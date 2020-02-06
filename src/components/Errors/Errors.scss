@@ -1,0 +1,35 @@
+.Error {
+  &.container {
+    color: rgb(54, 54, 54) !important;
+    margin-top: 2rem;
+  }
+  
+  .icon {
+    width: 150px !important;
+    height: 150px !important;
+    color: #adadad !important;
+    margin-bottom: 1.2rem;
+  }
+  
+  .header {
+    font-size: 1.8rem !important;
+  }
+  
+  .text {
+    font-size: 1.4rem !important;
+  }
+  
+  .link {
+    color: #4385ff;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    margin-top: 1rem;
+    
+  }
+  .link:hover {
+    text-decoration: underline;
+    color: #196aff;
+  }
+}

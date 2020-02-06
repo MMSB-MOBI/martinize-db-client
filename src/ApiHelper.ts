@@ -83,7 +83,7 @@ export const ApiHelper = new class APIHelper {
           if (settings.headers instanceof Headers)
             settings.headers.append('Content-Type', 'application/x-www-form-urlencoded');
           else
-            settings.headers['Content-Type'] = 'application/x-www-form-urlencoded';
+            settings.headers!['Content-Type'] = 'application/x-www-form-urlencoded';
         }
         // Sinon (json)
         else {
@@ -91,7 +91,7 @@ export const ApiHelper = new class APIHelper {
           if (settings.headers instanceof Headers)
             settings.headers.append('Content-Type', 'application/json');
           else
-            settings.headers['Content-Type'] = 'application/json';
+            settings.headers!['Content-Type'] = 'application/json';
         }
       }
     }
@@ -106,7 +106,7 @@ export const ApiHelper = new class APIHelper {
         if (settings.headers instanceof Headers) 
           settings.headers.set('Authorization', "Bearer " + used_token);
         else
-          settings.headers['Authorization'] = "Bearer " + used_token;
+          settings.headers!['Authorization'] = "Bearer " + used_token;
       }
     }
 
@@ -162,7 +162,11 @@ export const ApiHelper = new class APIHelper {
   isApiError(data: any) : data is APIError {
     return !!(data && typeof data.code === 'number' && typeof data.error === 'string');
   }
-}
+
+  isFullApiError(data: any) : data is [Response, APIError] {
+    return Array.isArray(data) && data[0] instanceof Response && this.isApiError(data[1]);
+  }
+}();
 
 export interface APIError {
   error: string;
