@@ -24,7 +24,7 @@ const Root = () => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <WaitForLoginFinish component={RouterCmpt} wait={Settings.login_promise} />
+      <WaitForLoginFinish component={RouterCmpt} wait={[Settings.login_promise, Settings.martinize_variables_promise]} />
     </ThemeProvider>
   );
 }

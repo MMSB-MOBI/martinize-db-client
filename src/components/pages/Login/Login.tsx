@@ -86,7 +86,6 @@ export default function Login() {
       })
       .catch(e => {
         setOperating("error");
-        console.error(e);
         
         if (ApiHelper.isFullApiError(e)) {
           setError(e[1]);

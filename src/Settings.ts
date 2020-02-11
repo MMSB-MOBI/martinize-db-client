@@ -1,5 +1,7 @@
 import ApiHelper from "./ApiHelper";
 import { User } from "./types/entities";
+import { SettingsJson } from "./types/settings";
+import { DEBUG_MODE } from "./constants";
 
 export enum LoginStatus {
   None, Pending, Curator, Admin,
@@ -8,8 +10,10 @@ export enum LoginStatus {
 export const Settings = new class Settings {
   protected _token?: string;
   protected _login_promise: Promise<boolean> = Promise.resolve(false);
+  protected _settings_promise: Promise<void> = Promise.resolve();
   protected _logged = LoginStatus.None;
   protected _user?: User;
+  protected _settings?: SettingsJson;
 
   constructor() {
     if (localStorage.getItem('token')) {
@@ -26,6 +30,7 @@ export const Settings = new class Settings {
     if (this.token) {
       this.verifyToken();
     }
+    this.downloadSettings();
   }
 
   set token(v: string | undefined) {
@@ -61,6 +66,29 @@ export const Settings = new class Settings {
   get login_promise() {
     return this._login_promise;
   }
+  
+  get martinize_variables() {
+    return this._settings!;
+  }
+
+  get martinize_variables_promise() {
+    return this._settings_promise;
+  }
+
+  downloadSettings() {
+    return this._settings_promise = (async () => {
+      await new Promise(resolve => setTimeout(resolve, 5));
+
+      try {
+        const settings: SettingsJson = await ApiHelper.request('settings', { auth: false, latency: DEBUG_MODE ? 200 : 0 });
+        this._settings = settings;
+      }
+      catch (e) {
+        // TODO make a toast for this.
+        console.error(e);
+      }
+    })();
+  }
 
   verifyToken() {
     this._logged = LoginStatus.Pending;
@@ -90,7 +118,7 @@ export const Settings = new class Settings {
   }
 
   async login(username: string, password: string) {
-    return ApiHelper.request('user/login', { method: 'POST', parameters: { username, password } })
+    return ApiHelper.request('user/login', { method: 'POST', parameters: { username, password }, latency: 0 })
       .then(({ token, user }: { token: string, user: User }) => {
         this.token = token;
         this.user = user;
@@ -108,3 +136,5 @@ export const Settings = new class Settings {
 }();
 
 export default Settings;
+
+window.DEBUG.Settings = Settings;

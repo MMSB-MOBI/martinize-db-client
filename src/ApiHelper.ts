@@ -1,7 +1,7 @@
 import Settings from "./Settings";
 import { API_URL } from "./constants";
 
-const LATENCY_ON_EVERY_REQUEST = 1000;
+const LATENCY_ON_EVERY_REQUEST = 1500;
 
 export const ApiHelper = new class APIHelper {
   /**
@@ -27,7 +27,8 @@ export const ApiHelper = new class APIHelper {
       headers?: { [key: string]: string } | Headers,
       body_mode?: 'form-encoded' | 'multipart' | 'json',
       auth?: boolean | string,
-      full?: boolean
+      full?: boolean,
+      latency?: number,
     } = {}
   ): Promise<any> {
     settings = Object.assign({}, { 
@@ -37,6 +38,7 @@ export const ApiHelper = new class APIHelper {
       body_mode: 'json',
       auth: true,
       headers: {},
+      latency: LATENCY_ON_EVERY_REQUEST,
     }, settings);
     
     let fullurl = API_URL + url;
@@ -110,8 +112,8 @@ export const ApiHelper = new class APIHelper {
       }
     }
 
-    if (LATENCY_ON_EVERY_REQUEST) {
-      await new Promise(resolve => setTimeout(resolve, LATENCY_ON_EVERY_REQUEST));
+    if (settings.latency) {
+      await new Promise(resolve => setTimeout(resolve, settings.latency));
     }
 
     return fetch(fullurl, {
