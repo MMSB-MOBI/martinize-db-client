@@ -11,14 +11,20 @@ import './Errors.scss';
 
 type EEProp = {
   error?: APIError | number;
-  text?: string;
+  text?: React.ReactNode;
+  title?: React.ReactNode;
   in_container?: boolean;
+  custom_icon?: React.ComponentType<SvgIconProps>;
+  button?: {
+    link: string;
+    text?: string;
+  };
 };
 
 type FEProp = {
   error?: APIError | number;
-  text?: string;
-  title?: string;
+  text?: React.ReactNode;
+  title?: React.ReactNode;
   custom_icon?: React.ComponentType<SvgIconProps>;
   button?: {
     link: string;
@@ -40,10 +46,10 @@ export const FullError: React.FC<FEProp> = props => {
         <ErrorIcon className="icon" />
       }
       <Typography component="h5" className="header">
-        {props.title ?? "Erreur"}
+        {props.title ?? "Error"}
       </Typography>
       <Typography component="h6" className="text">
-        {t ?? "Erreur inconnue"}
+        {t ?? "Unknown error"}
       </Typography>
       {props.button && <Link className="link no-underline" to={props.button.link} style={{ marginTop: '15px' }}>
         <Button color="primary">
@@ -69,13 +75,23 @@ const EmbeddedError: React.FC<EEProp> = props => {
 
   return (
     <CenterComponent className="Error container" style={style}>
-      <ErrorIcon className="icon" />
+      {props.custom_icon ? 
+        <props.custom_icon className="icon" /> : 
+        <ErrorIcon className="icon" />
+      }
       <Typography component="h5" className="header">
-        Erreur
+        {props.title ?? "Error"}
       </Typography>
       <Typography component="h6" className="text" align="center">
-        {t ? t : "Erreur inconnue"}
+        {t ? t : "Unknown error"}
       </Typography>
+
+      {props.button && <Link className="link no-underline" to={props.button.link} style={{ marginTop: '15px' }}>
+        <Button color="primary">
+          {props.button.text ?? props.button.link}
+        </Button>
+      </Link>}
+
       {props.children}
     </CenterComponent>
   )

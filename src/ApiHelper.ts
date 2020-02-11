@@ -1,7 +1,7 @@
 import Settings from "./Settings";
 import { API_URL } from "./constants";
 
-const LATENCY_ON_EVERY_REQUEST = 0;
+const LATENCY_ON_EVERY_REQUEST = 1000;
 
 export const ApiHelper = new class APIHelper {
   /**
@@ -160,11 +160,11 @@ export const ApiHelper = new class APIHelper {
   }
 
   isApiError(data: any) : data is APIError {
-    return !!(data && typeof data.code === 'number' && typeof data.error === 'string');
+    return !!(data && typeof data.code === 'number' && typeof data.message === 'string');
   }
 
   isFullApiError(data: any) : data is [Response, APIError] {
-    return Array.isArray(data) && data[0] instanceof Response && this.isApiError(data[1]);
+    return Array.isArray(data) && this.isApiError(data[1]);
   }
 }();
 

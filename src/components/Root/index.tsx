@@ -1,23 +1,31 @@
 import React from 'react';
-import './Root.scss';
+import { WaitForLoginFinish } from '../LoginWaiter/LoginWaiter';
+import RouterCmpt from '../Router';
+import { createMuiTheme, ThemeProvider } from '@material-ui/core/styles';
+import Settings from '../../Settings';
+import { useMediaQuery, CssBaseline } from '@material-ui/core';
 
 const Root = () => {
+  const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
+
+  const theme = React.useMemo(
+    () =>
+      createMuiTheme({
+        palette: {
+          type: prefersDarkMode ? 'dark' : 'light',
+          background: {
+            default: prefersDarkMode ? '#303030' : '#fafafa',
+          },
+        },
+      }),
+    [prefersDarkMode],
+  );
+
   return (
-    <div className="Root">
-      <header className="Root-header">
-        <p>
-          Edit <code>src/Root.tsx</code> and save to reload.
-        </p>
-        <a
-          className="Root-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <WaitForLoginFinish component={RouterCmpt} wait={Settings.login_promise} />
+    </ThemeProvider>
   );
 }
 

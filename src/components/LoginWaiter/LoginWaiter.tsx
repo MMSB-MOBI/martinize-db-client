@@ -9,6 +9,7 @@ export type RegisterableLoginState = "none" | "curator" | "admin" | "done";
 type LWProps = { 
   component: React.ComponentType;
   renderWhen: RegisterableLoginState | RegisterableLoginState[];
+  wait: Promise<any> | Promise<any>[];
 
   onNotAllowed?: JSX.Element | React.ComponentType<{ state: AllowedLoginState }>;
   onWaiting?: JSX.Element | React.ComponentType;
@@ -38,7 +39,7 @@ export default class LoginWaiter extends React.Component<LWProps, LWState> {
       is_logged = null;
 
       // Souscrit à la promesse d'attente
-      Settings.login_promise
+      Promise.all(Array.isArray(this.props.wait) ? this.props.wait : [this.props.wait])
         .then(() => {
           this.setState({ logged: Settings.logged === LoginStatus.Admin ? "admin" : "curator" });
         })
@@ -145,10 +146,10 @@ export default class LoginWaiter extends React.Component<LWProps, LWState> {
   }
 }
 
-export function WaitForLoginFinish<T extends { component: React.ComponentType }>(props: T) {
+export function WaitForLoginFinish<T extends { component: React.ComponentType, wait: Promise<any> | Promise<any>[] }>(props: T) {
   return <LoginWaiter {...props} renderWhen="done" />
 };
 
-export function WaitForLogged<T extends { component: React.ComponentType }>(props: T) {
+export function WaitForLogged<T extends { component: React.ComponentType, wait: Promise<any> | Promise<any>[] }>(props: T) {
   return <LoginWaiter {...props} renderWhen={["admin", "curator"]} />
 };

@@ -66,6 +66,8 @@ export const Settings = new class Settings {
     this._logged = LoginStatus.Pending;
 
     return this._login_promise = (async () => {
+      await new Promise(resolve => setTimeout(resolve, 5));
+
       try {
         const user: User = await ApiHelper.request('user/validate');
         this.user = user;

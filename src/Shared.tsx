@@ -1,5 +1,6 @@
 import React from 'react';
 import { Grid, CircularProgress } from "@material-ui/core";
+import clsx from 'clsx';
 
 export const CenterComponent = (props: any) => {
   return (
@@ -17,3 +18,10 @@ export const BigPreloader: React.FC<any> = (props: any) => {
   );
 };
 
+export function LoadFader(props: React.PropsWithChildren<{ when?: boolean }>) {
+  return (
+    <div className={clsx("can-load", props.when && "in")}>
+      {props.children}
+    </div>
+  );
+}
