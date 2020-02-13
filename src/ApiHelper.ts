@@ -56,11 +56,11 @@ export const ApiHelper = new class APIHelper {
     if (Object.keys(settings.parameters).length) {
       // Encodage dans la query
       if (settings.method === "GET" || settings.method === "DELETE") {
-        let str = "?";
+        const queries = [] as string[];
         for (const [key, value] of Object.entries(settings.parameters)) {
-          str += key + "=" + value;
+          queries.push(encodeURIComponent(key) + "=" + encodeURIComponent(value));
         }
-        fullurl += str;
+        fullurl += "?" + queries.join('&');
       }
       // Encodage POST (dans le body)
       else {

@@ -31,6 +31,8 @@ export interface BaseMolecule {
   martinize_version: string;
   /** Force field version */
   force_field: string;
+  /** Author (if fetched). */
+  author?: string;
 }
 
 export interface Molecule extends BaseMolecule {

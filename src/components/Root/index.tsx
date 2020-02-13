@@ -4,6 +4,7 @@ import RouterCmpt from '../Router';
 import { createMuiTheme, ThemeProvider } from '@material-ui/core/styles';
 import Settings from '../../Settings';
 import { useMediaQuery, CssBaseline } from '@material-ui/core';
+import Toaster from '../Toaster';
 
 const Root = () => {
   const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
@@ -25,6 +26,7 @@ const Root = () => {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <WaitForLoginFinish component={RouterCmpt} wait={[Settings.login_promise, Settings.martinize_variables_promise]} />
+      <Toaster />
     </ThemeProvider>
   );
 }
