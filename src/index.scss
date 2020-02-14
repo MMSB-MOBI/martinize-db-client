@@ -12,6 +12,15 @@ code {
     monospace;
 }
 
+.pre-break {
+  white-space: pre-line;
+  word-wrap: break-word;
+}
+
+.pointer {
+  cursor: pointer;
+}
+
 .can-load {
   transition: .4s;
 

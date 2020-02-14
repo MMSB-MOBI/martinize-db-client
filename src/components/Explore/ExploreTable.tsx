@@ -6,6 +6,7 @@ import KeyboardArrowLeft from '@material-ui/icons/KeyboardArrowLeft';
 import KeyboardArrowRight from '@material-ui/icons/KeyboardArrowRight';
 import LastPageIcon from '@material-ui/icons/LastPage';
 import { BaseMolecule } from '../../types/entities';
+import { Link } from 'react-router-dom';
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -16,6 +17,13 @@ const useStyles = makeStyles(theme => ({
   },
   container: {
     maxHeight: '80vh',
+  },
+  moleculeLink: {
+    color: theme.palette.primary.main,
+    textDecoration: 'none',
+    '&:hover': {
+      textDecoration: 'underline',
+    }
   },
 }));
 
@@ -61,7 +69,7 @@ export default function MoleculeTable(props: {
     <div className={classes.root}>
       <Paper className={classes.paperRoot}>
         <TableContainer className={classes.container}>
-          <Table stickyHeader aria-label="sticky table">
+          <Table stickyHeader aria-label="sticky table" size="small">
             <TableHead className={clsx("can-load", loading && "in")}>
               <TableRow>
                 {columns.map(column => (
@@ -69,6 +77,7 @@ export default function MoleculeTable(props: {
                     key={column.id}
                     align={column.align}
                     style={{ minWidth: column.minWidth }}
+                    size="medium"
                   >
                     {column.label}
                   </TableCell>
@@ -82,8 +91,18 @@ export default function MoleculeTable(props: {
                     {columns.map(column => {
                       const value = row[column.id];
                       return (
-                        <TableCell key={column.id} align={column.align}>
-                          {column.format && typeof value === 'number' ? column.format(value) : value}
+                        <TableCell 
+                          key={column.id} 
+                          align={column.align} 
+                        >
+                          {column.id === 'name' || column.id === 'alias' ?
+                            <Link className={classes.moleculeLink} to={"/molecule/" + row.alias + "?version=" + row.id}>
+                              {column.format && typeof value === 'number' ? column.format(value) : value}
+                            </Link> :
+                            <React.Fragment>
+                              {column.format && typeof value === 'number' ? column.format(value) : value}
+                            </React.Fragment>
+                          }
                         </TableCell>
                       );
                     })}
@@ -95,7 +114,7 @@ export default function MoleculeTable(props: {
             <TableFooter>
               <TableRow>
                 {/* Loading indicator */}
-                {loading && <TableCell style={{ lineHeight: '1', display: 'flex', alignItems: 'center' }}>
+                {loading && <TableCell style={{ lineHeight: '1', display: 'flex', alignItems: 'center' }} size="medium">
                   <CircularProgress size={20} /> <span style={{ marginLeft: 12 }}>
                     <em>Loading...</em>
                   </span>

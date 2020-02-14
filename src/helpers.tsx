@@ -1,5 +1,6 @@
 import ApiHelper, { APIError } from "./ApiHelper";
 import { CategoryTree } from "./types/settings";
+import React from 'react';
 
 export function errorToText(error: [any, APIError] | APIError | number) {
   let code: number;
@@ -33,9 +34,9 @@ export function loginErrorToText(code: number) {
   }
 }
 
-export function setPageTitle(title?: string, absolute = false, set_app_bar_name = true) {
+export function setPageTitle(title?: string, absolute = false, set_app_bar_name = false) {
   if (!absolute)
-    document.title = "Martinize Database" + (title ? ` - ${title}` : '');
+    document.title = "MAD" + (title ? ` - ${title}` : '');
   else
     document.title = title!;
 
@@ -75,4 +76,8 @@ export function flattenCategoryTree(cat: CategoryTree) {
   }
 
   return categories;
+}
+
+export function Marger(props: { size: number | string }) {
+  return <div style={{ width: '100%', height: props.size }} />;
 }

@@ -51,6 +51,7 @@ export class Explore extends React.Component<RouteComponentProps, ExploreState> 
   }
 
   previous_timeout = 0;
+  first = true;
 
   componentDidMount() {
     setPageTitle("Explore");
@@ -105,6 +106,12 @@ export class Explore extends React.Component<RouteComponentProps, ExploreState> 
 
   componentDidUpdate(_: any, old_state: ExploreState) {
     if (this.state.filters !== old_state.filters) {
+      if (this.first) {
+        this.first = false;
+        this.makeRequest();
+        return;
+      }
+
       if (this.previous_timeout) {
         clearTimeout(this.previous_timeout);
         this.previous_timeout = 0;

@@ -1,7 +1,7 @@
 import React from 'react';
 import Settings from '../../Settings';
 import { Select, MenuItem, InputLabel, makeStyles, createStyles, Theme, Input, useTheme, FormControl, Paper, TextField } from '@material-ui/core';
-import { flattenCategoryTree } from '../../helpers';
+import { flattenCategoryTree, Marger } from '../../helpers';
 
 export interface Filters {
   force_fields?: string[];
@@ -16,9 +16,6 @@ export interface Filters {
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     formControl: {
-      margin: theme.spacing(1),
-      minWidth: 200,
-      maxWidth: 350,
     },
     chips: {
       display: 'flex',
@@ -48,7 +45,6 @@ const MenuProps = {
   PaperProps: {
     style: {
       maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
-      width: 250,
     },
   },
 };
@@ -65,16 +61,24 @@ function MultipleSelect(props: {
   };
   const theme = useTheme();
   const classes = useStyles();
+  const [labelWidth, setLabelWidth] = React.useState(0);
+  const inputLabel = React.useRef<HTMLLabelElement>(null);
+  React.useEffect(() => {
+    setLabelWidth(inputLabel.current!.offsetWidth);
+  }, []);
 
   return (
-    <FormControl className={classes.formControl}>
-      <InputLabel id={props.id}>{props.label}</InputLabel>
+    <FormControl variant="outlined" className={classes.formControl}>
+      <InputLabel ref={inputLabel} id={props.id}>{props.label}</InputLabel>
       <Select 
-        labelId={props.id}
         multiple 
         value={props.value}
         onChange={handleChange}
-        input={<Input />}
+        labelWidth={labelWidth}
+        inputProps={{
+          name: 'age',
+          id: props.id,
+        }}
         MenuProps={MenuProps}
       >
         {props.options.map(v => <MenuItem key={v.value} value={v.value} style={getStyles(v.value, props.value, theme)}>
@@ -90,6 +94,19 @@ const useStylesFilters = makeStyles((theme: Theme) =>
     root: {
       padding: 14,
     },
+    textWrapper: {
+      display: 'grid',
+      columnGap: '10px',
+      gridTemplateColumns: '1fr 1fr 1fr',
+    },
+    freeTextWrapper: {
+      display: 'grid',
+    },
+    selectorsWrapper: {
+      display: 'grid',
+      columnGap: '10px',
+      gridTemplateColumns: '1fr 1fr 1fr',
+    }
   }),
 );
 
@@ -120,7 +137,7 @@ export default function MoleculeFilters(props: {
   return (
     <Paper variant="outlined" className={classes.root}>
       <form onSubmit={e => e.preventDefault()}>
-        <div>
+        <div className={classes.selectorsWrapper}>
           <MultipleSelect 
             options={settings.force_fields.map(e => ({ value: e }))} 
             value={props.force_fields || []}
@@ -157,8 +174,10 @@ export default function MoleculeFilters(props: {
             label="Categories"
           />
         </div>
+
+        <Marger size="1rem" />
         
-        <div>
+        <div className={classes.textWrapper}>
           <TextField 
             label="Name" 
             value={props.name || ""}
@@ -167,6 +186,7 @@ export default function MoleculeFilters(props: {
               filters.name = v.target.value;
               props.onFiltersChange(filters);
             }}
+            variant="outlined"
           />
 
           <TextField 
@@ -177,6 +197,7 @@ export default function MoleculeFilters(props: {
               filters.alias = v.target.value;
               props.onFiltersChange(filters);
             }}
+            variant="outlined"
           />
 
           <TextField 
@@ -187,10 +208,13 @@ export default function MoleculeFilters(props: {
               filters.author = v.target.value;
               props.onFiltersChange(filters);
             }}
+            variant="outlined"
           />
         </div>
+
+        <Marger size="1rem" />
         
-        <div>
+        <div className={classes.freeTextWrapper}>
           <TextField 
             label="Free text" 
             value={props.q || ""}
@@ -199,6 +223,7 @@ export default function MoleculeFilters(props: {
               filters.q = v.target.value;
               props.onFiltersChange(filters);
             }}
+            variant="outlined"
           />
         </div>
       </form>

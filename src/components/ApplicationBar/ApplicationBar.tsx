@@ -232,7 +232,7 @@ export default function ApplicationDrawer(props: RouteComponentProps) {
 }
 
 function AppBarContent() {
-  const [title, setTitle] = React.useState('Martinize Database');
+  const [title, setTitle] = React.useState('MArtini Database');
 
   function onTitleChange(e: CustomEvent<string>) {
     setTitle(e.detail);

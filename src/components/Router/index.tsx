@@ -6,6 +6,7 @@ import ApplicationDrawer from '../ApplicationBar/ApplicationBar';
 import { WaitForLoginFinish } from '../LoginWaiter/LoginWaiter';
 import Settings from '../../Settings';
 import Login from '../pages/Login/Login';
+import MoleculePage from '../Molecule/Molecule';
 
 function LoadAppDrawer(props: RouteComponentProps) {
   return <ApplicationDrawer {...props} />;
@@ -51,6 +52,7 @@ export const DrawerContentRouter = (props: RouteComponentProps) => {
   return (
     <Switch>
       <Route path="/explore" exact component={Explore} />
+      <Route path="/molecule/:alias" component={MoleculePage} />
       
       {/* Not found */}
       <Route component={InnerNotFound} />
