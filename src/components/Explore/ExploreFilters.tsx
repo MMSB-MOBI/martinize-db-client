@@ -1,6 +1,7 @@
 import React from 'react';
 import Settings from '../../Settings';
-import { Select, MenuItem, InputLabel, makeStyles, createStyles, Theme, Input, useTheme, FormControl } from '@material-ui/core';
+import { Select, MenuItem, InputLabel, makeStyles, createStyles, Theme, Input, useTheme, FormControl, Paper, TextField } from '@material-ui/core';
+import { flattenCategoryTree } from '../../helpers';
 
 export interface Filters {
   force_fields?: string[];
@@ -16,8 +17,8 @@ const useStyles = makeStyles((theme: Theme) =>
   createStyles({
     formControl: {
       margin: theme.spacing(1),
-      minWidth: 120,
-      maxWidth: 300,
+      minWidth: 200,
+      maxWidth: 350,
     },
     chips: {
       display: 'flex',
@@ -84,6 +85,14 @@ function MultipleSelect(props: {
   );
 }
 
+const useStylesFilters = makeStyles((theme: Theme) =>
+  createStyles({
+    root: {
+      padding: 14,
+    },
+  }),
+);
+
 export default function MoleculeFilters(props: {
   onFiltersChange: (filters: Filters) => void;
   force_fields?: string[];
@@ -95,6 +104,9 @@ export default function MoleculeFilters(props: {
   alias?: string;
 }) {
   const settings = Settings.martinize_variables;
+  const categories = React.useMemo(() => flattenCategoryTree(settings.category_tree), [settings]);
+  const classes = useStylesFilters();
+
   function getAllFilters() {
     const e = {
       ...props
@@ -106,20 +118,90 @@ export default function MoleculeFilters(props: {
   }
 
   return (
-    <div>
+    <Paper variant="outlined" className={classes.root}>
       <form onSubmit={e => e.preventDefault()}>
-        <MultipleSelect 
-          options={settings.force_fields.map(e => ({ value: e }))} 
-          value={props.force_fields || []}
-          onChange={v => {
-            const filters = getAllFilters();
-            filters.force_fields = v;
-            props.onFiltersChange(filters);
-          }}
-          id="ff-select"
-          label="Force field"
-        />
+        <div>
+          <MultipleSelect 
+            options={settings.force_fields.map(e => ({ value: e }))} 
+            value={props.force_fields || []}
+            onChange={v => {
+              const filters = getAllFilters();
+              filters.force_fields = v;
+              props.onFiltersChange(filters);
+            }}
+            id="ff-select"
+            label="Force field"
+          />
+
+          <MultipleSelect 
+            options={settings.martinize_versions.map(e => ({ value: e }))} 
+            value={props.martinize_versions || []}
+            onChange={v => {
+              const filters = getAllFilters();
+              filters.martinize_versions = v;
+              props.onFiltersChange(filters);
+            }}
+            id="mt-select"
+            label="Martinize version"
+          />
+
+          <MultipleSelect 
+            options={categories.map(e => ({ value: e.id, label: e.name }))} 
+            value={props.categories || []}
+            onChange={v => {
+              const filters = getAllFilters();
+              filters.categories = v;
+              props.onFiltersChange(filters);
+            }}
+            id="cat-select"
+            label="Categories"
+          />
+        </div>
+        
+        <div>
+          <TextField 
+            label="Name" 
+            value={props.name || ""}
+            onChange={v => {
+              const filters = getAllFilters();
+              filters.name = v.target.value;
+              props.onFiltersChange(filters);
+            }}
+          />
+
+          <TextField 
+            label="Alias" 
+            value={props.alias || ""}
+            onChange={v => {
+              const filters = getAllFilters();
+              filters.alias = v.target.value;
+              props.onFiltersChange(filters);
+            }}
+          />
+
+          <TextField 
+            label="Author" 
+            value={props.author || ""}
+            onChange={v => {
+              const filters = getAllFilters();
+              filters.author = v.target.value;
+              props.onFiltersChange(filters);
+            }}
+          />
+        </div>
+        
+        <div>
+          <TextField 
+            label="Free text" 
+            value={props.q || ""}
+            onChange={v => {
+              const filters = getAllFilters();
+              filters.q = v.target.value;
+              props.onFiltersChange(filters);
+            }}
+          />
+        </div>
       </form>
-    </div>
+    </Paper>
   )
 }

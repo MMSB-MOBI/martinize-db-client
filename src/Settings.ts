@@ -2,6 +2,7 @@ import ApiHelper from "./ApiHelper";
 import { User } from "./types/entities";
 import { SettingsJson } from "./types/settings";
 import { DEBUG_MODE } from "./constants";
+import { toast } from "./components/Toaster";
 
 export enum LoginStatus {
   None, Pending, Curator, Admin,
@@ -84,8 +85,8 @@ export const Settings = new class Settings {
         this._settings = settings;
       }
       catch (e) {
-        // TODO make a toast for this.
         console.error(e);
+        toast("Unable to connect to server. Please check your network settings.", "error");
       }
     })();
   }
@@ -112,7 +113,7 @@ export const Settings = new class Settings {
           }
         }
         console.error("Unable to verify login.", e);
-        return false;
+        throw e;
       }
     })();
   }

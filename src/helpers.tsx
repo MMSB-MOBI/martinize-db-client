@@ -1,4 +1,5 @@
 import ApiHelper, { APIError } from "./ApiHelper";
+import { CategoryTree } from "./types/settings";
 
 export function errorToText(error: [any, APIError] | APIError | number) {
   let code: number;
@@ -57,4 +58,21 @@ export function throwCodeOrUndefined(e: any) {
   }
   // eslint-disable-next-line
   throw undefined;
+}
+
+export function flattenCategoryTree(cat: CategoryTree) {
+  const categories: { id: string, name: string }[] = [];
+
+  for (const node in cat) {
+    const id = node;
+    const name = cat[node].name;
+
+    categories.push({ id, name });
+
+    if (cat[node].children) {
+      categories.push(...flattenCategoryTree(cat[node].children));
+    }
+  }
+
+  return categories;
 }

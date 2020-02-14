@@ -249,9 +249,11 @@ function AppBarContent() {
   }, []);
 
   return (
-    <Typography variant="h6" noWrap>
-      {title}
-    </Typography>
+    <div style={{ textAlign: 'center', width: '100%' }}>
+      <Typography variant="h6" noWrap style={{ fontWeight: 200, fontSize: '1.7rem' }}>
+        {title}
+      </Typography>
+    </div>
   );
 }
 

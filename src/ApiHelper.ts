@@ -98,6 +98,10 @@ export const ApiHelper = new class APIHelper {
       }
     }
 
+    if (settings.auth === "auto") {
+      settings.auth = !!Settings.token;
+    }
+
     if (settings.auth !== false) {
       if (!Settings.token && typeof settings.auth !== 'string') {
         console.warn("Could not authentificate request without token. Skipping auth header...");

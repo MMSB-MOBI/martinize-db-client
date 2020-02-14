@@ -14,6 +14,7 @@ import { User } from '../../../types/entities';
 import Settings from '../../../Settings';
 import { loginErrorToText } from '../../../helpers';
 import { LoadFader } from '../../../Shared';
+import { toast } from '../../Toaster';
 
 function Copyright() {
   return (
@@ -89,6 +90,10 @@ export default function Login() {
         
         if (ApiHelper.isFullApiError(e)) {
           setError(e[1]);
+        }
+        else {
+          // Erreur réseau ?
+          toast("Unable to login. Please check your network.", "error");
         }
       })
   }

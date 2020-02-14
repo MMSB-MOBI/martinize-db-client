@@ -1,9 +1,11 @@
 import React from 'react';
-import { BrowserRouter as Router, Route, Switch, RouteComponentProps, Redirect } from 'react-router-dom';
+import { Route, Switch, RouteComponentProps, Redirect, BrowserRouter } from 'react-router-dom';
 import Explore from '../Explore/Explore';
 import NotFound, { InnerNotFound } from '../pages/NotFound/NotFound';
-import Login from '../pages/Login/Login';
 import ApplicationDrawer from '../ApplicationBar/ApplicationBar';
+import { WaitForLoginFinish } from '../LoginWaiter/LoginWaiter';
+import Settings from '../../Settings';
+import Login from '../pages/Login/Login';
 
 function LoadAppDrawer(props: RouteComponentProps) {
   return <ApplicationDrawer {...props} />;
@@ -11,29 +13,39 @@ function LoadAppDrawer(props: RouteComponentProps) {
 
 const RouterCmpt = (props: {}) => {
   return (
-    <Router>
-      {/* For now, every page except login will be encapsulated in ApplicationBar drawer */}
-
+    <BrowserRouter>
       <Switch>
-        <Route path="/login" exact component={Login} />
-
         <Route path="/" exact render={() => <Redirect to="/explore" />} />
 
-        <Route path="/molecule/:alias" component={LoadAppDrawer} />
-        <Route path="/group/:alias" component={LoadAppDrawer} />
-        <Route path="/moderation" component={LoadAppDrawer} />
-        <Route path="/stashed/:id" component={LoadAppDrawer} />
-        <Route path="/explore" component={LoadAppDrawer} />
-        <Route path="/submissions" component={LoadAppDrawer} />
-        <Route path="/settings" component={LoadAppDrawer} />
-        <Route path="/contact" component={LoadAppDrawer} />
+        <Route path="/login" exact component={LoadLoginDrawer} />
+
+        <Route path="/molecule/:alias" component={LoadDrawer} />
+        <Route path="/group/:alias" component={LoadDrawer} />
+        <Route path="/moderation" component={LoadDrawer} />
+        <Route path="/stashed/:id" component={LoadDrawer} />
+        <Route path="/explore" component={LoadDrawer} />
+        <Route path="/submissions" component={LoadDrawer} />
+        <Route path="/settings" component={LoadDrawer} />
+        <Route path="/contact" component={LoadDrawer} />
 
         {/* Not found */}
         <Route component={NotFound} />
       </Switch>
-    </Router>
+    </BrowserRouter>
   )
 };
+
+function LoadDrawer(props: RouteComponentProps) {
+  return (
+    <WaitForLoginFinish {...props} component={LoadAppDrawer} wait={[Settings.login_promise, Settings.martinize_variables_promise]} />
+  );
+}
+
+function LoadLoginDrawer(props: RouteComponentProps) {
+  return (
+    <WaitForLoginFinish {...props} component={Login} wait={[Settings.login_promise, Settings.martinize_variables_promise]} />
+  );
+}
 
 export const DrawerContentRouter = (props: RouteComponentProps) => {
   return (

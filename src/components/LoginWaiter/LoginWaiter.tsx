@@ -2,6 +2,7 @@ import React from 'react';
 import Settings, { LoginStatus } from '../../Settings';
 import { FullError } from '../Errors/Errors';
 import { BigPreloader } from '../../Shared';
+import { Link, Button } from '@material-ui/core';
 
 export type AllowedLoginState = "none" | "progress" | "curator" | "admin" | "error" | "done";
 export type RegisterableLoginState = "none" | "curator" | "admin" | "done";
@@ -31,30 +32,28 @@ export default class LoginWaiter extends React.Component<LWProps, LWState> {
   constructor(props: LWProps) {
     super(props);
 
-    let is_logged: boolean | null;
-    if (Settings.logged > 1) {
-      is_logged = true;
-    }
-    else if (Settings.logged === LoginStatus.Pending) {
-      is_logged = null;
+    Promise.all(Array.isArray(this.props.wait) ? this.props.wait : [this.props.wait])
+      .then(() => {
+        let logged: AllowedLoginState;
+        if (Settings.logged === LoginStatus.Admin) {
+          logged = "admin";
+        }
+        else if (Settings.logged === LoginStatus.Curator) {
+          logged = "curator";
+        }
+        else {
+          // None
+          logged = "none";
+        }
 
-      // Souscrit à la promesse d'attente
-      Promise.all(Array.isArray(this.props.wait) ? this.props.wait : [this.props.wait])
-        .then(() => {
-          this.setState({ logged: Settings.logged === LoginStatus.Admin ? "admin" : "curator" });
-        })
-        .catch(() => {
-          this.setState({ logged: "error" });
-        });
-    }
-    else {
-      is_logged = false;
-    }
+        this.setState({ logged });
+      })
+      .catch(() => {
+        this.setState({ logged: "error" });
+      });
 
     this.state = {
-      logged: is_logged ? 
-        (Settings.logged === LoginStatus.Admin ? "admin" : "curator") : 
-        (is_logged === null ? "progress" : "none"),
+      logged: "progress"
     };
   }
 
@@ -113,11 +112,13 @@ export default class LoginWaiter extends React.Component<LWProps, LWState> {
 
     return <FullError
       text="Unable to login. This might be an server error, or you login keys are not valid anymore."
-      button={{
-        link: "/login/",
-        text: "Login page"
-      }}
-    />;
+    >
+      <Link className="link no-underline" href="#" style={{ marginTop: '15px' }} onClick={() => { Settings.unlog(); window.location.pathname = "/login"; }}>
+        <Button color="primary">
+          Log out
+        </Button>
+      </Link>
+    </FullError>;
   }
 
   render() {
@@ -146,10 +147,10 @@ export default class LoginWaiter extends React.Component<LWProps, LWState> {
   }
 }
 
-export function WaitForLoginFinish<T extends { component: React.ComponentType, wait: Promise<any> | Promise<any>[] }>(props: T) {
+export function WaitForLoginFinish<T extends { component: React.ComponentType<any>, wait: Promise<any> | Promise<any>[] }>(props: T) {
   return <LoginWaiter {...props} renderWhen="done" />
 };
 
-export function WaitForLogged<T extends { component: React.ComponentType, wait: Promise<any> | Promise<any>[] }>(props: T) {
+export function WaitForLogged<T extends { component: React.ComponentType<any>, wait: Promise<any> | Promise<any>[] }>(props: T) {
   return <LoginWaiter {...props} renderWhen={["admin", "curator"]} />
 };

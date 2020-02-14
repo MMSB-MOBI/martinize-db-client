@@ -34,75 +34,29 @@ function getRealFilters(filters: Filters) {
 
 const DEFAULT_ROWS_PER_PAGE = 5;
 
-const Explore = (props: RouteComponentProps) => {
-  const [filters, setFilters] = React.useState<Filters | undefined>();
-  const [molecules, setMolecules] = React.useState({ length: 0, molecules: [] as Molecule[] });
-  const [page, setPage] = React.useState(0);
-  const [loading, setLoading] = React.useState(false);
-  const [rowsPerPage, setRowsPerPage] = React.useState(DEFAULT_ROWS_PER_PAGE);
+type ExploreState = {
+  filters?: Filters,
+  molecules: { length: number, molecules: Molecule[] },
+  page: number,
+  rowsPerPage: number,
+  loading: number,
+};
 
-  // Make the request when filters changes
-  function makeRequest(new_page?: number) {
-    if (loading)
-      return;
-
-    // Refresh the query string with filters
-    let the_page = page;
-
-    // We ask for page change
-    if (new_page !== undefined) {
-      the_page = new_page;
-    }
-
-    // Construct the filters
-    const to_send = getRealFilters(filters!);
-
-    // Save the query string with selected filters
-    if (the_page) {
-      to_send.page = the_page + 1;
-    }
-    if (rowsPerPage !== DEFAULT_ROWS_PER_PAGE) {
-      to_send.page_size = rowsPerPage;
-    }
-    props.history.push({
-      search: "?" + new URLSearchParams(to_send).toString()
-    });
-    // This is irrelevant for server
-    delete to_send.page;
-    delete to_send.page_size;
-
-    // Set the limit and skip parameters
-    to_send.limit = rowsPerPage;
-    to_send.skip = rowsPerPage * the_page;
-
-      
-    // Begin loading animation
-    setLoading(true);
-
-    // Make the request
-    ApiHelper.request('molecule/list', { parameters: to_send, latency: 1500 })
-      .then(mols => {
-        setLoading(false);
-        setMolecules(mols);
-
-        if (new_page !== undefined) {
-          // Save the page change
-          setPage(new_page);
-        }
-      })
-      .catch(e => {
-        console.error(e);
-        setLoading(false);
-        toast(errorToText(e));
-      });
+export class Explore extends React.Component<RouteComponentProps, ExploreState> {
+  state: ExploreState = {
+    molecules: { length: 0, molecules: [] as Molecule[] },
+    page: 0,
+    loading: 0,
+    rowsPerPage: DEFAULT_ROWS_PER_PAGE,
   }
 
-  // Component didLoad
-  React.useEffect(() => {
+  previous_timeout = 0;
+
+  componentDidMount() {
     setPageTitle("Explore");
 
     // Read from query string
-    const query_string = qs.parse(props.location.search, { ignoreQueryPrefix: true });
+    const query_string = qs.parse(this.props.location.search, { ignoreQueryPrefix: true });
 
     function parseArray(key: string) {
       const v = query_string[key] as string;
@@ -122,51 +76,133 @@ const Explore = (props: RouteComponentProps) => {
       force_fields: parseArray('force_fields'),
       categories: parseArray('categories'),
     };
-    setFilters(new_filters);
+
+    let page = this.state.page;
+    let rowsPerPage = this.state.rowsPerPage;
 
     if (query_string.page) {
       const nb = Number(query_string.page);
       if (nb > 0) {
-        setPage(nb - 1);
+        page = nb - 1;
       }
     }
 
     if (query_string.page_size) {
       const ps = Number(query_string.page_size);
       if (ps > 0 && ps <= 200) {
-        setRowsPerPage(ps);
+        rowsPerPage = ps;
       }
     }
 
-    // Start the download (should fire, setFilters is triggered.)
-  }, []);
+    this.setState({
+      filters: new_filters,
+      page,
+      rowsPerPage
+    });
+
+    // Start the download (should fire, filters has changed is triggered.)
+  }
+
+  componentDidUpdate(_: any, old_state: ExploreState) {
+    if (this.state.filters !== old_state.filters) {
+      if (this.previous_timeout) {
+        clearTimeout(this.previous_timeout);
+        this.previous_timeout = 0;
+      }
   
-  // Component didUpdate on filter change
-  React.useEffect(() => {
-    if (!filters)
-      return;
+      this.previous_timeout = setTimeout(() => {
+        this.previous_timeout = 0;
+        this.makeRequest();
+      }, 500) as any;  
+    }
+  }
 
-    console.log("Downloading with filters");
-    makeRequest();
-  }, [filters]);
+  protected makeRequest(new_page?: number) {
+    // Refresh the query string with filters
+    let the_page = this.state.page;
 
-  return (
-    <div>
-      <MoleculeFilters 
-        {...filters}
-        onFiltersChange={setFilters}
-      />
+    // We ask for page change
+    if (new_page !== undefined) {
+      the_page = new_page;
+    }
+
+    // Construct the filters
+    const to_send = getRealFilters(this.state.filters!);
+
+    // Save the query string with selected filters
+    if (the_page) {
+      to_send.page = the_page + 1;
+    }
+    if (this.state.rowsPerPage !== DEFAULT_ROWS_PER_PAGE) {
+      to_send.page_size = this.state.rowsPerPage;
+    }
+
+    this.props.history.push({
+      search: "?" + new URLSearchParams(to_send).toString()
+    });
+    // This is irrelevant for server
+    delete to_send.page;
+    delete to_send.page_size;
+
+    // Set the limit and skip parameters
+    to_send.limit = this.state.rowsPerPage;
+    to_send.skip = this.state.rowsPerPage * the_page;
+
       
-      <MoleculeTable 
-        loading={loading}
-        molecules={molecules.molecules}
-        length={molecules.length}
-        page={page}
-        rowsPerPage={rowsPerPage}
-        onChangePage={page => makeRequest(page)}
-      />
-    </div>
-  )
+    // Begin loading animation
+    const load_uuid = Math.random();
+    this.setState({
+      loading: load_uuid
+    });
+
+    // Make the request
+    ApiHelper.request('molecule/list', { parameters: to_send, latency: 1500, auth: 'auto' })
+      .then(mols => {
+        if (load_uuid === this.state.loading) {
+          this.setState({
+            loading: 0,
+            molecules: mols,
+            page: new_page !== undefined ? new_page : this.state.page
+          });
+        }
+      })
+      .catch(e => {
+        if (load_uuid === this.state.loading) {
+          this.setState({
+            loading: 0,
+          });
+
+          console.error(e);
+          toast(errorToText(e));
+        }
+      });
+  }
+
+  protected changeFilters(filters: Filters) {
+    this.setState({ filters });
+  }
+  
+  render() {
+    return (
+      <div>
+        <div style={{ padding: 14 }}>
+          <MoleculeFilters 
+            {...(this.state.filters ?? {})}
+            onFiltersChange={filters => this.changeFilters(filters)}
+          />
+        </div>
+        
+        <MoleculeTable 
+          loading={!!this.state.loading}
+          molecules={this.state.molecules.molecules}
+          length={this.state.molecules.length}
+          page={this.state.page}
+          rowsPerPage={this.state.rowsPerPage}
+          onChangePage={page => this.makeRequest(page)}
+        />
+      </div>
+    );
+  }
 }
 
 export default Explore;
