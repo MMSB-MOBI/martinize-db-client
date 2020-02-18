@@ -1,8 +1,13 @@
 import ApiHelper, { APIError } from "./ApiHelper";
 import { CategoryTree } from "./types/settings";
 import React from 'react';
+import { toast } from "./components/Toaster";
 
-export function errorToText(error: [any, APIError] | APIError | number) {
+export function errorToText(error: [any, APIError] | APIError | number | undefined) {
+  if (!error) {
+    return "Server error.";
+  }
+
   let code: number;
   if (Array.isArray(error)) {
     code = error[1].code;
@@ -17,7 +22,12 @@ export function errorToText(error: [any, APIError] | APIError | number) {
   switch (code) {
     case 1:
       return "Server error";
-
+    case 102:
+      return "User not found";
+    case 203:
+      return "Invalid password";
+    case 302:
+      return "Missing parameters to request";
     default:
       return "Unknown error";
   }
@@ -80,4 +90,13 @@ export function flattenCategoryTree(cat: CategoryTree) {
 
 export function Marger(props: { size: number | string }) {
   return <div style={{ width: '100%', height: props.size }} />;
+}
+
+export function notifyError(error: APIError | [any, APIError | undefined] | undefined) : void {
+  if (Array.isArray(error)) {
+    return notifyError(error[1]);
+  }
+
+  console.error(error);
+  toast(errorToText(error), "error");
 }

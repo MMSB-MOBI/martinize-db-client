@@ -8,6 +8,8 @@ import ApiHelper from '../../ApiHelper';
 import { toast } from '../Toaster';
 import MoleculeTable from './ExploreTable';
 import MoleculeFilters, { Filters } from './ExploreFilters';
+import AddMolecule from '../AddMolecule/AddMolecule';
+import { Button } from '@material-ui/core';
 
 // Icon <Icon className="fas fa-camera" />
 
@@ -40,6 +42,7 @@ type ExploreState = {
   page: number,
   rowsPerPage: number,
   loading: number,
+  add_open: boolean,
 };
 
 export class Explore extends React.Component<RouteComponentProps, ExploreState> {
@@ -48,6 +51,7 @@ export class Explore extends React.Component<RouteComponentProps, ExploreState> 
     page: 0,
     loading: 0,
     rowsPerPage: DEFAULT_ROWS_PER_PAGE,
+    add_open: false,
   }
 
   previous_timeout = 0;
@@ -198,6 +202,10 @@ export class Explore extends React.Component<RouteComponentProps, ExploreState> 
             onFiltersChange={filters => this.changeFilters(filters)}
           />
         </div>
+
+        <Button onClick={() => this.setState({ add_open: true })}>
+          Add a molecule
+        </Button>
         
         <MoleculeTable 
           loading={!!this.state.loading}
@@ -206,6 +214,12 @@ export class Explore extends React.Component<RouteComponentProps, ExploreState> 
           page={this.state.page}
           rowsPerPage={this.state.rowsPerPage}
           onChangePage={page => this.makeRequest(page)}
+        />
+
+        <AddMolecule 
+          open={this.state.add_open}
+          onClose={() => this.setState({ add_open: false })}
+          onChange={() => this.setState({ add_open: false })}
         />
       </div>
     );

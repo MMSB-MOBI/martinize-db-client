@@ -69,7 +69,14 @@ export const ApiHelper = new class APIHelper {
           fd = new FormData();
   
           for (const [key, value] of Object.entries(settings.parameters)) {
-            fd.append(key, value);
+            if (Array.isArray(value)) {
+              for (const v of value) {
+                fd.append(key, v);
+              }
+            }
+            else {
+              fd.append(key, value);
+            }
           }
         }
         // Si www-form-encoded (ou par défault)
