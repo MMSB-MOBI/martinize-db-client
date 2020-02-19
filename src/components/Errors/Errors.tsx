@@ -83,7 +83,7 @@ const EmbeddedError: React.FC<EEProp> = props => {
         {props.title ?? "Error"}
       </Typography>
       <Typography component="h6" className="text" align="center">
-        {t ? t : "Unknown error"}
+        {t ?? "Unknown error"}
       </Typography>
 
       {props.button && <Link className="link no-underline" to={props.button.link} style={{ marginTop: '15px' }}>

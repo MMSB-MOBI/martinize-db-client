@@ -1,6 +1,6 @@
 import React from 'react';
 import { BaseMolecule, Molecule, StashedMolecule } from '../../types/entities';
-import { Dialog, Slide, makeStyles, createStyles, Theme, Button, Container, AppBar, Toolbar, IconButton, Typography, TextField, FormControl, InputLabel, Select, MenuItem } from '@material-ui/core';
+import { Dialog, Slide, makeStyles, createStyles, Theme, Button, Container, AppBar, Toolbar, IconButton, Typography, TextField, FormControl, InputLabel, Select, MenuItem, Link } from '@material-ui/core';
 import { TransitionProps } from '@material-ui/core/transitions/transition';
 import { LoadFader } from '../../Shared';
 import CloseIcon from '@material-ui/icons/Close';
@@ -9,6 +9,7 @@ import { flattenCategoryTree, Marger, notifyError } from '../../helpers';
 import { toast } from '../Toaster';
 import AddMoleculeFileInput from './AddMoleculeFileInput';
 import ApiHelper from '../../ApiHelper';
+import { SERVER_ROOT } from '../../constants';
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
@@ -65,6 +66,7 @@ interface AddMoleculeProps {
   onClose: () => void,
   /** When user has added/modified a molecule, and the server has successfully received it. */
   onChange: (modified: StashedMolecule | Molecule) => void,
+  stashed?: boolean,
 }
 
 const Transition = React.forwardRef<unknown, TransitionProps>(function Transition(props, ref) {
@@ -214,18 +216,30 @@ export default function AddMolecule(props: AddMoleculeProps) {
 
     setLoading(true);
 
-    /// TODO API REQUEST
     if (props.from) {
-      setTimeout(() => {
-        setLoading(false);
-        props.onClose();
-      }, 2500);
+      if (props.stashed) {
+        // @ts-ignore
+        partial_molecule.stashed = "1";
+      }
+
+      ApiHelper.request((props.stashed ? 'moderation' : 'molecule') + '/edit', {
+        method: 'POST', 
+        parameters: partial_molecule,
+        body_mode: 'multipart',
+      })
+        .then((mol: BaseMolecule) => {
+          props.onChange(mol);
+        })
+        .catch(notifyError)
+        .finally(() => {
+          setLoading(false);
+        });
     }
     else {
       ApiHelper.request('molecule/create', {
         method: 'POST', 
         parameters: partial_molecule,
-        body_mode: "multipart",
+        body_mode: 'multipart',
       })
         .then((mol: BaseMolecule) => {
           props.onChange(mol);
@@ -392,11 +406,26 @@ export default function AddMolecule(props: AddMoleculeProps) {
               Attached files
             </Typography>
               
-            <div>
+            {(!files || typeof files !== 'string') && <div>
               <AddMoleculeFileInput 
                 onChange={files => setFiles(files)}
               />
-            </div>
+            </div>}
+
+            {(files && typeof files === 'string') && <div>
+              <Typography>
+                A ZIP file is attached to this molecule. {" "}
+                <Link href={SERVER_ROOT + "api/molecule/download?id=" + files + "&filename=files.zip"} style={{ fontSize: '1.2rem' }}>
+                  <span>
+                    Download
+                  </span>
+                </Link>
+              </Typography>
+
+              <Button onClick={() => setFiles("")} color="secondary">
+                Delete related files
+              </Button>
+            </div>}
 
             <Marger size="2.5rem" />
           </form>

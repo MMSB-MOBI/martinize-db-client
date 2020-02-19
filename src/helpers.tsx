@@ -22,6 +22,8 @@ export function errorToText(error: [any, APIError] | APIError | number | undef
   switch (code) {
     case 1:
       return "Server error";
+    case 101:
+      return "Page not found";
     case 102:
       return "User not found";
     case 203:

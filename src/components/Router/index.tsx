@@ -7,6 +7,9 @@ import { WaitForLoginFinish } from '../LoginWaiter/LoginWaiter';
 import Settings from '../../Settings';
 import Login from '../pages/Login/Login';
 import MoleculePage from '../Molecule/Molecule';
+import StashedMolecule from '../Moderation/Stashed';
+import MySubmissions from '../MySubmissions/MySubmissions';
+import Moderation from '../Moderation/Moderation';
 
 function LoadAppDrawer(props: RouteComponentProps) {
   return <ApplicationDrawer {...props} />;
@@ -53,6 +56,9 @@ export const DrawerContentRouter = (props: RouteComponentProps) => {
     <Switch>
       <Route path="/explore" exact component={Explore} />
       <Route path="/molecule/:alias" component={MoleculePage} />
+      <Route path="/submissions" component={MySubmissions} />
+      <Route path="/moderation" component={Moderation} />
+      <Route path="/stashed/:id" component={StashedMolecule} />
       
       {/* Not found */}
       <Route component={InnerNotFound} />

@@ -119,6 +119,7 @@ export default function MoleculeFilters(props: {
   martinize_versions?: string[];
   name?: string;
   alias?: string;
+  disableAuthor?: boolean;
 }) {
   const settings = Settings.martinize_variables;
   const categories = React.useMemo(() => flattenCategoryTree(settings.category_tree), [settings]);
@@ -209,6 +210,7 @@ export default function MoleculeFilters(props: {
               props.onFiltersChange(filters);
             }}
             variant="outlined"
+            disabled={props.disableAuthor}
           />
         </div>
 

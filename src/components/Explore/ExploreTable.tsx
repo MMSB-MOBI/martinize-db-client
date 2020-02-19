@@ -7,6 +7,7 @@ import KeyboardArrowRight from '@material-ui/icons/KeyboardArrowRight';
 import LastPageIcon from '@material-ui/icons/LastPage';
 import { BaseMolecule } from '../../types/entities';
 import { Link } from 'react-router-dom';
+import DeleteIcon from '@material-ui/icons/Delete';
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -61,6 +62,7 @@ export default function MoleculeTable(props: {
   rowsPerPage: number,
   page: number,
   onChangePage: (page: number) => void,
+  moderation?: boolean,
 }) {
   const classes = useStyles();
   const { loading, molecules, length, rowsPerPage, page, onChangePage } = props;
@@ -72,6 +74,10 @@ export default function MoleculeTable(props: {
           <Table stickyHeader aria-label="sticky table" size="small">
             <TableHead className={clsx("can-load", loading && "in")}>
               <TableRow>
+                {props.moderation && <TableCell align="left" size="medium">
+                  Actions
+                </TableCell>}
+
                 {columns.map(column => (
                   <TableCell
                     key={column.id}
@@ -88,15 +94,26 @@ export default function MoleculeTable(props: {
               {molecules.map(row => {
                 return (
                   <TableRow hover role="checkbox" tabIndex={-1} key={row.id}>
+                    {props.moderation && <TableCell align="left">
+                      <IconButton onClick={() => console.log("Delete")}>
+                        <DeleteIcon />
+                      </IconButton>
+                    </TableCell>}
+
                     {columns.map(column => {
                       const value = row[column.id];
+                      const link = props.moderation ? "/stashed/" + row.id : "/molecule/" + row.alias + "?version=" + row.id;
+
                       return (
                         <TableCell 
                           key={column.id} 
                           align={column.align} 
                         >
                           {column.id === 'name' || column.id === 'alias' ?
-                            <Link className={classes.moleculeLink} to={"/molecule/" + row.alias + "?version=" + row.id}>
+                            <Link 
+                              className={classes.moleculeLink} 
+                              to={link}
+                            >
                               {column.format && typeof value === 'number' ? column.format(value) : value}
                             </Link> :
                             <React.Fragment>

@@ -1,26 +1,26 @@
 import React from 'react';
 import { withTheme, withStyles, Theme, Typography, Container, Divider, Link, Icon, Button } from '@material-ui/core';
 import { RouteComponentProps } from 'react-router-dom';
-import { Molecule } from '../../types/entities';
+import { Molecule, StashedMolecule } from '../../types/entities';
 import { CenterComponent, BigPreloader } from '../../Shared';
 import EmbeddedError from '../Errors/Errors';
 import ApiHelper from '../../ApiHelper';
 import qs from 'qs';
 import { setPageTitle, notifyError } from '../../helpers';
 import { SERVER_ROOT } from '../../constants';
-import AddMolecule from '../AddMolecule/AddMolecule';
 import Settings, { LoginStatus } from '../../Settings';
+import AddMolecule from '../AddMolecule/AddMolecule';
 
-interface MPBP extends RouteComponentProps {
+interface StashedProps extends RouteComponentProps {
   theme: Theme;
   classes: Record<string, string>;
 }
 
-interface MPBS {
-  molecule?: Molecule,
-  versions: Molecule[],
+interface StashedState {
+  molecule?: StashedMolecule,
+  parent?: Molecule,
+  edit?: boolean,
   error?: number,
-  edit: boolean,
 }
 
 const createStyles = (theme: Theme) => ({
@@ -49,29 +49,33 @@ const createStyles = (theme: Theme) => ({
   },
 });
 
-class MoleculePageBase extends React.Component<MPBP, MPBS> {
-  state: MPBS = {
+class StashedPageBase extends React.Component<StashedProps, StashedState> {
+  state: StashedState = {
     error: undefined,
     molecule: undefined,
-    versions: [],
-    edit: false,
   };
   
   componentDidMount() {
-    // @ts-ignore
-    const alias = this.props.match.params.alias;
-    const query_string = qs.parse(this.props.location.search, { ignoreQueryPrefix: true });
-
-    setPageTitle("Molecule");
-
-    const parameters: any = { alias };
-    if (query_string.version) {
-      parameters.version = query_string.version;
+    if (Settings.logged !== LoginStatus.Admin) {
+      return;
     }
 
-    ApiHelper.request('molecule', { parameters })  
-      .then((mol: { molecule: Molecule, versions: Molecule[] }) => {
-        setPageTitle(`Molecule - ${mol.molecule.alias} (${mol.molecule.version})`);
+    // @ts-ignore
+    const id = this.props.match.params.id;
+    const query_string = qs.parse(this.props.location.search, { ignoreQueryPrefix: true });
+
+    setPageTitle("Moderation");
+
+    const parameters: any = { id };
+
+    ApiHelper.request('moderation', { parameters })  
+      .then((mol: { molecule: StashedMolecule, parent?: Molecule, edit?: boolean, }) => {
+        setPageTitle(`Moderation - ${mol.molecule.alias} (${mol.molecule.version})`);
+
+        if (query_string.edit === "1") {
+          mol.edit = true;
+        }
+
         this.setState(mol);
       })
       .catch(e => {
@@ -81,6 +85,24 @@ class MoleculePageBase extends React.Component<MPBP, MPBS> {
         });
       })
   }
+
+  delete = () => {
+    // todo make delete modal
+    ApiHelper.request('moderation/destroy/' + this.state.molecule!.id, { method: 'DELETE' })
+      .then(() => {
+        window.location.pathname = "/moderation";
+      })
+      .catch(notifyError);
+  };
+
+  accept = () => {
+    // todo make accept modal
+    ApiHelper.request('moderation/accept', { method: 'POST', parameters: { id: this.state.molecule!.id } })
+      .then(() => {
+        window.location.pathname = "/moderation";
+      })
+      .catch(notifyError);
+  };
 
   renderInLoad() {
     return (
@@ -97,6 +119,12 @@ class MoleculePageBase extends React.Component<MPBP, MPBS> {
     );
   }
 
+  renderForbidden() {
+    return (
+      <EmbeddedError title="Forbidden" text="You don't have the right to show this page." />
+    );
+  }
+
   goBackButton() {
     return (
       <Link href="#" onClick={() => this.props.history.goBack()} className={this.props.classes.goBackLink}>
@@ -106,16 +134,11 @@ class MoleculePageBase extends React.Component<MPBP, MPBS> {
     )
   }
 
-  delete = () => {
-    // todo make delete modal
-    ApiHelper.request('molecule/destroy/' + this.state.molecule!.id, { method: 'DELETE' })
-      .then(() => {
-        window.location.pathname = "/explore";
-      })
-      .catch(notifyError);
-  };
-
   render() {
+    if (Settings.logged !== LoginStatus.Admin) {
+      return this.renderForbidden();
+    }
+
     if (this.state.error !== undefined) {
       return this.renderError();
     }
@@ -126,10 +149,6 @@ class MoleculePageBase extends React.Component<MPBP, MPBS> {
 
     const molecule = this.state.molecule;
     const classes = this.props.classes;
-    let is_same_as_logged = false;
-    if (Settings.user) {
-      is_same_as_logged = Settings.user.id === molecule.owner;
-    }
     
     return (
       <React.Fragment>
@@ -153,8 +172,6 @@ class MoleculePageBase extends React.Component<MPBP, MPBS> {
             <code>
               {`#${molecule.id}
 
-              Last update at ${molecule.last_update}
-
               Creation date at ${molecule.created_at}
 
               Related ZIP file ID: ${molecule.files}
@@ -174,31 +191,40 @@ class MoleculePageBase extends React.Component<MPBP, MPBS> {
 
           {/* Edit / delete button */}
           <div style={{ display: 'flex', marginTop: 15 }}>
-            {Settings.logged === LoginStatus.Admin && <Button variant="outlined" color="primary" style={{ marginRight: 10 }} onClick={() => this.setState({ edit: true })}>
+            <Button variant="outlined" color="primary" style={{ marginRight: 10 }} onClick={() => this.setState({ edit: true })}>
               Edit
-            </Button>}
-            {(Settings.logged === LoginStatus.Admin || is_same_as_logged) &&  <Button variant="outlined" color="secondary" onClick={this.delete}>
+            </Button>
+            <Button 
+              variant="outlined" 
+              color="inherit" 
+              style={{ marginRight: 10, color: 'green', borderColor: 'green' }}
+              onClick={this.accept}
+            >
+              Accept
+            </Button>
+            <Button variant="outlined" color="secondary" onClick={this.delete}>
               Delete
-            </Button>}
+            </Button>
           </div>
 
           <Divider />
           
           <pre>
-            {this.state.versions.length} versions available.
+            {this.state.parent ? "One" : "No"} parent available.
           </pre>
 
           <pre>
             <code>
-              {JSON.stringify(this.state.versions, null, 2)}
+              {JSON.stringify(this.state.parent, null, 2)}
             </code>
           </pre>
         </Container>
 
-        <AddMolecule
-          onChange={mol => this.setState({ molecule: mol as Molecule, edit: false })}
+        <AddMolecule 
+          onChange={mol => this.setState({ molecule: mol, edit: false })}
           from={this.state.molecule}
-          open={this.state.edit}
+          stashed
+          open={!!this.state.edit}
           onClose={() => this.setState({ edit: false })}
         />
       </React.Fragment>
@@ -207,4 +233,4 @@ class MoleculePageBase extends React.Component<MPBP, MPBS> {
 }
 
 // @ts-ignore
-export default withTheme(withStyles(createStyles)(MoleculePageBase));
+export default withTheme(withStyles(createStyles)(StashedPageBase));
