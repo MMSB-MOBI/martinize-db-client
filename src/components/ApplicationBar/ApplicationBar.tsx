@@ -269,7 +269,7 @@ function LogOutDialog() {
         <ListItemText primary="Logout" />
       </ListItem>
 
-      <Dialog open={open}>
+      <Dialog open={open} onClose={() => setOpen(false)}>
         <DialogTitle>
           Logout ?
         </DialogTitle>

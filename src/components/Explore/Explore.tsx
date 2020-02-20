@@ -9,7 +9,8 @@ import { toast } from '../Toaster';
 import MoleculeTable from './ExploreTable';
 import MoleculeFilters, { Filters } from './ExploreFilters';
 import AddMolecule from '../AddMolecule/AddMolecule';
-import { Button } from '@material-ui/core';
+import { Link, Icon } from '@material-ui/core';
+import clsx from 'clsx';
 
 // Icon <Icon className="fas fa-camera" />
 
@@ -167,7 +168,7 @@ export class Explore extends React.Component<RouteComponentProps, ExploreState> 
     });
 
     // Make the request
-    ApiHelper.request('molecule/list', { parameters: to_send, latency: 1500, auth: 'auto' })
+    ApiHelper.request('molecule/list', { parameters: to_send, latency: 200, auth: 'auto' })
       .then(mols => {
         if (load_uuid === this.state.loading) {
           this.setState({
@@ -203,9 +204,14 @@ export class Explore extends React.Component<RouteComponentProps, ExploreState> 
           />
         </div>
 
-        <Button onClick={() => this.setState({ add_open: true })}>
-          Add a molecule
-        </Button>
+        <div style={{ display: 'flex', justifyContent: 'center' }}>
+          <Link href="#" onClick={() => this.setState({ add_open: true })} style={{ fontSize: '1.2rem', color: "orange", margin: "1rem 0" }}>
+            <Icon className={clsx("fas", "fa-plus")} style={{ fontSize: '1.2rem', marginRight: 10 }} />
+            <span>
+              Add a new molecule
+            </span>
+          </Link>
+        </div>
         
         <MoleculeTable 
           loading={!!this.state.loading}
@@ -219,7 +225,10 @@ export class Explore extends React.Component<RouteComponentProps, ExploreState> 
         <AddMolecule 
           open={this.state.add_open}
           onClose={() => this.setState({ add_open: false })}
-          onChange={() => this.setState({ add_open: false })}
+          onChange={() => {
+            toast("You new molecule has been submitted.", "success");
+            this.setState({ add_open: false });
+          }}
         />
       </div>
     );

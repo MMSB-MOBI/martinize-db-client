@@ -286,7 +286,7 @@ export default function AddMolecule(props: AddMoleculeProps) {
 
             <Marger size="1rem" />
 
-            {props.parent && <Typography gutterBottom>
+            {props.parent && <Typography style={{ marginBottom: '1rem' }}>
               The following values are fixed by the parent molecule.
             </Typography>}
             <div className={classes.parentFixedBlock}>

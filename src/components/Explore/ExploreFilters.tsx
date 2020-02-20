@@ -1,6 +1,6 @@
 import React from 'react';
 import Settings from '../../Settings';
-import { Select, MenuItem, InputLabel, makeStyles, createStyles, Theme, Input, useTheme, FormControl, Paper, TextField } from '@material-ui/core';
+import { Select, MenuItem, InputLabel, makeStyles, createStyles, Theme, useTheme, FormControl, Paper, TextField } from '@material-ui/core';
 import { flattenCategoryTree, Marger } from '../../helpers';
 
 export interface Filters {

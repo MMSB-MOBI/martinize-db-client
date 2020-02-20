@@ -1,7 +1,7 @@
 import Settings from "./Settings";
-import { API_URL } from "./constants";
+import { API_URL, DEBUG_MODE } from "./constants";
 
-const LATENCY_ON_EVERY_REQUEST = 1500;
+const LATENCY_ON_EVERY_REQUEST = 500;
 
 export const ApiHelper = new class APIHelper {
   /**
@@ -123,7 +123,7 @@ export const ApiHelper = new class APIHelper {
       }
     }
 
-    if (settings.latency) {
+    if (settings.latency && DEBUG_MODE) {
       await new Promise(resolve => setTimeout(resolve, settings.latency));
     }
 

@@ -1,7 +1,6 @@
 import ApiHelper from "./ApiHelper";
 import { User } from "./types/entities";
 import { SettingsJson } from "./types/settings";
-import { DEBUG_MODE } from "./constants";
 import { toast } from "./components/Toaster";
 
 export enum LoginStatus {
@@ -81,7 +80,7 @@ export const Settings = new class Settings {
       await new Promise(resolve => setTimeout(resolve, 5));
 
       try {
-        const settings: SettingsJson = await ApiHelper.request('settings', { auth: false, latency: DEBUG_MODE ? 200 : 0 });
+        const settings: SettingsJson = await ApiHelper.request('settings', { auth: false });
         this._settings = settings;
       }
       catch (e) {
@@ -119,7 +118,7 @@ export const Settings = new class Settings {
   }
 
   async login(username: string, password: string) {
-    return ApiHelper.request('user/login', { method: 'POST', parameters: { username, password }, latency: 0 })
+    return ApiHelper.request('user/login', { method: 'POST', parameters: { username, password } })
       .then(({ token, user }: { token: string, user: User }) => {
         this.token = token;
         this.user = user;

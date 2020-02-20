@@ -5,8 +5,6 @@ import qs from 'qs';
 import { Molecule } from '../../types/entities';
 import ApiHelper from '../../ApiHelper';
 import { toast } from '../Toaster';
-import AddMolecule from '../AddMolecule/AddMolecule';
-import { Button } from '@material-ui/core';
 import MoleculeFilters, { Filters } from '../Explore/ExploreFilters';
 import Settings, { LoginStatus } from '../../Settings';
 import MoleculeTable from '../Explore/ExploreTable';
@@ -173,7 +171,7 @@ export class MySubmissions extends React.Component<RouteComponentProps, MySubmis
     to_send.owner = Settings.user?.id;
 
     // Make the request
-    ApiHelper.request('molecule/list', { parameters: to_send, latency: 1500 })
+    ApiHelper.request('molecule/list', { parameters: to_send, latency: 500 })
       .then(mols => {
         if (load_uuid === this.state.loading) {
           this.setState({

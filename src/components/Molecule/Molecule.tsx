@@ -1,15 +1,14 @@
 import React from 'react';
-import { withTheme, withStyles, Theme, Typography, Container, Divider, Link, Icon, Button } from '@material-ui/core';
+import { withTheme, withStyles, Theme, Container, Divider, Link, Icon } from '@material-ui/core';
 import { RouteComponentProps } from 'react-router-dom';
 import { Molecule } from '../../types/entities';
 import { CenterComponent, BigPreloader } from '../../Shared';
 import EmbeddedError from '../Errors/Errors';
 import ApiHelper from '../../ApiHelper';
 import qs from 'qs';
-import { setPageTitle, notifyError } from '../../helpers';
-import { SERVER_ROOT } from '../../constants';
-import AddMolecule from '../AddMolecule/AddMolecule';
-import Settings, { LoginStatus } from '../../Settings';
+import { setPageTitle } from '../../helpers';
+import MoleculeInfo from './MoleculeInfo';
+import MoleculeVersion from './MoleculeVersion';
 
 interface MPBP extends RouteComponentProps {
   theme: Theme;
@@ -20,7 +19,6 @@ interface MPBS {
   molecule?: Molecule,
   versions: Molecule[],
   error?: number,
-  edit: boolean,
 }
 
 const createStyles = (theme: Theme) => ({
@@ -54,15 +52,29 @@ class MoleculePageBase extends React.Component<MPBP, MPBS> {
     error: undefined,
     molecule: undefined,
     versions: [],
-    edit: false,
   };
+
+  constructor(props: MPBP) {
+    super(props);
+
+    const query_string = qs.parse(this.props.location.search, { ignoreQueryPrefix: true });
+    setPageTitle("Molecule");
+
+    if (query_string.edit === "1") {
+      this.editOnStartup = true;
+    }
+    else if (query_string.add === "1") {
+      this.addOnStartup = true;
+    }
+  }
+
+  addOnStartup = false;
+  editOnStartup = false;
   
   componentDidMount() {
     // @ts-ignore
     const alias = this.props.match.params.alias;
     const query_string = qs.parse(this.props.location.search, { ignoreQueryPrefix: true });
-
-    setPageTitle("Molecule");
 
     const parameters: any = { alias };
     if (query_string.version) {
@@ -106,13 +118,20 @@ class MoleculePageBase extends React.Component<MPBP, MPBS> {
     )
   }
 
-  delete = () => {
-    // todo make delete modal
-    ApiHelper.request('molecule/destroy/' + this.state.molecule!.id, { method: 'DELETE' })
-      .then(() => {
-        window.location.pathname = "/explore";
-      })
-      .catch(notifyError);
+  changeVersion = (id: string) => {
+    const new_one = this.state.versions.find(m => m.id === id);
+
+    if (new_one) {
+      this.props.history.push({
+        search: "?version=" + id
+      });
+
+      // todo change qs
+      window.scrollTo(0, 0);
+      this.setState({
+        molecule: new_one
+      });
+    }
   };
 
   render() {
@@ -126,10 +145,6 @@ class MoleculePageBase extends React.Component<MPBP, MPBS> {
 
     const molecule = this.state.molecule;
     const classes = this.props.classes;
-    let is_same_as_logged = false;
-    if (Settings.user) {
-      is_same_as_logged = Settings.user.id === molecule.owner;
-    }
     
     return (
       <React.Fragment>
@@ -149,58 +164,31 @@ class MoleculePageBase extends React.Component<MPBP, MPBS> {
         <Divider />
 
         <Container>
-          <pre className="pre-break">
-            <code>
-              {`#${molecule.id}
+          <MoleculeInfo 
+            molecule={molecule} 
+            onMoleculeChange={mol => {
+              const versions = this.state.versions;
+              const version = versions.findIndex(m => m.id === mol.id);
+              if (version !== -1) {
+                versions[version] = mol;
+              }
 
-              Last update at ${molecule.last_update}
-
-              Creation date at ${molecule.created_at}
-
-              Related ZIP file ID: ${molecule.files}
-
-              Molecule version ${molecule.version} built on Martinize ${molecule.martinize_version} with force field ${molecule.force_field}.\n`}
-            </code>
-
-            <br />
-
-            <Link href={SERVER_ROOT + "api/molecule/download?id=" + molecule.files + "&filename=" + molecule.alias + ".zip"} style={{ fontSize: '1.2rem' }}>
-              <Icon className="fas fa-download" style={{ fontSize: '1.2rem', marginRight: 10 }} />
-              <span>
-                Download related files
-              </span>
-            </Link>
-          </pre>
-
-          {/* Edit / delete button */}
-          <div style={{ display: 'flex', marginTop: 15 }}>
-            {Settings.logged === LoginStatus.Admin && <Button variant="outlined" color="primary" style={{ marginRight: 10 }} onClick={() => this.setState({ edit: true })}>
-              Edit
-            </Button>}
-            {(Settings.logged === LoginStatus.Admin || is_same_as_logged) &&  <Button variant="outlined" color="secondary" onClick={this.delete}>
-              Delete
-            </Button>}
-          </div>
+              this.setState({ molecule: mol as Molecule });
+            }}
+            addOnStartup={this.addOnStartup}
+            editOnStartup={this.editOnStartup}
+          />
 
           <Divider />
           
-          <pre>
-            {this.state.versions.length} versions available.
-          </pre>
-
-          <pre>
-            <code>
-              {JSON.stringify(this.state.versions, null, 2)}
-            </code>
-          </pre>
+          <MoleculeVersion 
+            current={molecule} 
+            versions={this.state.versions} 
+            onVersionChange={this.changeVersion}
+          />
         </Container>
 
-        <AddMolecule
-          onChange={mol => this.setState({ molecule: mol as Molecule, edit: false })}
-          from={this.state.molecule}
-          open={this.state.edit}
-          onClose={() => this.setState({ edit: false })}
-        />
+        
       </React.Fragment>
     );
   }

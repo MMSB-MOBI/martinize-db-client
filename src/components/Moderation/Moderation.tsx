@@ -65,7 +65,7 @@ export class Moderation extends React.Component<RouteComponentProps, ModerationS
     });
 
     // Make the request
-    ApiHelper.request('moderation/list', { parameters: to_send, latency: 1500 })
+    ApiHelper.request('moderation/list', { parameters: to_send })
       .then(mols => {
         if (load_uuid === this.state.loading) {
           this.setState({
@@ -101,6 +101,10 @@ export class Moderation extends React.Component<RouteComponentProps, ModerationS
           page={this.state.page}
           rowsPerPage={this.state.rowsPerPage}
           onChangePage={page => this.makeRequest(page)}
+          onMoleculeDelete={() => {
+            toast("Molecule has been deleted.", "success");
+            this.makeRequest();
+          }}
           moderation
         />
       </div>

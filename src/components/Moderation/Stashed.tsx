@@ -1,15 +1,15 @@
 import React from 'react';
-import { withTheme, withStyles, Theme, Typography, Container, Divider, Link, Icon, Button } from '@material-ui/core';
+import { withTheme, withStyles, Theme, Container, Divider, Link, Icon } from '@material-ui/core';
 import { RouteComponentProps } from 'react-router-dom';
 import { Molecule, StashedMolecule } from '../../types/entities';
 import { CenterComponent, BigPreloader } from '../../Shared';
 import EmbeddedError from '../Errors/Errors';
 import ApiHelper from '../../ApiHelper';
 import qs from 'qs';
-import { setPageTitle, notifyError } from '../../helpers';
-import { SERVER_ROOT } from '../../constants';
+import { setPageTitle } from '../../helpers';
 import Settings, { LoginStatus } from '../../Settings';
-import AddMolecule from '../AddMolecule/AddMolecule';
+import MoleculeInfo from '../Molecule/MoleculeInfo';
+import MoleculeParent from '../Molecule/MoleculeParent';
 
 interface StashedProps extends RouteComponentProps {
   theme: Theme;
@@ -19,7 +19,6 @@ interface StashedProps extends RouteComponentProps {
 interface StashedState {
   molecule?: StashedMolecule,
   parent?: Molecule,
-  edit?: boolean,
   error?: number,
 }
 
@@ -86,24 +85,6 @@ class StashedPageBase extends React.Component<StashedProps, StashedState> {
       })
   }
 
-  delete = () => {
-    // todo make delete modal
-    ApiHelper.request('moderation/destroy/' + this.state.molecule!.id, { method: 'DELETE' })
-      .then(() => {
-        window.location.pathname = "/moderation";
-      })
-      .catch(notifyError);
-  };
-
-  accept = () => {
-    // todo make accept modal
-    ApiHelper.request('moderation/accept', { method: 'POST', parameters: { id: this.state.molecule!.id } })
-      .then(() => {
-        window.location.pathname = "/moderation";
-      })
-      .catch(notifyError);
-  };
-
   renderInLoad() {
     return (
       <CenterComponent style={{ minHeight: '80vh' }}>
@@ -168,65 +149,16 @@ class StashedPageBase extends React.Component<StashedProps, StashedState> {
         <Divider />
 
         <Container>
-          <pre className="pre-break">
-            <code>
-              {`#${molecule.id}
-
-              Creation date at ${molecule.created_at}
-
-              Related ZIP file ID: ${molecule.files}
-
-              Molecule version ${molecule.version} built on Martinize ${molecule.martinize_version} with force field ${molecule.force_field}.\n`}
-            </code>
-
-            <br />
-
-            <Link href={SERVER_ROOT + "api/molecule/download?id=" + molecule.files + "&filename=" + molecule.alias + ".zip"} style={{ fontSize: '1.2rem' }}>
-              <Icon className="fas fa-download" style={{ fontSize: '1.2rem', marginRight: 10 }} />
-              <span>
-                Download related files
-              </span>
-            </Link>
-          </pre>
-
-          {/* Edit / delete button */}
-          <div style={{ display: 'flex', marginTop: 15 }}>
-            <Button variant="outlined" color="primary" style={{ marginRight: 10 }} onClick={() => this.setState({ edit: true })}>
-              Edit
-            </Button>
-            <Button 
-              variant="outlined" 
-              color="inherit" 
-              style={{ marginRight: 10, color: 'green', borderColor: 'green' }}
-              onClick={this.accept}
-            >
-              Accept
-            </Button>
-            <Button variant="outlined" color="secondary" onClick={this.delete}>
-              Delete
-            </Button>
-          </div>
+          <MoleculeInfo 
+            molecule={molecule}
+            stashed
+            onMoleculeChange={mol => this.setState({ molecule: mol })}
+          />
 
           <Divider />
           
-          <pre>
-            {this.state.parent ? "One" : "No"} parent available.
-          </pre>
-
-          <pre>
-            <code>
-              {JSON.stringify(this.state.parent, null, 2)}
-            </code>
-          </pre>
+          <MoleculeParent parent={this.state.parent} />
         </Container>
-
-        <AddMolecule 
-          onChange={mol => this.setState({ molecule: mol, edit: false })}
-          from={this.state.molecule}
-          stashed
-          open={!!this.state.edit}
-          onClose={() => this.setState({ edit: false })}
-        />
       </React.Fragment>
     );
   }

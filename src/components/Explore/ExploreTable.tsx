@@ -8,6 +8,10 @@ import LastPageIcon from '@material-ui/icons/LastPage';
 import { BaseMolecule } from '../../types/entities';
 import { Link } from 'react-router-dom';
 import DeleteIcon from '@material-ui/icons/Delete';
+import { DeleteModal } from '../Molecule/MoleculeInfo';
+import ApiHelper from '../../ApiHelper';
+import { notifyError, findInCategoryTree, dateFormatter } from '../../helpers';
+import Settings from '../../Settings';
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -37,24 +41,6 @@ interface Column {
   format?: (value: any) => string;
 }
 
-const columns: Column[] = [
-  { id: 'name', label: 'Name', minWidth: 170 },
-  { id: 'alias', label: 'Alias', minWidth: 100 },
-  {
-    id: 'category',
-    label: 'Category',
-    minWidth: 170,
-    align: 'right',
-  },
-  {
-    id: 'created_at',
-    label: 'Created at',
-    minWidth: 170,
-    align: 'right',
-    format: (value: string) => new Date(value).toISOString(),
-  },
-];
-
 export default function MoleculeTable(props: {
   loading?: boolean,
   molecules: BaseMolecule[],
@@ -62,10 +48,53 @@ export default function MoleculeTable(props: {
   rowsPerPage: number,
   page: number,
   onChangePage: (page: number) => void,
+  onMoleculeDelete?: (id: string) => void,
   moderation?: boolean,
 }) {
   const classes = useStyles();
   const { loading, molecules, length, rowsPerPage, page, onChangePage } = props;
+  const [deleteMol, setDeleteMol] = React.useState("");
+  const [loadModal, setLoadModal] = React.useState(false);
+
+  const categories = Settings.martinize_variables.category_tree;
+  const columns: Column[] = [
+    { id: 'name', label: 'Name', minWidth: 170 },
+    { id: 'alias', label: 'Alias', minWidth: 100 },
+    {
+      id: 'category',
+      label: 'Category',
+      minWidth: 170,
+      align: 'right',
+      format: (value: string) => findInCategoryTree(categories, value)
+    },
+    {
+      id: 'created_at',
+      label: 'Created at',
+      minWidth: 170,
+      align: 'right',
+      format: (value: string) => dateFormatter("Y-m-d H:i", new Date(value)),
+    },
+  ];
+
+
+  const deleteMolecule = () => {
+    if (loadModal)
+      return;
+
+    const mol_id = deleteMol;
+    setLoadModal(true);
+    // todo make delete modal
+    ApiHelper.request((props.moderation ? "moderation" : "molecule") + '/destroy/' + mol_id, { method: 'DELETE' })
+      .then(() => {
+        if (props.onMoleculeDelete)
+          props.onMoleculeDelete(mol_id);
+      })
+      .catch(notifyError)
+      .finally(() => {
+        setLoadModal(false);
+        setDeleteMol("");
+      });
+  };
 
   return (
     <div className={classes.root}>
@@ -95,7 +124,7 @@ export default function MoleculeTable(props: {
                 return (
                   <TableRow hover role="checkbox" tabIndex={-1} key={row.id}>
                     {props.moderation && <TableCell align="left">
-                      <IconButton onClick={() => console.log("Delete")}>
+                      <IconButton onClick={() => setDeleteMol(row.id)}>
                         <DeleteIcon />
                       </IconButton>
                     </TableCell>}
@@ -114,10 +143,10 @@ export default function MoleculeTable(props: {
                               className={classes.moleculeLink} 
                               to={link}
                             >
-                              {column.format && typeof value === 'number' ? column.format(value) : value}
+                              {column.format ? column.format(value) : value}
                             </Link> :
                             <React.Fragment>
-                              {column.format && typeof value === 'number' ? column.format(value) : value}
+                              {column.format ? column.format(value) : value}
                             </React.Fragment>
                           }
                         </TableCell>
@@ -153,6 +182,12 @@ export default function MoleculeTable(props: {
           </Table>
         </TableContainer>
       </Paper>
+
+      {deleteMol && <DeleteModal 
+        onAccept={deleteMolecule}
+        onClose={() => setDeleteMol("")}
+        loading={loadModal}
+      />}
     </div>
   );
 }
