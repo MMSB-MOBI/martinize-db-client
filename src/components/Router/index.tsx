@@ -3,13 +3,14 @@ import { Route, Switch, RouteComponentProps, Redirect, BrowserRouter } from 'rea
 import Explore from '../Explore/Explore';
 import NotFound, { InnerNotFound } from '../pages/NotFound/NotFound';
 import ApplicationDrawer from '../ApplicationBar/ApplicationBar';
-import { WaitForLoginFinish } from '../LoginWaiter/LoginWaiter';
+import { WaitForLoginFinish, WaitForLogged } from '../LoginWaiter/LoginWaiter';
 import Settings from '../../Settings';
 import Login from '../pages/Login/Login';
 import MoleculePage from '../Molecule/Molecule';
 import StashedMolecule from '../Moderation/Stashed';
 import MySubmissions from '../MySubmissions/MySubmissions';
 import Moderation from '../Moderation/Moderation';
+import SettingsPage from '../Settings/Settings';
 
 function LoadAppDrawer(props: RouteComponentProps) {
   return <ApplicationDrawer {...props} />;
@@ -51,12 +52,20 @@ function LoadLoginDrawer(props: RouteComponentProps) {
   );
 }
 
+function LoadSettingsDrawer(props: RouteComponentProps) {
+  return (
+    <WaitForLogged {...props} component={SettingsPage} wait={[Settings.login_promise]} />
+  );
+}
+
+
 export const DrawerContentRouter = (props: RouteComponentProps) => {
   return (
     <Switch>
       <Route path="/explore" exact component={Explore} />
       <Route path="/molecule/:alias" component={MoleculePage} />
       <Route path="/submissions" component={MySubmissions} />
+      <Route path="/settings" component={LoadSettingsDrawer} />
       <Route path="/moderation" component={Moderation} />
       <Route path="/stashed/:id" component={StashedMolecule} />
       

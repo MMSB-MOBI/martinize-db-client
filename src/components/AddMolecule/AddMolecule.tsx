@@ -329,6 +329,7 @@ export default function AddMolecule(props: AddMoleculeProps) {
                 onChange={v => setCategory(v)}
                 values={categories}
                 value={category}
+                disabled={isDisabled()}
               />
             </div>
 
@@ -436,7 +437,7 @@ export default function AddMolecule(props: AddMoleculeProps) {
 }
 
 
-function SimpleSelect(props: { label: string, value: string, onChange: (v: string) => void, id: string, values: { id: string, name: string }[], }) {
+function SimpleSelect(props: { label: string, value: string, onChange: (v: string) => void, id: string, values: { id: string, name: string }[], disabled?: boolean, }) {
   const inputLabel = React.useRef<HTMLLabelElement>(null);
   const [labelWidth, setLabelWidth] = React.useState(0);
   React.useEffect(() => {
@@ -455,6 +456,7 @@ function SimpleSelect(props: { label: string, value: string, onChange: (v: strin
         onChange={v => props.onChange(v.target.value as string)}
         labelWidth={labelWidth}
         required
+        disabled={props.disabled}
       >
         {props.values.map(cat => <MenuItem key={cat.id} value={cat.id}>{cat.name}</MenuItem>)}
       </Select>
