@@ -1,6 +1,6 @@
 import React from 'react';
 import './Explore.scss';
-import { setPageTitle, errorToText } from '../../helpers';
+import { setPageTitle, errorToText, Marger } from '../../helpers';
 import { RouteComponentProps } from 'react-router-dom';
 import qs from 'qs';
 import { Molecule } from '../../types/entities';
@@ -9,7 +9,7 @@ import { toast } from '../Toaster';
 import MoleculeTable from './ExploreTable';
 import MoleculeFilters, { Filters } from './ExploreFilters';
 import AddMolecule from '../AddMolecule/AddMolecule';
-import { Link, Icon } from '@material-ui/core';
+import { Link, Icon, Container, Typography } from '@material-ui/core';
 import clsx from 'clsx';
 
 // Icon <Icon className="fas fa-camera" />
@@ -196,13 +196,19 @@ export class Explore extends React.Component<RouteComponentProps, ExploreState> 
   
   render() {
     return (
-      <div>
-        <div style={{ padding: 14 }}>
+      <Container style={{ paddingTop: 14 }}>
+        <Typography variant="h3" className="page-title">
+          Explore
+        </Typography>
+
+        <div>
           <MoleculeFilters 
             {...(this.state.filters ?? {})}
             onFiltersChange={filters => this.changeFilters(filters)}
           />
         </div>
+
+        <Marger size={14} />
 
         <div style={{ display: 'flex', justifyContent: 'center' }}>
           <Link href="#" onClick={() => this.setState({ add_open: true })} style={{ fontSize: '1.2rem', color: "orange", margin: "1rem 0" }}>
@@ -212,6 +218,8 @@ export class Explore extends React.Component<RouteComponentProps, ExploreState> 
             </span>
           </Link>
         </div>
+
+        <Marger size={14} />
         
         <MoleculeTable 
           loading={!!this.state.loading}
@@ -230,7 +238,7 @@ export class Explore extends React.Component<RouteComponentProps, ExploreState> 
             this.setState({ add_open: false });
           }}
         />
-      </div>
+      </Container>
     );
   }
 }

@@ -14,9 +14,6 @@ import { notifyError, findInCategoryTree, dateFormatter } from '../../helpers';
 import Settings from '../../Settings';
 
 const useStyles = makeStyles(theme => ({
-  root: {
-    padding: theme.spacing(2),
-  },
   paperRoot: {
     width: '100%',
   },
@@ -97,7 +94,7 @@ export default function MoleculeTable(props: {
   };
 
   return (
-    <div className={classes.root}>
+    <div>
       <Paper className={classes.paperRoot}>
         <TableContainer className={classes.container}>
           <Table stickyHeader aria-label="sticky table" size="small">

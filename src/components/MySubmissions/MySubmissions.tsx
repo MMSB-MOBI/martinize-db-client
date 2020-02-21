@@ -1,5 +1,5 @@
 import React from 'react';
-import { setPageTitle, errorToText } from '../../helpers';
+import { setPageTitle, errorToText, Marger } from '../../helpers';
 import { RouteComponentProps } from 'react-router-dom';
 import qs from 'qs';
 import { Molecule } from '../../types/entities';
@@ -9,6 +9,7 @@ import MoleculeFilters, { Filters } from '../Explore/ExploreFilters';
 import Settings, { LoginStatus } from '../../Settings';
 import MoleculeTable from '../Explore/ExploreTable';
 import EmbeddedError from '../Errors/Errors';
+import { Container, Typography } from '@material-ui/core';
 
 // Icon <Icon className="fas fa-camera" />
 
@@ -203,14 +204,24 @@ export class MySubmissions extends React.Component<RouteComponentProps, MySubmis
     }
     
     return (
-      <div>
-        <div style={{ padding: 14 }}>
+      <Container style={{ paddingTop: 14 }}>
+        <Typography variant="h3" className="page-title">
+          Submissions
+        </Typography>
+
+        <Typography style={{ marginBottom: '1rem' }}>
+          This page contains all molecules you've submitted that been accepted by moderators.
+        </Typography>
+
+        <div>
           <MoleculeFilters 
             {...(this.state.filters ?? {})}
             onFiltersChange={filters => this.changeFilters(filters)}
             disableAuthor
           />
         </div>
+
+        <Marger size={14} />
         
         <MoleculeTable
           loading={!!this.state.loading}
@@ -220,7 +231,7 @@ export class MySubmissions extends React.Component<RouteComponentProps, MySubmis
           rowsPerPage={this.state.rowsPerPage}
           onChangePage={page => this.makeRequest(page)}
         />
-      </div>
+      </Container>
     );
   }
 }

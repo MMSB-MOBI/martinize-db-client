@@ -7,6 +7,7 @@ import { toast } from '../Toaster';
 import MoleculeTable from '../Explore/ExploreTable';
 import Settings, { LoginStatus } from '../../Settings';
 import EmbeddedError from '../Errors/Errors';
+import { Container, Typography } from '@material-ui/core';
 
 // Icon <Icon className="fas fa-camera" />
 
@@ -93,7 +94,15 @@ export class Moderation extends React.Component<RouteComponentProps, ModerationS
     }
 
     return (
-      <div>       
+      <Container style={{ paddingTop: 14 }}>
+        <Typography variant="h3" className="page-title">
+          Moderation
+        </Typography>
+
+        <Typography style={{ marginBottom: '1rem' }}>
+          You can find here the molecules waiting to be accepted.
+        </Typography>
+
         <MoleculeTable
           loading={!!this.state.loading}
           molecules={this.state.molecules.molecules}
@@ -107,7 +116,7 @@ export class Moderation extends React.Component<RouteComponentProps, ModerationS
           }}
           moderation
         />
-      </div>
+      </Container>
     );
   }
 }
