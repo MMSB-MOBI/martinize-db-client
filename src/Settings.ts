@@ -63,6 +63,10 @@ export const Settings = new class Settings {
     return this._logged;
   }
 
+  get is_fully_logged() {
+    return this._logged > 1;
+  }
+
   get login_promise() {
     return this._login_promise;
   }

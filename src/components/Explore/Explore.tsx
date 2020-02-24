@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Fragment } from 'react';
 import './Explore.scss';
 import { setPageTitle, errorToText, Marger } from '../../helpers';
 import { RouteComponentProps } from 'react-router-dom';
@@ -11,6 +11,7 @@ import MoleculeFilters, { Filters } from './ExploreFilters';
 import AddMolecule from '../AddMolecule/AddMolecule';
 import { Link, Icon, Container, Typography } from '@material-ui/core';
 import clsx from 'clsx';
+import Settings from '../../Settings';
 
 // Icon <Icon className="fas fa-camera" />
 
@@ -208,16 +209,18 @@ export class Explore extends React.Component<RouteComponentProps, ExploreState> 
           />
         </div>
 
-        <Marger size={14} />
+        {Settings.is_fully_logged && <Fragment>
+          <Marger size={14} />
 
-        <div style={{ display: 'flex', justifyContent: 'center' }}>
-          <Link href="#" onClick={() => this.setState({ add_open: true })} style={{ fontSize: '1.2rem', color: "orange", margin: "1rem 0" }}>
-            <Icon className={clsx("fas", "fa-plus")} style={{ fontSize: '1.2rem', marginRight: 10 }} />
-            <span>
-              Add a new molecule
-            </span>
-          </Link>
-        </div>
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <Link href="#" onClick={() => this.setState({ add_open: true })} style={{ fontSize: '1.2rem', color: "orange", margin: "1rem 0" }}>
+              <Icon className={clsx("fas", "fa-plus")} style={{ fontSize: '1.2rem', marginRight: 10 }} />
+              <span>
+                Add a new molecule
+              </span>
+            </Link>
+          </div>
+        </Fragment>}
 
         <Marger size={14} />
         
