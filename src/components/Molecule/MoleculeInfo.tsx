@@ -1,6 +1,6 @@
 import React, { Fragment } from 'react';
 import { Molecule, StashedMolecule } from '../../types/entities';
-import { Typography, makeStyles, Icon, Link, Divider, Dialog, DialogTitle, DialogContent, DialogActions, Button } from '@material-ui/core';
+import { Typography, makeStyles, Icon, Link, Divider, Dialog, DialogTitle, DialogContent, DialogActions, Button, DialogContentText } from '@material-ui/core';
 import Settings, { LoginStatus } from '../../Settings';
 import { findInCategoryTree, Marger, dateFormatter, notifyError } from '../../helpers';
 import { SERVER_ROOT } from '../../constants';
@@ -290,7 +290,9 @@ export function DeleteModal(props: { onAccept: () => void, onClose: () => void, 
 
       <DialogContent>
         <LoadFader when={props.loading}>
-          The molecule will be deleted and could not be restored. Do you want to continue ?
+          <DialogContentText>
+            The molecule will be deleted and could not be restored. Do you want to continue ?
+          </DialogContentText>
         </LoadFader>
       </DialogContent>
       
@@ -317,7 +319,9 @@ function AcceptModal(props: { onAccept: () => void, onClose: () => void, loading
 
       <DialogContent>
         <LoadFader when={props.loading}>
+          <DialogContentText>
           The molecule will be publish to the database. Do you want to continue ?
+          </DialogContentText>
         </LoadFader>
       </DialogContent>
       
