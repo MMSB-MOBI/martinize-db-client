@@ -21,17 +21,73 @@ export function errorToText(error: [any, APIError] | APIError | number | undef
 
   switch (code) {
     case 1:
-      return "Server error";
+      return "Server error.";
     case 101:
-      return "Page not found";
+      return "Page not found.";
     case 102:
-      return "User not found";
+      return "User not found.";
+    case 103:
+      return "Element not found;";
+    case 201:
+    case 204:
+      return "You don't have the right to do that.";
+    case 202:
+      return "Your credentials are invalid or expired.";
     case 203:
-      return "Invalid password";
+      return "Invalid password.";
+    case 301:
+      return "Request is badly formatted.";
     case 302:
-      return "Missing parameters to request";
-    default:
-      return "Unknown error";
+      return "Missing parameters to request.";
+    case 303:
+      return "This username already exists.";
+    case 304:
+      return "This e-mail already exists.";
+    case 305:
+      return "Invalid HTTP method (this message should not appear, maybe the API version is different from the client).";
+    case 306:
+      return "You try to upload too many files. Please respect the allowed number of files.";
+    case 307:
+      return "One file is too large. Please take care of file size limit.";
+    case 308:
+      return "Molecule files are invalid. Is format ok ?";
+    case 309:
+      return "Some needed files are missing. A single PDB plus at least one ITP is required.";
+    case 310:
+      return "The molecule parent is unknown. Maybe it has been deleted.";
+    case 311:
+      return "Molecule name contains forbidden characters.";
+    case 312:
+      return "Molecule alias contains forbidden characters.";
+    case 313:
+      return "Molecule version contains forbidden characters.";
+    case 314:
+      return "Molecule category does not exists.";
+    case 315:
+      return "This molecule name is already taken.";
+    case 316:
+      return "This molecule alias is already taken.";
+    case 317:
+      return "This version already already exists. Please use an alternate version number.";
+    case 318:
+      return "Martinize version does not exists.";
+    case 319:
+      return "Force field does not exists.";
+    case 320:
+      return "You can't edit a molecule that does not exists.";
+    case 321:
+      return "This username contains invalid characters, or its length is less than 2 characters.";
+    case 322:
+      return "Email address is invalid."
+    default: {
+      if (Array.isArray(error)) {
+        return error[1].message + ".";
+      }
+      else if (typeof error !== 'number') {
+        return error.message + ".";
+      }
+      return `Unknown error (code ${code})`;
+    }
   }
 }
 

@@ -182,7 +182,7 @@ export const ApiHelper = new class APIHelper {
 }();
 
 export interface APIError {
-  error: string;
+  message: string;
   code: number;
   detail?: any;
 }
