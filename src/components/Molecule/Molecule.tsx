@@ -144,6 +144,8 @@ class MoleculePageBase extends React.Component<MPBP, MPBS> {
 
     const molecule = this.state.molecule;
     const classes = this.props.classes;
+
+    const parent = molecule.parent ? this.state.versions.find(v => v.id === molecule.parent) : undefined;
     
     return (
       <React.Fragment>
@@ -176,6 +178,7 @@ class MoleculePageBase extends React.Component<MPBP, MPBS> {
             }}
             addOnStartup={this.addOnStartup}
             editOnStartup={this.editOnStartup}
+            parent={parent}
           />
 
           <Divider />

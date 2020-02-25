@@ -1,6 +1,6 @@
 import React, { Fragment } from 'react';
 import { Molecule, StashedMolecule } from '../../types/entities';
-import { Typography, makeStyles, Icon, Link, Divider, Dialog, DialogTitle, DialogContent, DialogActions, Button } from '@material-ui/core';
+import { Typography, makeStyles, Icon, Link, Divider, Dialog, DialogTitle, DialogContent, DialogActions, Button, DialogContentText } from '@material-ui/core';
 import Settings, { LoginStatus } from '../../Settings';
 import { findInCategoryTree, Marger, dateFormatter, notifyError } from '../../helpers';
 import { SERVER_ROOT } from '../../constants';
@@ -54,13 +54,23 @@ export default function MoleculeInfo<T extends StashedMolecule | Molecule>(props
   onMoleculeChange: (molecule: T) => void,
   addOnStartup?: boolean,
   editOnStartup?: boolean,
+  parent?: Molecule,
 }) {
   const { molecule, stashed } = props;
 
+  // Remember if you try to edit the molecule
   const [edit, setEdit] = React.useState(!!props.editOnStartup);
+
+  // Remember if you try to delete a molecule
   const [deleteMol, setDeleteMol] = React.useState(false);
+
+  // Remember if you try to accept a stashed molecule
   const [accept, setAccept] = React.useState(false);
+
+  // Remember loading state
   const [loading, setLoading] = React.useState(false);
+
+  // Remember if you try to add a child version
   const [newVersion, setNewVersion] = React.useState(!!props.addOnStartup);
   const classes = useStyles();
 
@@ -137,9 +147,9 @@ export default function MoleculeInfo<T extends StashedMolecule | Molecule>(props
           {category}
         </Typography>
 
-        <Typography color="textSecondary">
+        {molecule.formula && <Typography color="textSecondary">
           Formula: <code>{molecule.formula}</code>
-        </Typography>
+        </Typography>}
 
         <Marger size="1rem" />
 
@@ -238,6 +248,7 @@ export default function MoleculeInfo<T extends StashedMolecule | Molecule>(props
         open={edit}
         stashed={stashed}
         onClose={() => setEdit(false)}
+        parent={props.parent}
         onChange={mol => {
           props.onMoleculeChange(mol as T);
           toast("Changes had been saved.", "success");
@@ -279,7 +290,9 @@ export function DeleteModal(props: { onAccept: () => void, onClose: () => void, 
 
       <DialogContent>
         <LoadFader when={props.loading}>
-          The molecule will be deleted and could not be restored. Do you want to continue ?
+          <DialogContentText>
+            The molecule will be deleted and could not be restored. Do you want to continue ?
+          </DialogContentText>
         </LoadFader>
       </DialogContent>
       
@@ -306,7 +319,9 @@ function AcceptModal(props: { onAccept: () => void, onClose: () => void, loading
 
       <DialogContent>
         <LoadFader when={props.loading}>
+          <DialogContentText>
           The molecule will be publish to the database. Do you want to continue ?
+          </DialogContentText>
         </LoadFader>
       </DialogContent>
       

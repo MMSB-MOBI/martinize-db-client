@@ -165,9 +165,6 @@ export default function AddMolecule(props: AddMoleculeProps) {
       if (!alias) {
         return toast("Molecule alias is required.", "error")
       }
-      if (!formula) {
-        return toast("Molecule formula is required.", "error")
-      }
       if (!category) {
         return toast("Molecule category is required.", "error")
       }
@@ -320,7 +317,6 @@ export default function AddMolecule(props: AddMoleculeProps) {
                 }}
                 variant="outlined"
                 disabled={isDisabled()}
-                required
               />  
 
               <SimpleSelect 
