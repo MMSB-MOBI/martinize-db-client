@@ -31,7 +31,7 @@ const useStyles = makeStyles(theme => ({
 
 
 interface Column {
-  id: 'name' | 'alias' | 'category' | 'created_at';
+  id: 'name' | 'alias' | 'category' | 'created_at' | 'version';
   label: string;
   minWidth?: number;
   align?: 'right';
@@ -47,6 +47,7 @@ export default function MoleculeTable(props: {
   onChangePage: (page: number) => void,
   onMoleculeDelete?: (id: string) => void,
   moderation?: boolean,
+  withVersion?: boolean,
 }) {
   const classes = useStyles();
   const { loading, molecules, length, rowsPerPage, page, onChangePage } = props;
@@ -54,7 +55,7 @@ export default function MoleculeTable(props: {
   const [loadModal, setLoadModal] = React.useState(false);
 
   const categories = Settings.martinize_variables.category_tree;
-  const columns: Column[] = [
+  let columns: Column[] = [
     { id: 'name', label: 'Name', minWidth: 170 },
     { id: 'alias', label: 'Alias', minWidth: 100 },
     {
@@ -72,6 +73,12 @@ export default function MoleculeTable(props: {
       format: (value: string) => dateFormatter("Y-m-d H:i", new Date(value)),
     },
   ];
+
+  if (props.withVersion) {
+    const version_column: Column = { id: 'version', label: 'Version' };
+
+    columns = [...columns.slice(0, 2), version_column, ...columns.slice(2)];
+  }
 
 
   const deleteMolecule = () => {

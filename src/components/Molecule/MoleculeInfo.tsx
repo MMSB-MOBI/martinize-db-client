@@ -9,6 +9,7 @@ import AddMolecule from '../AddMolecule/AddMolecule';
 import ApiHelper from '../../ApiHelper';
 import { LoadFader } from '../../Shared';
 import { toast } from '../Toaster';
+import MoleculeViewer from './MoleculeViewer';
 
 const useStyles = makeStyles(theme => ({
   name: {
@@ -20,6 +21,15 @@ const useStyles = makeStyles(theme => ({
   },
   title: {
     
+  },
+  infoWrapper: {
+    display: 'grid',
+    justifyContent: 'space-between',
+    gridTemplateColumns: '47% 50%',
+    rowGap: '1rem',
+    [theme.breakpoints.down('sm')]: {
+      gridTemplateColumns: '1fr',
+    },
   },
   alias: {
     fontSize: '1.3rem',
@@ -124,49 +134,55 @@ export default function MoleculeInfo<T extends StashedMolecule | Molecule>(props
   };
 
   return (
-    <div>
+    <Fragment>
       <Marger size="1.5rem" />
 
       {/* Informations */}
-      <Fragment>
-        <Typography variant="h4" className={classes.title}>
-          Informations
-        </Typography>
+      <div className={classes.infoWrapper}>
+        <div>
+          <Typography variant="h4" className={classes.title}>
+            Informations
+          </Typography>
 
-        <Marger size="1rem" />
+          <Marger size="1rem" />
 
-        <Typography className={classes.name}>
-          {molecule.name}
-        </Typography>
+          <Typography className={classes.name}>
+            {molecule.name}
+          </Typography>
 
-        <Typography className={classes.alias}>
-          {molecule.alias}
-        </Typography>
+          <Typography className={classes.alias}>
+            {molecule.alias}
+          </Typography>
 
-        <Typography className={classes.category}>
-          {category}
-        </Typography>
+          <Typography className={classes.category}>
+            {category}
+          </Typography>
 
-        {molecule.formula && <Typography color="textSecondary">
-          Formula: <code>{molecule.formula}</code>
-        </Typography>}
+          {molecule.formula && <Typography color="textSecondary">
+            Formula: <code>{molecule.formula}</code>
+          </Typography>}
 
-        <Marger size="1rem" />
+          <Marger size="1rem" />
 
-        <Typography component="pre">
-          {molecule.comments}
-        </Typography>
+          <Typography component="pre">
+            {molecule.comments}
+          </Typography>
 
-        <Marger size="1rem" />
+          <Marger size="1rem" />
 
-        <Typography className={classes.version}>
-          Version <strong>{molecule.version}</strong> created at {ca_date}.
-        </Typography>
+          <Typography className={classes.version}>
+            Version <strong>{molecule.version}</strong> created at {ca_date}.
+          </Typography>
 
-        {show_last_update && <Typography className={classes.version}>
-          Last modified at <strong>{lu_date}</strong>.
-        </Typography>}
-      </Fragment>
+          {show_last_update && <Typography className={classes.version}>
+            Last modified at <strong>{lu_date}</strong>.
+          </Typography>}
+        </div>
+
+        <div>
+          <MoleculeViewer id={molecule.files} />
+        </div>
+      </div>
 
       <Marger size="1.5rem" />
       <Divider />
@@ -277,7 +293,7 @@ export default function MoleculeInfo<T extends StashedMolecule | Molecule>(props
         onClose={() => setAccept(false)}
         loading={loading}
       />}
-    </div>
+    </Fragment>
   );
 }
 

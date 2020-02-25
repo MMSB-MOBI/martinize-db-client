@@ -17,6 +17,7 @@
     "@types/react-router-dom": "^5.1.3",
     "@types/uuid": "^3.4.7",
     "clsx": "^1.1.0",
+    "ngl": "^2.0.0-dev.37",
     "node-sass": "^4.13.1",
     "notistack": "^0.9.8",
     "qs": "^6.9.1",

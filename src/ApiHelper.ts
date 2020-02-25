@@ -3,6 +3,10 @@ import { API_URL, DEBUG_MODE } from "./constants";
 
 const LATENCY_ON_EVERY_REQUEST = 500;
 
+export interface RequestPromise<T> extends Promise<T> {
+  request: XMLHttpRequest;
+}
+
 export const ApiHelper = new class APIHelper {
   /**
    * Send a request to API.
@@ -170,6 +174,106 @@ export const ApiHelper = new class APIHelper {
           return rspe.ok ? rspe.text().then(e => settings.full ? [rspe, e] : e) : rspe.text().then(d => Promise.reject([rspe, d]));
         }
       });
+  }
+
+  /**
+   * Make a request without any parameter helper.
+   * 
+   * Can used with a timeout, and are abortable (uses XMLHttpRequest).
+   * 
+   * `XMLHttpRequest` is in `.request` property of the returned `Promise`.
+   * 
+   * @param url 
+   * @param options 
+   */
+  rawRequest(url: string, options: {
+    onprogress?: (percentage: number) => void,
+    method?: string,
+    body?: string | Document | Blob | ArrayBufferView | ArrayBuffer | FormData | URLSearchParams | ReadableStream<Uint8Array> | null,
+    type?: "arraybuffer" | "blob" | "document" | "json" | "text",
+    timeout?: number,
+    latency?: number,
+    auth?: boolean | string,
+    headers?: { [name: string]: string },
+  } = {}) : RequestPromise<any> {
+    options = Object.assign({}, {
+      method: 'GET',
+      type: 'blob',
+      latency: LATENCY_ON_EVERY_REQUEST,
+      auth: true,
+      headers: {},
+    }, options);
+
+    const req = new XMLHttpRequest();
+
+    // Create the request
+    req.open(options.method!, API_URL + url, true);
+
+    // Attach the progress event
+    req.onprogress = event => {
+      if (event.lengthComputable) {
+        const percentage = (event.loaded / event.total) * 100;
+        if (options.onprogress) {
+          options.onprogress(percentage);
+        }
+      }
+    };
+
+    // Set the right response type
+    req.responseType = options.type ?? "text";
+
+    // Define timeout if any
+    if (options.timeout) {
+      req.timeout = options.timeout;
+    }
+
+    // Create the auth header if necessary
+    if (options.auth !== false) {
+      if (!Settings.token && typeof options.auth !== 'string') {
+        console.warn("Could not authentificate request without token. Skipping auth header...");
+      }
+      else {
+        const used_token = typeof options.auth === 'string' ? options.auth : Settings.token;
+
+        options.headers!['Authorization'] = "Bearer " + used_token;
+      }
+    }
+
+    // Set the user headers
+    for (const [header, value] of Object.entries(options.headers!)) {
+      req.setRequestHeader(header, value);
+    }
+
+    // START THE REQUEST
+    // ----------------
+
+    const res = new Promise((resolve, reject) => {
+      req.onreadystatechange = () => {
+        if (req.readyState === 4) {
+          resolve(req.response);
+        }
+      };
+      req.onerror = e => {
+        reject(e);
+      };
+    }) as RequestPromise<any>;
+
+    // Set the request inside the promise 
+    // (as non-enumerable/configurable/writable)
+    Object.defineProperty(res, 'request', {
+      value: req,
+    });
+
+    if (options.latency) {
+      setTimeout(() => {
+        req.send(options.body);
+      }, options.latency);
+    }
+    else {
+      req.send(options.body);
+    }
+
+    return res;
   }
 
   isApiError(data: any) : data is APIError {

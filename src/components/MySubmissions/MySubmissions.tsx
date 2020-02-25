@@ -168,8 +168,9 @@ export class MySubmissions extends React.Component<RouteComponentProps, MySubmis
       loading: load_uuid
     });
 
-    // Filter by my molecules!
+    // Filter by my molecules, and show all version (do not collapse)
     to_send.owner = Settings.user?.id;
+    to_send.combine = false;
 
     // Make the request
     ApiHelper.request('molecule/list', { parameters: to_send, latency: 500 })
@@ -230,6 +231,7 @@ export class MySubmissions extends React.Component<RouteComponentProps, MySubmis
           page={this.state.page}
           rowsPerPage={this.state.rowsPerPage}
           onChangePage={page => this.makeRequest(page)}
+          withVersion
         />
       </Container>
     );
