@@ -1,20 +1,14 @@
 import React from 'react';
 import uuid from 'uuid/v4';
 import { toast } from '../Toaster';
-// @ts-ignore
-import * as NGL from 'ngl';
+import { Stage, Component as NGLComponent } from 'ngl';
 import { Theme, withTheme, CircularProgress } from '@material-ui/core';
 import ApiHelper, { RequestPromise } from '../../ApiHelper';
-
-// NGL types
-type NGLComponent = any;
-type NGLStage = any;
-type NGLRepresentation = any;
 
 // Component types
 type MVProps = { id: string, theme: Theme, };
 type MVState = { 
-  component: NGLComponent, 
+  component?: NGLComponent, 
   loading: boolean, 
   file?: Blob,
   download_percentage: number,
@@ -23,7 +17,7 @@ type MVState = {
 
 class MoleculeViewer extends React.Component<MVProps, MVState> {
   protected component_uuid = uuid();
-  protected ngl_stage: NGLStage;
+  protected ngl_stage?: Stage;
 
   state: MVState = {
     loading: false,
@@ -34,7 +28,7 @@ class MoleculeViewer extends React.Component<MVProps, MVState> {
   };
 
   componentDidMount() {
-    this.ngl_stage = new NGL.Stage(this.viewport_id, { backgroundColor: this.props.theme.palette.background.default });
+    this.ngl_stage = new Stage(this.viewport_id, { backgroundColor: this.props.theme.palette.background.default });
     this.initStage();
     window.addEventListener('resize', this.refreshStage);
 
@@ -69,7 +63,7 @@ class MoleculeViewer extends React.Component<MVProps, MVState> {
 
   protected initStage() {
     this.setState({ loading: true });
-    this.ngl_stage.removeAllComponents();
+    this.ngl_stage!.removeAllComponents();
 
     // Cancel current request
     if (this.state.request) {
@@ -97,14 +91,16 @@ class MoleculeViewer extends React.Component<MVProps, MVState> {
     request.then((blob: Blob) => {
       this.setState({ download_percentage: 100 });
 
-      this.ngl_stage.loadFile(blob, { ext: 'pdb', name: this.props.id + ".pdb" })
-        .then((component: NGLComponent) => {
-          component.addRepresentation("ball+stick");
-          component.addRepresentation("cartoon");
-          component.autoView();
-  
-          // Register the component
-          this.setState({ component });
+      this.ngl_stage!.loadFile(blob, { ext: 'pdb', name: this.props.id + ".pdb" })
+        .then((component: NGLComponent | void) => {
+          if (component) {
+            component.addRepresentation("ball+stick", undefined);
+            component.addRepresentation("cartoon", undefined);
+            component.autoView();
+    
+            // Register the component
+            this.setState({ component });
+          }
         })
         .catch((e: any) => {
           toast("Unable to initialize molecule viewer", "error");

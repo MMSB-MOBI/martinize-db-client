@@ -45,6 +45,7 @@ type ExploreState = {
   rowsPerPage: number,
   loading: number,
   add_open: boolean,
+  combine: boolean,
 };
 
 export class Explore extends React.Component<RouteComponentProps, ExploreState> {
@@ -54,6 +55,7 @@ export class Explore extends React.Component<RouteComponentProps, ExploreState> 
     loading: 0,
     rowsPerPage: DEFAULT_ROWS_PER_PAGE,
     add_open: false,
+    combine: true,
   }
 
   previous_timeout = 0;
@@ -86,6 +88,7 @@ export class Explore extends React.Component<RouteComponentProps, ExploreState> 
 
     let page = this.state.page;
     let rowsPerPage = this.state.rowsPerPage;
+    const no_combine = query_string.combine === "false" || query_string.combine === "0";
 
     if (query_string.page) {
       const nb = Number(query_string.page);
@@ -104,7 +107,8 @@ export class Explore extends React.Component<RouteComponentProps, ExploreState> 
     this.setState({
       filters: new_filters,
       page,
-      rowsPerPage
+      rowsPerPage,
+      combine: !no_combine,
     });
 
     // Start the download (should fire, filters has changed is triggered.)
@@ -149,6 +153,11 @@ export class Explore extends React.Component<RouteComponentProps, ExploreState> 
     if (this.state.rowsPerPage !== DEFAULT_ROWS_PER_PAGE) {
       to_send.page_size = this.state.rowsPerPage;
     }
+
+    if (!this.state.combine) {
+      // true is default, so it is not set
+      to_send.combine = false;
+    } 
 
     this.props.history.push({
       search: "?" + new URLSearchParams(to_send).toString()
@@ -231,6 +240,7 @@ export class Explore extends React.Component<RouteComponentProps, ExploreState> 
           page={this.state.page}
           rowsPerPage={this.state.rowsPerPage}
           onChangePage={page => this.makeRequest(page)}
+          withVersion={!this.state.combine}
         />
 
         <AddMolecule 
