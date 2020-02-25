@@ -126,7 +126,6 @@ class MoleculePageBase extends React.Component<MPBP, MPBS> {
         search: "?version=" + id
       });
 
-      // todo change qs
       window.scrollTo(0, 0);
       this.setState({
         molecule: new_one
