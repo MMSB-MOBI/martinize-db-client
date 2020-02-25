@@ -1,5 +1,11 @@
 cd 
 
+if [ ! -d "/path/to/dir" ]
+then
+  # Create the NGL repo
+  git clone https://github.com/arose/ngl.git
+fi
+
 cd ngl
 
 # Refresh the project with the last version
