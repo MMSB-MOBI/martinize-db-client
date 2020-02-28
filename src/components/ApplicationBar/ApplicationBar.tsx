@@ -13,8 +13,9 @@ import Typography from '@material-ui/core/Typography';
 import { makeStyles, useTheme, Theme, createStyles } from '@material-ui/core/styles';
 import { RouteComponentProps, Link } from 'react-router-dom';
 import { DrawerContentRouter } from '../Router';
-import { Icon, Dialog, DialogTitle, DialogContent, DialogActions, Button, DialogContentText } from '@material-ui/core';
+import { Icon, Dialog, DialogTitle, DialogContent, DialogActions, Button, DialogContentText, ListItemAvatar, Avatar } from '@material-ui/core';
 import Settings, { LoginStatus } from '../../Settings';
+import PersonIcon from '@material-ui/icons/Person';
 
 const drawerWidth = 240;
 
@@ -47,6 +48,9 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     content: {
       flexGrow: 1,
+    },
+    ppHeader: {
+
     },
   }),
 );
@@ -154,7 +158,9 @@ function DrawerElements(props: RouteComponentProps) {
 
   compiled.pop();
 
-  return <React.Fragment>{compiled}</React.Fragment>;
+  return <React.Fragment>
+    {compiled}
+  </React.Fragment>;
 }
 
 export default function ApplicationDrawer(props: RouteComponentProps) {
@@ -169,6 +175,16 @@ export default function ApplicationDrawer(props: RouteComponentProps) {
   const drawer = (
     <div>
       <div className={classes.toolbar} />
+
+      {Settings.user && <ListItem className={classes.ppHeader}>
+        <ListItemAvatar>
+          <Avatar>
+            <PersonIcon />
+          </Avatar>
+        </ListItemAvatar>
+        <ListItemText primary={Settings.user.name} secondary={Settings.user.role === "admin" ? "Administrator" : "Curator"} />
+      </ListItem>}
+
       <DrawerElements {...props} />
     </div>
   );
@@ -284,7 +300,7 @@ function LogOutDialog() {
           <Button color="primary" autoFocus onClick={() => setOpen(false)}>
             Close
           </Button>
-          <Button color="secondary" onClick={() => { Settings.unlog(); setOpen(false); window.location.pathname = "/"; }}>
+          <Button color="secondary" onClick={async () => { await Settings.unlog(); setOpen(false); window.location.pathname = "/"; }}>
             Logout
           </Button>
         </DialogActions>

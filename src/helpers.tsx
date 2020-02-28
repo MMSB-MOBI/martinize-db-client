@@ -35,6 +35,8 @@ export function errorToText(error: [any, APIError] | APIError | number | undef
       return "Your credentials are invalid or expired.";
     case 203:
       return "Invalid password.";
+    case 205:
+      return "Your account hasn't been approved yet.";
     case 301:
       return "Request is badly formatted.";
     case 302:
@@ -97,6 +99,8 @@ export function loginErrorToText(code: number) {
       return "User not found";
     case 203:
       return "Invalid password";
+    case 205:
+      return "Your account hasn't been approved yet";
     default: 
       return "Unknown error";
   }

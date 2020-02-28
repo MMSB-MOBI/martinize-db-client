@@ -1,7 +1,8 @@
 import React from 'react';
 import { Molecule } from '../../types/entities';
-import { Marger, dateFormatter } from '../../helpers';
-import { Typography, makeStyles, List, ListItem, ListItemText, Link } from '@material-ui/core';
+import { Marger } from '../../helpers';
+import { Typography, makeStyles, Link } from '@material-ui/core';
+import { TreeView, TreeItem } from '@material-ui/lab';
 
 const useStyles = makeStyles(theme => ({
   name: {
@@ -33,7 +34,67 @@ const useStyles = makeStyles(theme => ({
     fontSize: '1.2rem',
     marginRight: '10px'
   },
+  moleculeLink: {
+    "&:hover": {
+      textDecoration: 'none',
+    },
+  },
+  contentTree: {
+    backgroundColor: 'unset !important',
+  },
 }));
+
+interface MoleculeTree {
+  molecule: Molecule;
+  children: MoleculeTree[];
+}
+
+function createMoleculeTree(molecules: Molecule[]) : MoleculeTree {
+  const root = molecules.find(m => m.parent === null);
+  if (!root) {
+    return {
+      molecule: molecules[0],
+      children: []
+    };
+  }
+
+  const id_to_mol: { [id: string]: MoleculeTree } = {};
+
+  id_to_mol[root.id] = {
+    molecule: root,
+    children: []
+  };
+  
+  for (const mol of molecules) {
+    if (mol.id in id_to_mol) {
+      continue;
+    }
+
+    if (mol.parent === null) {
+      // Root is already added
+      continue;
+    }
+
+    if (mol.parent in id_to_mol) {
+      id_to_mol[mol.parent].children.push({
+        molecule: mol,
+        children: []
+      });
+    }
+    else {
+      const parent = molecules.find(m => m.id === m.parent)!;
+      id_to_mol[mol.parent] = {
+        molecule: parent,
+        children: [{
+          molecule: mol,
+          children: []
+        }]
+      };
+    }
+  }
+
+  return id_to_mol[root.id];
+}
 
 export default function MoleculeVersion(props: { versions: Molecule[], current: Molecule, onVersionChange: (id: string) => void }) {
   const classes = useStyles();
@@ -43,22 +104,54 @@ export default function MoleculeVersion(props: { versions: Molecule[], current: 
   }
 
   function formatDetails(molecule: Molecule) {
-    return `Martinize ${molecule.martinize_version}, ${molecule.force_field} (created on ${dateFormatter("Y-m-d", new Date(molecule.created_at))})`;
+    return `Martinize ${molecule.martinize_version}, ${molecule.force_field}`;
   }
 
-  function specificity(molecule: Molecule) {
-    let appended = "";
-    if (molecule.id === props.current.id) {
-      appended = " (current)";
-    }
-    else if (molecule.id === props.current.parent) {
-      appended = " (parent)";
-    }
-    else if (molecule.parent === null) {
-      appended = " (initial version)";
-    }
-    return appended;
+  function renderMoleculeLabel(molecule: Molecule) {
+    return (
+      <Typography component="span" className={classes.alias}>
+        <Link 
+          href={"/molecule/" + molecule.alias + "?version=" + molecule.id} 
+          className={classes.moleculeLink}
+          id={"link-to-" + molecule.id} 
+          color={molecule.id === props.current.id ? "secondary" : "primary"}
+          onClick={(e: React.MouseEvent<any>) => {
+            e.preventDefault();
+            props.onVersionChange(molecule.id);
+          }}
+        >
+          <strong>{formatVersion(molecule)}</strong> • ({formatDetails(molecule)})
+        </Link>
+      </Typography>
+    );
   }
+
+  function handleMoleculeClick(molecule_id: string) {
+    const link = document.getElementById('link-to-' + molecule_id);
+
+    if (link) {
+      link.click();
+    }
+  }
+
+  function renderTreeItem(tree: MoleculeTree) {
+    return (
+      <TreeItem 
+        onClick={() => handleMoleculeClick(tree.molecule.id)} 
+        key={tree.molecule.id} 
+        nodeId={tree.molecule.id} 
+        label={renderMoleculeLabel(tree.molecule)}
+        classes={{
+          content: classes.contentTree
+        }}
+      >
+        {tree.children.length ? tree.children.map(m => renderTreeItem(m)) : null}
+      </TreeItem>
+    );
+  }
+
+  const tree = React.useMemo(() => createMoleculeTree(props.versions), [props]);
+  const mol_ids = props.versions.map(v => v.id);
 
   return (
     <div>
@@ -68,26 +161,11 @@ export default function MoleculeVersion(props: { versions: Molecule[], current: 
         Versions
       </Typography>
 
-      <List dense>
-        {props.versions.map(m => <ListItem key={m.version}>
-          <ListItemText 
-            primary={<Typography className={classes.alias}>
-              <Link 
-                href={"/molecule/" + m.alias + "?version=" + m.id} 
-                onClick={(e: React.MouseEvent<any>) => {
-                  e.preventDefault();
-                  props.onVersionChange(m.id);
-                }}
-              >
-                <strong>{formatVersion(m)} {specificity(m)}</strong>
-              </Link>
-            </Typography>} 
-            
-            secondary={<Typography variant="body2" color="textSecondary" className={classes.version}>
-              {formatDetails(m)}
-            </Typography>} />
-        </ListItem>)}
-      </List>
+      <Marger size="1.5rem" />
+
+      <TreeView expanded={mol_ids}>
+        {renderTreeItem(tree)}
+      </TreeView>
 
       <Marger size="1.5rem" />
     </div>

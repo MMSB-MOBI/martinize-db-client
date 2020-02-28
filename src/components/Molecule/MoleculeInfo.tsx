@@ -99,6 +99,7 @@ export default function MoleculeInfo<T extends StashedMolecule | Molecule>(props
   }
 
   const has_edit_button = Settings.logged === LoginStatus.Admin;
+  const is_logged = Settings.logged > 1;
   const has_delete_button = Settings.logged === LoginStatus.Admin || is_same_as_logged;
 
   const deleteMolecule = () => {
@@ -225,7 +226,7 @@ export default function MoleculeInfo<T extends StashedMolecule | Molecule>(props
         </Link>
 
         {/* Edit icon. Available for administrators. */}
-        {has_edit_button && <Link href="#" className={classes.link} onClick={() => setEdit(true)}>
+        {has_edit_button && <Link className={classes.link} onClick={() => setEdit(true)}>
           <Icon className={clsx("fas", "fa-pen", classes.linkIcon)} />
           <span>
             Edit
@@ -233,7 +234,7 @@ export default function MoleculeInfo<T extends StashedMolecule | Molecule>(props
         </Link>}
 
         {/* Delete button. Available for molecule owners and admins. */}
-        {has_delete_button && <Link href="#" className={classes.link} color="secondary" onClick={() => setDeleteMol(true)}>
+        {has_delete_button && <Link className={classes.link} color="secondary" onClick={() => setDeleteMol(true)}>
           <Icon className={clsx("fas", "fa-trash", classes.linkIcon)} />
           <span>
             Delete
@@ -241,7 +242,7 @@ export default function MoleculeInfo<T extends StashedMolecule | Molecule>(props
         </Link>}
 
         {/* Accept button. Available when {stashed}. */}
-        {stashed && <Link href="#" className={classes.link} style={{ color: "green" }} onClick={() => setAccept(true)}>
+        {stashed && <Link className={classes.link} style={{ color: "green" }} onClick={() => setAccept(true)}>
           <Icon className={clsx("fas", "fa-check", classes.linkIcon)} />
           <span>
             Accept
@@ -249,7 +250,7 @@ export default function MoleculeInfo<T extends StashedMolecule | Molecule>(props
         </Link>}
 
         {/* Add button. Available when !{stashed}. */}
-        {!stashed && <Link href="#" className={classes.link} style={{ color: "orange" }} onClick={() => setNewVersion(true)}>
+        {!stashed && is_logged && <Link className={classes.link} style={{ color: "orange" }} onClick={() => setNewVersion(true)}>
           <Icon className={clsx("fas", "fa-plus", classes.linkIcon)} />
           <span>
             Add a version
@@ -299,7 +300,7 @@ export default function MoleculeInfo<T extends StashedMolecule | Molecule>(props
 
 export function DeleteModal(props: { onAccept: () => void, onClose: () => void, loading: boolean, }) {
   return (
-    <Dialog scroll="body" open onClose={props.loading ? undefined : props.onClose}>
+    <Dialog open onClose={props.loading ? undefined : props.onClose}>
       <DialogTitle>
         Delete this molecule ?
       </DialogTitle>
@@ -328,7 +329,7 @@ export function DeleteModal(props: { onAccept: () => void, onClose: () => void, 
 
 function AcceptModal(props: { onAccept: () => void, onClose: () => void, loading: boolean, }) {
   return (
-    <Dialog scroll="body" open onClose={props.loading ? undefined : props.onClose}>
+    <Dialog open onClose={props.loading ? undefined : props.onClose}>
       <DialogTitle>
         Accept molecule
       </DialogTitle>
