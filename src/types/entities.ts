@@ -57,6 +57,7 @@ export interface User {
   password: string;
   /** User role */
   role: UserRole;
+  approved: boolean;
 }
 
 export interface Token {

@@ -135,7 +135,7 @@ export const Settings = new class Settings {
     const token = this.token;
     if (token) {
       try {
-        await ApiHelper.request('user/revoke'), { method: 'DELETE' };
+        await ApiHelper.request('user/revoke', { method: 'DELETE' });
       } catch (e) { }
     }
 

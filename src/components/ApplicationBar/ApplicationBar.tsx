@@ -94,6 +94,13 @@ function DrawerElements(props: RouteComponentProps) {
         text: "Moderation",
         condition: Settings.logged === LoginStatus.Admin,
       },
+      {
+        path: '/users',
+        link: true,
+        icon: "user",
+        text: "Users",
+        condition: Settings.logged === LoginStatus.Admin,
+      },
     ],
     [
       {

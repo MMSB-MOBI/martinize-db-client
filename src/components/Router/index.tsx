@@ -3,7 +3,7 @@ import { Route, Switch, RouteComponentProps, Redirect, BrowserRouter } from 'rea
 import Explore from '../Explore/Explore';
 import NotFound, { InnerNotFound } from '../pages/NotFound/NotFound';
 import ApplicationDrawer from '../ApplicationBar/ApplicationBar';
-import { WaitForLoginFinish, WaitForLogged } from '../LoginWaiter/LoginWaiter';
+import { WaitForLoginFinish, WaitForLogged, WaitForAdminLogged } from '../LoginWaiter/LoginWaiter';
 import Settings from '../../Settings';
 import Login from '../pages/Login/Login';
 import MoleculePage from '../Molecule/Molecule';
@@ -11,6 +11,7 @@ import StashedMolecule from '../Moderation/Stashed';
 import MySubmissions from '../MySubmissions/MySubmissions';
 import Moderation from '../Moderation/Moderation';
 import SettingsPage from '../Settings/Settings';
+import Users from '../Users/Users';
 
 function LoadAppDrawer(props: RouteComponentProps) {
   return <ApplicationDrawer {...props} />;
@@ -31,6 +32,7 @@ const RouterCmpt = (props: {}) => {
         <Route path="/explore" component={LoadDrawer} />
         <Route path="/submissions" component={LoadDrawer} />
         <Route path="/settings" component={LoadDrawer} />
+        <Route path="/users" component={LoadDrawer} />
         <Route path="/contact" component={LoadDrawer} />
 
         {/* Not found */}
@@ -58,6 +60,18 @@ function LoadSettingsDrawer(props: RouteComponentProps) {
   );
 }
 
+function LoadUsersDrawer(props: RouteComponentProps) {
+  return (
+    <WaitForAdminLogged {...props} component={Users} wait={[Settings.login_promise]} />
+  );
+}
+
+function LoadModerationDrawer(props: RouteComponentProps) {
+  return (
+    <WaitForAdminLogged {...props} component={Moderation} wait={[Settings.login_promise]} />
+  );
+}
+
 
 export const DrawerContentRouter = (props: RouteComponentProps) => {
   return (
@@ -66,7 +80,8 @@ export const DrawerContentRouter = (props: RouteComponentProps) => {
       <Route path="/molecule/:alias" component={MoleculePage} />
       <Route path="/submissions" component={MySubmissions} />
       <Route path="/settings" component={LoadSettingsDrawer} />
-      <Route path="/moderation" component={Moderation} />
+      <Route path="/users" component={LoadUsersDrawer} />
+      <Route path="/moderation" component={LoadModerationDrawer} />
       <Route path="/stashed/:id" component={StashedMolecule} />
       
       {/* Not found */}

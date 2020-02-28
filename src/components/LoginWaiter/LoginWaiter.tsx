@@ -154,3 +154,7 @@ export function WaitForLoginFinish<T extends { component: React.ComponentType<an
 export function WaitForLogged<T extends { component: React.ComponentType<any>, wait: Promise<any> | Promise<any>[] }>(props: T) {
   return <LoginWaiter {...props} renderWhen={["admin", "curator"]} />
 };
+
+export function WaitForAdminLogged<T extends { component: React.ComponentType<any>, wait: Promise<any> | Promise<any>[] }>(props: T) {
+  return <LoginWaiter {...props} renderWhen="admin" />
+};
