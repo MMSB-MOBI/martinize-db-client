@@ -1,5 +1,9 @@
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
+## Building project
+
+Just run `npm run build`. Copy content of the build folder, it is the whole website with `index.html` entry-point.
+
 ## Available Scripts
 
 In the project directory, you can run:

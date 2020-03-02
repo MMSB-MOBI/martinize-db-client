@@ -264,7 +264,7 @@ export const ApiHelper = new class APIHelper {
       value: req,
     });
 
-    if (options.latency) {
+    if (options.latency && DEBUG_MODE) {
       setTimeout(() => {
         req.send(options.body);
       }, options.latency);
