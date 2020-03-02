@@ -12,6 +12,9 @@ import MySubmissions from '../MySubmissions/MySubmissions';
 import Moderation from '../Moderation/Moderation';
 import SettingsPage from '../Settings/Settings';
 import Users from '../Users/Users';
+import LostPassword from '../pages/LostPassword/LostPassword';
+import ChangePassword from '../pages/ChangePassword/ChangePassword';
+import CreateAccount from '../pages/CreateAccount/CreateAccount';
 
 function LoadAppDrawer(props: RouteComponentProps) {
   return <ApplicationDrawer {...props} />;
@@ -24,6 +27,9 @@ const RouterCmpt = (props: {}) => {
         <Route path="/" exact render={() => <Redirect to="/explore" />} />
 
         <Route path="/login" exact component={LoadLoginDrawer} />
+        <Route path="/lost_password" exact component={LoadLostPasswordDrawer} />
+        <Route path="/create_account" exact component={LoadCreateAccountDrawer} />
+        <Route path="/change_password" exact component={LoadChangePasswordDrawer} />
 
         <Route path="/molecule/:alias" component={LoadDrawer} />
         <Route path="/group/:alias" component={LoadDrawer} />
@@ -51,6 +57,24 @@ function LoadDrawer(props: RouteComponentProps) {
 function LoadLoginDrawer(props: RouteComponentProps) {
   return (
     <WaitForLoginFinish {...props} component={Login} wait={[Settings.login_promise, Settings.martinize_variables_promise]} />
+  );
+}
+
+function LoadLostPasswordDrawer(props: RouteComponentProps) {
+  return (
+    <WaitForLoginFinish {...props} component={LostPassword} wait={[Settings.login_promise, Settings.martinize_variables_promise]} />
+  );
+}
+
+function LoadCreateAccountDrawer(props: RouteComponentProps) {
+  return (
+    <WaitForLoginFinish {...props} component={CreateAccount} wait={[Settings.login_promise, Settings.martinize_variables_promise]} />
+  );
+}
+
+function LoadChangePasswordDrawer(props: RouteComponentProps) {
+  return (
+    <WaitForLoginFinish {...props} component={ChangePassword} wait={[Settings.login_promise, Settings.martinize_variables_promise]} />
   );
 }
 

@@ -3,6 +3,7 @@ import Avatar from '@material-ui/core/Avatar';
 import Button from '@material-ui/core/Button';
 import TextField from '@material-ui/core/TextField';
 import Link from '@material-ui/core/Link';
+import { Link as RouterLink } from 'react-router-dom';
 import Paper from '@material-ui/core/Paper';
 import Box from '@material-ui/core/Box';
 import Grid from '@material-ui/core/Grid';
@@ -12,7 +13,7 @@ import { makeStyles } from '@material-ui/core/styles';
 import ApiHelper, { APIError } from '../../../ApiHelper';
 import { User } from '../../../types/entities';
 import Settings from '../../../Settings';
-import { loginErrorToText } from '../../../helpers';
+import { loginErrorToText, setPageTitle } from '../../../helpers';
 import { LoadFader } from '../../../Shared';
 import { toast } from '../../Toaster';
 
@@ -65,6 +66,10 @@ export default function Login() {
   const [password, setPassword] = React.useState("");
   const [operating, setOperating] = React.useState("idle");
   const [error, setError] = React.useState<APIError | undefined>();
+
+  React.useEffect(() => {
+    setPageTitle("Login");
+  }, []);
 
   function handleSubmit(evt: React.FormEvent) {
     evt.stopPropagation();
@@ -150,12 +155,12 @@ export default function Login() {
               </Button>
               <Grid container>
                 <Grid item xs>
-                  <Link href="#" variant="body2">
+                  <Link color="secondary" component={RouterLink} to="/lost_password" href="/lost_password" variant="body2">
                     Forgot password?
                   </Link>
                 </Grid>
                 <Grid item>
-                  <Link href="#" variant="body2">
+                  <Link color="secondary" component={RouterLink} to="/create_account" href="/create_account" variant="body2">
                     {"Don't have an account? Sign Up"}
                   </Link>
                 </Grid>

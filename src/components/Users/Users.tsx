@@ -1,6 +1,6 @@
 import React from 'react';
 import { Container, Typography, withStyles, List, ListItem, ListItemAvatar, Avatar, ListItemText, Button, Paper, CircularProgress, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@material-ui/core';
-import { Marger, notifyError } from '../../helpers';
+import { Marger, notifyError, setPageTitle } from '../../helpers';
 import { User } from '../../types/entities';
 import ApiHelper from '../../ApiHelper';
 import { CenterComponent, LoadFader } from '../../Shared';
@@ -25,6 +25,8 @@ class Users extends React.Component<{ classes: Record<string, string> }, UserSta
     this.setState({
       loading: true
     });
+
+    setPageTitle("Users");
 
     ApiHelper.request('user/list')
       .then((users: User[]) => {
