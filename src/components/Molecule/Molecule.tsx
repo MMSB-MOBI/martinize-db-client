@@ -28,6 +28,7 @@ const createStyles = (theme: Theme) => ({
       textDecoration: 'none',
     },
     marginLeft: '2vw',
+    cursor: 'pointer',
   },
   nameWrapper: {
     padding: 14,
@@ -111,7 +112,7 @@ class MoleculePageBase extends React.Component<MPBP, MPBS> {
 
   goBackButton() {
     return (
-      <Link href="#" onClick={() => this.props.history.goBack()} className={this.props.classes.goBackLink}>
+      <Link onClick={() => this.props.history.goBack()} className={this.props.classes.goBackLink}>
         <Icon className="fas fa-arrow-left" style={{ marginRight: 10, fontSize: '1.1rem' }} />
         Go back 
       </Link>
