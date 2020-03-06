@@ -15,12 +15,14 @@ import Users from '../Users/Users';
 import LostPassword from '../pages/LostPassword/LostPassword';
 import ChangePassword from '../pages/ChangePassword/ChangePassword';
 import CreateAccount from '../pages/CreateAccount/CreateAccount';
+import ContactPage from '../Contact/Contact';
+import MartinizeBuilder from '../Builder/Builder';
 
 function LoadAppDrawer(props: RouteComponentProps) {
   return <ApplicationDrawer {...props} />;
 }
 
-const RouterCmpt = (props: {}) => {
+const RouterCmpt = () => {
   return (
     <BrowserRouter>
       <Switch>
@@ -30,6 +32,7 @@ const RouterCmpt = (props: {}) => {
         <Route path="/lost_password" exact component={LoadLostPasswordDrawer} />
         <Route path="/create_account" exact component={LoadCreateAccountDrawer} />
         <Route path="/change_password" exact component={LoadChangePasswordDrawer} />
+        <Route path="/builder" exact component={LoadMartinizeBuilder} />
 
         <Route path="/molecule/:alias" component={LoadDrawer} />
         <Route path="/group/:alias" component={LoadDrawer} />
@@ -51,6 +54,12 @@ const RouterCmpt = (props: {}) => {
 function LoadDrawer(props: RouteComponentProps) {
   return (
     <WaitForLoginFinish {...props} component={LoadAppDrawer} wait={[Settings.login_promise, Settings.martinize_variables_promise]} />
+  );
+}
+
+function LoadMartinizeBuilder(props: RouteComponentProps) {
+  return (
+    <WaitForLoginFinish {...props} component={MartinizeBuilder} wait={[Settings.login_promise, Settings.martinize_variables_promise]} />
   );
 }
 
@@ -103,6 +112,7 @@ export const DrawerContentRouter = (props: RouteComponentProps) => {
       <Route path="/explore" exact component={Explore} />
       <Route path="/molecule/:alias" component={MoleculePage} />
       <Route path="/submissions" component={MySubmissions} />
+      <Route path="/contact" component={ContactPage} />
       <Route path="/settings" component={LoadSettingsDrawer} />
       <Route path="/users" component={LoadUsersDrawer} />
       <Route path="/moderation" component={LoadModerationDrawer} />
