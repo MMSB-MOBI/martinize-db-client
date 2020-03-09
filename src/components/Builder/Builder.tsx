@@ -26,12 +26,12 @@ interface MBState {
   builder_force_field: string;
   builder_mode: 'go' | 'classic' | 'elastic';
   builder_positions: 'none' | 'all' | 'backbone';
-  builder_ef: number;
-  builder_el: number;
-  builder_eu: number;
-  builder_ea: number;
-  builder_ep: number;
-  builder_em: number;
+  builder_ef: string;
+  builder_el: string;
+  builder_eu: string;
+  builder_ea: string;
+  builder_ep: string;
+  builder_em: string;
 }
 
 class MartinizeBuilder extends React.Component<MBProps, MBState> {
@@ -40,12 +40,12 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     builder_force_field: 'martini22',
     builder_mode: 'classic',
     builder_positions: 'backbone',
-    builder_ef: 500,
-    builder_el: 0.5,
-    builder_eu: 0.9,
-    builder_ea: 0,
-    builder_ep: 0,
-    builder_em: 0,
+    builder_ef: '500',
+    builder_el: '0.5',
+    builder_eu: '0.9',
+    builder_ea: '0',
+    builder_ep: '0',
+    builder_em: '0',
   };
   protected ngl_stage?: Stage;
 
@@ -108,10 +108,13 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
         this.initCoarseGrainPdb(cg_pdb);
       })
       .catch(e => {
-        if (ApiHelper.isFullApiError(e)) {
+        console.log(e);
+        if (Array.isArray(e)) {
+          const error = JSON.parse(e[1]);
+
           this.setState({
             running: 'martinize_error',
-            error: e[1]
+            error
           });
         }
         else {
@@ -242,15 +245,13 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       <div>
         <Marger size="2rem" />
 
-        <Typography>
-          Your molecule is loaded.
-        </Typography>
-
         {this.state.running === 'martinize_error' && this.state.error && <React.Fragment>
-          <Marger size="2rem" />
 
           <Typography color="error">
-            Unable to proceed your molecule: {ApiHelper.isApiError(this.state.error) ? errorToText(this.state.error) : "Unknown error."}
+            Unable to proceed your molecule: {" "}
+            <strong>
+              {ApiHelper.isApiError(this.state.error) ? errorToText(this.state.error) : "Unknown error."}
+            </strong>
             
             <br />
             This error will be reported.
@@ -306,7 +307,6 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
           {this.state.builder_mode === 'elastic' && this.martinizeElasticForm()}
 
-
           <Marger size="2rem" />
 
           <Button variant="outlined" color="primary" type="submit">
@@ -324,10 +324,10 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
           <TextField 
             variant="outlined"
             className={this.props.classes.textField}
-            label="Elastic force constant"
+            label="Force constant"
             type="number"
             value={this.state.builder_ef}
-            onChange={e => this.setState({ builder_ef: Number(e.target.value) })}
+            onChange={e => this.setState({ builder_ef: e.target.value })}
           />
         </Grid>
 
@@ -335,10 +335,10 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
           <TextField 
             variant="outlined"
             className={this.props.classes.textField}
-            label="Elastic lower cutoff"
+            label="Lower cutoff"
             type="number"
             value={this.state.builder_el}
-            onChange={e => this.setState({ builder_el: Number(e.target.value) })}
+            onChange={e => this.setState({ builder_el: e.target.value })}
           />
         </Grid>
 
@@ -346,10 +346,10 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
           <TextField 
             variant="outlined"
             className={this.props.classes.textField}
-            label="Elastic upper cutoff"
+            label="Upper cutoff"
             type="number"
             value={this.state.builder_eu}
-            onChange={e => this.setState({ builder_eu: Number(e.target.value) })}
+            onChange={e => this.setState({ builder_eu: e.target.value })}
           />
         </Grid>
 
@@ -357,10 +357,10 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
           <TextField 
             variant="outlined"
             className={this.props.classes.textField} 
-            label="Elastic decay factor a"
+            label="Decay factor a"
             type="number"
             value={this.state.builder_ea}
-            onChange={e => this.setState({ builder_ea: Number(e.target.value) })}
+            onChange={e => this.setState({ builder_ea: e.target.value })}
           />
         </Grid>
 
@@ -368,10 +368,10 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
           <TextField 
             variant="outlined"
             className={this.props.classes.textField}
-            label="Elastic decay power p"
+            label="Decay power p"
             type="number"
             value={this.state.builder_ep}
-            onChange={e => this.setState({ builder_ep: Number(e.target.value) })}
+            onChange={e => this.setState({ builder_ep: e.target.value })}
           />
         </Grid>
 
@@ -379,10 +379,10 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
           <TextField 
             variant="outlined"
             className={this.props.classes.textField}
-            label="Elastic minimum force"
+            label="Minimum force"
             type="number"
             value={this.state.builder_em}
-            onChange={e => this.setState({ builder_em: Number(e.target.value) })}
+            onChange={e => this.setState({ builder_em: e.target.value })}
           />
         </Grid>
       </React.Fragment>
@@ -416,10 +416,10 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
         <Marger size="2rem" />
 
         <Typography variant="h6" color="primary" align="center">
-          Your molcule has been successfully generated.
+          Your molecule has been successfully generated.
         </Typography>
       </React.Fragment>
-    )
+    );
   }
 
   render() {
