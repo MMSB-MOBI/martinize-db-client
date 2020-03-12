@@ -113,7 +113,7 @@ export default class LoginWaiter extends React.Component<LWProps, LWState> {
     return <FullError
       text="Unable to login. This might be an server error, or you login keys are not valid anymore."
     >
-      <Link className="link no-underline" href="#" style={{ marginTop: '15px' }} onClick={() => { Settings.unlog(); window.location.pathname = "/login"; }}>
+      <Link className="link no-underline" href="#" style={{ marginTop: '15px' }} onClick={async () => { await Settings.unlog(); window.location.pathname = "/login"; }}>
         <Button color="primary">
           Log out
         </Button>
@@ -153,4 +153,8 @@ export function WaitForLoginFinish<T extends { component: React.ComponentType<an
 
 export function WaitForLogged<T extends { component: React.ComponentType<any>, wait: Promise<any> | Promise<any>[] }>(props: T) {
   return <LoginWaiter {...props} renderWhen={["admin", "curator"]} />
+};
+
+export function WaitForAdminLogged<T extends { component: React.ComponentType<any>, wait: Promise<any> | Promise<any>[] }>(props: T) {
+  return <LoginWaiter {...props} renderWhen="admin" />
 };

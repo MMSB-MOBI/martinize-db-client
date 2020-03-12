@@ -131,7 +131,14 @@ export const Settings = new class Settings {
       });
   }
 
-  unlog() {
+  async unlog() {
+    const token = this.token;
+    if (token) {
+      try {
+        await ApiHelper.request('user/revoke', { method: 'DELETE' });
+      } catch (e) { }
+    }
+
     this.token = undefined;
     this.user = undefined;
     this._logged = LoginStatus.None;

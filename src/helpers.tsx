@@ -35,6 +35,8 @@ export function errorToText(error: [any, APIError] | APIError | number | undef
       return "Your credentials are invalid or expired.";
     case 203:
       return "Invalid password.";
+    case 205:
+      return "Your account hasn't been approved yet.";
     case 301:
       return "Request is badly formatted.";
     case 302:
@@ -78,7 +80,9 @@ export function errorToText(error: [any, APIError] | APIError | number | undef
     case 321:
       return "This username contains invalid characters, or its length is less than 2 characters.";
     case 322:
-      return "Email address is invalid."
+      return "Email address is invalid.";
+    case 401:
+      return "Martinize program failed with an exit code.";
     default: {
       if (Array.isArray(error)) {
         return error[1].message + ".";
@@ -97,6 +101,8 @@ export function loginErrorToText(code: number) {
       return "User not found";
     case 203:
       return "Invalid password";
+    case 205:
+      return "Your account hasn't been approved yet";
     default: 
       return "Unknown error";
   }

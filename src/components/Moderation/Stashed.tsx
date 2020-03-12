@@ -108,7 +108,7 @@ class StashedPageBase extends React.Component<StashedProps, StashedState> {
 
   goBackButton() {
     return (
-      <Link href="#" onClick={() => this.props.history.goBack()} className={this.props.classes.goBackLink}>
+      <Link onClick={() => this.props.history.goBack()} className={this.props.classes.goBackLink}>
         <Icon className="fas fa-arrow-left" style={{ marginRight: 10, fontSize: '1.1rem' }} />
         Go back 
       </Link>

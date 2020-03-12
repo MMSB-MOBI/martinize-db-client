@@ -222,7 +222,7 @@ export class Explore extends React.Component<RouteComponentProps, ExploreState> 
           <Marger size={14} />
 
           <div style={{ display: 'flex', justifyContent: 'center' }}>
-            <Link href="#" onClick={() => this.setState({ add_open: true })} style={{ fontSize: '1.2rem', color: "orange", margin: "1rem 0" }}>
+            <Link onClick={() => this.setState({ add_open: true })} style={{ fontSize: '1.2rem', color: "orange", margin: "1rem 0" }}>
               <Icon className={clsx("fas", "fa-plus")} style={{ fontSize: '1.2rem', marginRight: 10 }} />
               <span>
                 Add a new molecule

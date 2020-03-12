@@ -1,8 +1,8 @@
 import React from 'react';
 import { BaseMolecule, Molecule, StashedMolecule } from '../../types/entities';
-import { Dialog, Slide, makeStyles, createStyles, Theme, Button, Container, AppBar, Toolbar, IconButton, Typography, TextField, FormControl, InputLabel, Select, MenuItem, Link } from '@material-ui/core';
+import { Dialog, Slide, makeStyles, createStyles, Theme, Button, Container, AppBar, Toolbar, IconButton, Typography, TextField, Link } from '@material-ui/core';
 import { TransitionProps } from '@material-ui/core/transitions/transition';
-import { LoadFader } from '../../Shared';
+import { LoadFader, SimpleSelect } from '../../Shared';
 import CloseIcon from '@material-ui/icons/Close';
 import Settings from '../../Settings';
 import { flattenCategoryTree, Marger, notifyError } from '../../helpers';
@@ -371,7 +371,7 @@ export default function AddMolecule(props: AddMoleculeProps) {
                 value={martinizeVersion}
               />
 
-              <SimpleSelect 
+              <SimpleSelect
                 id="s-ff-v-new"
                 label="Used force field"
                 onChange={v => setForceField(v)}
@@ -430,32 +430,4 @@ export default function AddMolecule(props: AddMoleculeProps) {
       </LoadFader>
     </Dialog>
   );
-}
-
-
-function SimpleSelect(props: { label: string, value: string, onChange: (v: string) => void, id: string, values: { id: string, name: string }[], disabled?: boolean, }) {
-  const inputLabel = React.useRef<HTMLLabelElement>(null);
-  const [labelWidth, setLabelWidth] = React.useState(0);
-  React.useEffect(() => {
-    if (inputLabel.current)
-      setLabelWidth(inputLabel.current!.offsetWidth);
-  }, [props]);
-
-  return (
-    <FormControl variant="outlined" style={{ minWidth: 180 }}>
-      <InputLabel ref={inputLabel} id={props.id}>
-        {props.label}
-      </InputLabel>
-      <Select
-        labelId={props.id}
-        value={props.value}
-        onChange={v => props.onChange(v.target.value as string)}
-        labelWidth={labelWidth}
-        required
-        disabled={props.disabled}
-      >
-        {props.values.map(cat => <MenuItem key={cat.id} value={cat.id}>{cat.name}</MenuItem>)}
-      </Select>
-    </FormControl>
-  )
 }
