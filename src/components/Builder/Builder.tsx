@@ -127,13 +127,13 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
   initCoarseGrainPdb(pdb: Blob) {
     this.ngl_stage!.loadFile(pdb, { ext: 'pdb', name: 'coarse_grain.pdb' })
-      .then(component => {
+      .then((component: NGLComponent) => {
         if (component) {
           component.addRepresentation("ball+stick", undefined);
           // component.addRepresentation("cartoon", undefined);
           component.autoView();
 
-          this.state.all_atom_ngl?.eachRepresentation(rep => {
+          this.state.all_atom_ngl?.eachRepresentation((rep: any) => {
             rep.setParameters({ opacity: .3 });
           });
 
@@ -144,7 +144,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
           });
         }
       })
-      .catch(e => {
+      .catch((e: any) => {
         console.error(e);
         toast("Unable to load generated PDB. Please retry by re-loading the page.");
       });
@@ -160,7 +160,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       });
 
       this.ngl_stage!.loadFile(file)
-        .then(component => {
+        .then((component: NGLComponent) => {
           if (component) {
             component.addRepresentation("ball+stick", undefined);
             // component.addRepresentation("cartoon", undefined);
@@ -174,7 +174,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
             });
           }
         })
-        .catch(e => {
+        .catch((e: any) => {
           console.error(e);
           this.setState({
             running: 'pdb',
