@@ -2,7 +2,7 @@ import React from 'react';
 import uuid from 'uuid/v4';
 import { toast } from '../Toaster';
 // @ts-ignore
-import { Stage, Component as NGLComponent } from 'ngl';
+import { Stage, Component as NGLComponent } from '@mmsb/ngl';
 import { Theme, withTheme, CircularProgress } from '@material-ui/core';
 import ApiHelper, { RequestPromise } from '../../ApiHelper';
 

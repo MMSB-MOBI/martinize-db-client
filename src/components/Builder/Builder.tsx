@@ -1,12 +1,17 @@
 import React from 'react';
 import { withStyles, Grid, Typography, Paper, TextField, Button, withTheme, Theme, CircularProgress } from '@material-ui/core';
 import { Marger, errorToText } from '../../helpers';
-// @ts-ignore
-import { Stage, Component as NGLComponent } from 'ngl';
+
+import { Stage, Component as NGLComponent } from '@mmsb/ngl';
+import * as ngl from '@mmsb/ngl';
+
 import { SimpleSelect } from '../../Shared';
 import Settings from '../../Settings';
 import ApiHelper from '../../ApiHelper';
 import { toast } from '../Toaster';
+
+// @ts-ignore
+window.NGL = ngl;
 
 interface MBProps {
   classes: Record<string, string>;
