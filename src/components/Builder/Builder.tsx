@@ -63,6 +63,8 @@ interface MBState {
   files?: {
     pdb: MartinizeFile;
     itps: MartinizeFile[];
+    radius: { [name: string]: number };
+    top: MartinizeFile;
   };
   generating_files: boolean;
 
@@ -219,7 +221,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       method: 'POST',
       body_mode: 'multipart'
     }) 
-      .then((res: { pdb: MartinizeFile, itps: MartinizeFile[], radius: { [name: string]: number } }) => {
+      .then((res: { pdb: MartinizeFile, top: MartinizeFile, itps: MartinizeFile[], radius: { [name: string]: number } }) => {
         const cg_pdb = new Blob([res.pdb.content]);
 
         // Init PDB scene
@@ -342,9 +344,10 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       const files = this.state.files;
   
       zip.file(files.pdb.name, files.pdb.content);
-      const itp_dir = zip.folder('itp');
+      zip.file(files.top.name, files.top.content);
+
       for (const itp of files.itps) {
-        itp_dir.file(itp.name, itp.content);
+        zip.file(itp.name, itp.content);
       }
   
       const generated = await zip.generateAsync({

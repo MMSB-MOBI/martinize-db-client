@@ -8,6 +8,7 @@ export function applyUserRadius(radius: { [name: string]: number }) {
 
   // Get the number of the last item
   let i = Object.keys(vdwradius).length + 1;
+  
   for (const atom in radius) {
     if (atom in atoms) {
       continue;
@@ -15,9 +16,7 @@ export function applyUserRadius(radius: { [name: string]: number }) {
 
     atoms[atom] = i;
     vdwradius[i] = radius[atom] * 10;
-    console.log("Set", atom, "to", radius[atom]);
+    console.log("Set atom", atom, "to", radius[atom]);
     i++;
   }
-
-  console.log(atoms, vdwradius);
 }
