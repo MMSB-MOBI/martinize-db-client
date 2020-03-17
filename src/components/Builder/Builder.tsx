@@ -1,6 +1,6 @@
 import React from 'react';
-import { withStyles, Grid, Typography, Paper, TextField, Button, withTheme, Theme, CircularProgress } from '@material-ui/core';
-import { Marger, errorToText } from '../../helpers';
+import { withStyles, Grid, Typography, Paper, TextField, Button, withTheme, Theme, CircularProgress, Slider, FormControl, FormGroup, FormControlLabel, Switch, Box, Divider, createMuiTheme, ThemeProvider } from '@material-ui/core';
+import { Marger, errorToText, FaIcon, downloadBlob } from '../../helpers';
 
 import { Stage, Component as NGLComponent } from '@mmsb/ngl';
 import * as ngl from '@mmsb/ngl';
@@ -9,9 +9,23 @@ import { SimpleSelect } from '../../Shared';
 import Settings from '../../Settings';
 import ApiHelper from '../../ApiHelper';
 import { toast } from '../Toaster';
+import RepresentationElement from '@mmsb/ngl/declarations/component/representation-element';
+import { RepresentationParameters } from '@mmsb/ngl/declarations/representation/representation';
+import JSZip from 'jszip';
+import ToggleButton from '@material-ui/lab/ToggleButton';
+import ToggleButtonGroup from '@material-ui/lab/ToggleButtonGroup';
+import { blue } from '@material-ui/core/colors';
+import { applyUserRadius } from '../../nglhelpers';
 
 // @ts-ignore
 window.NGL = ngl;
+
+interface MartinizeFile {
+  name: string;
+  content: string;
+}
+
+type ViableRepresentation = 'ball+stick' | 'ribbon' | 'surface' | 'spacefill' | 'line';
 
 interface MBProps {
   classes: Record<string, string>;
@@ -24,9 +38,11 @@ interface MBState {
 
   all_atom_pdb?: File;
   all_atom_ngl?: NGLComponent;
+  all_atom_representations: RepresentationElement[];
 
-  coase_grain_pdb?: Blob;
-  coase_grain_ngl?: NGLComponent;
+  coarse_grain_pdb?: Blob;
+  coarse_grain_ngl?: NGLComponent;
+  coarse_grain_representations: RepresentationElement[];
 
   builder_force_field: string;
   builder_mode: 'go' | 'classic' | 'elastic';
@@ -37,6 +53,20 @@ interface MBState {
   builder_ea: string;
   builder_ep: string;
   builder_em: string;
+
+  all_atom_opacity: number;
+  all_atom_visible: boolean;
+  coarse_grain_opacity: number;
+  coarse_grain_visible: boolean;
+  representations: ViableRepresentation[];
+  
+  files?: {
+    pdb: MartinizeFile;
+    itps: MartinizeFile[];
+  };
+  generating_files: boolean;
+
+  theme: Theme;
 }
 
 class MartinizeBuilder extends React.Component<MBProps, MBState> {
@@ -51,6 +81,22 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     builder_ea: '0',
     builder_ep: '0',
     builder_em: '0',
+    coarse_grain_representations: [],
+    all_atom_representations: [],
+    coarse_grain_opacity: 1,
+    coarse_grain_visible: true,
+    all_atom_visible: true,
+    all_atom_opacity: .3,
+    generating_files: false,
+    representations: ['ball+stick'],
+    theme: createMuiTheme({
+      palette: {
+        type: 'light',
+        background: {
+          default: '#fafafa',
+        },
+      },
+    }),
   };
   protected ngl_stage?: Stage;
 
@@ -65,9 +111,77 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     }, { passive: false });
   }
 
-  componentWillUnmount() {
 
+  /* SET SETTINGS FOR REPRESENTATIONS */
+
+  setCoarseGrainRepresentation(parameters: Partial<RepresentationParameters>) {
+    for (const repr of this.state.coarse_grain_representations) {
+      repr.setParameters(parameters);
+    }
   }
+
+  setAllAtomRepresentation(parameters: Partial<RepresentationParameters>) {
+    for (const repr of this.state.all_atom_representations) {
+      repr.setParameters(parameters);
+    }
+  }
+
+  setRepresentation(parameters: Partial<RepresentationParameters>) {
+    this.setCoarseGrainRepresentation(parameters);
+    this.setAllAtomRepresentation(parameters);
+  }
+
+  changeTheme(hint: 'light' | 'dark') {
+    const bgclr = hint === 'dark' ? '#303030' : '#fafafa';
+
+    this.setState({
+      theme: createMuiTheme({
+        palette: {
+          type: hint,
+          background: {
+            default: bgclr,
+          },
+          primary: {
+            main: blue[600]
+          },
+        },
+      })
+    });
+
+    this.ngl_stage!.setParameters({ backgroundColor: bgclr });
+  }
+
+  initCoarseGrainPdb(pdb: Blob, radius: { [atom: string]: number }) {
+    // Apply the NGL radius
+    applyUserRadius(radius);
+
+    this.ngl_stage!.loadFile(pdb, { ext: 'pdb', name: 'coarse_grain.pdb' })
+      .then(component => {
+        if (component) {
+          const repr: RepresentationElement = component.addRepresentation("ball+stick", undefined);
+          // repr.name => "ball+stick"
+
+          component.autoView(500);
+
+          this.setAllAtomRepresentation({ opacity: .3 });
+
+          // Register the component
+          this.setState({
+            running: 'done',
+            coarse_grain_pdb: pdb,
+            coarse_grain_representations: [...this.state.coarse_grain_representations, repr],
+            coarse_grain_ngl: component,
+          });
+        }
+      })
+      .catch((e: any) => {
+        console.error(e);
+        toast("Unable to load generated PDB. Please retry by re-loading the page.");
+      });
+  }
+
+
+  /* EVENTS */
 
   handleMartinizeBegin = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -102,20 +216,20 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
     ApiHelper.request('molecule/martinize', {
       parameters: form_data,
-      mode: 'text',
       method: 'POST',
       body_mode: 'multipart'
     }) 
-      .then((pdb_generated: string) => {
-        const cg_pdb = new Blob([pdb_generated]);
+      .then((res: { pdb: MartinizeFile, itps: MartinizeFile[], radius: { [name: string]: number } }) => {
+        const cg_pdb = new Blob([res.pdb.content]);
 
         // Init PDB scene
-        this.initCoarseGrainPdb(cg_pdb);
+        this.initCoarseGrainPdb(cg_pdb, res.radius);
+        this.setState({ files: res });
       })
       .catch(e => {
         console.log(e);
         if (Array.isArray(e)) {
-          const error = JSON.parse(e[1]);
+          const error = e[1];
 
           this.setState({
             running: 'martinize_error',
@@ -130,31 +244,6 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       }) 
   };
 
-  initCoarseGrainPdb(pdb: Blob) {
-    this.ngl_stage!.loadFile(pdb, { ext: 'pdb', name: 'coarse_grain.pdb' })
-      .then((component: NGLComponent) => {
-        if (component) {
-          component.addRepresentation("ball+stick", undefined);
-          // component.addRepresentation("cartoon", undefined);
-          component.autoView();
-
-          this.state.all_atom_ngl?.eachRepresentation((rep: any) => {
-            rep.setParameters({ opacity: .3 });
-          });
-
-          // Register the component
-          this.setState({
-            running: 'done',
-            coase_grain_pdb: pdb,
-          });
-        }
-      })
-      .catch((e: any) => {
-        console.error(e);
-        toast("Unable to load generated PDB. Please retry by re-loading the page.");
-      });
-  }
-
   allAtomPdbChange = (e: React.FormEvent<HTMLInputElement>) => {
     const file = e.currentTarget.files?.[0];
 
@@ -165,17 +254,18 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       });
 
       this.ngl_stage!.loadFile(file)
-        .then((component: NGLComponent) => {
+        .then(component => {
           if (component) {
-            component.addRepresentation("ball+stick", undefined);
-            // component.addRepresentation("cartoon", undefined);
+            const repr: RepresentationElement = component.addRepresentation("ball+stick", undefined);
+
             component.autoView();
     
             // Register the component
             this.setState({
               all_atom_ngl: component,
               all_atom_pdb: file,
-              running: 'martinize_params'
+              running: 'martinize_params',
+              all_atom_representations: [...this.state.all_atom_representations, repr],
             });
           }
         })
@@ -198,6 +288,154 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       });
     }
   };
+
+  onAllAtomOpacityChange = (_: any, value: number | number[]) => {
+    if (Array.isArray(value)) {
+      value = value[0];
+    }
+
+    this.setState({
+      all_atom_opacity: value / 100
+    });
+
+    this.setAllAtomRepresentation({ opacity: value / 100 });
+  };
+
+  onAllAtomVisibilityChange = (_: any, checked: boolean) => {
+    for (const repr of this.state.all_atom_representations) {
+      repr.setVisibility(checked);
+    }
+    
+    this.setState({ all_atom_visible: checked });
+  };
+
+  onCoarseGrainedOpacityChange = (_: any, value: number | number[]) => {
+    if (Array.isArray(value)) {
+      value = value[0];
+    }
+
+    this.setState({
+      coarse_grain_opacity: value / 100
+    });
+
+    this.setCoarseGrainRepresentation({ opacity: value / 100 });
+  };
+
+  onCoarseGrainedVisibilityChange = (_: any, checked: boolean) => {
+    for (const repr of this.state.coarse_grain_representations) {
+      repr.setVisibility(checked);
+    }
+
+    this.setState({ coarse_grain_visible: checked });
+  };
+
+  onMoleculeDownload = async () => {
+    if (!this.state.files) {
+      console.warn("Hey, files should be present in component when this method is called.");
+      return;
+    }
+
+    this.setState({ generating_files: true });
+
+    try {
+      const zip = new JSZip();
+      const files = this.state.files;
+  
+      zip.file(files.pdb.name, files.pdb.content);
+      const itp_dir = zip.folder('itp');
+      for (const itp of files.itps) {
+        itp_dir.file(itp.name, itp.content);
+      }
+  
+      const generated = await zip.generateAsync({
+        type: 'blob',
+        compression: 'DEFLATE',
+        compressionOptions: {
+          level: 7
+        }
+      });
+
+      const original_name = this.state.all_atom_pdb!.name;
+      const without_extension = original_name.slice(0, original_name.indexOf('.pdb')) + '-CG';
+
+      downloadBlob(generated, without_extension + '.zip');
+    } catch (e) {
+      console.warn("Failed to build zip.", e);
+    } finally {
+      this.setState({ generating_files: false });
+    }
+  };  
+
+  onRepresentationAdd = (type: ViableRepresentation) => {
+    const cmp_aa = this.state.all_atom_ngl!;
+    const cmp_coarse = this.state.coarse_grain_ngl!;
+
+    this.setState({
+      representations: [...this.state.representations, type],
+      all_atom_representations: [
+        ...this.state.all_atom_representations,
+        cmp_aa.addRepresentation(type, {
+          visible: this.state.all_atom_visible,
+          opacity: this.state.all_atom_opacity,
+        }),
+      ],
+      coarse_grain_representations: [
+        ...this.state.coarse_grain_representations,
+        cmp_coarse.addRepresentation(type, {
+          visible: this.state.coarse_grain_visible,
+          opacity: this.state.coarse_grain_opacity,
+        }),
+      ],
+    });
+  };
+
+  onRepresentationRemove = (type: ViableRepresentation) => {
+    const cmp_aa = this.state.all_atom_ngl!;
+    const cmp_coarse = this.state.coarse_grain_ngl!;
+
+    const current_all = this.state.all_atom_representations;
+    for (const repr of current_all.filter(e => e.name === type)) {
+      cmp_aa.removeRepresentation(repr);
+    }
+
+    const current_coarse = this.state.coarse_grain_representations;
+    for (const repr of current_coarse.filter(e => e.name === type)) {
+      cmp_coarse.removeRepresentation(repr);
+    }
+
+    this.setState({
+      representations: this.state.representations.filter(e => e !== type),
+      all_atom_representations: current_all.filter(e => e.name !== type),
+      coarse_grain_representations: current_coarse.filter(e => e.name !== type),
+    });
+  };
+
+  onRepresentationChange = (_: any, values: ViableRepresentation[]) => {
+    const actual = this.state.representations;
+
+    for (const value of values) {
+      if (!actual.find(e => e === value)) {
+        // new value !
+        this.onRepresentationAdd(value);
+      }
+    }
+
+    for (const val of actual) {
+      if (!values.find(e => e === val)) {
+        // value deleted !
+        this.onRepresentationRemove(val);
+      }
+    }
+  };
+
+  onThemeChange = () => {
+    const is_dark = this.state.theme.palette.type === 'dark';
+
+    this.changeTheme(is_dark ? 'light' : 'dark');
+  };
+
+
+  /* RENDERING */
 
   allAtomLoading() {
     return (
@@ -231,7 +469,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
           Please load your all atom PDB here to start.
         </Typography>
 
-        <Marger size=".5rem" />
+        <Marger size="2rem" />
 
         <div style={{ textAlign: 'center' }}>
           <Button variant="outlined" color="primary" onClick={() => { (this.root.current!.querySelector('input[type="file"]') as HTMLInputElement).click(); }}>
@@ -314,9 +552,11 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
           <Marger size="2rem" />
 
-          <Button variant="outlined" color="primary" type="submit">
-            Submit
-          </Button>
+          <Box width="100%" justifyContent="flex-end" display="flex">
+            <Button variant="outlined" color="primary" type="submit">
+              Submit
+            </Button>
+          </Box>
         </Grid>
       </div>
     );
@@ -415,6 +655,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     );
   }
 
+  /** Happening when molecule is ready, and the two coarse grain + all atom models are showed. */
   generated() {
     return (
       <React.Fragment>
@@ -423,38 +664,171 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
         <Typography variant="h6" color="primary" align="center">
           Your molecule has been successfully generated.
         </Typography>
+
+        <Marger size="2rem" />
+
+        {/* Theme */}
+        <Typography variant="h6">
+          Theme
+        </Typography>
+        <FormControl component="fieldset">
+          <FormGroup>
+            <FormControlLabel
+              control={<Switch checked={this.state.theme.palette.type === 'dark'} onChange={this.onThemeChange} value="dark" />}
+              label="Dark theme"
+            />
+          </FormGroup>
+        </FormControl>
+
+        <Marger size="2rem" />
+
+        {/* All Atom Settings */}
+        <Typography variant="h6">
+          All atom
+        </Typography>
+
+        <Typography gutterBottom>
+          Opacity
+        </Typography>
+        <Slider
+          value={this.state.all_atom_opacity * 100}
+          valueLabelDisplay="auto"
+          step={10}
+          marks
+          min={10}
+          max={100}
+          onChange={this.onAllAtomOpacityChange}
+          color="secondary"
+        />
+
+        <FormControl component="fieldset">
+          <FormGroup>
+            <FormControlLabel
+              control={<Switch checked={this.state.all_atom_visible} onChange={this.onAllAtomVisibilityChange} value="visible" />}
+              label="Visible"
+            />
+          </FormGroup>
+        </FormControl>
+
+        <Marger size="1rem" />
+
+        {/* Coarse Grained Settings */}
+        <Typography variant="h6">
+          Coarse grained
+        </Typography>
+
+        <Typography gutterBottom>
+          Opacity
+        </Typography>
+        <Slider
+          value={this.state.coarse_grain_opacity * 100}
+          valueLabelDisplay="auto"
+          step={10}
+          marks
+          min={10}
+          max={100}
+          onChange={this.onCoarseGrainedOpacityChange}
+          color="secondary"
+        />
+
+        <FormControl component="fieldset">
+          <FormGroup>
+            <FormControlLabel
+              control={<Switch checked={this.state.coarse_grain_visible} onChange={this.onCoarseGrainedVisibilityChange} value="visible" />}
+              label="Visible"
+            />
+          </FormGroup>
+        </FormControl>
+
+        <Marger size="1rem" />
+
+        <Typography variant="h6">
+          Representations
+        </Typography>
+
+        <Marger size=".5rem" />
+
+        <div>
+          {/* 'ball+stick' | 'ribbon' | 'surface' | 'spacefill' | 'line' */}
+          <ToggleButtonGroup
+            value={this.state.representations}
+            onChange={this.onRepresentationChange}
+          >
+            <ToggleButton value="ball+stick">
+              <FaIcon atom />
+            </ToggleButton>
+            <ToggleButton value="ribbon">
+              <FaIcon ribbon />
+            </ToggleButton>
+            <ToggleButton value="surface">
+              <FaIcon bullseye />
+            </ToggleButton>
+            <ToggleButton value="spacefill">
+              <FaIcon expand-alt />
+            </ToggleButton>
+            <ToggleButton value="line">
+              <FaIcon project-diagram />
+            </ToggleButton>
+          </ToggleButtonGroup>
+        </div>
+
+        <Marger size="1rem" />
+
+        <Divider style={{ width: '100%' }} />
+
+        <Marger size="1rem" />
+
+        <Box alignContent="center" justifyContent="center" width="100%">
+          <Button 
+            style={{ width: '100%' }} 
+            color="primary" 
+            disabled={this.state.generating_files}
+            onClick={this.onMoleculeDownload}
+          >
+            <FaIcon download /> <span style={{ marginLeft: '.6rem' }}>Download</span>
+          </Button>
+        </Box>
       </React.Fragment>
     );
   }
 
   render() {
     const classes = this.props.classes;
+    const is_dark = this.state.theme.palette.type === 'dark';
 
     return (
-      <Grid container component="main" className={classes.root} ref={this.root}>
-        <Grid item sm={8} md={4} component={Paper} elevation={6} style={{ zIndex: 3 }} square>
-          <div className={classes.paper}>
-            <Typography component="h1" variant="h5">
-              Build a molecule
-            </Typography>
+      <ThemeProvider theme={this.state.theme}>
+        <Grid 
+          container 
+          component="main" 
+          className={classes.root} 
+          ref={this.root} 
+          style={{ backgroundColor: this.state.theme.palette.background.default }}
+        >
+          <Grid item sm={8} md={4} component={Paper} elevation={6} style={{ zIndex: 3, backgroundColor: is_dark ? '#232323' : '' }} square>
+            <div className={classes.paper}>
+              <Typography component="h1" variant="h5">
+                Build a molecule
+              </Typography>
 
-            {/* Forms... */}
-            {this.state.running === 'pdb' && this.allAtomPdbLoader()}
+              {/* Forms... */}
+              {this.state.running === 'pdb' && this.allAtomPdbLoader()}
 
-            {this.state.running === 'pdb_read' && this.allAtomLoading()}
+              {this.state.running === 'pdb_read' && this.allAtomLoading()}
 
-            {(this.state.running === 'martinize_params' || this.state.running === 'martinize_error') && this.martinizeForm()}
+              {(this.state.running === 'martinize_params' || this.state.running === 'martinize_error') && this.martinizeForm()}
 
-            {this.state.running === 'martinize_generate' && this.martinizeGenerating()}
+              {this.state.running === 'martinize_generate' && this.martinizeGenerating()}
 
-            {this.state.running === 'done' && this.generated()}
-          </div>
+              {this.state.running === 'done' && this.generated()}
+            </div>
+          </Grid>
+
+          <Grid item sm={4} md={8} className={classes.image}>
+            <div id="ngl-stage" style={{ height: '99%' }} />
+          </Grid>
         </Grid>
-
-        <Grid item sm={4} md={8} className={classes.image}>
-          <div id="ngl-stage" style={{ height: '99%' }} />
-        </Grid>
-      </Grid>
+      </ThemeProvider>
     );
   }
 }

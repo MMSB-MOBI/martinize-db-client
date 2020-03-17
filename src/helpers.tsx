@@ -2,6 +2,7 @@ import ApiHelper, { APIError } from "./ApiHelper";
 import { CategoryTree } from "./types/settings";
 import React from 'react';
 import { toast } from "./components/Toaster";
+import { Icon } from "@material-ui/core";
 
 export function errorToText(error: [any, APIError] | APIError | number | undefined) {
   if (!error) {
@@ -235,4 +236,41 @@ export function dateFormatter(schema: string, date = new Date()) : string {
   }
 
   return str;
+}
+
+
+export function FaIcon(props: any) {
+  let icon: string = "";
+  let injected: any = {};
+
+  for (const k in props) {
+    if (props[k] === true) {
+      icon = k;
+    }
+    else {
+      injected[k] = props[k];
+    }
+  }
+
+  return (
+    <Icon className={"fas fa-" + icon} {...injected} />
+  );
+}
+
+export function downloadBlob(file: Blob, filename: string) {
+  const url = URL.createObjectURL(file);
+  const link = document.createElement('a');
+  link.style.display = 'none';
+  link.download = filename;
+  link.href = url;
+
+  document.body.appendChild(link);
+
+  link.click();
+
+  setTimeout(() => {
+    URL.revokeObjectURL(url);
+    document.body.removeChild(link);
+  }, 1500);
+
 }
