@@ -1,9 +1,9 @@
-cd 
+cd ~/IBCP
 
 if [ ! -d "/path/to/dir" ]
 then
   # Create the NGL repo
-  git clone https://github.com/arose/ngl.git
+  git clone https://github.com/alkihis/ngl.git
 fi
 
 cd ngl
@@ -12,7 +12,7 @@ cd ngl
 git pull
 npm i
 git commit -am "Updated NGL"
-tsc --emitDeclarationOnly --project tsconfig.json -d --declarationDir types
+npm run dts
 
 # Copy the types to the NPM module
-cp -R types/* ../martinize-db-client/node_modules/ngl/dist/
+cp -R -f declarations ~/Prog/martinize-db-client/node_modules/@mmsb/ngl/
