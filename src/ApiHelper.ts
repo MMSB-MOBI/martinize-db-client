@@ -3,8 +3,20 @@ import { API_URL, DEBUG_MODE } from "./constants";
 
 const LATENCY_ON_EVERY_REQUEST = 500;
 
-export interface RequestPromise<T> extends Promise<T> {
-  request: XMLHttpRequest;
+export class RequestPromise<T> extends Promise<T> {
+  constructor(
+    executor: (resolve: (value: T) => void, reject: (reason?: any) => void) => void, 
+    public request: XMLHttpRequest
+  ) {
+    super(executor);
+  }
+
+  /**
+   * Abort the request.
+   */
+  abort() {
+    this.request.abort();
+  }
 }
 
 export const ApiHelper = new class APIHelper {
@@ -247,7 +259,7 @@ export const ApiHelper = new class APIHelper {
     // START THE REQUEST
     // ----------------
 
-    const res = new Promise((resolve, reject) => {
+    const res = new RequestPromise<any>((resolve, reject) => {
       req.onreadystatechange = () => {
         if (req.readyState === 4) {
           resolve(req.response);
@@ -256,7 +268,7 @@ export const ApiHelper = new class APIHelper {
       req.onerror = e => {
         reject(e);
       };
-    }) as RequestPromise<any>;
+    }, req);
 
     // Set the request inside the promise 
     // (as non-enumerable/configurable/writable)

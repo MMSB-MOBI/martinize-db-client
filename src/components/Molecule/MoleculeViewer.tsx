@@ -5,6 +5,7 @@ import { toast } from '../Toaster';
 import { Stage, Component as NGLComponent } from '@mmsb/ngl';
 import { Theme, withTheme, CircularProgress } from '@material-ui/core';
 import ApiHelper, { RequestPromise } from '../../ApiHelper';
+import { applyUserRadius, UserRadius } from '../../nglhelpers';
 
 // Component types
 type MVProps = { id: string, theme: Theme, };
@@ -12,8 +13,6 @@ type MVState = {
   component?: NGLComponent, 
   loading: boolean, 
   file?: Blob,
-  download_percentage: number,
-  request?: RequestPromise<Blob>,
 };
 
 class MoleculeViewer extends React.Component<MVProps, MVState> {
@@ -24,8 +23,6 @@ class MoleculeViewer extends React.Component<MVProps, MVState> {
     loading: false,
     component: undefined,
     file: undefined,
-    download_percentage: 0,
-    request: undefined,
   };
 
   componentDidMount() {
@@ -59,58 +56,47 @@ class MoleculeViewer extends React.Component<MVProps, MVState> {
   }
 
   protected getUrlFromId() {
-    return "molecule/representation/" + this.props.id + ".pdb";
+    return "molecule/representation/" + this.props.id;
   }
 
-  protected initStage() {
+  protected async initStage() {
     this.setState({ loading: true });
     this.ngl_stage!.removeAllComponents();
 
-    // Cancel current request
-    if (this.state.request) {
-      const req = this.state.request.request;
-      req.onprogress = null;
-      req.onerror = null;
-      req.abort();
-    }
-
     // Download a new file
-    const request = ApiHelper.rawRequest(this.getUrlFromId(), {
-      onprogress: download_percentage => {
-        this.setState({ download_percentage });
-      },
-      type: 'blob',
-      latency: 250,
+    const request: Promise<{ radius: UserRadius, pdb: string }> = ApiHelper.request(this.getUrlFromId(), {
+      mode: 'json'
     });
 
     this.setState({
-      download_percentage: 1,
       file: undefined,
-      request
     });
 
-    request.then((blob: Blob) => {
-      this.setState({ download_percentage: 100 });
+    request
+      .then(({ radius, pdb }) => {
+        // Apply the radius to NGL
+        applyUserRadius(radius);
 
-      this.ngl_stage!.loadFile(blob, { ext: 'pdb', name: this.props.id + ".pdb" })
-        .then((component: NGLComponent | void) => {
-          if (component) {
-            component.addRepresentation("ball+stick", undefined);
-            component.addRepresentation("cartoon", undefined);
-            component.autoView();
-    
-            // Register the component
-            this.setState({ component });
-          }
-        })
-        .catch((e: any) => {
-          toast("Unable to initialize molecule viewer", "error");
-          console.error(e);
-        })
-        .finally(() => {
-          this.setState({ loading: false, download_percentage: 0, file: undefined, request: undefined });
-        });
-    });
+        // Load the PDB into NGL
+        return this.ngl_stage!.loadFile(new Blob([pdb]), { ext: 'pdb', name: this.props.id + ".pdb" })
+          .then((component: NGLComponent | void) => {
+            if (component) {
+              component.addRepresentation("ball+stick", undefined);
+              component.addRepresentation("cartoon", undefined);
+              component.autoView();
+      
+              // Register the component
+              this.setState({ component });
+            }
+          });
+      })
+      .catch((e: any) => {
+        toast("Unable to initialize molecule viewer", "error");
+        console.error(e);
+      })
+      .finally(() => {
+        this.setState({ loading: false, file: undefined });
+      });
   }
 
   render() {
@@ -120,7 +106,7 @@ class MoleculeViewer extends React.Component<MVProps, MVState> {
         style={{ width: '100%', height: '100%', minHeight: '300px', borderRadius: '8px', border: '1px #82828278 dashed', position: 'relative' }} 
       >
         {this.state.loading && <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 999 }}>
-          <CircularProgress variant="static" value={this.state.download_percentage} />
+          <CircularProgress variant="determinate" value={50} />
         </div>}
       </div>
     );

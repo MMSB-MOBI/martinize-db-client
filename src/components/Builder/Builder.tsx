@@ -25,7 +25,7 @@ interface MartinizeFile {
   content: string;
 }
 
-type ViableRepresentation = 'ball+stick' | 'ribbon' | 'surface' | 'spacefill' | 'line';
+type ViableRepresentation = 'ball+stick' | 'ribbon' | 'surface' | 'hyperball' | 'line';
 
 interface MBProps {
   classes: Record<string, string>;
@@ -752,7 +752,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
         <Marger size=".5rem" />
 
         <div>
-          {/* 'ball+stick' | 'ribbon' | 'surface' | 'spacefill' | 'line' */}
+          {/* 'ball+stick' | 'ribbon' | 'surface' | 'hyperball' | 'line' */}
           <ToggleButtonGroup
             value={this.state.representations}
             onChange={this.onRepresentationChange}
@@ -766,7 +766,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
             <ToggleButton value="surface">
               <FaIcon bullseye />
             </ToggleButton>
-            <ToggleButton value="spacefill">
+            <ToggleButton value="hyperball">
               <FaIcon expand-alt />
             </ToggleButton>
             <ToggleButton value="line">
