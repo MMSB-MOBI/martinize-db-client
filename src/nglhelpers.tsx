@@ -19,7 +19,7 @@ export function applyUserRadius(radius: UserRadius) {
     }
 
     atoms[atom] = i;
-    vdwradius[i] = radius[atom] * 10;
+    vdwradius[i] = radius[atom];
     console.log("Set atom", atom, "radius to", radius[atom]);
     i++;
   }

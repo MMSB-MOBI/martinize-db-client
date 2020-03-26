@@ -104,6 +104,14 @@ function DrawerElements(props: RouteComponentProps) {
     ],
     [
       {
+        path: '/builder',
+        link: true,
+        icon: 'atom',
+        text: 'Builder',
+      }
+    ],
+    [
+      {
         render: LogOutDialog,
         condition: !!Settings.logged,
       },

@@ -1,6 +1,7 @@
 import React from 'react';
-import { withStyles, Grid, Typography, Paper, TextField, Button, withTheme, Theme, CircularProgress, Slider, FormControl, FormGroup, FormControlLabel, Switch, Box, Divider, createMuiTheme, ThemeProvider } from '@material-ui/core';
+import { withStyles, Grid, Typography, Paper, TextField, Button, withTheme, Theme, CircularProgress, Slider, FormControl, FormGroup, FormControlLabel, Switch, Box, Divider, createMuiTheme, ThemeProvider, Link, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@material-ui/core';
 import { Marger, errorToText, FaIcon, downloadBlob } from '../../helpers';
+import { Link as RouterLink } from 'react-router-dom';
 
 import { Stage, Component as NGLComponent } from '@mmsb/ngl';
 import * as ngl from '@mmsb/ngl';
@@ -16,14 +17,11 @@ import ToggleButton from '@material-ui/lab/ToggleButton';
 import ToggleButtonGroup from '@material-ui/lab/ToggleButtonGroup';
 import { blue } from '@material-ui/core/colors';
 import { applyUserRadius } from '../../nglhelpers';
+import StashedBuildHelper, { MartinizeFile } from '../../StashedBuildHelper';
+import StashedBuild from './StashedBuild';
 
 // @ts-ignore
 window.NGL = ngl;
-
-interface MartinizeFile {
-  name: string;
-  content: string;
-}
 
 type ViableRepresentation = 'ball+stick' | 'ribbon' | 'surface' | 'hyperball' | 'line';
 
@@ -67,42 +65,20 @@ interface MBState {
     top: MartinizeFile;
   };
   generating_files: boolean;
+  saved: boolean;
+  want_reset: boolean;
+  want_go_back: boolean;
 
   theme: Theme;
 }
 
 class MartinizeBuilder extends React.Component<MBProps, MBState> {
-  state: MBState = {
-    running: 'pdb',
-    builder_force_field: 'martini22',
-    builder_mode: 'classic',
-    builder_positions: 'backbone',
-    builder_ef: '500',
-    builder_el: '0.5',
-    builder_eu: '0.9',
-    builder_ea: '0',
-    builder_ep: '0',
-    builder_em: '0',
-    coarse_grain_representations: [],
-    all_atom_representations: [],
-    coarse_grain_opacity: 1,
-    coarse_grain_visible: true,
-    all_atom_visible: true,
-    all_atom_opacity: .3,
-    generating_files: false,
-    representations: ['ball+stick'],
-    theme: createMuiTheme({
-      palette: {
-        type: 'light',
-        background: {
-          default: '#fafafa',
-        },
-      },
-    }),
-  };
+  state = this.original_state;
+
   protected ngl_stage?: Stage;
 
   protected root = React.createRef<HTMLDivElement>();
+  protected go_back_btn = React.createRef<any>();
 
   componentDidMount() {
     this.ngl_stage = new Stage("ngl-stage", { backgroundColor: this.props.theme.palette.background.default });
@@ -111,6 +87,114 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     document.getElementById('ngl-stage')!.addEventListener('wheel', (e) => {
       e.preventDefault();
     }, { passive: false });
+  }
+
+  protected get original_state() : MBState {
+    return {
+      running: 'pdb',
+      builder_force_field: 'martini22',
+      builder_mode: 'classic',
+      builder_positions: 'backbone',
+      builder_ef: '500',
+      builder_el: '0.5',
+      builder_eu: '0.9',
+      builder_ea: '0',
+      builder_ep: '0',
+      builder_em: '0',
+      coarse_grain_representations: [],
+      all_atom_representations: [],
+      coarse_grain_opacity: 1,
+      coarse_grain_visible: true,
+      all_atom_visible: true,
+      all_atom_opacity: .3,
+      generating_files: false,
+      representations: ['ball+stick'],
+      theme: createMuiTheme({
+        palette: {
+          type: 'light',
+          background: {
+            default: '#fafafa',
+          },
+        },
+      }),
+      saved: false,
+      want_reset: false,
+      want_go_back: false,
+    };
+  }
+
+  /* LOAD, RESET AND SAVE STAGES */
+  save() {
+    const saver = new StashedBuildHelper();
+
+    if (!this.state.files) {
+      return;
+    }
+
+    this.setState({
+      saved: true
+    });
+
+    return saver.add({
+      info: {
+        created_at: new Date(),
+        name: this.state.all_atom_pdb!.name,
+        builder_force_field: this.state.builder_force_field,
+        builder_mode: this.state.builder_mode,
+        builder_positions: this.state.builder_positions,
+        builder_ef: this.state.builder_ef,
+        builder_el: this.state.builder_el,
+        builder_ea: this.state.builder_ea,
+        builder_eu: this.state.builder_eu,
+        builder_ep: this.state.builder_ep,
+        builder_em: this.state.builder_em,
+      },
+      all_atom: this.state.all_atom_pdb!,
+      coarse_grained: this.state.files.pdb,
+      itp_files: this.state.files.itps,
+      top_file: this.state.files.top,
+      radius: this.state.files.radius,
+    });
+  }
+
+  async load(uuid: string) {
+    const saver = new StashedBuildHelper();
+    
+    const save = await saver.get(uuid);
+
+    if (!save) {
+      return;
+    }
+
+    this.initAllAtomPdb(save.all_atom);
+
+    const infos = { ...save.info };
+    delete infos.created_at;
+    delete infos.name;
+
+    // @ts-ignore
+    this.setState(infos);
+
+    const cg_pdb = new Blob([save.coarse_grained.content]);
+
+    // Init PDB scene
+    this.initCoarseGrainPdb(cg_pdb, save.radius);
+    this.setState({ 
+      files: {
+        top: save.top_file,
+        itps: save.itp_files,
+        pdb: save.coarse_grained,
+        radius: save.radius,
+      },
+      saved: true,
+    });
+  }
+
+  reset() {
+    if (this.ngl_stage)
+      this.ngl_stage.removeAllComponents();
+    this.setState(this.original_state);
+    this.changeTheme('light');
   }
 
 
@@ -143,9 +227,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
           background: {
             default: bgclr,
           },
-          primary: {
-            main: blue[600]
-          },
+          primary: hint === 'dark' ? { main: blue[600] } : undefined,
         },
       })
     });
@@ -179,6 +261,24 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       .catch((e: any) => {
         console.error(e);
         toast("Unable to load generated PDB. Please retry by re-loading the page.");
+      });
+  }
+
+  initAllAtomPdb(file: File) {
+    return this.ngl_stage!.loadFile(file)
+      .then(component => {
+        if (component) {
+          const repr: RepresentationElement = component.addRepresentation("ball+stick", undefined);
+
+          component.autoView();
+  
+          // Register the component
+          this.setState({
+            all_atom_ngl: component,
+            all_atom_pdb: file,
+            all_atom_representations: [...this.state.all_atom_representations, repr],
+          });
+        }
       });
   }
 
@@ -255,21 +355,11 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
         running: 'pdb_read'
       });
 
-      this.ngl_stage!.loadFile(file)
-        .then(component => {
-          if (component) {
-            const repr: RepresentationElement = component.addRepresentation("ball+stick", undefined);
-
-            component.autoView();
-    
-            // Register the component
-            this.setState({
-              all_atom_ngl: component,
-              all_atom_pdb: file,
-              running: 'martinize_params',
-              all_atom_representations: [...this.state.all_atom_representations, repr],
-            });
-          }
+      this.initAllAtomPdb(file)
+        .then(() => {
+          this.setState({
+            running: 'martinize_params',
+          });
         })
         .catch((e: any) => {
           console.error(e);
@@ -277,7 +367,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
             running: 'pdb',
             error: e
           });
-        }) 
+        });
     }
     else {
       if (this.state.all_atom_ngl)
@@ -437,6 +527,40 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     this.changeTheme(is_dark ? 'light' : 'dark');
   };
 
+  onMoleculeStash = () => {
+    // Save the current molecule
+    this.save();
+    toast("Your molecule has been saved.", "info");
+  };
+
+  onWantReset = () => {
+    this.setState({
+      want_reset: true
+    });
+  };
+
+  onWantResetCancel = () => {
+    this.setState({ want_reset: false });
+  };
+
+  onWantGoBack = (e: React.MouseEvent) => {
+    // Don't go to #!
+    e.preventDefault();
+
+    this.setState({
+      want_go_back: true
+    });
+  };
+
+  onWantGoBackCancel = () => {
+    this.setState({ want_go_back: false });
+  };
+
+  onGoBack = () => {
+    // Click on the hidden link
+    this.go_back_btn.current.click();
+  };
+
 
   /* RENDERING */
 
@@ -460,7 +584,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
   allAtomPdbLoader() {
     return (
-      <div>
+      <div style={{ textAlign: 'center' }}>
         <Marger size="2rem" />
 
         {this.state.error && <Typography variant="body1" color="error">
@@ -472,6 +596,13 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
           Please load your all atom PDB here to start.
         </Typography>
 
+        <Marger size="1rem" />
+
+        <Typography variant="body2">
+          Here, you can transform a all atom molecule, stored in a PDB file format, in a coarse-grained file.
+          You will have access to a generated PDB, with required ITP and TOP files in order to use the it in GROMACS.
+        </Typography>
+
         <Marger size="2rem" />
 
         <div style={{ textAlign: 'center' }}>
@@ -480,6 +611,14 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
           </Button>
           <input type="file" style={{ display: 'none' }} onChange={this.allAtomPdbChange} />
         </div>
+
+        <Marger size="2rem" />
+
+        <Divider />
+
+        <Marger size="1rem" />
+
+        <StashedBuild onSelect={uuid => this.load(uuid)} />
       </div>
     );
   }
@@ -489,7 +628,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
     return (
       <div>
-        <Marger size="2rem" />
+        <Marger size="1rem" />
 
         {this.state.running === 'martinize_error' && this.state.error && <React.Fragment>
 
@@ -555,7 +694,11 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
           <Marger size="2rem" />
 
-          <Box width="100%" justifyContent="flex-end" display="flex">
+          <Box width="100%" justifyContent="space-between" display="flex">
+            <Button variant="outlined" color="secondary" type="button" onClick={() => this.reset()}>
+              Back
+            </Button>
+
             <Button variant="outlined" color="primary" type="submit">
               Submit
             </Button>
@@ -662,13 +805,19 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
   generated() {
     return (
       <React.Fragment>
-        <Marger size="2rem" />
+        {this.wantResetModal()}
 
-        <Typography variant="h6" color="primary" align="center">
-          Your molecule has been successfully generated.
-        </Typography>
+        <Marger size="1rem" />
 
-        <Marger size="2rem" />
+        <Button 
+          style={{ width: '100%' }} 
+          color="primary" 
+          onClick={this.onWantReset}
+        >
+          <FaIcon redo-alt /> <span style={{ marginLeft: '.6rem' }}>Restart builder</span>
+        </Button>
+
+        <Marger size="1rem" />
 
         {/* Theme */}
         <Typography variant="h6">
@@ -784,6 +933,17 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
         <Box alignContent="center" justifyContent="center" width="100%">
           <Button 
             style={{ width: '100%' }} 
+            color="secondary" 
+            disabled={this.state.saved}
+            onClick={this.onMoleculeStash}
+          >
+            <FaIcon save /> <span style={{ marginLeft: '.6rem' }}>Save</span>
+          </Button>
+
+          <Marger size="1rem" />
+
+          <Button 
+            style={{ width: '100%' }} 
             color="primary" 
             disabled={this.state.generating_files}
             onClick={this.onMoleculeDownload}
@@ -791,8 +951,56 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
             <FaIcon download /> <span style={{ marginLeft: '.6rem' }}>Download</span>
           </Button>
         </Box>
+
+
       </React.Fragment>
     );
+  }
+
+  wantResetModal() {
+    return (
+      <Dialog open={this.state.want_reset} onClose={this.onWantResetCancel}>
+        <DialogTitle>
+          Restart molecule builder ?
+        </DialogTitle>
+
+        <DialogContent>
+          <DialogContentText>
+            You will lose unsaved actions.
+          </DialogContentText>
+          <DialogContentText>
+            If you want to use this molecule in Membrane Builder or get back to this page later,
+            you must save the molecule firt, using the appropriate button.
+          </DialogContentText>
+        </DialogContent>
+
+        <DialogActions>
+          <Button color="primary" onClick={this.onWantResetCancel}>Cancel</Button>
+          <Button color="secondary" onClick={() => this.reset()}>Restart builder</Button>
+        </DialogActions>
+      </Dialog>
+    );
+  }
+
+  renderModalBackToDatabase() {
+    return (
+      <Dialog open={!!this.state.want_go_back} onClose={this.onWantGoBackCancel}>
+        <DialogTitle>
+          Get back to database ?
+        </DialogTitle>
+
+        <DialogContent>
+          <DialogContentText>
+            You will definitively lose unsaved changes made into Molecule Builder.
+          </DialogContentText>
+        </DialogContent>
+
+        <DialogActions>
+          <Button color="primary" onClick={this.onWantGoBackCancel}>Cancel</Button>
+          <Button color="secondary" onClick={this.onGoBack}>Go back</Button>
+        </DialogActions>
+      </Dialog>
+    )
   }
 
   render() {
@@ -801,6 +1009,8 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
     return (
       <ThemeProvider theme={this.state.theme}>
+        {this.renderModalBackToDatabase()}
+
         <Grid 
           container 
           component="main" 
@@ -810,9 +1020,28 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
         >
           <Grid item sm={8} md={4} component={Paper} elevation={6} style={{ zIndex: 3, backgroundColor: is_dark ? '#232323' : '' }} square>
             <div className={classes.paper}>
-              <Typography component="h1" variant="h5">
-                Build a molecule
-              </Typography>
+              <div className={classes.header}>
+                <Typography component="h1" variant="h3" align="center" style={{ fontWeight: 700, fontSize: '2.5rem', marginBottom: '1rem' }}>
+                  Build a molecule
+                </Typography>
+
+                <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+                  <Link 
+                    href="#!" 
+                    // When state is initial state (main loader), don't show the confirm modal
+                    onClick={this.state.running !== 'pdb' ? this.onWantGoBack : this.onGoBack}  
+                  >
+                    <FaIcon arrow-left style={{ fontSize: '1rem' }} /> 
+                    <span style={{ marginLeft: '.7rem', fontSize: '1.1rem' }}>
+                      Back to MArtinize Database
+                    </span>
+                  </Link>
+
+                  <RouterLink ref={this.go_back_btn} to="/" style={{ display: 'none' }} />
+                </div>
+
+                <Divider />
+              </div>
 
               {/* Forms... */}
               {this.state.running === 'pdb' && this.allAtomPdbLoader()}
@@ -842,9 +1071,14 @@ export default withStyles(theme => ({
   },
   paper: {
     margin: theme.spacing(8, 4),
+    marginTop: 0,
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
+  },
+  header: {
+    marginTop: '2rem',
+    width: '100%',
   },
   form: {
     width: '100%', // Fix IE 11 issue.

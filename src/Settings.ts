@@ -71,8 +71,12 @@ export const Settings = new class Settings {
     return this._login_promise;
   }
   
-  get martinize_variables() {
-    return this._settings!;
+  get martinize_variables() : SettingsJson {
+    return this._settings ?? {
+      force_fields: [],
+      martinize_versions: [],
+      category_tree: {}
+    };
   }
 
   get martinize_variables_promise() {
