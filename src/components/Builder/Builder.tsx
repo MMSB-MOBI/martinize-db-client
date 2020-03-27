@@ -120,6 +120,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       saved: false,
       want_reset: false,
       want_go_back: false,
+      error: undefined,
     };
   }
 
@@ -1018,7 +1019,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
           ref={this.root} 
           style={{ backgroundColor: this.state.theme.palette.background.default }}
         >
-          <Grid item sm={8} md={4} component={Paper} elevation={6} style={{ zIndex: 3, backgroundColor: is_dark ? '#232323' : '' }} square>
+          <Grid item sm={8} md={4} component={Paper} elevation={6} className={classes.side} style={{ backgroundColor: is_dark ? '#232323' : '' }} square>
             <div className={classes.paper}>
               <div className={classes.header}>
                 <Typography component="h1" variant="h3" align="center" style={{ fontWeight: 700, fontSize: '2.5rem', marginBottom: '1rem' }}>
@@ -1056,8 +1057,8 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
             </div>
           </Grid>
 
-          <Grid item sm={4} md={8} className={classes.image}>
-            <div id="ngl-stage" style={{ height: '99%' }} />
+          <Grid item sm={4} md={8}>
+            <div id="ngl-stage" style={{ height: 'calc(100% - 5px)' }} />
           </Grid>
         </Grid>
       </ThemeProvider>
@@ -1093,5 +1094,10 @@ export default withStyles(theme => ({
   },
   submit: {
     margin: theme.spacing(3, 0, 2),
+  },
+  side: {
+    zIndex: 3,
+    overflow: 'auto', 
+    maxHeight: '100vh',
   },
 }))(withTheme(MartinizeBuilder));

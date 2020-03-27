@@ -76,7 +76,7 @@ const Transition = React.forwardRef<unknown, TransitionProps>(function Transitio
 
 export default function AddMolecule(props: AddMoleculeProps) {
   // string if files are already set, File[] if we want to set new files.
-  const [files, setFiles] = React.useState<string | { itp: File[], pdb: File | undefined }>(props.from?.files ?? "");
+  const [files, setFiles] = React.useState<string | { itp: File[], pdb: File | undefined, top: File | undefined }>(props.from?.files ?? "");
   
   const [name, setName] = React.useState(props.from?.name ?? (props.parent?.name ?? ""));
   const [alias, setAlias] = React.useState(props.from?.alias ?? (props.parent?.alias ?? ""));
@@ -153,9 +153,12 @@ export default function AddMolecule(props: AddMoleculeProps) {
       if (!files.pdb) {
         return toast("PDB file is required.", "error")
       }
+      if (!files.top) {
+        return toast("TOP file is required.", "error")
+      }
     }
     else if (!files) {
-      return toast("You must specify ITP and PDB files.", "error");
+      return toast("You must specify ITP, TOP and PDB files.", "error");
     }
 
     if (!form.checkValidity()) {
@@ -184,7 +187,7 @@ export default function AddMolecule(props: AddMoleculeProps) {
       return toast("Form is not valid. Please check the fields.", "warning");
     }
 
-    let partial_molecule: Partial<Molecule> & { itp?: File[], pdb?: File } = {
+    let partial_molecule: Partial<Molecule> & { itp?: File[], pdb?: File, top?: File } = {
       name,
       alias,
       formula,
@@ -202,9 +205,11 @@ export default function AddMolecule(props: AddMoleculeProps) {
     else if (props.parent) {
       partial_molecule.parent = props.parent.id;
     }
+    
     if (typeof files === 'object') {
       partial_molecule.itp = files.itp;
       partial_molecule.pdb = files.pdb;
+      partial_molecule.top = files.top;
     }
     else {
       // This is a file ID reference, only for edit mode.
