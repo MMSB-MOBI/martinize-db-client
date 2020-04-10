@@ -33,6 +33,7 @@ interface MBProps {
 interface MBState {
   running: 'pdb' | 'pdb_read' | 'martinize_params' | 'martinize_generate' | 'martinize_error' | 'done';
   error?: any;
+  saver_modal: string | false;
 
   all_atom_pdb?: File;
   all_atom_ngl?: NGLComponent;
@@ -72,6 +73,17 @@ interface MBState {
   theme: Theme;
 }
 
+/**
+ * TODO: iterate over atoms in NGL
+ * 
+ * Access each coarse grained atom
+ * MoleculeBuilder.ngl_stage.compList[1].reprList[0].repr.structure
+ *  .eachAtom(a => atom...)  or  .atomIterator()
+ * 
+ * Access Three.js scene
+ * MoleculeBuilder.ngl_stage.viewer.scene
+ */
+
 class MartinizeBuilder extends React.Component<MBProps, MBState> {
   state = this.original_state;
 
@@ -92,7 +104,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
   protected get original_state() : MBState {
     return {
       running: 'pdb',
-      builder_force_field: 'martini22',
+      builder_force_field: 'martini304',
       builder_mode: 'classic',
       builder_positions: 'backbone',
       builder_ef: '500',
@@ -121,11 +133,12 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       want_reset: false,
       want_go_back: false,
       error: undefined,
+      saver_modal: false,
     };
   }
 
   /* LOAD, RESET AND SAVE STAGES */
-  save() {
+  save(name: string) {
     const saver = new StashedBuildHelper();
 
     if (!this.state.files) {
@@ -133,13 +146,16 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     }
 
     this.setState({
-      saved: true
+      saved: true,
+      saver_modal: false
     });
+
+    toast("Your molecule has been saved.", "info");
 
     return saver.add({
       info: {
         created_at: new Date(),
-        name: this.state.all_atom_pdb!.name,
+        name,
         builder_force_field: this.state.builder_force_field,
         builder_mode: this.state.builder_mode,
         builder_positions: this.state.builder_positions,
@@ -176,7 +192,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     // @ts-ignore
     this.setState(infos);
 
-    const cg_pdb = new Blob([save.coarse_grained.content]);
+    const cg_pdb = save.coarse_grained.content;
 
     // Init PDB scene
     this.initCoarseGrainPdb(cg_pdb, save.radius);
@@ -320,14 +336,18 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     ApiHelper.request('molecule/martinize', {
       parameters: form_data,
       method: 'POST',
-      body_mode: 'multipart'
+      body_mode: 'multipart',
+      mode: 'text',
     }) 
-      .then((res: { pdb: MartinizeFile, top: MartinizeFile, itps: MartinizeFile[], radius: { [name: string]: number } }) => {
-        const cg_pdb = new Blob([res.pdb.content]);
+      .then((res: string) => {
+        const data = martinizeOutputParser(res);
+        console.log(data);
+
+        const cg_pdb = data.pdb.content;
 
         // Init PDB scene
-        this.initCoarseGrainPdb(cg_pdb, res.radius);
-        this.setState({ files: res });
+        this.initCoarseGrainPdb(cg_pdb, data.radius);
+        this.setState({ files: data });
       })
       .catch(e => {
         console.log(e);
@@ -530,8 +550,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
   onMoleculeStash = () => {
     // Save the current molecule
-    this.save();
-    toast("Your molecule has been saved.", "info");
+    this.setState({ saver_modal: this.state.all_atom_pdb!.name.split('.')[0] })
   };
 
   onWantReset = () => {
@@ -1012,6 +1031,13 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       <ThemeProvider theme={this.state.theme}>
         {this.renderModalBackToDatabase()}
 
+        <MoleculeSaverModal 
+          open={!!this.state.saver_modal} 
+          onClose={() => this.setState({ saver_modal: false })}
+          onConfirm={name => this.save(name)}
+          defaultName={this.state.saver_modal || ""}
+        />
+
         <Grid 
           container 
           component="main" 
@@ -1101,3 +1127,71 @@ export default withStyles(theme => ({
     maxHeight: '100vh',
   },
 }))(withTheme(MartinizeBuilder));
+
+function MoleculeSaverModal(props: { 
+  defaultName: string,
+  open: boolean, 
+  onConfirm: (name: string) => void, 
+  onClose: () => void, 
+}) {
+  const [name, setName] = React.useState(props.defaultName);
+
+  React.useEffect(() => {
+    setName(props.defaultName);
+  }, [props.defaultName]);
+
+  return (
+    <Dialog open={props.open} onClose={props.onClose}>
+      <DialogTitle>
+        Save this molecule
+      </DialogTitle>
+      <DialogContent>
+        <DialogContentText>
+          You're about to save your molecule.
+          Please specify a save name.
+        </DialogContentText>
+       
+        <form onSubmit={e => { e.preventDefault(); props.onConfirm(name); }}>
+          <TextField
+            value={name}
+            onChange={e => setName(e.target.value)}
+            variant="outlined"
+            style={{ width: '100%' }}
+          />
+        </form>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={props.onClose} color="secondary">
+          Cancel
+        </Button>
+
+        <Button onClick={() => props.onConfirm(name)} color="primary">
+          Save
+        </Button>
+      </DialogActions>
+    </Dialog>
+  )
+}
+
+function martinizeOutputParser(input: string) : { pdb: MartinizeFile, top: MartinizeFile, itps: MartinizeFile[], radius: { [name: string]: number } } {
+  return JSON.parse(
+    input, 
+    function (key, value) {
+      if (key === 'content' && typeof value === 'string') {
+        // this refers to object in reviver that contains the {key} property 
+        // We can create a File object (that extends Blob)
+        if ('type' in this && 'name' in this) {
+          return new File([value], this.name, { type: this.type });
+        }
+
+        // Convert to blob
+        return new Blob([value]);
+      } 
+
+      return value;
+    }
+  );
+}
+
+// @ts-ignore
+window.Buffer = Buffer;

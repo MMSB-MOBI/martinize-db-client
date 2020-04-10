@@ -4,7 +4,7 @@ import { toast } from '../Toaster';
 // @ts-ignore
 import { Stage, Component as NGLComponent } from '@mmsb/ngl';
 import { Theme, withTheme, CircularProgress } from '@material-ui/core';
-import ApiHelper, { RequestPromise } from '../../ApiHelper';
+import ApiHelper from '../../ApiHelper';
 import { applyUserRadius, UserRadius } from '../../nglhelpers';
 
 // Component types

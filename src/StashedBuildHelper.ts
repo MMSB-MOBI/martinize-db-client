@@ -18,7 +18,7 @@ export interface StashedBuildInfo {
 
 export interface MartinizeFile {
   name: string;
-  content: string;
+  content: Blob;
 }
 
 export interface StashedBuild {

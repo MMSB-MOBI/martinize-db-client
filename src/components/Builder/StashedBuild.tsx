@@ -127,6 +127,10 @@ export default class StashedBuild extends React.Component<StashedBuildProps, Sta
       <React.Fragment>
         {this.renderModalDelete()}
 
+        <Typography variant="h6">
+          Saved molecules
+        </Typography>
+
         <List>
           {Object.entries(this.state.available).map(([uuid, save]) => <ListItem key={uuid} button onClick={() => this.props.onSelect(uuid)}>
             <ListItemText 
