@@ -1,6 +1,11 @@
 import LocalForage from 'localforage';
 import uuid from 'uuid/v4';
 
+/**
+ * Tuple of two integers: [{from} atom index, {to} atom index]
+ */
+export type ElasticOrGoBounds = [number, number];
+
 export interface StashedBuildInfo {
   created_at: Date;
   name: string;
@@ -27,6 +32,8 @@ export interface StashedBuild {
   itp_files: MartinizeFile[];
   top_file: MartinizeFile;
   radius: { [atomName: string]: number };
+  go_bonds?: ElasticOrGoBounds[];
+  elastic_bonds?: ElasticOrGoBounds[];
   info: StashedBuildInfo;
 }
 

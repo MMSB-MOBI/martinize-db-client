@@ -17,7 +17,7 @@ import ToggleButton from '@material-ui/lab/ToggleButton';
 import ToggleButtonGroup from '@material-ui/lab/ToggleButtonGroup';
 import { blue } from '@material-ui/core/colors';
 import { applyUserRadius } from '../../nglhelpers';
-import StashedBuildHelper, { MartinizeFile } from '../../StashedBuildHelper';
+import StashedBuildHelper, { MartinizeFile, ElasticOrGoBounds } from '../../StashedBuildHelper';
 import StashedBuild from './StashedBuild';
 
 // @ts-ignore
@@ -64,6 +64,8 @@ interface MBState {
     itps: MartinizeFile[];
     radius: { [name: string]: number };
     top: MartinizeFile;
+    go_bonds?: ElasticOrGoBounds[];
+    elastic_bonds?: ElasticOrGoBounds[];
   };
   generating_files: boolean;
   saved: boolean;
@@ -171,6 +173,8 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       itp_files: this.state.files.itps,
       top_file: this.state.files.top,
       radius: this.state.files.radius,
+      elastic_bonds: this.state.files.elastic_bonds,
+      go_bonds: this.state.files.go_bonds,
     });
   }
 
@@ -202,6 +206,8 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
         itps: save.itp_files,
         pdb: save.coarse_grained,
         radius: save.radius,
+        go_bonds: save.go_bonds,
+        elastic_bonds: save.elastic_bonds,
       },
       saved: true,
     });
@@ -1173,7 +1179,14 @@ function MoleculeSaverModal(props: {
   )
 }
 
-function martinizeOutputParser(input: string) : { pdb: MartinizeFile, top: MartinizeFile, itps: MartinizeFile[], radius: { [name: string]: number } } {
+function martinizeOutputParser(input: string) : { 
+  pdb: MartinizeFile, 
+  top: MartinizeFile, 
+  itps: MartinizeFile[], 
+  radius: { [name: string]: number }, 
+  go_bonds?: ElasticOrGoBounds[], 
+  elastic_bonds?: ElasticOrGoBounds[] 
+} {
   return JSON.parse(
     input, 
     function (key, value) {
