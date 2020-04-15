@@ -1,14 +1,14 @@
 import React from 'react';
 import { withStyles, Grid, Typography, Paper, TextField, Button, withTheme, Theme, CircularProgress, Slider, FormControl, FormGroup, FormControlLabel, Switch, Box, Divider, createMuiTheme, ThemeProvider, Link, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@material-ui/core';
-import { Marger, errorToText, FaIcon, downloadBlob } from '../../helpers';
+import { Marger, FaIcon, downloadBlob, setPageTitle, dateFormatter } from '../../helpers';
 import { Link as RouterLink } from 'react-router-dom';
 
 import { Stage, Component as NGLComponent } from '@mmsb/ngl';
+import BallAndStickRepresentation from '@mmsb/ngl/declarations/representation/ballandstick-representation';
 import * as ngl from '@mmsb/ngl';
 
 import { SimpleSelect } from '../../Shared';
 import Settings from '../../Settings';
-import ApiHelper from '../../ApiHelper';
 import { toast } from '../Toaster';
 import RepresentationElement from '@mmsb/ngl/declarations/component/representation-element';
 import { RepresentationParameters } from '@mmsb/ngl/declarations/representation/representation';
@@ -19,6 +19,9 @@ import { blue } from '@material-ui/core/colors';
 import { applyUserRadius } from '../../nglhelpers';
 import StashedBuildHelper, { MartinizeFile, ElasticOrGoBounds } from '../../StashedBuildHelper';
 import StashedBuild from './StashedBuild';
+import SocketIo from 'socket.io-client';
+import { SERVER_ROOT, STEPS } from '../../constants';
+import { v4 as uuid } from 'uuid';
 
 // @ts-ignore
 window.NGL = ngl;
@@ -30,10 +33,21 @@ interface MBProps {
   theme: Theme;
 }
 
+interface MartinizeFiles {
+  pdb: MartinizeFile;
+  itps: MartinizeFile[];
+  radius: { [name: string]: number };
+  top: MartinizeFile;
+  go_bonds?: ElasticOrGoBounds[];
+  elastic_bonds?: ElasticOrGoBounds[];
+}
+
 interface MBState {
   running: 'pdb' | 'pdb_read' | 'martinize_params' | 'martinize_generate' | 'martinize_error' | 'done';
   error?: any;
+  martinize_error?: { type?: string, raw_run?: ArrayBuffer, error: string, open?: boolean, stack: string };
   saver_modal: string | false;
+  martinize_step: string;
 
   all_atom_pdb?: File;
   all_atom_ngl?: NGLComponent;
@@ -42,6 +56,9 @@ interface MBState {
   coarse_grain_pdb?: Blob;
   coarse_grain_ngl?: NGLComponent;
   coarse_grain_representations: RepresentationElement[];
+
+  virtual_links?: NGLComponent;
+  virtual_links_repr?: RepresentationElement;
 
   builder_force_field: string;
   builder_mode: 'go' | 'classic' | 'elastic';
@@ -57,16 +74,11 @@ interface MBState {
   all_atom_visible: boolean;
   coarse_grain_opacity: number;
   coarse_grain_visible: boolean;
+  virtual_link_opacity: number;
+  virtual_link_visible: boolean;
   representations: ViableRepresentation[];
   
-  files?: {
-    pdb: MartinizeFile;
-    itps: MartinizeFile[];
-    radius: { [name: string]: number };
-    top: MartinizeFile;
-    go_bonds?: ElasticOrGoBounds[];
-    elastic_bonds?: ElasticOrGoBounds[];
-  };
+  files?: MartinizeFiles;
   generating_files: boolean;
   saved: boolean;
   want_reset: boolean;
@@ -95,6 +107,8 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
   protected go_back_btn = React.createRef<any>();
 
   componentDidMount() {
+    setPageTitle('Molecule Builder');
+
     this.ngl_stage = new Stage("ngl-stage", { backgroundColor: this.props.theme.palette.background.default });
     // @ts-ignore
     window.MoleculeBuilder = this;
@@ -115,12 +129,15 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       builder_ea: '0',
       builder_ep: '0',
       builder_em: '0',
+      martinize_error: undefined,
       coarse_grain_representations: [],
       all_atom_representations: [],
       coarse_grain_opacity: 1,
       coarse_grain_visible: true,
       all_atom_visible: true,
       all_atom_opacity: .3,
+      virtual_link_opacity: .2,
+      virtual_link_visible: true,
       generating_files: false,
       representations: ['ball+stick'],
       theme: createMuiTheme({
@@ -136,6 +153,9 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       want_go_back: false,
       error: undefined,
       saver_modal: false,
+      martinize_step: '',
+      virtual_links: undefined,
+      virtual_links_repr: undefined,
     };
   }
 
@@ -197,9 +217,10 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     this.setState(infos);
 
     const cg_pdb = save.coarse_grained.content;
+    const mode = save.elastic_bonds ? 'elastic' : (save.go_bonds ? 'go' : undefined);
 
     // Init PDB scene
-    this.initCoarseGrainPdb(cg_pdb, save.radius);
+    this.initCoarseGrainPdb(cg_pdb, save.radius, save.elastic_bonds ?? save.go_bonds, mode);
     this.setState({ 
       files: {
         top: save.top_file,
@@ -227,6 +248,11 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     for (const repr of this.state.coarse_grain_representations) {
       repr.setParameters(parameters);
     }
+  }
+
+  setVirtualLinksRepresentation(parameters: Partial<RepresentationParameters>) {
+    if (this.state.virtual_links_repr)
+      this.state.virtual_links_repr.setParameters(parameters);
   }
 
   setAllAtomRepresentation(parameters: Partial<RepresentationParameters>) {
@@ -258,12 +284,12 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     this.ngl_stage!.setParameters({ backgroundColor: bgclr });
   }
 
-  initCoarseGrainPdb(pdb: Blob, radius: { [atom: string]: number }) {
+  initCoarseGrainPdb(pdb: Blob, radius: { [atom: string]: number }, bonds?: ElasticOrGoBounds[], mode?: 'go' | 'elastic') {
     // Apply the NGL radius
     applyUserRadius(radius);
 
     this.ngl_stage!.loadFile(pdb, { ext: 'pdb', name: 'coarse_grain.pdb' })
-      .then(component => {
+      .then(async component => {
         if (component) {
           const repr: RepresentationElement = component.addRepresentation("ball+stick", undefined);
           // repr.name => "ball+stick"
@@ -271,6 +297,23 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
           component.autoView(500);
 
           this.setAllAtomRepresentation({ opacity: .3 });
+
+          // todo register the bonds somewhere
+          if (bonds && mode) {
+            const coordinates = await new Promise<[number, number, number][]>(resolve => {
+              const coords: [number, number, number][] = [];
+  
+              (repr.repr as BallAndStickRepresentation).structure.eachAtom(ap => {
+                coords.push([ap.x, ap.y, ap.z]);
+              }, undefined, () => resolve(coords));
+            });
+  
+            const { component, representation } = drawBondsInStage(this.ngl_stage!, bonds, coordinates, mode);
+            this.setState({ 
+              virtual_links: component, 
+              virtual_links_repr: representation 
+            });
+          }
 
           // Register the component
           this.setState({
@@ -308,7 +351,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
   /* EVENTS */
 
-  handleMartinizeBegin = (e: React.FormEvent<HTMLFormElement>) => {
+  handleMartinizeBegin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     const form_data: any = {};
@@ -332,45 +375,189 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       form_data.sc_fix = "true";
     }
 
-    form_data.pdb = s.all_atom_pdb;
+    // form_data.pdb = s.all_atom_pdb;
 
     this.setState({ 
       running: 'martinize_generate',
       error: undefined,
+      martinize_error: undefined,
     });
 
-    ApiHelper.request('molecule/martinize', {
-      parameters: form_data,
-      method: 'POST',
-      body_mode: 'multipart',
-      mode: 'text',
-    }) 
-      .then((res: string) => {
-        const data = martinizeOutputParser(res);
-        console.log(data);
+    // Run via socket.io
+    const socket = SocketIo.connect(SERVER_ROOT);
+    const pdb_content = await s.all_atom_pdb!.arrayBuffer();
+    const RUN_ID = uuid();
 
-        const cg_pdb = data.pdb.content;
+    const setMartinizeStep = (str: string) => {
+      this.setState({ martinize_step: str });
+    };
 
-        // Init PDB scene
-        this.initCoarseGrainPdb(cg_pdb, data.radius);
-        this.setState({ files: data });
-      })
-      .catch(e => {
-        console.log(e);
-        if (Array.isArray(e)) {
-          const error = e[1];
+    const files: MartinizeFiles | undefined = await new Promise<MartinizeFiles>((resolve, reject) => {
+      const files: Partial<MartinizeFiles> = {};
 
-          this.setState({
-            running: 'martinize_error',
-            error
-          });
+      // Begin the run
+      socket.emit('martinize', Buffer.from(pdb_content), RUN_ID, form_data);
+
+      // Martinize step
+      socket.on('martinize step', ({ step, id, data }: { step: string, id: string, data: any[] }) => {
+        if (id !== RUN_ID) {
+          return;
         }
-        else {
-          this.setState({
-            running: 'martinize_error'
-          });
+
+        switch (step) {
+          case STEPS.STEP_MARTINIZE_INIT:
+            setMartinizeStep("Martinize is initializing...");
+            break;
+          case STEPS.STEP_MARTINIZE_RUNNING:
+            setMartinizeStep("Current step: " + data[0]);
+            break;
+          case STEPS.STEP_MARTINIZE_ENDED_FINE:
+            setMartinizeStep("Martinize run ended fine");
+            break;
+          case STEPS.STEP_MARTINIZE_GET_CONTACTS:
+            setMartinizeStep("Getting contact map for molecule");
+            break;
+          case STEPS.STEP_MARTINIZE_GO_SITES:
+            setMartinizeStep("Creating virtual Go sites");
+            break;
+          case STEPS.STEP_MARTINIZE_GROMACS:
+            setMartinizeStep("Compiling bonds inside PDB file");
+            break;
         }
-      }) 
+      }); 
+
+      // File upload
+      socket.on('martinize download', ({ id, name, type }: { id: string, name: string, type: string }, file: ArrayBuffer, ok_cb: Function) => {
+        if (id !== RUN_ID) {
+          return;
+        }
+        setMartinizeStep("Downloading results");
+
+        switch (type) {
+          case 'chemical/x-pdb': {
+            // pdb file
+            files.pdb = {
+              name,
+              content: new File([file], name, { type }),
+            };
+            break;
+          }
+          case 'chemical/x-topology': {
+            // TOP file
+            files.top = {
+              name,
+              content: new File([file], name, { type }),
+            };
+            break;
+          }
+          case 'chemical/x-include-topology': {
+            // ITP file
+            if (!files.itps) {
+              files.itps = [];
+            }
+
+            files.itps.push({
+              name,
+              content: new File([file], name, { type }),
+            });
+            break;
+          }
+        }
+
+        ok_cb();
+      });
+
+      // Run error
+      socket.on('martinize error', ({ id, error, type, stack }: { id: string, error: string, type?: string, stack: string }, raw_run?: ArrayBuffer) => {
+        if (id !== RUN_ID) {
+          return;
+        }
+        
+        reject({ id, error, type, raw_run, stack });
+      });
+
+      // Before end send
+      socket.on('martinize before end', ({ id }: { id: string }) => {
+        if (id !== RUN_ID) {
+          return;
+        }
+
+        setMartinizeStep("Finishing...");
+      });
+
+      // When run ends
+      socket.on('martinize end', (
+        { id, go_bonds, elastic_bonds, radius }: { 
+          id: string, 
+          go_bonds?: ElasticOrGoBounds[], 
+          elastic_bonds?: ElasticOrGoBounds[], 
+          radius: { [name: string]: number; }, 
+        }) => {
+          if (id !== RUN_ID) {
+            return;
+          }
+
+          files.radius = radius;
+          files.go_bonds = go_bonds;
+          files.elastic_bonds = elastic_bonds;
+
+          resolve(files as MartinizeFiles);
+      });
+    }).catch(error => {
+      this.setState({
+        running: 'martinize_error',
+        martinize_step: '',
+        martinize_error: error
+      });
+
+      return undefined;
+    });
+
+    socket.disconnect();
+
+    if (!files) {
+      return;
+    }
+
+    this.setState({ files, martinize_step: "" });
+
+    const mode = files.elastic_bonds ? 'elastic' : (files.go_bonds ? 'go' : undefined);
+    this.initCoarseGrainPdb(files.pdb.content, files.radius, files.elastic_bonds ?? files.go_bonds, mode);
+
+    // AJAX METHOD
+    //
+    // ApiHelper.request('molecule/martinize', {
+    //   parameters: form_data,
+    //   method: 'POST',
+    //   body_mode: 'multipart',
+    //   mode: 'text',
+    // }) 
+    //   .then((res: string) => {
+    //     const data = martinizeOutputParser(res);
+    //     console.log(data);
+
+    //     const cg_pdb = data.pdb.content;
+
+    //     // Init PDB scene
+    //     this.initCoarseGrainPdb(cg_pdb, data.radius);
+    //     this.setState({ files: data });
+    //   })
+    //   .catch(e => {
+    //     console.log(e);
+    //     if (Array.isArray(e)) {
+    //       const error = e[1];
+
+    //       this.setState({
+    //         running: 'martinize_error',
+    //         error
+    //       });
+    //     }
+    //     else {
+    //       this.setState({
+    //         running: 'martinize_error'
+    //       });
+    //     }
+    //   }) 
   };
 
   allAtomPdbChange = (e: React.FormEvent<HTMLInputElement>) => {
@@ -446,6 +633,25 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     }
 
     this.setState({ coarse_grain_visible: checked });
+  };
+
+  onVirtualLinksOpacityChange = (_: any, value: number | number[]) => {
+    if (Array.isArray(value)) {
+      value = value[0];
+    }
+
+    this.setState({
+      virtual_link_opacity: value / 100
+    });
+
+    this.setVirtualLinksRepresentation({ opacity: value / 100 });
+  };
+
+  onVirtualLinksVisibilityChange = (_: any, checked: boolean) => {
+    if (this.state.virtual_links_repr)
+      this.state.virtual_links_repr.setVisibility(checked);
+
+    this.setState({ virtual_link_visible: checked });
   };
 
   onMoleculeDownload = async () => {
@@ -649,6 +855,79 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     );
   }
 
+  formatMartinizeError() {
+    const error = this.state.martinize_error;
+
+    if (!error) {
+      return "";
+    }
+    const close_fn = () => this.setState({ martinize_error: { ...error, open: false } });
+    const open_fn = () => this.setState({ martinize_error: { ...error, open: true } });
+    const download_fn = () => {
+      const blob = new Blob([error.raw_run!]);
+      downloadBlob(blob, "run_" + dateFormatter("Y-m-d_H-i-s") + ".zip")
+    };
+
+    return (
+      <React.Fragment>
+        {/* Dialog */}
+        <Dialog open={!!error.open} onClose={close_fn} maxWidth="md">
+          <DialogTitle>
+            Martinize run failed :(
+          </DialogTitle>
+
+          <DialogContent>
+            <DialogContentText color="secondary">
+              {error.error}
+            </DialogContentText>
+
+            {error.raw_run && <DialogContentText>
+              To explore more details, like intermediate files and program command line outputs, you can{" "}
+              <Link href="#!" onClick={download_fn}>
+                download a dump of this run
+              </Link>.
+            </DialogContentText>}
+
+            <Marger size=".5rem" />
+
+            <Divider />
+
+            <Marger size="1rem" />
+
+            {error.stack && <DialogContentText component="pre" style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+              <strong>Stack trace</strong>  
+              
+              <br />
+              <code>
+                {error.stack}
+              </code>
+            </DialogContentText>}
+          </DialogContent>
+
+          <DialogActions>
+            <Button color="primary" onClick={close_fn}>
+              Close
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Inline text */}
+        <Typography color="error" align="center">
+          Unable to proceed your molecule: {" "}
+          <strong>
+            Run failed
+          </strong>.
+          
+          <br />
+          <Link color="primary" href="#!" onClick={open_fn}>
+            Click here to see more details
+          </Link>.
+        </Typography>
+        
+      </React.Fragment>
+    );
+  }
+
   martinizeForm() {
     const force_fields = Settings.martinize_variables.force_fields.map(e => ({ id: e, name: e }));
 
@@ -656,19 +935,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       <div>
         <Marger size="1rem" />
 
-        {this.state.running === 'martinize_error' && this.state.error && <React.Fragment>
-
-          <Typography color="error">
-            Unable to proceed your molecule: {" "}
-            <strong>
-              {ApiHelper.isApiError(this.state.error) ? errorToText(this.state.error) : "Unknown error."}
-            </strong>
-            
-            <br />
-            This error will be reported.
-          </Typography>
-          
-        </React.Fragment>}
+        {this.state.running === 'martinize_error' && this.formatMartinizeError()}
 
         <Marger size="1rem" />
 
@@ -818,6 +1085,10 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
         <Typography variant="h6">
           Generating coarse grained structure...
         </Typography>
+        <Marger size=".5rem" />
+        <Typography>
+          {this.state.martinize_step}
+        </Typography>
         <Marger size="1rem" />
 
         <Typography color="textSecondary">
@@ -920,6 +1191,38 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
         <Marger size="1rem" />
 
+        {/* Go / Elastic networks virtual bonds */}
+        {this.state.virtual_links && <React.Fragment>
+          <Typography variant="h6">
+            Virtual {this.state.builder_mode === "go" ? "Go" : "elastic"} bonds
+          </Typography>
+
+          <Typography gutterBottom>
+            Opacity
+          </Typography>
+          <Slider
+            value={this.state.virtual_link_opacity * 100}
+            valueLabelDisplay="auto"
+            step={10}
+            marks
+            min={10}
+            max={100}
+            onChange={this.onVirtualLinksOpacityChange}
+            color="secondary"
+          />
+
+          <FormControl component="fieldset">
+            <FormGroup>
+              <FormControlLabel
+                control={<Switch checked={this.state.virtual_link_visible} onChange={this.onVirtualLinksVisibilityChange} value="visible" />}
+                label="Visible"
+              />
+            </FormGroup>
+          </FormControl>
+
+          <Marger size="1rem" />
+        </React.Fragment>}
+
         <Typography variant="h6">
           Representations
         </Typography>
@@ -977,7 +1280,6 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
             <FaIcon download /> <span style={{ marginLeft: '.6rem' }}>Download</span>
           </Button>
         </Box>
-
 
       </React.Fragment>
     );
@@ -1204,6 +1506,30 @@ function martinizeOutputParser(input: string) : {
       return value;
     }
   );
+}
+
+function drawBondsInStage(stage: Stage, points: ElasticOrGoBounds[], coords: [number, number, number][], mode: 'go' | 'elastic') {
+  const shape = new ngl.Shape("add-bonds");
+  const upper_mode = mode.toLocaleUpperCase();
+  
+  for (const [atom1_index, atom2_index] of points) {
+    // atom index starts at 1, atom array stats to 0
+    const atom1 = coords[atom1_index - 1];
+    const atom2 = coords[atom2_index - 1];
+    
+    if (!atom1 || !atom2) {
+      console.warn("Not found atom", atom1_index, atom2_index, coords);
+      continue;
+    }
+    
+    const name = `[${upper_mode}] Bond w/ atoms ${atom1_index}-${atom2_index}`;
+    shape.addCylinder(atom1, atom2, [0, 65, 0], 0.1, name);
+  }
+
+  const component = stage.addComponentFromObject(shape) as NGLComponent;
+  const representation: RepresentationElement = component.addRepresentation("buffer", { opacity: .2 });
+
+  return { component, representation };
 }
 
 // @ts-ignore
