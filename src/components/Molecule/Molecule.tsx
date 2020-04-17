@@ -85,6 +85,7 @@ class MoleculePageBase extends React.Component<MPBP, MPBS> {
     ApiHelper.request('molecule', { parameters })  
       .then((mol: { molecule: Molecule, versions: Molecule[] }) => {
         setPageTitle(`Molecule - ${mol.molecule.alias} (${mol.molecule.version})`);
+
         this.setState(mol);
       })
       .catch(e => {

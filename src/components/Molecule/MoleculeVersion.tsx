@@ -58,15 +58,40 @@ function createMoleculeTree(molecules: Molecule[]) : MoleculeTree {
     };
   }
 
-  const id_to_mol: { [id: string]: MoleculeTree } = {};
+  const id_to_mol: { [id: string]: Molecule } = {};
+  const tree: { [id: string]: MoleculeTree } = {};
 
-  id_to_mol[root.id] = {
+  for (const mol of molecules) {
+    id_to_mol[mol.id] = mol;
+  }  
+
+  // Root will always be the first element of object
+  // Other elements will be "fast access" nodes
+  tree[root.id] = {
     molecule: root,
     children: []
   };
+
+  function insertInTree(node: MoleculeTree) {
+    tree[node.molecule.id] = node;
+
+    if (node.molecule.parent! in tree) {
+      // case: parent is inserted
+      tree[node.molecule.parent!].children.push(node);
+    }
+    else {      
+      // Otherwise, insert until find 
+      const parent_mol = {
+        molecule: id_to_mol[node.molecule.parent!],
+        children: [node]
+      };
+
+      insertInTree(parent_mol);
+    }
+  }
   
   for (const mol of molecules) {
-    if (mol.id in id_to_mol) {
+    if (mol.id in tree) {
       continue;
     }
 
@@ -75,25 +100,15 @@ function createMoleculeTree(molecules: Molecule[]) : MoleculeTree {
       continue;
     }
 
-    if (mol.parent in id_to_mol) {
-      id_to_mol[mol.parent].children.push({
-        molecule: mol,
-        children: []
-      });
-    }
-    else {
-      const parent = molecules.find(m => m.id === m.parent)!;
-      id_to_mol[mol.parent] = {
-        molecule: parent,
-        children: [{
-          molecule: mol,
-          children: []
-        }]
-      };
-    }
+    const mol_data = {
+      molecule: mol,
+      children: []
+    };
+    insertInTree(mol_data);
   }
 
-  return id_to_mol[root.id];
+  // Return the root
+  return tree[root.id];
 }
 
 export default function MoleculeVersion(props: { versions: Molecule[], current: Molecule, onVersionChange: (id: string) => void }) {
