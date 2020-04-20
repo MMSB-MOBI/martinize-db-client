@@ -17,6 +17,7 @@ import ChangePassword from '../pages/ChangePassword/ChangePassword';
 import CreateAccount from '../pages/CreateAccount/CreateAccount';
 import ContactPage from '../Contact/Contact';
 import MartinizeBuilder from '../Builder/Builder';
+import MembraneBuilder from '../Builder/MembraneBuilder';
 
 function LoadAppDrawer(props: RouteComponentProps) {
   return <ApplicationDrawer {...props} />;
@@ -33,6 +34,7 @@ const RouterCmpt = () => {
         <Route path="/create_account" exact component={LoadCreateAccountDrawer} />
         <Route path="/change_password" exact component={LoadChangePasswordDrawer} />
         <Route path="/builder" exact component={LoadMartinizeBuilder} />
+        <Route path="/membrane_builder" exact component={LoadMembraneBuilder} />
 
         <Route path="/molecule/:alias" component={LoadDrawer} />
         <Route path="/group/:alias" component={LoadDrawer} />
@@ -60,6 +62,12 @@ function LoadDrawer(props: RouteComponentProps) {
 function LoadMartinizeBuilder(props: RouteComponentProps) {
   return (
     <WaitForLoginFinish {...props} component={MartinizeBuilder} wait={[Settings.login_promise, Settings.martinize_variables_promise]} />
+  );
+}
+
+function LoadMembraneBuilder(props: RouteComponentProps) {
+  return (
+    <WaitForLoginFinish {...props} component={MembraneBuilder} wait={[Settings.login_promise, Settings.martinize_variables_promise]} />
   );
 }
 

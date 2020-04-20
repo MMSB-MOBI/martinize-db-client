@@ -26,7 +26,16 @@ export function LoadFader(props: React.PropsWithChildren<{ when?: boolean }>) {
   );
 }
 
-export function SimpleSelect(props: { label: string, value: string, onChange: (v: string) => void, id: string, values: { id: string, name: string }[], disabled?: boolean, formControlClass?: string }) {
+export function SimpleSelect(props: { 
+  label: string, 
+  value: string, 
+  onChange: (v: string) => void, id: string, 
+  values: { id: string, name: string }[], 
+  disabled?: boolean, 
+  formControlClass?: string,
+  variant?: "outlined" | "standard" | "filled",
+  noMinWidth?: boolean,
+}) {
   const inputLabel = React.useRef<HTMLLabelElement>(null);
   const [labelWidth, setLabelWidth] = React.useState(0);
   React.useEffect(() => {
@@ -35,7 +44,7 @@ export function SimpleSelect(props: { label: string, value: string, onChange: (v
   }, [props]);
 
   return (
-    <FormControl className={props.formControlClass} variant="outlined" style={{ minWidth: 180 }}>
+    <FormControl className={props.formControlClass} variant={props.variant ?? "outlined"} style={{ minWidth: props.noMinWidth ? 0 : 180 }}>
       <InputLabel ref={inputLabel} id={props.id}>
         {props.label}
       </InputLabel>

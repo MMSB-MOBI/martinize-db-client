@@ -87,17 +87,6 @@ interface MBState {
   theme: Theme;
 }
 
-/**
- * TODO: iterate over atoms in NGL
- * 
- * Access each coarse grained atom
- * MoleculeBuilder.ngl_stage.compList[1].reprList[0].repr.structure
- *  .eachAtom(a => atom...)  or  .atomIterator()
- * 
- * Access Three.js scene
- * MoleculeBuilder.ngl_stage.viewer.scene
- */
-
 class MartinizeBuilder extends React.Component<MBProps, MBState> {
   state = this.original_state;
 
@@ -850,7 +839,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
         <Marger size="1rem" />
 
-        <StashedBuild onSelect={uuid => this.load(uuid)} />
+        <StashedBuild onSelect={uuid => this.load(uuid)} hasTitle />
       </div>
     );
   }
@@ -1481,6 +1470,7 @@ function MoleculeSaverModal(props: {
   )
 }
 
+// Used for martinize output in ajax post call
 function martinizeOutputParser(input: string) : { 
   pdb: MartinizeFile, 
   top: MartinizeFile, 
