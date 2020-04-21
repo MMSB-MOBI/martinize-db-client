@@ -1,5 +1,5 @@
 import React from 'react';
-import { withStyles, Typography, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, List, ListItem, ListItemText, ListItemSecondaryAction, IconButton, DialogContentText, CircularProgress } from '@material-ui/core';
+import { withStyles, Link, Typography, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, List, ListItem, ListItemText, ListItemSecondaryAction, IconButton, DialogContentText, CircularProgress } from '@material-ui/core';
 import AddMoleculeFileInput from '../../AddMolecule/AddMoleculeFileInput';
 import StashedBuild from '../StashedBuild';
 import StashedBuildHelper from '../../../StashedBuildHelper';
@@ -7,11 +7,15 @@ import { toast } from '../../Toaster';
 import { Marger, FaIcon } from '../../../helpers';
 import ApiHelper from '../../../ApiHelper';
 import { Molecule } from '../../../types/entities';
+import { SimpleSelect } from '../../../Shared';
+import Settings from '../../../Settings';
+import { Link as RouterLink } from 'react-router-dom';
 
 export interface MoleculeWithFiles {
   pdb: File;
   top: File;
   itps: File[];
+  force_field: string;
 }
 
 interface MCProps {
@@ -23,6 +27,7 @@ interface MCState {
   pdb?: File;
   top?: File;
   itps: File[];
+  ff: string;
   modal_chooser: boolean;
 }
 
@@ -30,14 +35,15 @@ class MoleculeChooser extends React.Component<MCProps, MCState> {
   state: MCState = {
     itps: [],
     modal_chooser: false,
+    ff: 'martini22',
   };
 
   nextFromFiles = () => {
-    const { pdb, top, itps } = this.state;
+    const { pdb, top, itps, ff } = this.state;
 
     if (pdb && top && itps.length) {
       this.props.onMoleculeChoose({
-        pdb, top, itps
+        pdb, top, itps, force_field: ff,
       });
     }
     else {
@@ -54,6 +60,10 @@ class MoleculeChooser extends React.Component<MCProps, MCState> {
     const { pdb, top, itps } = this.state;
 
     return !!(pdb && top && itps.length);
+  }
+
+  get force_fields() {
+    return Settings.martinize_variables.force_fields;
   }
 
   render() {
@@ -84,6 +94,12 @@ class MoleculeChooser extends React.Component<MCProps, MCState> {
         <Typography align="center" variant="h6">
           Load from saved molecules
         </Typography>
+
+        <Typography align="center">
+          <Link component={RouterLink} to="/builder">
+            Want to create a molecule ?
+          </Link>
+        </Typography>
         
         <StashedBuild 
           onSelect={async uuid => {
@@ -95,6 +111,7 @@ class MoleculeChooser extends React.Component<MCProps, MCState> {
                 pdb: new File([save.coarse_grained.content], save.coarse_grained.name),
                 top: new File([save.top_file.content], save.top_file.name),
                 itps: save.itp_files.map(e => new File([e.content], e.name)),
+                ff: save.info.builder_force_field,
               }, this.nextFromFiles);
             }
           }}
@@ -106,6 +123,19 @@ class MoleculeChooser extends React.Component<MCProps, MCState> {
           Upload a molecule
         </Typography>
         
+        <Marger size="1rem" />
+        
+        <SimpleSelect
+          label="Used force field"
+          variant="standard"
+          id="ff_select"
+          values={this.force_fields.map(e => ({ id: e, name: e }))}
+          value={this.state.ff}
+          onChange={val => this.setState({ ff: val })}
+          noMinWidth
+          formControlClass={this.props.classes.ff_select}
+        />
+
         <Marger size="1rem" />
 
         <AddMoleculeFileInput 
@@ -131,7 +161,9 @@ class MoleculeChooser extends React.Component<MCProps, MCState> {
 }
 
 export default withStyles(theme => ({
-
+  ff_select: {
+    width: '100%'
+  },
 }))(MoleculeChooser);
 
 interface ModalState {
@@ -251,7 +283,7 @@ class ModalMoleculeSelector extends React.Component<{ open: boolean; onChoose(id
 
           {this.state.molecules.length > 0 && <List>
             {this.state.molecules.map(m => (
-              <ListItem button onClick={() => this.props.onChoose(m.id)}>
+              <ListItem key={m.id} button onClick={() => this.props.onChoose(m.id)}>
                 <ListItemText
                   primary={`${m.name} (${m.alias}) - ${m.force_field} - Version ${m.version}`}
                 />

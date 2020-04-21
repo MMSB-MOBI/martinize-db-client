@@ -108,6 +108,12 @@ function DrawerElements(props: RouteComponentProps) {
         link: true,
         icon: 'atom',
         text: 'Builder',
+      },
+      {
+        path: '/membrane_builder',
+        link: true,
+        icon: 'virus',
+        text: 'Membrane builder',
       }
     ],
     [

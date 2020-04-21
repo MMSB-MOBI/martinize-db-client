@@ -5,7 +5,6 @@ import { dateFormatter, FaIcon } from '../../helpers';
 
 type StashedBuildProps = {
   onSelect(uuid: string): void;
-  hasTitle?: boolean;
 };
 
 type StashedBuildState = {
@@ -127,10 +126,6 @@ export default class StashedBuild extends React.Component<StashedBuildProps, Sta
     return (
       <React.Fragment>
         {this.renderModalDelete()}
-
-        {this.props.hasTitle && <Typography variant="h6">
-          Saved molecules
-        </Typography>}
 
         <List>
           {Object.entries(this.state.available).map(([uuid, save]) => <ListItem key={uuid} button onClick={() => this.props.onSelect(uuid)}>

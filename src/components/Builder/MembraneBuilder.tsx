@@ -1,14 +1,33 @@
 import React from 'react';
 import * as ngl from '@mmsb/ngl';
-import { withStyles, ThemeProvider, Theme, withTheme, Grid, Link, Typography, Paper, Divider, createMuiTheme, Dialog, DialogTitle, DialogContent, DialogContentText, Button, DialogActions } from '@material-ui/core';
+import { withStyles, ThemeProvider, Theme, withTheme, Grid, Link, Typography, Paper, Divider, createMuiTheme, Dialog, DialogTitle, DialogContent, DialogContentText, Button, DialogActions, Box, CircularProgress, FormControl, FormGroup, FormControlLabel, Switch, Slider, Checkbox } from '@material-ui/core';
 import { Link as RouterLink } from 'react-router-dom';
-import { FaIcon, setPageTitle } from '../../helpers';
+import { FaIcon, setPageTitle, Marger, downloadBlob } from '../../helpers';
 import { blue } from '@material-ui/core/colors';
 import MoleculeChooser, { MoleculeWithFiles } from './MembraneBuilder/MoleculeChooser';
-import LipidChooser from './MembraneBuilder/LipidChooser';
+import LipidChooser, { ChoosenLipid } from './MembraneBuilder/LipidChooser';
+import SettingsChooser, { SettingsInsane } from './MembraneBuilder/SettingsChooser';
+import ApiHelper from '../../ApiHelper';
+import NglWrapper, { NglRepresentation } from './NglWrapper';
+import BallAndStickRepresentation from '@mmsb/ngl/declarations/representation/ballandstick-representation';
+import { toast } from '../Toaster';
+import JSZip from 'jszip';
 
 // @ts-ignore
 window.NGL = ngl;
+
+interface InsaneResult {
+  water: File;
+  no_water: File;
+  top: File;
+  itps: File[];
+}
+
+interface ToBeFile {
+  name: string;
+  content: string;
+  type: string;
+}
 
 interface MBuilderProps {
   classes: Record<string, string>;
@@ -22,12 +41,22 @@ interface MBuilderState {
   want_go_back: boolean;
 
   molecule?: string | MoleculeWithFiles;
+  lipids?: { lower: ChoosenLipid[], upper?: ChoosenLipid[] };
+  settings?: SettingsInsane;
+
+  insane_error?: any;
+  result?: InsaneResult;
+  opacity: number;
+  want_close_result: boolean;
+  generating_files: boolean;
+  with_water: boolean;
 }
 
 class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
   state: MBuilderState;
   
-  ngl_stage!: ngl.Stage;
+  ngl!: NglWrapper;
+  representation?: NglRepresentation<BallAndStickRepresentation>;
   go_back_btn = React.createRef<any>();
 
   constructor(props: MBuilderProps) {
@@ -39,51 +68,83 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
   componentDidMount() {
     // Init ngl stage
     setPageTitle('Membrane Builder');
-
-    this.ngl_stage = new ngl.Stage("ngl-stage", { backgroundColor: this.props.theme.palette.background.default });
     // @ts-ignore
     window.MembraneBuilder = this;
-    document.getElementById('ngl-stage')!.addEventListener('wheel', (e) => {
-      e.preventDefault();
-    }, { passive: false });
+
+    this.ngl = new NglWrapper("ngl-stage", { backgroundColor: this.props.theme.palette.background.default });
   }
 
-  get original_state() {
+  get original_state() : MBuilderState {
     return {
-      theme: createMuiTheme({
-        palette: {
-          type: 'light',
-          background: {
-            default: '#fafafa',
-          },
-        },
-      }),
+      theme: this.createTheme('light'),
       running: 'choose_molecule',
       modal_select_molecule: false,
       want_go_back: false,
       molecule: undefined,
-    } as MBuilderState;
+      lipids: undefined,
+      insane_error: undefined,
+      result: undefined,
+      opacity: 1,
+      want_close_result: false,
+      generating_files: false,
+      with_water: false,
+    };
   }
 
   /* INDEPENDANT CLASS METHODS */
 
-  changeTheme(hint: 'light' | 'dark') {
+  createTheme(hint: 'light' | 'dark') {
     const bgclr = hint === 'dark' ? '#303030' : '#fafafa';
 
-    this.setState({
-      theme: createMuiTheme({
-        palette: {
-          type: hint,
-          background: {
-            default: bgclr,
-          },
-          primary: hint === 'dark' ? { main: blue[600] } : undefined,
+    return createMuiTheme({
+      palette: {
+        type: hint,
+        background: {
+          default: bgclr,
         },
-      })
+        primary: hint === 'dark' ? { main: blue[600] } : undefined,
+      },
     });
+  }
+
+  changeTheme(hint: 'light' | 'dark') {
+    const theme = this.createTheme(hint);
+
+    this.setState({ theme });
 
     // Change color of ngl stage
-    this.ngl_stage.setParameters({ backgroundColor: bgclr });
+    this.ngl.set({ backgroundColor: theme.palette.background.default });
+  }
+
+  protected parseToBeFile(file: ToBeFile) {
+    return new File([file.content], file.name, { type: file.type });
+  }
+
+  parseInsaneResult(res: { water: ToBeFile, no_water: ToBeFile, top: ToBeFile, itps: ToBeFile[] }) {
+    return {
+      water: this.parseToBeFile(res.water),
+      no_water: this.parseToBeFile(res.no_water),
+      top: this.parseToBeFile(res.top),
+      itps: res.itps.map(this.parseToBeFile),
+    };
+  }
+
+  initNglWithResult(result: InsaneResult, mode: 'water' | 'no_water') {
+    this.ngl.reset();
+
+    this.ngl.load(result[mode])
+      .then(component => {
+        const repr = component.add<BallAndStickRepresentation>('ball+stick');
+        this.representation = repr;
+        component.center();
+      });
+  }
+
+  setOpacity(opacity: number) {
+    opacity = opacity > 1 ? opacity / 100 : opacity;
+
+    if (this.representation)
+      this.representation.set({ opacity });
   }
 
   /* EVENTS */
@@ -106,7 +167,160 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
     this.go_back_btn.current.click();
   };
 
+  startInsane = async () => {
+    const { settings, lipids, molecule } = this.state;
+    const parameters: any = {};
+
+    if (!molecule || !settings || !lipids) {
+      return;
+    }
+
+    if (lipids.upper) {
+      parameters.upper_leaflet = lipids.upper.map(e => `${e.name}:${e.ratio}`).join(',');
+    }
+    parameters.lipids = lipids.lower.map(e => `${e.name}:${e.ratio}`).join(',');
+    
+    if (typeof molecule === 'string') {
+      parameters.from_id = molecule;
+    }
+    else {
+      parameters.pdb = molecule.pdb;
+      parameters.top = molecule.top;
+      parameters.itp = molecule.itps;
+      parameters.force_field = molecule.force_field;
+    }
+
+    if (settings.box_size) {
+      parameters.box = settings.box_size.join(',');
+    }
+    if (settings.box_type) {
+      parameters.pbc = settings.box_type;
+    }
+    
+    try {
+      const res = await ApiHelper.request('molecule/membrane_builder', {
+        parameters, body_mode: 'multipart', method: 'POST',
+      });
+
+      const result = this.parseInsaneResult(res);
+
+      this.initNglWithResult(result, 'no_water');
+
+      this.setState({ 
+        running: 'visualization', 
+        result, 
+      });
+    } catch (e) {
+      this.setState({ insane_error: e, running: 'choose_settings' });
+    }
+  };
+
+  onThemeChange = () => {
+    const is_dark = this.state.theme.palette.type === 'dark';
+
+    this.changeTheme(is_dark ? 'light' : 'dark');
+  };
+
+  onOpacityChange = (_: any, value: number | number[]) => {
+    if (Array.isArray(value)) {
+      value = value[0];
+    }
+
+    this.setState({
+      opacity: value / 100
+    });
+
+    this.setOpacity(value);
+  };
+
+  onWantCloseResultCancel = () => {
+    this.setState({ want_close_result: false });
+  };
+
+  onWantCloseResultOpen = () => {
+    this.setState({ want_close_result: true });
+  };
+
+  onWantCloseResult = () => {
+    this.ngl.reset();
+    this.setState({ 
+      want_close_result: false, 
+      result: undefined, 
+      running: 'choose_settings', 
+      opacity: 1,
+      with_water: false,
+    });
+  };
+
+  onMembraneDownload = async () => {
+    this.setState({ generating_files: true });
+
+    if (!this.state.result) {
+      return;
+    }
+
+    try {
+      const zip = new JSZip();
+
+      const { water, top, itps } = this.state.result;
+
+      zip.file(water.name, water);
+      zip.file(top.name, top);
+      
+      for (const itp of itps) {
+        zip.file(itp.name, itp);
+      }
+
+      const blob = await zip.generateAsync({
+        type: "blob",
+        compression: "DEFLATE",
+        compressionOptions: { level: 6 },
+      });
+
+      downloadBlob(blob, "membrane.zip");
+    } catch (e) {
+      toast("Unable to generate files.");
+    } finally {
+      this.setState({ generating_files: false });
+    }
+  };
+
+  onWaterChange = (_: any, checked: boolean) => {
+    if (checked) {
+      this.initNglWithResult(this.state.result!, 'water');
+    }
+    else {
+      this.initNglWithResult(this.state.result!, 'no_water');
+    }
+
+    this.setState({ with_water: checked });
+  };
+
   /* RENDER FUNCTIONS */
+
+  renderInsaneBackModal() {
+    return (
+      <Dialog open={this.state.want_close_result} onClose={this.onWantCloseResultCancel}>
+        <DialogTitle>
+          Go back to build settings ?
+        </DialogTitle>
+
+        <DialogContent>
+          <DialogContentText>
+            You will loose the generated membrane.
+          </DialogContentText>
+          <DialogContentText>
+            You can still rebuild the same membrane again with sent files.
+          </DialogContentText>
+        </DialogContent>
+
+        <DialogActions>
+          <Button color="primary" onClick={this.onWantCloseResultCancel}>Cancel</Button>
+          <Button color="secondary" onClick={this.onWantCloseResult}>Back to settings</Button>
+        </DialogActions>
+      </Dialog>
+    );
+  }
 
   renderModalBackToDatabase() {
     return (
@@ -117,7 +331,7 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
 
         <DialogContent>
           <DialogContentText>
-            You will definitively lose unsaved changes made into Molecule Builder.
+            You will definitively lose unsaved changes made into Membrane Builder.
           </DialogContentText>
         </DialogContent>
 
@@ -145,11 +359,14 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
   renderChooseLipids() {
     return (
       <LipidChooser 
-        onLipidChoose={() => {
-
+        onLipidChoose={lipids => {
+          // Next page: settings
+          this.setState({ running: 'choose_settings', lipids });
         }}
         onPrevious={() => {
-          this.setState({ running: 'choose_molecule', molecule: undefined, })
+          this.setState({ 
+            running: 'choose_molecule', 
+          });
         }}
       />
     );
@@ -157,25 +374,137 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
 
   renderChooseSettings() {
     return (
-      <div />
+      <SettingsChooser 
+        onSettingsChoose={settings => {
+          this.setState({
+            running: 'insane_wait', settings,
+          }, this.startInsane);
+        }}
+        onPrevious={() => {
+          this.setState({ 
+            running: 'choose_lipids',
+          });
+        }}
+      />
     );
   }
 
   renderWaitForInsane() {
     return (
-      <div />
+      <Box display="flex" alignItems="center" flexDirection="column">
+        <Marger size="2rem" />
+        
+        <CircularProgress size={56} />
+
+        <Marger size="2rem" />
+
+        <Typography>
+          <strong>
+            Making the membrane...
+          </strong>
+        </Typography>
+
+        <Marger size=".5rem" />
+
+        <Typography color="textSecondary" variant="body2">
+          This may take a while.
+        </Typography>
+      </Box>
     );
   }
 
   renderGenerated() {
     return (
-      <div />
+      <Box display="flex" alignItems="center" flexDirection="column">
+        {this.renderInsaneBackModal()}
+
+        <Marger size="1rem" />
+
+        {/* Theme */}
+        <Typography variant="h6">
+          Theme
+        </Typography>
+        <FormControl component="fieldset">
+          <FormGroup>
+            <FormControlLabel
+              control={<Switch checked={this.state.theme.palette.type === 'dark'} onChange={this.onThemeChange} value="dark" />}
+              label="Dark theme"
+            />
+          </FormGroup>
+        </FormControl>
+
+        <Marger size="2rem" />
+
+        {/* Water */}
+        <Typography variant="h6">
+          Water
+        </Typography>
+        <FormControl component="fieldset">
+          <FormGroup>
+            <FormControlLabel
+              control={<Checkbox value="water" checked={this.state.with_water} onChange={this.onWaterChange} />}
+              label="Show water"
+            />
+          </FormGroup>
+        </FormControl>
+
+        <Marger size="2rem" />
+
+        {/* Opacity settings */}
+        <Typography variant="h6">
+          Opacity
+        </Typography>
+
+        <Slider
+          value={this.state.opacity * 100}
+          valueLabelDisplay="auto"
+          step={10}
+          marks
+          min={10}
+          max={100}
+          onChange={this.onOpacityChange}
+          color="secondary"
+        />
+
+        <Marger size="1rem" />
+
+        <Divider style={{ width: '100%' }} />
+
+        <Marger size="1rem" />
+
+        <Box alignContent="center" justifyContent="center" width="100%">
+          <Button 
+            style={{ width: '100%' }} 
+            color="secondary" 
+            onClick={this.onWantCloseResultOpen}
+          >
+            <FaIcon arrow-left /> <span style={{ marginLeft: '.6rem' }}>Back</span>
+          </Button>
+
+          <Marger size="1rem" />
+
+          <Button 
+            style={{ width: '100%' }} 
+            color="primary" 
+            onClick={this.onMembraneDownload}
+            disabled={this.state.generating_files}
+          >
+            <FaIcon download /> <span style={{ marginLeft: '.6rem' }}>Download</span>
+          </Button>
+        </Box>
+
+      </Box>
     );
   }
   
   render() {
     const classes = this.props.classes;
     const is_dark = this.state.theme.palette.type === 'dark';
+
+    const displays = {
+      lipids: this.state.running === 'choose_lipids',
+      settings: this.state.running === 'choose_settings',
+    };
 
     return (
       <ThemeProvider theme={this.state.theme}>
@@ -212,16 +541,19 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
                 <Divider />
               </div>
 
-              {/* Forms... */}
+              {/* Programmatic renders */}
               {this.state.running === 'choose_molecule' && this.renderChooseMolecule()}
-
-              {this.state.running === 'choose_lipids' && this.renderChooseLipids()}
-
-              {this.state.running === 'choose_settings' && this.renderChooseSettings()}
-
               {this.state.running === 'insane_wait' && this.renderWaitForInsane()}
-
               {this.state.running === 'visualization' && this.renderGenerated()}
+
+              {/* Systematic renders */}
+              <div style={{ display: displays.lipids ? undefined : 'none' }}>
+                {this.renderChooseLipids()}
+              </div>
+
+              <div style={{ display: displays.settings ? undefined : 'none' }}>
+                {this.renderChooseSettings()}
+              </div>
             </div>
           </Grid>
 

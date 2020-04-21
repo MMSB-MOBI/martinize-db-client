@@ -22,11 +22,10 @@ import StashedBuild from './StashedBuild';
 import SocketIo from 'socket.io-client';
 import { SERVER_ROOT, STEPS } from '../../constants';
 import { v4 as uuid } from 'uuid';
+import NglWrapper, { NglComponent, ViableRepresentation } from './NglWrapper';
 
 // @ts-ignore
 window.NGL = ngl;
-
-type ViableRepresentation = 'ball+stick' | 'ribbon' | 'surface' | 'hyperball' | 'line';
 
 interface MBProps {
   classes: Record<string, string>;
@@ -50,12 +49,10 @@ interface MBState {
   martinize_step: string;
 
   all_atom_pdb?: File;
-  all_atom_ngl?: NGLComponent;
-  all_atom_representations: RepresentationElement[];
+  all_atom_ngl?: NglComponent;
 
   coarse_grain_pdb?: Blob;
-  coarse_grain_ngl?: NGLComponent;
-  coarse_grain_representations: RepresentationElement[];
+  coarse_grain_ngl?: NglComponent;
 
   virtual_links?: NGLComponent;
   virtual_links_repr?: RepresentationElement;
@@ -91,19 +88,17 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
   state = this.original_state;
 
   protected ngl_stage?: Stage;
+  protected ngl!: NglWrapper;
 
   protected root = React.createRef<HTMLDivElement>();
   protected go_back_btn = React.createRef<any>();
 
   componentDidMount() {
     setPageTitle('Molecule Builder');
-
-    this.ngl_stage = new Stage("ngl-stage", { backgroundColor: this.props.theme.palette.background.default });
     // @ts-ignore
     window.MoleculeBuilder = this;
-    document.getElementById('ngl-stage')!.addEventListener('wheel', (e) => {
-      e.preventDefault();
-    }, { passive: false });
+
+    this.ngl = new NglWrapper("ngl-stage", { backgroundColor: this.props.theme.palette.background.default });
   }
 
   protected get original_state() : MBState {
@@ -119,8 +114,6 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       builder_ep: '0',
       builder_em: '0',
       martinize_error: undefined,
-      coarse_grain_representations: [],
-      all_atom_representations: [],
       coarse_grain_opacity: 1,
       coarse_grain_visible: true,
       all_atom_visible: true,
@@ -129,14 +122,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       virtual_link_visible: true,
       generating_files: false,
       representations: ['ball+stick'],
-      theme: createMuiTheme({
-        palette: {
-          type: 'light',
-          background: {
-            default: '#fafafa',
-          },
-        },
-      }),
+      theme: this.createTheme('light'),
       saved: false,
       want_reset: false,
       want_go_back: false,
@@ -146,6 +132,18 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       virtual_links: undefined,
       virtual_links_repr: undefined,
     };
+  }
+
+  protected get available_modes() {
+    if (this.state.builder_force_field.includes('martini3')) {
+      return [
+        { id: 'classic', name: 'Classic' }, { id: 'elastic', name: 'Elastic' }, { id: 'go', name: 'Virtual Go Sites' }
+      ];
+    }
+
+    return [
+      { id: 'classic', name: 'Classic' }, { id: 'elastic', name: 'Elastic' }
+    ];
   }
 
   /* LOAD, RESET AND SAVE STAGES */
@@ -224,8 +222,8 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
   }
 
   reset() {
-    if (this.ngl_stage)
-      this.ngl_stage.removeAllComponents();
+    if (this.ngl)
+      this.ngl.reset();
     this.setState(this.original_state);
     this.changeTheme('light');
   }
@@ -234,8 +232,8 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
   /* SET SETTINGS FOR REPRESENTATIONS */
 
   setCoarseGrainRepresentation(parameters: Partial<RepresentationParameters>) {
-    for (const repr of this.state.coarse_grain_representations) {
-      repr.setParameters(parameters);
+    for (const repr of this.state.coarse_grain_ngl!.representations) {
+      repr.set(parameters);
     }
   }
 
@@ -245,8 +243,8 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
   }
 
   setAllAtomRepresentation(parameters: Partial<RepresentationParameters>) {
-    for (const repr of this.state.all_atom_representations) {
-      repr.setParameters(parameters);
+    for (const repr of this.state.all_atom_ngl!.representations) {
+      repr.set(parameters);
     }
   }
 
@@ -255,63 +253,65 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     this.setAllAtomRepresentation(parameters);
   }
 
-  changeTheme(hint: 'light' | 'dark') {
+  createTheme(hint: 'light' | 'dark') {
     const bgclr = hint === 'dark' ? '#303030' : '#fafafa';
 
-    this.setState({
-      theme: createMuiTheme({
-        palette: {
-          type: hint,
-          background: {
-            default: bgclr,
-          },
-          primary: hint === 'dark' ? { main: blue[600] } : undefined,
+    return createMuiTheme({
+      palette: {
+        type: hint,
+        background: {
+          default: bgclr,
         },
-      })
+        primary: hint === 'dark' ? { main: blue[600] } : undefined,
+      },
+    });
+  }
+
+  changeTheme(hint: 'light' | 'dark') {
+    const theme = this.createTheme(hint);
+
+    this.setState({
+      theme
     });
 
-    this.ngl_stage!.setParameters({ backgroundColor: bgclr });
+    this.ngl.set({ backgroundColor: theme.palette.background.default });
   }
 
   initCoarseGrainPdb(pdb: Blob, radius: { [atom: string]: number }, bonds?: ElasticOrGoBounds[], mode?: 'go' | 'elastic') {
     // Apply the NGL radius
     applyUserRadius(radius);
 
-    this.ngl_stage!.loadFile(pdb, { ext: 'pdb', name: 'coarse_grain.pdb' })
-      .then(async component => {
-        if (component) {
-          const repr: RepresentationElement = component.addRepresentation("ball+stick", undefined);
-          // repr.name => "ball+stick"
+    this.ngl.load(pdb, { ext: 'pdb', name: 'coarse_grain.pdb' })
+      .then(async (component: NglComponent) => {
+        const repr = component.add<BallAndStickRepresentation>("ball+stick");
+        // repr.name => "ball+stick"
 
-          component.autoView(500);
+        component.center(500);
 
-          this.setAllAtomRepresentation({ opacity: .3 });
+        this.setAllAtomRepresentation({ opacity: .3 });
 
-          // todo register the bonds somewhere
-          if (bonds && mode) {
-            const coordinates = await new Promise<[number, number, number][]>(resolve => {
-              const coords: [number, number, number][] = [];
-  
-              (repr.repr as BallAndStickRepresentation).structure.eachAtom(ap => {
-                coords.push([ap.x, ap.y, ap.z]);
-              }, undefined, () => resolve(coords));
-            });
-  
-            const { component, representation } = drawBondsInStage(this.ngl_stage!, bonds, coordinates, mode);
-            this.setState({ 
-              virtual_links: component, 
-              virtual_links_repr: representation 
-            });
-          }
+        // todo register the bonds somewhere
+        if (bonds && mode) {
+          const coordinates: [number, number, number][] = [];
 
-          // Register the component
-          this.setState({
-            running: 'done',
-            coarse_grain_pdb: pdb,
-            coarse_grain_representations: [...this.state.coarse_grain_representations, repr],
-            coarse_grain_ngl: component,
+          repr.atomIterator(ap => {
+            coordinates.push([ap.x, ap.y, ap.z]);
+          });
+
+          // todo change
+          const { component, representation } = drawBondsInStage(this.ngl.stage, bonds, coordinates, mode);
+          this.setState({ 
+            virtual_links: component, 
+            virtual_links_repr: representation 
           });
         }
+
+        // Register the component
+        this.setState({
+          running: 'done',
+          coarse_grain_pdb: pdb,
+          coarse_grain_ngl: component,
+        });
       })
       .catch((e: any) => {
         console.error(e);
@@ -320,20 +320,16 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
   }
 
   initAllAtomPdb(file: File) {
-    return this.ngl_stage!.loadFile(file)
+    return this.ngl.load(file)
       .then(component => {
-        if (component) {
-          const repr: RepresentationElement = component.addRepresentation("ball+stick", undefined);
+        component.add<BallAndStickRepresentation>("ball+stick");
+        component.center();
 
-          component.autoView();
-  
-          // Register the component
-          this.setState({
-            all_atom_ngl: component,
-            all_atom_pdb: file,
-            all_atom_representations: [...this.state.all_atom_representations, repr],
-          });
-        }
+        // Register the component
+        this.setState({
+          all_atom_ngl: component,
+          all_atom_pdb: file,
+        });
       });
   }
 
@@ -573,8 +569,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
         });
     }
     else {
-      if (this.state.all_atom_ngl)
-        this.ngl_stage!.removeComponent(this.state.all_atom_ngl);
+      this.ngl.reset();
 
       this.setState({
         all_atom_ngl: undefined,
@@ -597,8 +592,8 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
   };
 
   onAllAtomVisibilityChange = (_: any, checked: boolean) => {
-    for (const repr of this.state.all_atom_representations) {
-      repr.setVisibility(checked);
+    for (const repr of this.state.all_atom_ngl!.representations) {
+      repr.visible = checked;
     }
     
     this.setState({ all_atom_visible: checked });
@@ -617,8 +612,8 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
   };
 
   onCoarseGrainedVisibilityChange = (_: any, checked: boolean) => {
-    for (const repr of this.state.coarse_grain_representations) {
-      repr.setVisibility(checked);
+    for (const repr of this.state.coarse_grain_ngl!.representations) {
+      repr.visible = checked;
     }
 
     this.setState({ coarse_grain_visible: checked });
@@ -685,22 +680,18 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     const cmp_aa = this.state.all_atom_ngl!;
     const cmp_coarse = this.state.coarse_grain_ngl!;
 
+    cmp_aa.add(type, {
+      visible: this.state.all_atom_visible,
+      opacity: this.state.all_atom_opacity,
+    });
+
+    cmp_coarse.add(type, {
+      visible: this.state.coarse_grain_visible,
+      opacity: this.state.coarse_grain_opacity,
+    });
+
     this.setState({
       representations: [...this.state.representations, type],
-      all_atom_representations: [
-        ...this.state.all_atom_representations,
-        cmp_aa.addRepresentation(type, {
-          visible: this.state.all_atom_visible,
-          opacity: this.state.all_atom_opacity,
-        }),
-      ],
-      coarse_grain_representations: [
-        ...this.state.coarse_grain_representations,
-        cmp_coarse.addRepresentation(type, {
-          visible: this.state.coarse_grain_visible,
-          opacity: this.state.coarse_grain_opacity,
-        }),
-      ],
     });
   };
 
@@ -708,20 +699,11 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     const cmp_aa = this.state.all_atom_ngl!;
     const cmp_coarse = this.state.coarse_grain_ngl!;
 
-    const current_all = this.state.all_atom_representations;
-    for (const repr of current_all.filter(e => e.name === type)) {
-      cmp_aa.removeRepresentation(repr);
-    }
-
-    const current_coarse = this.state.coarse_grain_representations;
-    for (const repr of current_coarse.filter(e => e.name === type)) {
-      cmp_coarse.removeRepresentation(repr);
-    }
+    cmp_aa.removeOfType(type);
+    cmp_coarse.removeOfType(type);
 
     this.setState({
       representations: this.state.representations.filter(e => e !== type),
-      all_atom_representations: current_all.filter(e => e.name !== type),
-      coarse_grain_representations: current_coarse.filter(e => e.name !== type),
     });
   };
 
@@ -782,6 +764,13 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     this.go_back_btn.current.click();
   };
 
+  onForceFieldChange = (ff: string) => {
+    if (this.state.builder_mode === 'go' && !ff.includes('martini3')) {
+      this.setState({ builder_mode: 'classic' });
+    }
+    this.setState({ builder_force_field: ff });
+  };
+
 
   /* RENDERING */
 
@@ -839,7 +828,20 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
         <Marger size="1rem" />
 
-        <StashedBuild onSelect={uuid => this.load(uuid)} hasTitle />
+        <Typography variant="h6">
+          Saved molecules
+        </Typography>
+
+        <Typography>
+          You can use these molecules in the <Link 
+            component={RouterLink} 
+            to="/membrane_builder"
+          >
+            membrane builder
+          </Link>.
+        </Typography>
+
+        <StashedBuild onSelect={uuid => this.load(uuid)} />
       </div>
     );
   }
@@ -942,7 +944,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
               values={force_fields}
               id="builder_ff"
               value={this.state.builder_force_field}
-              onChange={e => this.setState({ builder_force_field: e })}
+              onChange={this.onForceFieldChange}
             />
           </Grid>
 
@@ -965,7 +967,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
             <SimpleSelect 
               formControlClass={this.props.classes.form}
               label="Mode"
-              values={[{ id: 'classic', name: 'Classic' }, { id: 'elastic', name: 'Elastic' }, { id: 'go', name: 'Virtual Go Sites' }]}
+              values={this.available_modes}
               id="builder_mode"
               value={this.state.builder_mode}
               onChange={e => this.setState({ builder_mode: e as any })}

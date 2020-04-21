@@ -1,5 +1,5 @@
 import React from 'react';
-import { withStyles, Typography, Button, TextField, IconButton, CircularProgress, FormControlLabel, Checkbox } from '@material-ui/core';
+import { withStyles, Typography, Button, TextField, IconButton, CircularProgress, FormControlLabel, Checkbox, makeStyles } from '@material-ui/core';
 import { toast } from '../../Toaster';
 import { Marger, FaIcon } from '../../../helpers';
 import ApiHelper from '../../../ApiHelper';
@@ -46,18 +46,38 @@ class LipidChooser extends React.Component<LCProps, LCState> {
     }
   }
 
-  next = () => {
-    const { lower, upper_separated } = this.state;
-    const upper = upper_separated ? this.state.upper : [];
+  checkLipidIntegrity(lipids: LipidWithId[], layer_name: '' | 'Lower' | 'Upper') {
+    const lipid_set = new Set<string>();
 
-    // Check if a lipid has invalid ratio
-    for (const lipid of [...lower, ...upper]) {
+    for (const lipid of lipids) {
+      if (lipid_set.has(lipid.value)) {
+        if (layer_name) 
+          toast(`${layer_name} leaflet: Lipid ${lipid.value} is set multiple times.`, "error");
+        else 
+          toast(`Lipid ${lipid.value} is set multiple times.`, "error");
+        
+        return false;
+      }
+      lipid_set.add(lipid.value);
+
       const n_count = Number(lipid.count);
 
       if (!n_count || n_count < 0 || lipid.count.indexOf('.') !== -1) {
         toast("One lipid has invalid ratio.", "error");
-        return;
+        return false;
       }
+    } 
+
+    return true;
+  }
+
+  next = () => {
+    const { lower, upper_separated } = this.state;
+    const upper = upper_separated ? this.state.upper : [];
+
+    // Check if a lipid has invalid ratio or if one lipid is repeated
+    if (!this.checkLipidIntegrity(lower, upper_separated ? 'Lower' : '') || !this.checkLipidIntegrity(upper, 'Upper')) {
+      return;
     }
 
     if (lower.length) {
@@ -211,6 +231,8 @@ class LipidChooser extends React.Component<LCProps, LCState> {
           />
         </div>
 
+        <Marger size="1rem" />
+
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
           <Button variant="outlined" color="secondary" onClick={this.props.onPrevious}>
             Back
@@ -240,7 +262,7 @@ function LipidSelectGroup(props: {
   return (
     <React.Fragment>
       {props.items.map(item => (
-        <div>
+        <div key={item.id}>
           <LipidSelect 
             id={item.id}
             value={item.value}
@@ -264,6 +286,16 @@ function LipidSelectGroup(props: {
   );
 }
 
+const useStylesLipid = makeStyles(theme => ({
+  root: {
+    display: 'grid',
+    width: '100%',
+    gridTemplateColumns: '1fr 1fr min-content',
+    gap: '20px',
+    margin: '1rem 0',
+  },
+}));
+
 function LipidSelect(props: {
   id: number,
   lipids: string[],
@@ -272,14 +304,16 @@ function LipidSelect(props: {
   value: string;
   count: string;
 }) {
-  let error = "";
+  const classes = useStylesLipid();
+
+  let error = false;
   let n_count = Number(props.count);
   if (!n_count || n_count < 0 || props.count.indexOf('.') !== -1) {
-    error = "Invalid number";
+    error = true;
   }
 
   return (
-    <React.Fragment>
+    <div className={classes.root}>
       <SimpleSelect 
         label="Lipid"
         variant="standard"
@@ -296,12 +330,14 @@ function LipidSelect(props: {
         type="number"
         label="Presence ratio"
         error={!!error}
-        helperText={error ? error : undefined}
+        helperText="Positive integer"
       />
 
-      <IconButton onClick={props.onDelete}>
-        <FaIcon trash />
-      </IconButton>
-    </React.Fragment>
+      <div>
+        <IconButton onClick={props.onDelete}>
+          <FaIcon trash />
+        </IconButton>
+      </div>
+    </div>
   );
 }
