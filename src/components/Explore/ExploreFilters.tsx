@@ -41,12 +41,14 @@ function getStyles(value: string, values: string[], theme: Theme) {
 
 const ITEM_HEIGHT = 48;
 const ITEM_PADDING_TOP = 8;
-const MenuProps = {
+const MenuProps: any = {
   PaperProps: {
     style: {
       maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
     },
   },
+  /** Fix for unwanted scroll on click: see https://github.com/mui-org/material-ui/issues/19245#issuecomment-616482764 */
+  variant: 'menu',
 };
 
 function MultipleSelect(props: { 
@@ -59,10 +61,12 @@ function MultipleSelect(props: {
   const handleChange = (event: React.ChangeEvent<{ value: unknown }>) => {
     props.onChange(event.target.value as string[]);
   };
+  
   const theme = useTheme();
   const classes = useStyles();
   const [labelWidth, setLabelWidth] = React.useState(0);
   const inputLabel = React.useRef<HTMLLabelElement>(null);
+
   React.useEffect(() => {
     setLabelWidth(inputLabel.current!.offsetWidth);
   }, []);

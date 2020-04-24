@@ -12,6 +12,7 @@ import NglWrapper, { NglRepresentation } from './NglWrapper';
 import BallAndStickRepresentation from '@mmsb/ngl/declarations/representation/ballandstick-representation';
 import { toast } from '../Toaster';
 import JSZip from 'jszip';
+import { Molecule } from '../../types/entities';
 
 // @ts-ignore
 window.NGL = ngl;
@@ -40,7 +41,7 @@ interface MBuilderState {
   modal_select_molecule: boolean;
   want_go_back: boolean;
 
-  molecule?: string | MoleculeWithFiles;
+  molecule?: Molecule | MoleculeWithFiles;
   lipids?: { lower: ChoosenLipid[], upper?: ChoosenLipid[] };
   settings?: SettingsInsane;
 
@@ -50,6 +51,13 @@ interface MBuilderState {
   want_close_result: boolean;
   generating_files: boolean;
   with_water: boolean;
+
+  available_lipids: string[];
+  no_lipid: boolean;
+}
+
+function isMolecule(data: any) : data is Molecule {
+  return 'last_update' in data;
 }
 
 class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
@@ -65,13 +73,20 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
     this.state = this.original_state;
   }
 
-  componentDidMount() {
+  async componentDidMount() {
     // Init ngl stage
     setPageTitle('Membrane Builder');
     // @ts-ignore
     window.MembraneBuilder = this;
 
     this.ngl = new NglWrapper("ngl-stage", { backgroundColor: this.props.theme.palette.background.default });
+
+    try {
+      const lipids: string[] = await ApiHelper.request('settings/lipids');
+      this.setState({ available_lipids: lipids });
+    } catch (e) {
+      toast("Unable to fetch available lipids.", "error");
+    }
   }
 
   get original_state() : MBuilderState {
@@ -88,6 +103,8 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
       want_close_result: false,
       generating_files: false,
       with_water: false,
+      available_lipids: [],
+      no_lipid: false,
     };
   }
 
@@ -147,6 +164,20 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
       this.representation.set({ opacity });
   }
 
+  async downloadLipids(force_field: string) {
+    this.setState({ available_lipids: [], no_lipid: false });
+
+    try {
+      const lipids: string[] = await ApiHelper.request('settings/lipids', { parameters: { force_field } });
+      this.setState({ 
+        available_lipids: lipids, 
+        no_lipid: lipids.length === 0, 
+      });
+    } catch (e) {
+      toast("Unable to fetch available lipids.", "error");
+    }
+  }
+
   /* EVENTS */
 
   onWantGoBack = (e: React.MouseEvent) => {
@@ -180,8 +211,8 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
     }
     parameters.lipids = lipids.lower.map(e => `${e.name}:${e.ratio}`).join(',');
     
-    if (typeof molecule === 'string') {
-      parameters.from_id = molecule;
+    if (isMolecule(molecule)) {
+      parameters.from_id = molecule.id;
     }
     else {
       parameters.pdb = molecule.pdb;
@@ -350,7 +381,10 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
           this.setState({
             molecule,
             running: 'choose_lipids',
+            available_lipids: [],
           });
+
+          this.downloadLipids(molecule.force_field);
         }}
       />
     );
@@ -368,6 +402,8 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
             running: 'choose_molecule', 
           });
         }}
+        lipids={this.state.available_lipids}
+        noLipid={this.state.no_lipid}
       />
     );
   }
@@ -531,7 +567,7 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
                   >
                     <FaIcon arrow-left style={{ fontSize: '1rem' }} /> 
                     <span style={{ marginLeft: '.7rem', fontSize: '1.1rem' }}>
-                      Back to MArtinize Database
+                      Back to MArtini Database
                     </span>
                   </Link>
 

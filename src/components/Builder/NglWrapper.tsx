@@ -3,11 +3,12 @@ import { StageParameters, StageLoadFileParams } from '@mmsb/ngl/declarations/sta
 import RepresentationElement from '@mmsb/ngl/declarations/component/representation-element';
 import Representation, { RepresentationParameters } from '@mmsb/ngl/declarations/representation/representation';
 import AtomProxy from '@mmsb/ngl/declarations/proxy/atom-proxy';
+import Surface from '@mmsb/ngl/declarations/surface/surface';
 
 export class NglWrapper {
   stage: ngl.Stage;
 
-  constructor(protected target: string | HTMLElement, protected stage_params?: Partial<StageParameters>) {
+  constructor(target: string | HTMLElement, stage_params?: Partial<StageParameters>) {
     this.stage = new ngl.Stage(target, stage_params);
 
     const target_el = typeof target === 'string' ? document.getElementById(target)! : target;
@@ -45,9 +46,18 @@ export class NglWrapper {
   center(duration?: number) {
     this.stage.autoView(duration);
   }
+
+  add(item: ngl.Structure | Surface | ngl.Volume | ngl.Shape) {
+    const component = this.stage.addComponentFromObject(item) as ngl.Component;
+    return new NglComponent(component);
+  }
+
+  remove(component: NglComponent) {
+    this.stage.removeComponent(component.component);
+  }
 }
 
-export type ViableRepresentation = 'ball+stick' | 'ribbon' | 'surface' | 'hyperball' | 'line';
+export type ViableRepresentation = 'ball+stick' | 'ribbon' | 'surface' | 'hyperball' | 'line' | 'buffer';
 
 export class NglComponent {
   protected _repr: NglRepresentation<any>[] = [];

@@ -2,7 +2,6 @@ import React from 'react';
 import { withStyles, Typography, Button, TextField, IconButton, CircularProgress, FormControlLabel, Checkbox, makeStyles } from '@material-ui/core';
 import { toast } from '../../Toaster';
 import { Marger, FaIcon } from '../../../helpers';
-import ApiHelper from '../../../ApiHelper';
 import { SimpleSelect } from '../../../Shared';
 
 export interface ChoosenLipid {
@@ -20,13 +19,14 @@ interface LCProps {
   classes: Record<string, string>;
   onLipidChoose(lipids: { lower: ChoosenLipid[], upper?: ChoosenLipid[] }): any;
   onPrevious(): any;
+  lipids: string[];
+  noLipid: boolean;
 }
 
 interface LCState {
   lower: LipidWithId[];
   upper: LipidWithId[];
   upper_separated: boolean;
-  available_lipids: string[];
 }
 
 class LipidChooser extends React.Component<LCProps, LCState> {
@@ -34,15 +34,17 @@ class LipidChooser extends React.Component<LCProps, LCState> {
     lower: [],
     upper: [],
     upper_separated: false,
-    available_lipids: [],
   };
 
-  async componentDidMount() {
-    try {
-      const lipids: string[] = await ApiHelper.request('settings/lipids');
-      this.setState({ available_lipids: lipids });
-    } catch (e) {
-      toast("Unable to fetch available lipids.", "error");
+  componentDidUpdate(prev_props: LCProps) {
+    // Lipids changed
+    if (prev_props.lipids !== this.props.lipids && this.props.lipids.length) {
+      // Remove lipids that does not exists
+      const available = new Set(this.props.lipids);
+      const lower = this.state.lower.filter(e => available.has(e.value));
+      const upper = this.state.upper.filter(e => available.has(e.value));
+
+      this.setState({ lower, upper });
     }
   }
 
@@ -97,7 +99,7 @@ class LipidChooser extends React.Component<LCProps, LCState> {
     this.setState({
       lower: [
         ...lower, 
-        { id: Math.random(), value: this.state.available_lipids[0], count: '1' }
+        { id: Math.random(), value: this.props.lipids[0], count: '1' }
       ]
     });
   };
@@ -128,7 +130,7 @@ class LipidChooser extends React.Component<LCProps, LCState> {
     this.setState({
       upper: [
         ...upper, 
-        { id: Math.random(), value: this.state.available_lipids[0], count: '1' }
+        { id: Math.random(), value: this.props.lipids[0], count: '1' }
       ]
     });
   };
@@ -179,27 +181,37 @@ class LipidChooser extends React.Component<LCProps, LCState> {
     );
   }
 
+  renderNoLipid() {
+    return (
+      <React.Fragment>
+        <Marger size="2rem" />
+
+        <Typography variant="h6">
+          Selected molecule force field does not have any available lipid.
+        </Typography>
+
+        <Marger size="2rem" />
+
+        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+          <Button variant="outlined" color="secondary" onClick={this.props.onPrevious}>
+            Back
+          </Button>
+        </div>
+      </React.Fragment>
+    );
+  }
+
   render() {
-    if (this.state.available_lipids.length === 0) {
+    if (this.props.noLipid) {
+      return this.renderNoLipid();
+    }
+
+    if (this.props.lipids.length === 0) {
       return this.renderLoadingLipids();
     }
 
     return (
       <React.Fragment>
-        <Marger size="1rem" />
-
-        <Typography align="center" variant="h6">
-          {!this.state.upper_separated ? "Lipids" : "Lower membrane leaflet"}
-        </Typography>
-
-        <LipidSelectGroup 
-          lipids={this.state.available_lipids}
-          items={this.state.lower}
-          onItemAdd={this.onLipidAdd}
-          onItemChange={this.onLipidChange}
-          onItemDelete={this.onLipidDelete}
-        />
-
         <Marger size="1rem" />
 
         {this.state.upper_separated && <React.Fragment>
@@ -208,7 +220,7 @@ class LipidChooser extends React.Component<LCProps, LCState> {
           </Typography>
           
           <LipidSelectGroup 
-            lipids={this.state.available_lipids}
+            lipids={this.props.lipids}
             items={this.state.upper}
             onItemAdd={this.onUpperLipidAdd}
             onItemChange={this.onUpperLipidChange}
@@ -217,6 +229,20 @@ class LipidChooser extends React.Component<LCProps, LCState> {
 
           <Marger size="1rem" />
         </React.Fragment>}
+
+        <Typography align="center" variant="h6">
+          {!this.state.upper_separated ? "Lipids" : "Lower membrane leaflet"}
+        </Typography>
+
+        <LipidSelectGroup 
+          lipids={this.props.lipids}
+          items={this.state.lower}
+          onItemAdd={this.onLipidAdd}
+          onItemChange={this.onLipidChange}
+          onItemDelete={this.onLipidDelete}
+        />
+
+        <Marger size="1rem" />
 
         <div>
           <FormControlLabel

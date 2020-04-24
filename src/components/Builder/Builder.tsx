@@ -3,26 +3,26 @@ import { withStyles, Grid, Typography, Paper, TextField, Button, withTheme, Them
 import { Marger, FaIcon, downloadBlob, setPageTitle, dateFormatter } from '../../helpers';
 import { Link as RouterLink } from 'react-router-dom';
 
-import { Stage, Component as NGLComponent } from '@mmsb/ngl';
+import { Stage } from '@mmsb/ngl';
 import BallAndStickRepresentation from '@mmsb/ngl/declarations/representation/ballandstick-representation';
 import * as ngl from '@mmsb/ngl';
 
 import { SimpleSelect } from '../../Shared';
 import Settings from '../../Settings';
 import { toast } from '../Toaster';
-import RepresentationElement from '@mmsb/ngl/declarations/component/representation-element';
 import { RepresentationParameters } from '@mmsb/ngl/declarations/representation/representation';
 import JSZip from 'jszip';
 import ToggleButton from '@material-ui/lab/ToggleButton';
 import ToggleButtonGroup from '@material-ui/lab/ToggleButtonGroup';
 import { blue } from '@material-ui/core/colors';
 import { applyUserRadius } from '../../nglhelpers';
-import StashedBuildHelper, { MartinizeFile, ElasticOrGoBounds } from '../../StashedBuildHelper';
+import StashedBuildHelper, { MartinizeFile, ElasticOrGoBounds, GoMoleculeDetails, GoBoundsDetails } from '../../StashedBuildHelper';
 import StashedBuild from './StashedBuild';
 import SocketIo from 'socket.io-client';
 import { SERVER_ROOT, STEPS } from '../../constants';
 import { v4 as uuid } from 'uuid';
-import NglWrapper, { NglComponent, ViableRepresentation } from './NglWrapper';
+import NglWrapper, { NglComponent, ViableRepresentation, NglRepresentation } from './NglWrapper';
+import { ItpFile } from 'itp-parser';
 
 // @ts-ignore
 window.NGL = ngl;
@@ -39,7 +39,10 @@ interface MartinizeFiles {
   top: MartinizeFile;
   go_bonds?: ElasticOrGoBounds[];
   elastic_bonds?: ElasticOrGoBounds[];
+  go_details?: GoMoleculeDetails;
 }
+
+interface AtomRadius { [atom: string]: number }
 
 interface MBState {
   running: 'pdb' | 'pdb_read' | 'martinize_params' | 'martinize_generate' | 'martinize_error' | 'done';
@@ -54,8 +57,9 @@ interface MBState {
   coarse_grain_pdb?: Blob;
   coarse_grain_ngl?: NglComponent;
 
-  virtual_links?: NGLComponent;
-  virtual_links_repr?: RepresentationElement;
+  virtual_links?: NglComponent;
+  virtual_links_repr?: NglRepresentation<ngl.BufferRepresentation>;
+  coordinates: [number, number, number][];
 
   builder_force_field: string;
   builder_mode: 'go' | 'classic' | 'elastic';
@@ -84,6 +88,9 @@ interface MBState {
   theme: Theme;
 }
 
+/**
+ * The protein builder.
+ */
 class MartinizeBuilder extends React.Component<MBProps, MBState> {
   state = this.original_state;
 
@@ -94,7 +101,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
   protected go_back_btn = React.createRef<any>();
 
   componentDidMount() {
-    setPageTitle('Molecule Builder');
+    setPageTitle('Protein Builder');
     // @ts-ignore
     window.MoleculeBuilder = this;
 
@@ -131,6 +138,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       martinize_step: '',
       virtual_links: undefined,
       virtual_links_repr: undefined,
+      coordinates: [],
     };
   }
 
@@ -182,6 +190,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       radius: this.state.files.radius,
       elastic_bonds: this.state.files.elastic_bonds,
       go_bonds: this.state.files.go_bonds,
+      go_details: this.state.files.go_details,
     });
   }
 
@@ -207,7 +216,14 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     const mode = save.elastic_bonds ? 'elastic' : (save.go_bonds ? 'go' : undefined);
 
     // Init PDB scene
-    this.initCoarseGrainPdb(cg_pdb, save.radius, save.elastic_bonds ?? save.go_bonds, mode);
+    this.initCoarseGrainPdb({
+      pdb: cg_pdb,
+      radius: save.radius,
+      bonds: save.elastic_bonds ?? save.go_bonds,
+      mode,
+      go_details: save.go_details,
+    });
+
     this.setState({ 
       files: {
         top: save.top_file,
@@ -239,7 +255,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
   setVirtualLinksRepresentation(parameters: Partial<RepresentationParameters>) {
     if (this.state.virtual_links_repr)
-      this.state.virtual_links_repr.setParameters(parameters);
+      this.state.virtual_links_repr.set(parameters);
   }
 
   setAllAtomRepresentation(parameters: Partial<RepresentationParameters>) {
@@ -277,60 +293,112 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     this.ngl.set({ backgroundColor: theme.palette.background.default });
   }
 
-  initCoarseGrainPdb(pdb: Blob, radius: { [atom: string]: number }, bonds?: ElasticOrGoBounds[], mode?: 'go' | 'elastic') {
+  async initCoarseGrainPdb(options: { pdb: Blob, radius: AtomRadius, bonds?: ElasticOrGoBounds[], go_details?: GoMoleculeDetails, mode?: 'go' | 'elastic' }) {
+    let component: NglComponent;
+
     // Apply the NGL radius
-    applyUserRadius(radius);
+    applyUserRadius(options.radius);
 
-    this.ngl.load(pdb, { ext: 'pdb', name: 'coarse_grain.pdb' })
-      .then(async (component: NglComponent) => {
-        const repr = component.add<BallAndStickRepresentation>("ball+stick");
-        // repr.name => "ball+stick"
+    try {
+      component = await this.ngl.load(options.pdb, { ext: 'pdb', name: 'coarse_grain.pdb' });
+    } catch (e) {
+      console.error(e);
+      toast("Unable to load generated PDB. Please retry by re-loading the page.");
+      return;
+    }
 
-        component.center(500);
+    const repr = component.add<BallAndStickRepresentation>("ball+stick");
+    // repr.name => "ball+stick"
 
-        this.setAllAtomRepresentation({ opacity: .3 });
+    component.center(500);
 
-        // todo register the bonds somewhere
-        if (bonds && mode) {
-          const coordinates: [number, number, number][] = [];
+    this.setAllAtomRepresentation({ opacity: .3 });
 
-          repr.atomIterator(ap => {
-            coordinates.push([ap.x, ap.y, ap.z]);
-          });
+    if (options.bonds && options.mode) {
+      const coordinates: [number, number, number][] = [];
 
-          // todo change
-          const { component, representation } = drawBondsInStage(this.ngl.stage, bonds, coordinates, mode);
-          this.setState({ 
-            virtual_links: component, 
-            virtual_links_repr: representation 
-          });
-        }
-
-        // Register the component
-        this.setState({
-          running: 'done',
-          coarse_grain_pdb: pdb,
-          coarse_grain_ngl: component,
-        });
-      })
-      .catch((e: any) => {
-        console.error(e);
-        toast("Unable to load generated PDB. Please retry by re-loading the page.");
+      repr.atomIterator(ap => {
+        coordinates.push([ap.x, ap.y, ap.z]);
       });
+
+      const { component, representation } = drawBondsInStage(this.ngl, options.bonds, coordinates, options.mode);
+      this.setState({ 
+        virtual_links: component, 
+        virtual_links_repr: representation,
+        coordinates
+      });
+    }
+
+    // Register the component
+    this.setState({
+      running: 'done',
+      coarse_grain_pdb: options.pdb,
+      coarse_grain_ngl: component,
+    });
   }
 
-  initAllAtomPdb(file: File) {
-    return this.ngl.load(file)
-      .then(component => {
-        component.add<BallAndStickRepresentation>("ball+stick");
-        component.center();
+  async initAllAtomPdb(file: File) {
+    const component = await this.ngl.load(file);
 
-        // Register the component
-        this.setState({
-          all_atom_ngl: component,
-          all_atom_pdb: file,
-        });
-      });
+    component.add<BallAndStickRepresentation>("ball+stick");
+    component.center();
+
+    // Register the component
+    this.setState({
+      all_atom_ngl: component,
+      all_atom_pdb: file,
+    });
+  }
+
+  /* ADD OR REMOVE GO BONDS */
+  async addOrRemoveGoBond(atom_index_1: number, atom_index_2: number, mode: 'add' | 'remove') {
+    const { files, coordinates, virtual_links: links_component } = this.state;
+
+    if (!files || !files.go_bonds || !files.go_details || !links_component) {
+      return;
+    }
+
+    // Find which molecule type is affected.
+    // TODO!!
+    // Now, it is just molecule_0
+    const mol_name = Object.keys(files.go_details)[0];
+
+    // Find the corresponding ITP
+    const itp_index = files.itps.findIndex(e => e.name.startsWith(mol_name + '_go-table_VirtGoSites'));
+    
+    if (itp_index === -1) {
+      console.log("ITP not found");
+      return;
+    }
+
+    // Read the ITP
+    const m_file = files.itps[itp_index];
+    const itp_file = ItpFile.readFromString(await m_file.content.text());
+
+    const target_fn = mode === 'add' ? addBond : removeBond;
+
+    const { component, representation, points } = target_fn({
+      source: atom_index_1,
+      target: atom_index_2,
+      itp_file,
+      details: files.go_details[mol_name],
+      stage: this.ngl,
+      points: files.go_bonds,
+      coords: coordinates,
+      links_component,
+    });
+
+    files.go_bonds = points;
+    representation.set({ opacity: this.state.virtual_link_opacity });
+    representation.visible = this.state.virtual_link_visible;
+
+    // Save the ITP file
+    m_file.content = new File([itp_file.toString()], m_file.name, { type: m_file.type });
+
+    this.setState({
+      virtual_links: component,
+      virtual_links_repr: representation,
+    });
   }
 
 
@@ -424,6 +492,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
             files.pdb = {
               name,
               content: new File([file], name, { type }),
+              type,
             };
             break;
           }
@@ -432,6 +501,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
             files.top = {
               name,
               content: new File([file], name, { type }),
+              type,
             };
             break;
           }
@@ -444,6 +514,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
             files.itps.push({
               name,
               content: new File([file], name, { type }),
+              type,
             });
             break;
           }
@@ -472,10 +543,11 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
       // When run ends
       socket.on('martinize end', (
-        { id, go_bonds, elastic_bonds, radius }: { 
+        { id, go_bonds, elastic_bonds, radius, go_details, }: { 
           id: string, 
           go_bonds?: ElasticOrGoBounds[], 
           elastic_bonds?: ElasticOrGoBounds[], 
+          go_details?: GoMoleculeDetails,
           radius: { [name: string]: number; }, 
         }) => {
           if (id !== RUN_ID) {
@@ -485,6 +557,9 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
           files.radius = radius;
           files.go_bonds = go_bonds;
           files.elastic_bonds = elastic_bonds;
+          files.go_details = go_details;
+
+          console.log(files);
 
           resolve(files as MartinizeFiles);
       });
@@ -507,7 +582,14 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     this.setState({ files, martinize_step: "" });
 
     const mode = files.elastic_bonds ? 'elastic' : (files.go_bonds ? 'go' : undefined);
-    this.initCoarseGrainPdb(files.pdb.content, files.radius, files.elastic_bonds ?? files.go_bonds, mode);
+
+    this.initCoarseGrainPdb({
+      pdb: files.pdb.content,
+      radius: files.radius,
+      bonds: files.elastic_bonds ?? files.go_bonds,
+      go_details: files.go_details,
+      mode
+    });
 
     // AJAX METHOD
     //
@@ -632,8 +714,9 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
   };
 
   onVirtualLinksVisibilityChange = (_: any, checked: boolean) => {
-    if (this.state.virtual_links_repr)
-      this.state.virtual_links_repr.setVisibility(checked);
+    const repr = this.state.virtual_links_repr;
+    if (repr)
+      repr.visible = checked;
 
     this.setState({ virtual_link_visible: checked });
   };
@@ -1348,7 +1431,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
             <div className={classes.paper}>
               <div className={classes.header}>
                 <Typography component="h1" variant="h3" align="center" style={{ fontWeight: 700, fontSize: '2.5rem', marginBottom: '1rem' }}>
-                  Build a molecule
+                  Martinize a protein
                 </Typography>
 
                 <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
@@ -1359,7 +1442,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
                   >
                     <FaIcon arrow-left style={{ fontSize: '1rem' }} /> 
                     <span style={{ marginLeft: '.7rem', fontSize: '1.1rem' }}>
-                      Back to MArtinize Database
+                      Back to MArtini Database
                     </span>
                   </Link>
 
@@ -1500,7 +1583,7 @@ function martinizeOutputParser(input: string) : {
   );
 }
 
-function drawBondsInStage(stage: Stage, points: ElasticOrGoBounds[], coords: [number, number, number][], mode: 'go' | 'elastic') {
+function drawBondsInStage(stage: NglWrapper, points: ElasticOrGoBounds[], coords: [number, number, number][], mode: 'go' | 'elastic') {
   const shape = new ngl.Shape("add-bonds");
   const upper_mode = mode.toLocaleUpperCase();
   
@@ -1518,10 +1601,86 @@ function drawBondsInStage(stage: Stage, points: ElasticOrGoBounds[], coords: [nu
     shape.addCylinder(atom1, atom2, [0, 65, 0], 0.1, name);
   }
 
-  const component = stage.addComponentFromObject(shape) as NGLComponent;
-  const representation: RepresentationElement = component.addRepresentation("buffer", { opacity: .2 });
+  const component = stage.add(shape);
+  const representation = component.add<ngl.BufferRepresentation>('buffer', { opacity: .2 });
 
   return { component, representation };
+}
+
+
+interface AddOrRemoveBoundParams {
+  source: number;
+  target: number;
+  itp_file: ItpFile;
+  details: GoBoundsDetails;
+  stage: NglWrapper;
+  points: ElasticOrGoBounds[];
+  coords: [number, number, number][];
+  links_component: NglComponent;
+}
+
+/** 
+ * Source&Target are GO index + 1 !! 
+ * 
+ * {ngl_click_event}.atom.index + 1
+ */
+function addBond({ source, target, itp_file, details, stage, points, coords, links_component }: AddOrRemoveBoundParams) {
+  const go_i = source, go_j = target;
+  const go_i_name = details.index_to_name[go_i], go_j_name = details.index_to_name[go_j];
+
+  itp_file.headlines.push(`${go_i_name}    ${go_j_name}    1  0.7923518221  9.4140000000`);
+ 
+  // Remove the old go bonds component
+  stage.remove(links_component);
+ 
+  // Add the relations i, j in the points
+  points.push([details.index_to_real[source], details.index_to_real[target]]);
+ 
+  // Redraw all the bounds (very quick)
+  const { component: new_cmp, representation } = drawBondsInStage(stage, points, coords, 'go');
+ 
+  // Save the new component
+  return { component: new_cmp, representation, points };
+}
+
+/** 
+ * Source&Target are REAL ATOM index 
+ * 
+ * {ngl_click_event}.type === "cylinder"
+ * {ngl_click_event}.object.name.startsWith("[GO]")
+ * const [source, target] = {ngl_click_event}.object.name.split('atoms ')[1].split('-').map(Number)
+ */
+function removeBond({ source, target, itp_file, details, stage, points, coords, links_component }: AddOrRemoveBoundParams) {
+  const go_i = details.real_to_index[source], go_j = details.real_to_index[target];
+  const go_i_name = details.index_to_name[go_i], go_j_name = details.index_to_name[go_j];
+
+  const index = itp_file.headlines.findIndex(e => {
+    const [name_1, name_2,] = e.split(/\s+/).filter(l => l); 
+
+    return (name_1 === go_i_name && name_2 === go_j_name) || (name_2 === go_i_name && name_1 === go_j_name);
+  });
+
+  if (index !== -1) {
+    // Remove line at index {index}
+    itp_file.headlines.splice(index, 1);
+  }
+ 
+  // Remove the old go bonds component
+  stage.remove(links_component);
+ 
+  // Add the relations i, j in the points
+  const new_points = points.filter(e => {
+    if (e[0] === source && e[1] === target) return false;
+    if (e[1] === source && e[0] === target) return false;
+    
+    return true;
+  });
+ 
+  // Redraw all the bounds (very quick)
+  const { component: new_cmp, representation } = drawBondsInStage(stage, new_points, coords, 'go');
+ 
+  // Save the new component
+  return { component: new_cmp, representation, points: new_points };
 }
 
 // @ts-ignore

@@ -6,6 +6,17 @@ import uuid from 'uuid/v4';
  */
 export type ElasticOrGoBounds = [number, number];
 
+export interface GoBoundsDetails {
+  index_to_real: { [index: number]: number };
+  name_to_index: { [name: string]: number };
+  index_to_name: { [index: number]: string };
+  real_to_index: { [index: number]: number };
+  /** Atom count */
+  count: number;
+}
+
+export type GoMoleculeDetails = { [moleculeType: string]: GoBoundsDetails };
+
 export interface StashedBuildInfo {
   created_at: Date;
   name: string;
@@ -24,6 +35,7 @@ export interface StashedBuildInfo {
 export interface MartinizeFile {
   name: string;
   content: Blob;
+  type: string;
 }
 
 export interface StashedBuild {
@@ -35,6 +47,7 @@ export interface StashedBuild {
   go_bonds?: ElasticOrGoBounds[];
   elastic_bonds?: ElasticOrGoBounds[];
   info: StashedBuildInfo;
+  go_details?: GoMoleculeDetails;
 }
 
 /**

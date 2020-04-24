@@ -107,7 +107,7 @@ function DrawerElements(props: RouteComponentProps) {
         path: '/builder',
         link: true,
         icon: 'atom',
-        text: 'Builder',
+        text: 'Protein builder',
       },
       {
         path: '/membrane_builder',

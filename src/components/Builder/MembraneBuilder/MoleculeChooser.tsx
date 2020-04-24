@@ -20,7 +20,7 @@ export interface MoleculeWithFiles {
 
 interface MCProps {
   classes: Record<string, string>;
-  onMoleculeChoose(molecule: MoleculeWithFiles | string): any;
+  onMoleculeChoose(molecule: MoleculeWithFiles | Molecule): any;
 }
 
 interface MCState {
@@ -51,9 +51,9 @@ class MoleculeChooser extends React.Component<MCProps, MCState> {
     }
   };
 
-  nextFromId = (id: string) => {
+  nextFromMolecule = (molecule: Molecule) => {
     this.setState({ modal_chooser: false });
-    this.props.onMoleculeChoose(id);
+    this.props.onMoleculeChoose(molecule);
   };
 
   get can_continue() {
@@ -71,7 +71,7 @@ class MoleculeChooser extends React.Component<MCProps, MCState> {
       <React.Fragment>
         <ModalMoleculeSelector
           open={this.state.modal_chooser}
-          onChoose={this.nextFromId}
+          onChoose={this.nextFromMolecule}
           onCancel={() => this.setState({ modal_chooser: false })}
         />
 
@@ -92,12 +92,12 @@ class MoleculeChooser extends React.Component<MCProps, MCState> {
         <Marger size="2rem" />
 
         <Typography align="center" variant="h6">
-          Load from saved molecules
+          Load from saved proteins
         </Typography>
 
         <Typography align="center">
           <Link component={RouterLink} to="/builder">
-            Want to create a molecule ?
+            Want to create a protein ?
           </Link>
         </Typography>
         
@@ -174,7 +174,7 @@ interface ModalState {
   content: string;
 }
 
-class ModalMoleculeSelector extends React.Component<{ open: boolean; onChoose(id: string): any; onCancel(): any; }, ModalState> {
+class ModalMoleculeSelector extends React.Component<{ open: boolean; onChoose(molecule: Molecule): any; onCancel(): any; }, ModalState> {
   timeout: NodeJS.Timeout | undefined;
 
   state: ModalState = {
@@ -283,7 +283,7 @@ class ModalMoleculeSelector extends React.Component<{ open: boolean; onChoose(id
 
           {this.state.molecules.length > 0 && <List>
             {this.state.molecules.map(m => (
-              <ListItem key={m.id} button onClick={() => this.props.onChoose(m.id)}>
+              <ListItem key={m.id} button onClick={() => this.props.onChoose(m)}>
                 <ListItemText
                   primary={`${m.name} (${m.alias}) - ${m.force_field} - Version ${m.version}`}
                 />
