@@ -9,12 +9,12 @@ import { Marger, FaIcon } from '../../../helpers';
 
 interface GoEditorProps {
   stage: NglWrapper;
-  onBondCreate(go_atom_1: number, go_atom_2: number): any;
+  onBondCreate(go_atom_1: number, go_atom_2: number): Promise<any>;
   onBondRemove(real_atom_1: number, real_atom_2: number): any;
   onAllBondRemove(from_go_atom: number): any;
   onCancel(): any;
 
-  onRedrawGoBonds(highlight?: [number, number], opacity?: number): any;
+  onRedrawGoBonds(highlight?: number | [number, number], opacity?: number): any;
   setColorForCgRepr(schemeId?: string): any;
 }
 
@@ -90,9 +90,15 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
       const residue_number = pp.atom.resno;
 
       if (this.state.mode === 'add-link' && this.state.clicked?.type === 'atom') {
+        const go_atom_1 = this.state.clicked.source;
         // Create the bond if possible
-        if (this.state.clicked.source !== source_or_target)
-          this.props.onBondCreate(this.state.clicked.source, source_or_target);
+        if (this.state.clicked.source !== source_or_target) {
+          this.props.onBondCreate(go_atom_1, source_or_target)
+            .then(() => {
+              // redraw the bonds for selected atom
+              this.props.onRedrawGoBonds(go_atom_1 + 1, 1);
+            });
+        }
 
         this.setState({
           mode: 'idle'
@@ -111,7 +117,7 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
       }
 
       // Highlight the selected one
-      this.highlightAtom(residue_number);
+      this.highlightAtom(residue_number, source_or_target);
 
       this.setState({
         clicked: {
@@ -162,19 +168,20 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
     this.props.onRedrawGoBonds(undefined, 1);
   }
 
-  highlightAtom(...indexes: number[]) {
-    console.log(indexes)
+  highlightAtom(residue_index: number, atom_index: number) {
     const schemeId = ngl.ColormakerRegistry.addSelectionScheme([
-      ["red", indexes.join(' or ')],
+      ["red", String(residue_index)],
       // @ts-ignore
       ["element", "*"],
     ], "test");
     
     this.props.setColorForCgRepr(schemeId);
+    this.props.onRedrawGoBonds(atom_index + 1, 1);
   }
 
   removeAtomHighlight() {
     this.props.setColorForCgRepr();
+    this.props.onRedrawGoBonds();
   }
 
   onAddLinkEnable = () => {

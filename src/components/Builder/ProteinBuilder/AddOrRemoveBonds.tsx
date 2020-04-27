@@ -2,6 +2,7 @@ import ItpFile from "itp-parser";
 import { GoBoundsDetails, ElasticOrGoBounds } from "../../../StashedBuildHelper";
 import NglWrapper, { NglComponent } from "../NglWrapper";
 import * as ngl from '@mmsb/ngl';
+import AtomProxy from "@mmsb/ngl/declarations/proxy/atom-proxy";
 
 export interface AddOrRemoveBoundParams {
   source: number;
@@ -133,12 +134,30 @@ export function drawBondsInStage(
   points: ElasticOrGoBounds[], 
   coords: [number, number, number][], 
   mode: 'go' | 'elastic', 
-  highlight?: [number, number],
+  highlight?: [number, number] | number,
   default_opacity = 0.2,
 ) {
   const shape = new ngl.Shape("add-bonds");
   const upper_mode = mode.toLocaleUpperCase();
-  const [h1, h2] = highlight || [];
+  let h1 = 0, h2 = 0;
+
+  if (Array.isArray(highlight)) {
+    [h1, h2] = highlight;
+  }
+  else if (typeof highlight === 'number') {
+    // Highlight every link from highlight go atom
+    h1 = highlight;
+  }
+
+  function isHighlighted(atom1_index: number, atom2_index: number) {
+    if (highlight && Array.isArray(highlight)) {
+      return (atom1_index === h1 && atom2_index === h2) || (atom2_index === h1 && atom1_index === h2);
+    }
+    // Highlight is a number
+    else if (h1) {
+      return atom1_index === h1 || atom2_index === h1;
+    }
+  }
   
   for (const [atom1_index, atom2_index] of points) {
     // atom index starts at 1, atom array stats to 0
@@ -151,11 +170,9 @@ export function drawBondsInStage(
     }
     
     const name = `[${upper_mode}] Bond w/ atoms ${atom1_index}-${atom2_index}`;
-    if (highlight) {
-      if ((atom1_index === h1 && atom2_index === h2) || (atom2_index === h1 && atom1_index === h2)) {
-        shape.addCylinder(atom1, atom2, V_BONDS_HIGHLIGHT_COLOR, .1, name);
-        continue;
-      }
+    if (isHighlighted(atom1_index, atom2_index)) {
+      shape.addCylinder(atom1, atom2, V_BONDS_HIGHLIGHT_COLOR, .1, name);
+      continue;
     }
 
     shape.addCylinder(atom1, atom2, V_BONDS_DEFAULT_COLOR, .1, name);

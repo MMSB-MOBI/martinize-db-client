@@ -403,10 +403,18 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     });
   }
 
-  redrawGoBonds = (highlight?: [number, number], opacity?: number) => {
+  redrawGoBonds = (highlight?: [number, number] | number, opacity?: number) => {
     const { files, coordinates, virtual_links: links_component } = this.state;
 
     this.ngl.remove(links_component!);
+    
+    if (typeof highlight === 'number') {
+      const mol_name = Object.keys(files!.go_details!)[0];
+      const mol = files!.go_details![mol_name];
+
+      // transform go index to real index
+      highlight = mol.index_to_real[highlight];
+    }
 
     const { component, representation } = drawBondsInStage(
       this.ngl, 
@@ -872,7 +880,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
   };
 
   onBondCreate = (go_atom_1: number, go_atom_2: number) => {
-    this.addOrRemoveGoBond(go_atom_1 + 1, go_atom_2 + 1, 'add');
+    return this.addOrRemoveGoBond(go_atom_1 + 1, go_atom_2 + 1, 'add');
   };
 
   onBondRemove = (real_atom_1: number, real_atom_2: number) => {
