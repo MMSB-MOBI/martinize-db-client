@@ -1,28 +1,29 @@
 import React from 'react';
-import { withStyles, Grid, Typography, Paper, TextField, Button, withTheme, Theme, CircularProgress, Slider, FormControl, FormGroup, FormControlLabel, Switch, Box, Divider, createMuiTheme, ThemeProvider, Link, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@material-ui/core';
-import { Marger, FaIcon, downloadBlob, setPageTitle, dateFormatter } from '../../helpers';
+import { withStyles, Grid, Typography, Paper, Button, withTheme, Theme, CircularProgress, Divider, createMuiTheme, ThemeProvider, Link, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@material-ui/core';
+import { Marger, FaIcon, downloadBlob, setPageTitle } from '../../helpers';
 import { Link as RouterLink } from 'react-router-dom';
 
 import { Stage } from '@mmsb/ngl';
 import BallAndStickRepresentation from '@mmsb/ngl/declarations/representation/ballandstick-representation';
 import * as ngl from '@mmsb/ngl';
 
-import { SimpleSelect } from '../../Shared';
-import Settings from '../../Settings';
 import { toast } from '../Toaster';
 import { RepresentationParameters } from '@mmsb/ngl/declarations/representation/representation';
 import JSZip from 'jszip';
-import ToggleButton from '@material-ui/lab/ToggleButton';
-import ToggleButtonGroup from '@material-ui/lab/ToggleButtonGroup';
 import { blue } from '@material-ui/core/colors';
 import { applyUserRadius } from '../../nglhelpers';
-import StashedBuildHelper, { MartinizeFile, ElasticOrGoBounds, GoMoleculeDetails, GoBoundsDetails } from '../../StashedBuildHelper';
-import StashedBuild from './StashedBuild';
+import StashedBuildHelper, { MartinizeFile, ElasticOrGoBounds, GoMoleculeDetails } from '../../StashedBuildHelper';
 import SocketIo from 'socket.io-client';
 import { SERVER_ROOT, STEPS } from '../../constants';
 import { v4 as uuid } from 'uuid';
 import NglWrapper, { NglComponent, ViableRepresentation, NglRepresentation } from './NglWrapper';
 import { ItpFile } from 'itp-parser';
+import LoadPdb from './ProteinBuilder/LoadPdb';
+import { MZError } from './ProteinBuilder/MartinizeError';
+import MartinizeForm from './ProteinBuilder/MartinizeForm';
+import MartinizeGenerated from './ProteinBuilder/MartinizeGenerated';
+import MoleculeSaverModal from './ProteinBuilder/MoleculeSaverModal';
+import { addBond, removeBond, drawBondsInStage } from './ProteinBuilder/AddOrRemoveBonds';
 
 // @ts-ignore
 window.NGL = ngl;
@@ -47,7 +48,7 @@ interface AtomRadius { [atom: string]: number }
 interface MBState {
   running: 'pdb' | 'pdb_read' | 'martinize_params' | 'martinize_generate' | 'martinize_error' | 'done';
   error?: any;
-  martinize_error?: { type?: string, raw_run?: ArrayBuffer, error: string, open?: boolean, stack: string };
+  martinize_error?: MZError;
   saver_modal: string | false;
   martinize_step: string;
 
@@ -140,18 +141,6 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       virtual_links_repr: undefined,
       coordinates: [],
     };
-  }
-
-  protected get available_modes() {
-    if (this.state.builder_force_field.includes('martini3')) {
-      return [
-        { id: 'classic', name: 'Classic' }, { id: 'elastic', name: 'Elastic' }, { id: 'go', name: 'Virtual Go Sites' }
-      ];
-    }
-
-    return [
-      { id: 'classic', name: 'Classic' }, { id: 'elastic', name: 'Elastic' }
-    ];
   }
 
   /* LOAD, RESET AND SAVE STAGES */
@@ -359,7 +348,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     }
 
     // Find which molecule type is affected.
-    // TODO!!
+    // TODO multiple molecule support! It could be guessed with .count property of each molecule
     // Now, it is just molecule_0
     const mol_name = Object.keys(files.go_details)[0];
 
@@ -627,38 +616,25 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     //   }) 
   };
 
-  allAtomPdbChange = (e: React.FormEvent<HTMLInputElement>) => {
-    const file = e.currentTarget.files?.[0];
+  onFileSelect = (file: File) => {
+    // Mount the PDB in NGL
+    this.setState({
+      running: 'pdb_read'
+    });
 
-    if (file) {
-      // Mount the PDB in NGL
-      this.setState({
-        running: 'pdb_read'
-      });
-
-      this.initAllAtomPdb(file)
-        .then(() => {
-          this.setState({
-            running: 'martinize_params',
-          });
-        })
-        .catch((e: any) => {
-          console.error(e);
-          this.setState({
-            running: 'pdb',
-            error: e
-          });
+    this.initAllAtomPdb(file)
+      .then(() => {
+        this.setState({
+          running: 'martinize_params',
         });
-    }
-    else {
-      this.ngl.reset();
-
-      this.setState({
-        all_atom_ngl: undefined,
-        all_atom_pdb: undefined,
-        running: 'pdb'
+      })
+      .catch((e: any) => {
+        console.error(e);
+        this.setState({
+          running: 'pdb',
+          error: e
+        });
       });
-    }
   };
 
   onAllAtomOpacityChange = (_: any, value: number | number[]) => {
@@ -875,278 +851,6 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     );
   }
 
-  allAtomPdbLoader() {
-    return (
-      <div style={{ textAlign: 'center' }}>
-        <Marger size="2rem" />
-
-        {this.state.error && <Typography variant="body1" color="error">
-          Your file seems invalid: {" "}
-          {this.state.error}
-        </Typography>}
-
-        <Typography>
-          Please load your all atom PDB here to start.
-        </Typography>
-
-        <Marger size="1rem" />
-
-        <Typography variant="body2">
-          Here, you can transform a all atom molecule, stored in a PDB file format, in a coarse-grained file.
-          You will have access to a generated PDB, with required ITP and TOP files in order to use the it in GROMACS.
-        </Typography>
-
-        <Marger size="2rem" />
-
-        <div style={{ textAlign: 'center' }}>
-          <Button variant="outlined" color="primary" onClick={() => { (this.root.current!.querySelector('input[type="file"]') as HTMLInputElement).click(); }}>
-            Load all atom PDB
-          </Button>
-          <input type="file" style={{ display: 'none' }} onChange={this.allAtomPdbChange} />
-        </div>
-
-        <Marger size="2rem" />
-
-        <Divider />
-
-        <Marger size="1rem" />
-
-        <Typography variant="h6">
-          Saved molecules
-        </Typography>
-
-        <Typography>
-          You can use these molecules in the <Link 
-            component={RouterLink} 
-            to="/membrane_builder"
-          >
-            membrane builder
-          </Link>.
-        </Typography>
-
-        <StashedBuild onSelect={uuid => this.load(uuid)} />
-      </div>
-    );
-  }
-
-  formatMartinizeError() {
-    const error = this.state.martinize_error;
-
-    if (!error) {
-      return "";
-    }
-    const close_fn = () => this.setState({ martinize_error: { ...error, open: false } });
-    const open_fn = () => this.setState({ martinize_error: { ...error, open: true } });
-    const download_fn = () => {
-      const blob = new Blob([error.raw_run!]);
-      downloadBlob(blob, "run_" + dateFormatter("Y-m-d_H-i-s") + ".zip")
-    };
-
-    return (
-      <React.Fragment>
-        {/* Dialog */}
-        <Dialog open={!!error.open} onClose={close_fn} maxWidth="md">
-          <DialogTitle>
-            Martinize run failed :(
-          </DialogTitle>
-
-          <DialogContent>
-            <DialogContentText color="secondary">
-              {error.error}
-            </DialogContentText>
-
-            {error.raw_run && <DialogContentText>
-              To explore more details, like intermediate files and program command line outputs, you can{" "}
-              <Link href="#!" onClick={download_fn}>
-                download a dump of this run
-              </Link>.
-            </DialogContentText>}
-
-            <Marger size=".5rem" />
-
-            <Divider />
-
-            <Marger size="1rem" />
-
-            {error.stack && <DialogContentText component="pre" style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
-              <strong>Stack trace</strong>  
-              
-              <br />
-              <code>
-                {error.stack}
-              </code>
-            </DialogContentText>}
-          </DialogContent>
-
-          <DialogActions>
-            <Button color="primary" onClick={close_fn}>
-              Close
-            </Button>
-          </DialogActions>
-        </Dialog>
-
-        {/* Inline text */}
-        <Typography color="error" align="center">
-          Unable to proceed your molecule: {" "}
-          <strong>
-            Run failed
-          </strong>.
-          
-          <br />
-          <Link color="primary" href="#!" onClick={open_fn}>
-            Click here to see more details
-          </Link>.
-        </Typography>
-        
-      </React.Fragment>
-    );
-  }
-
-  martinizeForm() {
-    const force_fields = Settings.martinize_variables.force_fields.map(e => ({ id: e, name: e }));
-
-    return (
-      <div>
-        <Marger size="1rem" />
-
-        {this.state.running === 'martinize_error' && this.formatMartinizeError()}
-
-        <Marger size="1rem" />
-
-        <Typography variant="h6" align="center">
-          Select your coarse graining settings
-        </Typography>
-
-        <Marger size="1rem" />
-
-        <Grid component="form" container onSubmit={this.handleMartinizeBegin}>
-          <Grid item sm={12}>
-            <SimpleSelect 
-              formControlClass={this.props.classes.form}
-              label="Force field"
-              values={force_fields}
-              id="builder_ff"
-              value={this.state.builder_force_field}
-              onChange={this.onForceFieldChange}
-            />
-          </Grid>
-
-          <Marger size="1rem" />
-
-          <Grid item sm={12}>
-            <SimpleSelect 
-              formControlClass={this.props.classes.form}
-              label="Position restrains"
-              values={[{ id: 'none', name: 'None' }, { id: 'all', name: 'All' }, { id: 'backbone', name: 'Backbone' }]}
-              id="builder_position_restrains"
-              value={this.state.builder_positions}
-              onChange={e => this.setState({ builder_positions: e as any })}
-            />
-          </Grid>
-
-          <Marger size="1rem" />
-
-          <Grid item sm={12}>
-            <SimpleSelect 
-              formControlClass={this.props.classes.form}
-              label="Mode"
-              values={this.available_modes}
-              id="builder_mode"
-              value={this.state.builder_mode}
-              onChange={e => this.setState({ builder_mode: e as any })}
-            />
-          </Grid>
-
-          {this.state.builder_mode === 'elastic' && this.martinizeElasticForm()}
-
-          <Marger size="2rem" />
-
-          <Box width="100%" justifyContent="space-between" display="flex">
-            <Button variant="outlined" color="secondary" type="button" onClick={() => this.reset()}>
-              Back
-            </Button>
-
-            <Button variant="outlined" color="primary" type="submit">
-              Submit
-            </Button>
-          </Box>
-        </Grid>
-      </div>
-    );
-  }
-
-  martinizeElasticForm() {
-    return (
-      <React.Fragment>
-        <Grid item xs={12} sm={6} className={this.props.classes.formContainer}>
-          <TextField 
-            variant="outlined"
-            className={this.props.classes.textField}
-            label="Force constant"
-            type="number"
-            value={this.state.builder_ef}
-            onChange={e => this.setState({ builder_ef: e.target.value })}
-          />
-        </Grid>
-
-        <Grid item xs={12} sm={6} className={this.props.classes.formContainer}>
-          <TextField 
-            variant="outlined"
-            className={this.props.classes.textField}
-            label="Lower cutoff"
-            type="number"
-            value={this.state.builder_el}
-            onChange={e => this.setState({ builder_el: e.target.value })}
-          />
-        </Grid>
-
-        <Grid item xs={12} sm={6} className={this.props.classes.formContainer}>
-          <TextField 
-            variant="outlined"
-            className={this.props.classes.textField}
-            label="Upper cutoff"
-            type="number"
-            value={this.state.builder_eu}
-            onChange={e => this.setState({ builder_eu: e.target.value })}
-          />
-        </Grid>
-
-        <Grid item xs={12} sm={6} className={this.props.classes.formContainer}>
-          <TextField 
-            variant="outlined"
-            className={this.props.classes.textField} 
-            label="Decay factor a"
-            type="number"
-            value={this.state.builder_ea}
-            onChange={e => this.setState({ builder_ea: e.target.value })}
-          />
-        </Grid>
-
-        <Grid item xs={12} sm={6} className={this.props.classes.formContainer}>
-          <TextField 
-            variant="outlined"
-            className={this.props.classes.textField}
-            label="Decay power p"
-            type="number"
-            value={this.state.builder_ep}
-            onChange={e => this.setState({ builder_ep: e.target.value })}
-          />
-        </Grid>
-
-        <Grid item xs={12} sm={6} className={this.props.classes.formContainer}>
-          <TextField 
-            variant="outlined"
-            className={this.props.classes.textField}
-            label="Minimum force"
-            type="number"
-            value={this.state.builder_em}
-            onChange={e => this.setState({ builder_em: e.target.value })}
-          />
-        </Grid>
-      </React.Fragment>
-    );
-  }
-
   martinizeGenerating() {
     return (
       <div style={{ textAlign: 'center' }}>
@@ -1169,218 +873,6 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
           This might take a while.
         </Typography>
       </div>
-    );
-  }
-
-  /** Happening when molecule is ready, and the two coarse grain + all atom models are showed. */
-  generated() {
-    return (
-      <React.Fragment>
-        {this.wantResetModal()}
-
-        <Marger size="1rem" />
-
-        <Button 
-          style={{ width: '100%' }} 
-          color="primary" 
-          onClick={this.onWantReset}
-        >
-          <FaIcon redo-alt /> <span style={{ marginLeft: '.6rem' }}>Restart builder</span>
-        </Button>
-
-        <Marger size="1rem" />
-
-        {/* Theme */}
-        <Typography variant="h6">
-          Theme
-        </Typography>
-        <FormControl component="fieldset">
-          <FormGroup>
-            <FormControlLabel
-              control={<Switch checked={this.state.theme.palette.type === 'dark'} onChange={this.onThemeChange} value="dark" />}
-              label="Dark theme"
-            />
-          </FormGroup>
-        </FormControl>
-
-        <Marger size="2rem" />
-
-        {/* All Atom Settings */}
-        <Typography variant="h6">
-          All atom
-        </Typography>
-
-        <Typography gutterBottom>
-          Opacity
-        </Typography>
-        <Slider
-          value={this.state.all_atom_opacity * 100}
-          valueLabelDisplay="auto"
-          step={10}
-          marks
-          min={10}
-          max={100}
-          onChange={this.onAllAtomOpacityChange}
-          color="secondary"
-        />
-
-        <FormControl component="fieldset">
-          <FormGroup>
-            <FormControlLabel
-              control={<Switch checked={this.state.all_atom_visible} onChange={this.onAllAtomVisibilityChange} value="visible" />}
-              label="Visible"
-            />
-          </FormGroup>
-        </FormControl>
-
-        <Marger size="1rem" />
-
-        {/* Coarse Grained Settings */}
-        <Typography variant="h6">
-          Coarse grained
-        </Typography>
-
-        <Typography gutterBottom>
-          Opacity
-        </Typography>
-        <Slider
-          value={this.state.coarse_grain_opacity * 100}
-          valueLabelDisplay="auto"
-          step={10}
-          marks
-          min={10}
-          max={100}
-          onChange={this.onCoarseGrainedOpacityChange}
-          color="secondary"
-        />
-
-        <FormControl component="fieldset">
-          <FormGroup>
-            <FormControlLabel
-              control={<Switch checked={this.state.coarse_grain_visible} onChange={this.onCoarseGrainedVisibilityChange} value="visible" />}
-              label="Visible"
-            />
-          </FormGroup>
-        </FormControl>
-
-        <Marger size="1rem" />
-
-        {/* Go / Elastic networks virtual bonds */}
-        {this.state.virtual_links && <React.Fragment>
-          <Typography variant="h6">
-            Virtual {this.state.builder_mode === "go" ? "Go" : "elastic"} bonds
-          </Typography>
-
-          <Typography gutterBottom>
-            Opacity
-          </Typography>
-          <Slider
-            value={this.state.virtual_link_opacity * 100}
-            valueLabelDisplay="auto"
-            step={10}
-            marks
-            min={10}
-            max={100}
-            onChange={this.onVirtualLinksOpacityChange}
-            color="secondary"
-          />
-
-          <FormControl component="fieldset">
-            <FormGroup>
-              <FormControlLabel
-                control={<Switch checked={this.state.virtual_link_visible} onChange={this.onVirtualLinksVisibilityChange} value="visible" />}
-                label="Visible"
-              />
-            </FormGroup>
-          </FormControl>
-
-          <Marger size="1rem" />
-        </React.Fragment>}
-
-        <Typography variant="h6">
-          Representations
-        </Typography>
-
-        <Marger size=".5rem" />
-
-        <div>
-          {/* 'ball+stick' | 'ribbon' | 'surface' | 'hyperball' | 'line' */}
-          <ToggleButtonGroup
-            value={this.state.representations}
-            onChange={this.onRepresentationChange}
-          >
-            <ToggleButton value="ball+stick">
-              <FaIcon atom />
-            </ToggleButton>
-            <ToggleButton value="ribbon">
-              <FaIcon ribbon />
-            </ToggleButton>
-            <ToggleButton value="surface">
-              <FaIcon bullseye />
-            </ToggleButton>
-            <ToggleButton value="hyperball">
-              <FaIcon expand-alt />
-            </ToggleButton>
-            <ToggleButton value="line">
-              <FaIcon project-diagram />
-            </ToggleButton>
-          </ToggleButtonGroup>
-        </div>
-
-        <Marger size="1rem" />
-
-        <Divider style={{ width: '100%' }} />
-
-        <Marger size="1rem" />
-
-        <Box alignContent="center" justifyContent="center" width="100%">
-          <Button 
-            style={{ width: '100%' }} 
-            color="secondary" 
-            disabled={this.state.saved}
-            onClick={this.onMoleculeStash}
-          >
-            <FaIcon save /> <span style={{ marginLeft: '.6rem' }}>Save</span>
-          </Button>
-
-          <Marger size="1rem" />
-
-          <Button 
-            style={{ width: '100%' }} 
-            color="primary" 
-            disabled={this.state.generating_files}
-            onClick={this.onMoleculeDownload}
-          >
-            <FaIcon download /> <span style={{ marginLeft: '.6rem' }}>Download</span>
-          </Button>
-        </Box>
-
-      </React.Fragment>
-    );
-  }
-
-  wantResetModal() {
-    return (
-      <Dialog open={this.state.want_reset} onClose={this.onWantResetCancel}>
-        <DialogTitle>
-          Restart molecule builder ?
-        </DialogTitle>
-
-        <DialogContent>
-          <DialogContentText>
-            You will lose unsaved actions.
-          </DialogContentText>
-          <DialogContentText>
-            If you want to use this molecule in Membrane Builder or get back to this page later,
-            you must save the molecule firt, using the appropriate button.
-          </DialogContentText>
-        </DialogContent>
-
-        <DialogActions>
-          <Button color="primary" onClick={this.onWantResetCancel}>Cancel</Button>
-          <Button color="secondary" onClick={() => this.reset()}>Restart builder</Button>
-        </DialogActions>
-      </Dialog>
     );
   }
 
@@ -1453,15 +945,62 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
               </div>
 
               {/* Forms... */}
-              {this.state.running === 'pdb' && this.allAtomPdbLoader()}
+              {this.state.running === 'pdb' && <LoadPdb 
+                onStashedSelect={uuid => this.load(uuid)}
+                onFileSelect={this.onFileSelect}
+                error={this.state.error}
+              />}
 
               {this.state.running === 'pdb_read' && this.allAtomLoading()}
 
-              {(this.state.running === 'martinize_params' || this.state.running === 'martinize_error') && this.martinizeForm()}
+              {(this.state.running === 'martinize_params' || this.state.running === 'martinize_error') && <MartinizeForm 
+                martinizeError={this.state.martinize_error}
+                onBuilderModeChange={value => this.setState({ builder_mode: value as any })}
+                onBuilderPositionChange={value => this.setState({ builder_positions: value as any })}
+                onForceFieldChange={value => this.setState({ builder_force_field: value })}
+                onMartinizeBegin={this.handleMartinizeBegin}
+                onReset={() => this.reset()}
+                onElasticChange={(type, value) => {
+                  // @ts-ignore
+                  this.setState({ [type]: value })
+                }}
+                builderForceField={this.state.builder_force_field}
+                builderMode={this.state.builder_mode}
+                builderPosition={this.state.builder_positions}
+                builderEa={this.state.builder_ea}
+                builderEf={this.state.builder_ef}
+                builderEl={this.state.builder_el}
+                builderEm={this.state.builder_em}
+                builderEp={this.state.builder_ep}
+                builderEu={this.state.builder_eu}
+              />}
 
               {this.state.running === 'martinize_generate' && this.martinizeGenerating()}
 
-              {this.state.running === 'done' && this.generated()}
+              {this.state.running === 'done' && <MartinizeGenerated 
+                onReset={() => this.reset()}
+                theme={this.state.theme}
+                onThemeChange={this.onThemeChange}
+                virtualLinks={this.state.builder_mode === 'classic' ? '' : this.state.builder_mode}
+                allAtomOpacity={this.state.all_atom_opacity}
+                allAtomVisible={this.state.all_atom_visible}
+                onAllAtomOpacityChange={this.onAllAtomOpacityChange}
+                onAllAtomVisibilityChange={this.onAllAtomVisibilityChange}
+                onMoleculeDownload={this.onMoleculeDownload}
+                onMoleculeStash={this.onMoleculeStash}
+                onRepresentationChange={this.onRepresentationChange}
+                representations={this.state.representations}
+                coarseGrainedOpacity={this.state.coarse_grain_opacity}
+                coarseGrainedVisible={this.state.coarse_grain_visible}
+                onCoarseGrainedOpacityChange={this.onCoarseGrainedOpacityChange}
+                onCoarseGrainedVisibilityChange={this.onCoarseGrainedVisibilityChange}
+                virtualLinksOpacity={this.state.virtual_link_opacity}
+                virtualLinksVisible={this.state.virtual_link_visible}
+                onVirtualLinksOpacityChange={this.onVirtualLinksOpacityChange}
+                onVirtualLinksVisibilityChange={this.onVirtualLinksVisibilityChange}
+                saved={this.state.saved}
+                generatingFiles={this.state.generating_files}
+              />}
             </div>
           </Grid>
 
@@ -1493,13 +1032,6 @@ export default withStyles(theme => ({
     width: '100%', // Fix IE 11 issue.
     marginTop: theme.spacing(1),
   },
-  formContainer: {
-    padding: theme.spacing(1),
-    marginTop: theme.spacing(1),
-  },
-  textField: {
-    width: '100%',
-  },
   submit: {
     margin: theme.spacing(3, 0, 2),
   },
@@ -1509,51 +1041,6 @@ export default withStyles(theme => ({
     maxHeight: '100vh',
   },
 }))(withTheme(MartinizeBuilder));
-
-function MoleculeSaverModal(props: { 
-  defaultName: string,
-  open: boolean, 
-  onConfirm: (name: string) => void, 
-  onClose: () => void, 
-}) {
-  const [name, setName] = React.useState(props.defaultName);
-
-  React.useEffect(() => {
-    setName(props.defaultName);
-  }, [props.defaultName]);
-
-  return (
-    <Dialog open={props.open} onClose={props.onClose}>
-      <DialogTitle>
-        Save this molecule
-      </DialogTitle>
-      <DialogContent>
-        <DialogContentText>
-          You're about to save your molecule.
-          Please specify a save name.
-        </DialogContentText>
-       
-        <form onSubmit={e => { e.preventDefault(); props.onConfirm(name); }}>
-          <TextField
-            value={name}
-            onChange={e => setName(e.target.value)}
-            variant="outlined"
-            style={{ width: '100%' }}
-          />
-        </form>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={props.onClose} color="secondary">
-          Cancel
-        </Button>
-
-        <Button onClick={() => props.onConfirm(name)} color="primary">
-          Save
-        </Button>
-      </DialogActions>
-    </Dialog>
-  )
-}
 
 // Used for martinize output in ajax post call
 function martinizeOutputParser(input: string) : { 
@@ -1581,106 +1068,6 @@ function martinizeOutputParser(input: string) : {
       return value;
     }
   );
-}
-
-function drawBondsInStage(stage: NglWrapper, points: ElasticOrGoBounds[], coords: [number, number, number][], mode: 'go' | 'elastic') {
-  const shape = new ngl.Shape("add-bonds");
-  const upper_mode = mode.toLocaleUpperCase();
-  
-  for (const [atom1_index, atom2_index] of points) {
-    // atom index starts at 1, atom array stats to 0
-    const atom1 = coords[atom1_index - 1];
-    const atom2 = coords[atom2_index - 1];
-    
-    if (!atom1 || !atom2) {
-      console.warn("Not found atom", atom1_index, atom2_index, coords);
-      continue;
-    }
-    
-    const name = `[${upper_mode}] Bond w/ atoms ${atom1_index}-${atom2_index}`;
-    shape.addCylinder(atom1, atom2, [0, 65, 0], 0.1, name);
-  }
-
-  const component = stage.add(shape);
-  const representation = component.add<ngl.BufferRepresentation>('buffer', { opacity: .2 });
-
-  return { component, representation };
-}
-
-
-interface AddOrRemoveBoundParams {
-  source: number;
-  target: number;
-  itp_file: ItpFile;
-  details: GoBoundsDetails;
-  stage: NglWrapper;
-  points: ElasticOrGoBounds[];
-  coords: [number, number, number][];
-  links_component: NglComponent;
-}
-
-/** 
- * Source&Target are GO index + 1 !! 
- * 
- * {ngl_click_event}.atom.index + 1
- */
-function addBond({ source, target, itp_file, details, stage, points, coords, links_component }: AddOrRemoveBoundParams) {
-  const go_i = source, go_j = target;
-  const go_i_name = details.index_to_name[go_i], go_j_name = details.index_to_name[go_j];
-
-  itp_file.headlines.push(`${go_i_name}    ${go_j_name}    1  0.7923518221  9.4140000000`);
- 
-  // Remove the old go bonds component
-  stage.remove(links_component);
- 
-  // Add the relations i, j in the points
-  points.push([details.index_to_real[source], details.index_to_real[target]]);
- 
-  // Redraw all the bounds (very quick)
-  const { component: new_cmp, representation } = drawBondsInStage(stage, points, coords, 'go');
- 
-  // Save the new component
-  return { component: new_cmp, representation, points };
-}
-
-/** 
- * Source&Target are REAL ATOM index 
- * 
- * {ngl_click_event}.type === "cylinder"
- * {ngl_click_event}.object.name.startsWith("[GO]")
- * const [source, target] = {ngl_click_event}.object.name.split('atoms ')[1].split('-').map(Number)
- */
-function removeBond({ source, target, itp_file, details, stage, points, coords, links_component }: AddOrRemoveBoundParams) {
-  const go_i = details.real_to_index[source], go_j = details.real_to_index[target];
-  const go_i_name = details.index_to_name[go_i], go_j_name = details.index_to_name[go_j];
-
-  const index = itp_file.headlines.findIndex(e => {
-    const [name_1, name_2,] = e.split(/\s+/).filter(l => l); 
-
-    return (name_1 === go_i_name && name_2 === go_j_name) || (name_2 === go_i_name && name_1 === go_j_name);
-  });
-
-  if (index !== -1) {
-    // Remove line at index {index}
-    itp_file.headlines.splice(index, 1);
-  }
- 
-  // Remove the old go bonds component
-  stage.remove(links_component);
- 
-  // Add the relations i, j in the points
-  const new_points = points.filter(e => {
-    if (e[0] === source && e[1] === target) return false;
-    if (e[1] === source && e[0] === target) return false;
-    
-    return true;
-  });
- 
-  // Redraw all the bounds (very quick)
-  const { component: new_cmp, representation } = drawBondsInStage(stage, new_points, coords, 'go');
- 
-  // Save the new component
-  return { component: new_cmp, representation, points: new_points };
 }
 
 // @ts-ignore
