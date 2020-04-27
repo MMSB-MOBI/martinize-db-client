@@ -63,7 +63,7 @@ export function removeBond({ source, target, itp_file, details, stage, points, c
   // Remove the old go bonds component
   stage.remove(links_component);
  
-  // Add the relations i, j in the points
+  // Remove the relations i, j in the points
   const new_points = points.filter(e => {
     if (e[0] === source && e[1] === target) return false;
     if (e[1] === source && e[0] === target) return false;
@@ -78,9 +78,67 @@ export function removeBond({ source, target, itp_file, details, stage, points, c
   return { component: new_cmp, representation, points: new_points };
 }
 
-export function drawBondsInStage(stage: NglWrapper, points: ElasticOrGoBounds[], coords: [number, number, number][], mode: 'go' | 'elastic') {
+/**
+ * Remove all bonds from source
+ * 
+ * {source} is GO index + 1 !
+ */
+export function removeAllOfBond({ source, itp_file, details, stage, points, coords, links_component }: AddOrRemoveBoundParams) {
+  const go_i = source;
+  const real_atom_i = details.index_to_real[go_i];
+  const go_i_name = details.index_to_name[go_i];
+
+  const indexes: number[] = [];
+  let cur_i = 0;
+  for (const line of itp_file.headlines) {
+    const [name_1, name_2,] = line.split(/\s+/).filter(e => e); 
+
+    if (name_1 === go_i_name || name_2 === go_i_name) {
+      indexes.push(cur_i);
+    }
+
+    cur_i++;
+  }
+
+  console.log("Will remove", indexes);
+
+  for (const index of indexes) {
+    // NON OPTIMAL: TODO?
+    // Remove line at index {index}
+    itp_file.headlines.splice(index, 1);
+  }
+ 
+  // Remove the old go bonds component
+  stage.remove(links_component);
+ 
+  // Remove the relations i, j in the points
+  const new_points = points.filter(e => {
+    if (e[0] === real_atom_i || e[1] === real_atom_i) return false;
+    
+    return true;
+  });
+ 
+  // Redraw all the bounds (very quick)
+  const { component: new_cmp, representation } = drawBondsInStage(stage, new_points, coords, 'go');
+ 
+  // Save the new component
+  return { component: new_cmp, representation, points: new_points };
+}
+
+export const V_BONDS_DEFAULT_COLOR = new ngl.Color(0, 255, 0);
+export const V_BONDS_HIGHLIGHT_COLOR = new ngl.Color(1, .1, .1);
+
+export function drawBondsInStage(
+  stage: NglWrapper, 
+  points: ElasticOrGoBounds[], 
+  coords: [number, number, number][], 
+  mode: 'go' | 'elastic', 
+  highlight?: [number, number],
+  default_opacity = 0.2,
+) {
   const shape = new ngl.Shape("add-bonds");
   const upper_mode = mode.toLocaleUpperCase();
+  const [h1, h2] = highlight || [];
   
   for (const [atom1_index, atom2_index] of points) {
     // atom index starts at 1, atom array stats to 0
@@ -93,11 +151,18 @@ export function drawBondsInStage(stage: NglWrapper, points: ElasticOrGoBounds[],
     }
     
     const name = `[${upper_mode}] Bond w/ atoms ${atom1_index}-${atom2_index}`;
-    shape.addCylinder(atom1, atom2, [0, 65, 0], 0.1, name);
+    if (highlight) {
+      if ((atom1_index === h1 && atom2_index === h2) || (atom2_index === h1 && atom1_index === h2)) {
+        shape.addCylinder(atom1, atom2, V_BONDS_HIGHLIGHT_COLOR, .1, name);
+        continue;
+      }
+    }
+
+    shape.addCylinder(atom1, atom2, V_BONDS_DEFAULT_COLOR, .1, name);
   }
 
   const component = stage.add(shape);
-  const representation = component.add<ngl.BufferRepresentation>('buffer', { opacity: .2 });
+  const representation = component.add<ngl.BufferRepresentation>('buffer', { opacity: default_opacity });
 
   return { component, representation };
 }

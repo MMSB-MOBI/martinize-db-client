@@ -32,6 +32,8 @@ interface MartinizeGeneratedProps {
   onMoleculeStash(): any;
   generatingFiles: boolean;
   onMoleculeDownload(): any;
+
+  onGoEditorStart(): any;
 }
 
 export default function MartinizeGenerated(props: MartinizeGeneratedProps) {
@@ -152,6 +154,20 @@ export default function MartinizeGenerated(props: MartinizeGeneratedProps) {
         <Typography variant="h6">
           Virtual {props.virtualLinks === "go" ? "Go" : "elastic"} bonds
         </Typography>
+
+        <Marger size=".5rem" />
+
+        {props.virtualLinks === "go" && <Box alignContent="center" justifyContent="center" width="100%">
+          <Button 
+            style={{ width: '100%' }} 
+            color="primary" 
+            onClick={props.onGoEditorStart}
+          >
+            <FaIcon pen /> <span style={{ marginLeft: '.6rem' }}>Edit</span>
+          </Button>
+        </Box>}
+
+        <Marger size=".5rem" />
 
         <Typography gutterBottom>
           Opacity

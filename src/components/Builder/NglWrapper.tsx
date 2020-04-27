@@ -4,6 +4,7 @@ import RepresentationElement from '@mmsb/ngl/declarations/component/representati
 import Representation, { RepresentationParameters } from '@mmsb/ngl/declarations/representation/representation';
 import AtomProxy from '@mmsb/ngl/declarations/proxy/atom-proxy';
 import Surface from '@mmsb/ngl/declarations/surface/surface';
+import PickingProxy from '@mmsb/ngl/declarations/controls/picking-proxy';
 
 export class NglWrapper {
   stage: ngl.Stage;
@@ -54,6 +55,23 @@ export class NglWrapper {
 
   remove(component: NglComponent) {
     this.stage.removeComponent(component.component);
+  }
+
+  onClick(callback: (pp: PickingProxy) => any) {
+    this.stage.signals.clicked.add(callback);
+  }
+
+  removePanOnClick() {
+    // @ts-ignore Bad typing
+    this.stage.mouseControls.remove("clickPick-*");
+  }
+
+  removeEvents() {
+    this.stage.signals.clicked.removeAll();
+  }
+
+  restoreDefaultMouseEvents() {
+    this.stage.mouseControls.preset("default");
   }
 }
 

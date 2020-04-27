@@ -23,7 +23,8 @@ import { MZError } from './ProteinBuilder/MartinizeError';
 import MartinizeForm from './ProteinBuilder/MartinizeForm';
 import MartinizeGenerated from './ProteinBuilder/MartinizeGenerated';
 import MoleculeSaverModal from './ProteinBuilder/MoleculeSaverModal';
-import { addBond, removeBond, drawBondsInStage } from './ProteinBuilder/AddOrRemoveBonds';
+import { addBond, removeBond, drawBondsInStage, removeAllOfBond } from './ProteinBuilder/AddOrRemoveBonds';
+import GoEditor from './ProteinBuilder/GoEditor';
 
 // @ts-ignore
 window.NGL = ngl;
@@ -46,7 +47,7 @@ interface MartinizeFiles {
 interface AtomRadius { [atom: string]: number }
 
 interface MBState {
-  running: 'pdb' | 'pdb_read' | 'martinize_params' | 'martinize_generate' | 'martinize_error' | 'done';
+  running: 'pdb' | 'pdb_read' | 'martinize_params' | 'martinize_generate' | 'martinize_error' | 'done' | 'go_editor';
   error?: any;
   martinize_error?: MZError;
   saver_modal: string | false;
@@ -100,6 +101,15 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
   protected root = React.createRef<HTMLDivElement>();
   protected go_back_btn = React.createRef<any>();
+
+  protected saved_viz_params?: {
+    aa_enabled: boolean;
+    cg_op: number;
+    cg_enabled: boolean;
+    vl_op: number;
+    vl_enabled: boolean;
+    representations: ViableRepresentation[];
+  };
 
   componentDidMount() {
     setPageTitle('Protein Builder');
@@ -220,6 +230,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
         pdb: save.coarse_grained,
         radius: save.radius,
         go_bonds: save.go_bonds,
+        go_details: save.go_details,
         elastic_bonds: save.elastic_bonds,
       },
       saved: true,
@@ -340,10 +351,11 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
   }
 
   /* ADD OR REMOVE GO BONDS */
-  async addOrRemoveGoBond(atom_index_1: number, atom_index_2: number, mode: 'add' | 'remove') {
+  async addOrRemoveGoBond(atom_index_1: number, atom_index_2: number, mode: 'add' | 'remove' | 'remove_all') {
     const { files, coordinates, virtual_links: links_component } = this.state;
 
     if (!files || !files.go_bonds || !files.go_details || !links_component) {
+      console.warn("One required element is missing", files, links_component);
       return;
     }
 
@@ -364,7 +376,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     const m_file = files.itps[itp_index];
     const itp_file = ItpFile.readFromString(await m_file.content.text());
 
-    const target_fn = mode === 'add' ? addBond : removeBond;
+    const target_fn = mode === 'add' ? addBond : (mode === 'remove' ? removeBond : removeAllOfBond);
 
     const { component, representation, points } = target_fn({
       source: atom_index_1,
@@ -387,9 +399,38 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     this.setState({
       virtual_links: component,
       virtual_links_repr: representation,
+      saved: false,
     });
   }
 
+  redrawGoBonds = (highlight?: [number, number], opacity?: number) => {
+    const { files, coordinates, virtual_links: links_component } = this.state;
+
+    this.ngl.remove(links_component!);
+
+    const { component, representation } = drawBondsInStage(
+      this.ngl, 
+      files!.go_bonds!, 
+      coordinates, 
+      'go', 
+      highlight, 
+      opacity ?? this.state.virtual_link_opacity
+    );
+
+    this.setState({
+      virtual_links: component,
+      virtual_links_repr: representation,
+    });
+  };
+
+  setSchemeIdColorForCg = (id?: string) => {
+    for (const repr of this.state.coarse_grain_ngl!.representations) {
+      repr.set({
+        colorScheme: 'element',
+        color: id,
+      });
+    }
+  };
 
   /* EVENTS */
 
@@ -830,6 +871,70 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     this.setState({ builder_force_field: ff });
   };
 
+  onBondCreate = (go_atom_1: number, go_atom_2: number) => {
+    this.addOrRemoveGoBond(go_atom_1 + 1, go_atom_2 + 1, 'add');
+  };
+
+  onBondRemove = (real_atom_1: number, real_atom_2: number) => {
+    this.addOrRemoveGoBond(real_atom_1, real_atom_2, 'remove');
+  };
+
+  onAllBondRemove = (from_go_atom: number) => {
+    this.addOrRemoveGoBond(from_go_atom + 1, 0, 'remove_all');
+  };
+
+  onGoEditorCancel = () => {
+    // Restore all settings
+    if (this.saved_viz_params) {
+      const { aa_enabled, vl_enabled, vl_op, cg_op, cg_enabled, representations } = this.saved_viz_params;
+
+      this.onRepresentationChange(undefined, representations);
+
+      this.setVirtualLinksRepresentation({ opacity: vl_op });
+      this.setCoarseGrainRepresentation({ opacity: cg_op });
+      
+      for (const repr of this.state.coarse_grain_ngl!.representations) {
+        repr.visible = cg_enabled;
+      }
+      for (const repr of this.state.all_atom_ngl!.representations) {
+        repr.visible = aa_enabled;
+      }
+      this.state.virtual_links_repr!.visible = vl_enabled;
+      this.setState({ virtual_link_opacity: vl_op });
+    }
+
+    this.setState({ running: 'done' });
+  };
+
+  onGoEditorStart = () => {
+    // Save original params
+    this.saved_viz_params = {
+      aa_enabled: this.state.all_atom_visible,
+      cg_enabled: this.state.coarse_grain_visible,
+      vl_enabled: this.state.virtual_link_visible,
+      cg_op: this.state.coarse_grain_opacity,
+      vl_op: this.state.virtual_link_opacity,
+      representations: this.state.representations,
+    };
+
+    // Apply custom params
+    this.onRepresentationChange(undefined, ['ball+stick']);
+
+    for (const repr of this.state.coarse_grain_ngl!.representations) {
+      repr.visible = true;
+    }
+    for (const repr of this.state.all_atom_ngl!.representations) {
+      repr.visible = false;
+    }
+    this.state.virtual_links_repr!.visible = true;
+
+    this.setVirtualLinksRepresentation({ opacity: 1 });
+    this.setCoarseGrainRepresentation({ opacity: .7 });
+
+    // Load the go editor
+    this.setState({ running: 'go_editor', virtual_link_opacity: 1 });
+  };
+
 
   /* RENDERING */
 
@@ -1000,6 +1105,17 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
                 onVirtualLinksVisibilityChange={this.onVirtualLinksVisibilityChange}
                 saved={this.state.saved}
                 generatingFiles={this.state.generating_files}
+                onGoEditorStart={this.onGoEditorStart}
+              />}
+
+              {this.state.running === 'go_editor' && <GoEditor 
+                stage={this.ngl}
+                onBondRemove={this.onBondRemove}
+                onBondCreate={this.onBondCreate}
+                onAllBondRemove={this.onAllBondRemove}
+                onCancel={this.onGoEditorCancel}
+                onRedrawGoBonds={this.redrawGoBonds}
+                setColorForCgRepr={this.setSchemeIdColorForCg}
               />}
             </div>
           </Grid>
