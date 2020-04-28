@@ -221,12 +221,32 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
       parameters.force_field = molecule.force_field;
     }
 
-    if (settings.box_size) {
-      parameters.box = settings.box_size.join(',');
-    }
-    if (settings.box_type) {
-      parameters.pbc = settings.box_type;
-    }
+    parameters.box = settings.box_size.join(',');
+    parameters.pbc = settings.box_type;
+
+    // Area params
+    parameters.area_per_lipid = settings.area_per_lipid;
+    if (settings.area_per_lipid_upper)
+      parameters.area_per_lipid_upper = settings.area_per_lipid_upper;
+
+    // Add every number parameter
+    parameters.bead_distance = settings.bead_distance;
+    parameters.fudge = settings.fudge_factor;
+    parameters.grid_spacing = settings.grid_spacing_orientation;
+    parameters.hydrophobic_ratio = settings.hydrophobic_ratio;
+    parameters.random_kick_size = settings.random_kick_size;
+    parameters.shift_protein = settings.shift_protein;
+
+    // Rotate params
+    parameters.rotate = settings.rotate_mode;
+    if (settings.rotate_angle)
+      parameters.rotate_angle = settings.rotate_angle;
+
+    // Boolean params
+    if (settings.center_protein)
+      parameters.center = "true";
+    if (settings.orient_protein)
+      parameters.orient = "true";
     
     try {
       const res = await ApiHelper.request('molecule/membrane_builder', {
@@ -338,7 +358,7 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
 
         <DialogContent>
           <DialogContentText>
-            You will loose the generated membrane.
+            You will lose the generated membrane.
           </DialogContentText>
           <DialogContentText>
             You can still rebuild the same membrane again with sent files.
@@ -421,6 +441,7 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
             running: 'choose_lipids',
           });
         }}
+        hasUpperLayer={!!this.state.lipids?.upper}
       />
     );
   }

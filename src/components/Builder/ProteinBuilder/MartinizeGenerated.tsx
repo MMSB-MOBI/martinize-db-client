@@ -3,12 +3,15 @@ import { Marger, FaIcon } from '../../../helpers';
 import { Button, Typography, FormControl, FormGroup, FormControlLabel, Switch, Slider, Divider, Box, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Theme } from '@material-ui/core';
 import { ToggleButtonGroup, ToggleButton } from '@material-ui/lab';
 import { ViableRepresentation } from '../NglWrapper';
+import MoleculeSaverModal from './MoleculeSaverModal';
 
 interface MartinizeGeneratedProps {
   onReset(): any;
   theme: Theme;
   onThemeChange(): any;
   virtualLinks: 'go' | 'elastic' | '';
+
+  allAtomName: string;
 
   allAtomOpacity: number;
   onAllAtomOpacityChange(_: any, value: number | number[]): any;
@@ -29,18 +32,26 @@ interface MartinizeGeneratedProps {
   onRepresentationChange(_: any, values: ViableRepresentation[]): any;
 
   saved: boolean;
-  onMoleculeStash(): any;
   generatingFiles: boolean;
   onMoleculeDownload(): any;
 
   onGoEditorStart(): any;
+  onSave(name: string): any;
 }
 
 export default function MartinizeGenerated(props: MartinizeGeneratedProps) {
   const [wantReset, setWantReset] = React.useState(false);
+  const [saverModal, setSaverModal] = React.useState("");
 
   return (
     <React.Fragment>
+      <MoleculeSaverModal
+        open={!!saverModal} 
+        onClose={() => setSaverModal("")}
+        onConfirm={name => { props.onSave(name); setSaverModal(""); }}
+        defaultName={saverModal}
+      />
+
       <Dialog open={wantReset} onClose={() => setWantReset(false)}>
         <DialogTitle>
           Restart molecule builder ?
@@ -236,7 +247,7 @@ export default function MartinizeGenerated(props: MartinizeGeneratedProps) {
           style={{ width: '100%' }} 
           color="secondary" 
           disabled={props.saved}
-          onClick={props.onMoleculeStash}
+          onClick={() => setSaverModal(props.allAtomName)}
         >
           <FaIcon save /> <span style={{ marginLeft: '.6rem' }}>Save</span>
         </Button>

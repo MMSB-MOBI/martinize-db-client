@@ -17,13 +17,11 @@ import SocketIo from 'socket.io-client';
 import { SERVER_ROOT, STEPS } from '../../constants';
 import { v4 as uuid } from 'uuid';
 import NglWrapper, { NglComponent, ViableRepresentation, NglRepresentation } from './NglWrapper';
-import { ItpFile } from 'itp-parser';
 import LoadPdb from './ProteinBuilder/LoadPdb';
 import { MZError } from './ProteinBuilder/MartinizeError';
 import MartinizeForm from './ProteinBuilder/MartinizeForm';
 import MartinizeGenerated from './ProteinBuilder/MartinizeGenerated';
-import MoleculeSaverModal from './ProteinBuilder/MoleculeSaverModal';
-import { addBond, removeBond, drawBondsInStage, removeAllOfBond } from './ProteinBuilder/AddOrRemoveBonds';
+import { drawBondsInStage, addOrRemoveGoBonds } from './ProteinBuilder/AddOrRemoveBonds';
 import GoEditor from './ProteinBuilder/GoEditor';
 
 // @ts-ignore
@@ -44,13 +42,14 @@ interface MartinizeFiles {
   go_details?: GoMoleculeDetails;
 }
 
-interface AtomRadius { [atom: string]: number }
+interface AtomRadius { 
+  [atom: string]: number;
+}
 
-interface MBState {
+export interface MBState {
   running: 'pdb' | 'pdb_read' | 'martinize_params' | 'martinize_generate' | 'martinize_error' | 'done' | 'go_editor';
   error?: any;
   martinize_error?: MZError;
-  saver_modal: string | false;
   martinize_step: string;
 
   all_atom_pdb?: File;
@@ -145,7 +144,6 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       want_reset: false,
       want_go_back: false,
       error: undefined,
-      saver_modal: false,
       martinize_step: '',
       virtual_links: undefined,
       virtual_links_repr: undefined,
@@ -163,7 +161,6 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
     this.setState({
       saved: true,
-      saver_modal: false
     });
 
     toast("Your molecule has been saved.", "info");
@@ -264,11 +261,6 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     }
   }
 
-  setRepresentation(parameters: Partial<RepresentationParameters>) {
-    this.setCoarseGrainRepresentation(parameters);
-    this.setAllAtomRepresentation(parameters);
-  }
-
   createTheme(hint: 'light' | 'dark') {
     const bgclr = hint === 'dark' ? '#303030' : '#fafafa';
 
@@ -352,55 +344,15 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
   /* ADD OR REMOVE GO BONDS */
   async addOrRemoveGoBond(atom_index_1: number, atom_index_2: number, mode: 'add' | 'remove' | 'remove_all') {
-    const { files, coordinates, virtual_links: links_component } = this.state;
-
-    if (!files || !files.go_bonds || !files.go_details || !links_component) {
-      console.warn("One required element is missing", files, links_component);
-      return;
-    }
-
-    // Find which molecule type is affected.
-    // TODO multiple molecule support! It could be guessed with .count property of each molecule
-    // Now, it is just molecule_0
-    const mol_name = Object.keys(files.go_details)[0];
-
-    // Find the corresponding ITP
-    const itp_index = files.itps.findIndex(e => e.name.startsWith(mol_name + '_go-table_VirtGoSites'));
+    const value = await addOrRemoveGoBonds(this.state, this.ngl, atom_index_1, atom_index_2, mode);
     
-    if (itp_index === -1) {
-      console.log("ITP not found");
-      return;
+    if (value) {
+      this.setState({
+        virtual_links: value.component,
+        virtual_links_repr: value.representation,
+        saved: false,
+      });
     }
-
-    // Read the ITP
-    const m_file = files.itps[itp_index];
-    const itp_file = ItpFile.readFromString(await m_file.content.text());
-
-    const target_fn = mode === 'add' ? addBond : (mode === 'remove' ? removeBond : removeAllOfBond);
-
-    const { component, representation, points } = target_fn({
-      source: atom_index_1,
-      target: atom_index_2,
-      itp_file,
-      details: files.go_details[mol_name],
-      stage: this.ngl,
-      points: files.go_bonds,
-      coords: coordinates,
-      links_component,
-    });
-
-    files.go_bonds = points;
-    representation.set({ opacity: this.state.virtual_link_opacity });
-    representation.visible = this.state.virtual_link_visible;
-
-    // Save the ITP file
-    m_file.content = new File([itp_file.toString()], m_file.name, { type: m_file.type });
-
-    this.setState({
-      virtual_links: component,
-      virtual_links_repr: representation,
-      saved: false,
-    });
   }
 
   redrawGoBonds = (highlight?: [number, number] | number, opacity?: number) => {
@@ -839,11 +791,6 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     this.changeTheme(is_dark ? 'light' : 'dark');
   };
 
-  onMoleculeStash = () => {
-    // Save the current molecule
-    this.setState({ saver_modal: this.state.all_atom_pdb!.name.split('.')[0] })
-  };
-
   onWantReset = () => {
     this.setState({
       want_reset: true
@@ -1018,13 +965,6 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       <ThemeProvider theme={this.state.theme}>
         {this.renderModalBackToDatabase()}
 
-        <MoleculeSaverModal 
-          open={!!this.state.saver_modal} 
-          onClose={() => this.setState({ saver_modal: false })}
-          onConfirm={name => this.save(name)}
-          defaultName={this.state.saver_modal || ""}
-        />
-
         <Grid 
           container 
           component="main" 
@@ -1093,6 +1033,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
               {this.state.running === 'done' && <MartinizeGenerated 
                 onReset={() => this.reset()}
                 theme={this.state.theme}
+                allAtomName={this.state.all_atom_pdb!.name.split('.')[0]}
                 onThemeChange={this.onThemeChange}
                 virtualLinks={this.state.builder_mode === 'classic' ? '' : this.state.builder_mode}
                 allAtomOpacity={this.state.all_atom_opacity}
@@ -1100,7 +1041,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
                 onAllAtomOpacityChange={this.onAllAtomOpacityChange}
                 onAllAtomVisibilityChange={this.onAllAtomVisibilityChange}
                 onMoleculeDownload={this.onMoleculeDownload}
-                onMoleculeStash={this.onMoleculeStash}
+                onSave={name => this.save(name)}
                 onRepresentationChange={this.onRepresentationChange}
                 representations={this.state.representations}
                 coarseGrainedOpacity={this.state.coarse_grain_opacity}

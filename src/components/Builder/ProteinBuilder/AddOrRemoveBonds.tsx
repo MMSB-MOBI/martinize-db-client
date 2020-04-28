@@ -2,7 +2,7 @@ import ItpFile from "itp-parser";
 import { GoBoundsDetails, ElasticOrGoBounds } from "../../../StashedBuildHelper";
 import NglWrapper, { NglComponent } from "../NglWrapper";
 import * as ngl from '@mmsb/ngl';
-import AtomProxy from "@mmsb/ngl/declarations/proxy/atom-proxy";
+import { MBState } from "../Builder";
 
 export interface AddOrRemoveBoundParams {
   source: number;
@@ -180,6 +180,71 @@ export function drawBondsInStage(
 
   const component = stage.add(shape);
   const representation = component.add<ngl.BufferRepresentation>('buffer', { opacity: default_opacity });
+
+  return { component, representation };
+}
+
+/**
+ * Add or remove go bonds in the stage, and refresh files in state.
+ * 
+ * Meant to be used only with protein builder.
+ * 
+ * Return newly created virtual link component and representation.
+ */
+export async function addOrRemoveGoBonds(
+  { 
+    files, 
+    coordinates, 
+    virtual_links: links_component, 
+    virtual_link_opacity, 
+    virtual_link_visible 
+  }: MBState, 
+  ngl_wrapper: NglWrapper,
+  atom_index_1: number, 
+  atom_index_2: number,
+  mode: 'add' | 'remove' | 'remove_all',
+) {
+  if (!files || !files.go_bonds || !files.go_details || !links_component) {
+    console.warn("One required element is missing", files, links_component);
+    return;
+  }
+
+  // Find which molecule type is affected.
+  // TODO multiple molecule support! It could be guessed with .count property of each molecule
+  // Now, it is just molecule_0
+  const mol_name = Object.keys(files.go_details)[0];
+
+  // Find the corresponding ITP
+  const itp_index = files.itps.findIndex(e => e.name.startsWith(mol_name + '_go-table_VirtGoSites'));
+  
+  if (itp_index === -1) {
+    console.log("ITP not found");
+    return;
+  }
+
+  // Read the ITP
+  const m_file = files.itps[itp_index];
+  const itp_file = ItpFile.readFromString(await m_file.content.text());
+
+  const target_fn = mode === 'add' ? addBond : (mode === 'remove' ? removeBond : removeAllOfBond);
+
+  const { component, representation, points } = target_fn({
+    source: atom_index_1,
+    target: atom_index_2,
+    itp_file,
+    details: files.go_details[mol_name],
+    stage: ngl_wrapper,
+    points: files.go_bonds,
+    coords: coordinates,
+    links_component,
+  });
+
+  files.go_bonds = points;
+  representation.set({ opacity: virtual_link_opacity });
+  representation.visible = virtual_link_visible;
+
+  // Save the ITP file
+  m_file.content = new File([itp_file.toString()], m_file.name, { type: m_file.type });
 
   return { component, representation };
 }
