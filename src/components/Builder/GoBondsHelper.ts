@@ -179,12 +179,12 @@ export default class GoBondsHelper {
     const files_as_file: File[] = [];
 
     for (const type in files) {
-      files_as_file.push(new File([files[type]], type + suffix));
+      files_as_file.push(new File([files[type]], type + suffix, { type: 'chemical/x-include-topology' }));
 
       index += `#include "${type + suffix}"\n`;
     }
 
-    files_as_file.push(new File([index], index_filename));
+    files_as_file.push(new File([index], index_filename, { type: 'chemical/x-include-topology' }));
 
     return files_as_file;
   }
@@ -196,8 +196,8 @@ export default class GoBondsHelper {
     const compiled_filename = "compiled__go-table_VirtGoSites.itp";
     const index_filename = "go-table_VirtGoSites.itp";
 
-    const go_table_index = new File([this.toIndexString(compiled_filename)], index_filename);
-    const compiled_itp = new File([this.toString()], compiled_filename);
+    const go_table_index = new File([this.toIndexString(compiled_filename)], index_filename, { type: 'chemical/x-include-topology' });
+    const compiled_itp = new File([this.toString()], compiled_filename, { type: 'chemical/x-include-topology' });
 
     return {
       index: go_table_index,

@@ -713,7 +713,31 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       zip.file(files.pdb.name, files.pdb.content);
       zip.file(files.top.name, files.top.content);
 
-      for (const itp of files.itps) {
+      const itps = [...files.itps];
+
+      // Take the right itps
+      if (files.go) {
+        const to_replace = files.go.toOriginalFiles();
+
+        for (const file of to_replace) {
+          const index = itps.findIndex(e => e.name === file.name);
+          const m_file = {
+            name: file.name,
+            content: file,
+            type: 'chemical/x-include-topology',
+          };
+
+          if (index !== -1) {
+            console.log("Replaced file", itps[index], 'with', m_file)
+            itps[index] = m_file;
+          }
+          else {
+            itps.push(m_file);
+          }
+        }
+      }
+
+      for (const itp of itps) {
         zip.file(itp.name, itp.content);
       }
   
