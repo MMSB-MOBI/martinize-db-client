@@ -1,21 +1,11 @@
 import LocalForage from 'localforage';
 import uuid from 'uuid/v4';
+import { GoBondsHelperJSON } from './components/Builder/GoBondsHelper';
 
 /**
  * Tuple of two integers: [{from} atom index, {to} atom index]
  */
 export type ElasticOrGoBounds = [number, number];
-
-export interface GoBoundsDetails {
-  index_to_real: { [index: number]: number };
-  name_to_index: { [name: string]: number };
-  index_to_name: { [index: number]: string };
-  real_to_index: { [index: number]: number };
-  /** Atom count */
-  count: number;
-}
-
-export type GoMoleculeDetails = { [moleculeType: string]: GoBoundsDetails };
 
 export interface StashedBuildInfo {
   created_at: Date;
@@ -34,7 +24,7 @@ export interface StashedBuildInfo {
 
 export interface MartinizeFile {
   name: string;
-  content: Blob;
+  content: File;
   type: string;
 }
 
@@ -44,10 +34,9 @@ export interface StashedBuild {
   itp_files: MartinizeFile[];
   top_file: MartinizeFile;
   radius: { [atomName: string]: number };
-  go_bonds?: ElasticOrGoBounds[];
   elastic_bonds?: ElasticOrGoBounds[];
   info: StashedBuildInfo;
-  go_details?: GoMoleculeDetails;
+  go?: GoBondsHelperJSON;
 }
 
 /**
@@ -75,7 +64,7 @@ export default class StashedBuildHelper {
     storeName: StashedBuildHelper.STORE_NAME_SAVES,
   });
 
-  async add(build: StashedBuild) {
+  async add(build: StashedBuild, use_uuid?: string) {
     if (
       StashedBuildHelper.can_work && 
       !StashedBuildHelper.asked_persistence && 
@@ -93,7 +82,7 @@ export default class StashedBuildHelper {
         .catch(() => {});
     }
 
-    const id = uuid();
+    const id = use_uuid ?? uuid();
 
     await this.store_infos.setItem(id, build.info);
     await this.store_saves.setItem(id, build);

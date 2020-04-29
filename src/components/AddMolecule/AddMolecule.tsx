@@ -172,9 +172,6 @@ export default function AddMolecule(props: AddMoleculeProps) {
       if (!category) {
         return toast("Molecule category is required.", "error")
       }
-      if (!commandLine) {
-        return toast("Used command line to generate files is required.", "error")
-      }
       if (!martinizeVersion) {
         return toast("Martinize version is required.", "error")
       }
@@ -352,7 +349,6 @@ export default function AddMolecule(props: AddMoleculeProps) {
                   setCommandLine(v.target.value);
                 }}
                 variant="outlined"
-                required
               />
 
               <TextField

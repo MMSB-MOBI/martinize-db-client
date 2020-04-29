@@ -1,16 +1,14 @@
-import ItpFile from "itp-parser";
-import { GoBoundsDetails, ElasticOrGoBounds } from "../../../StashedBuildHelper";
-import NglWrapper, { NglComponent } from "../NglWrapper";
+import { ElasticOrGoBounds } from '../../../StashedBuildHelper';
+import NglWrapper, { NglComponent } from '../NglWrapper';
 import * as ngl from '@mmsb/ngl';
 import { MBState } from "../Builder";
+import GoBondsHelper from "../GoBondsHelper";
 
 export interface AddOrRemoveBoundParams {
   source: number;
   target: number;
-  itp_file: ItpFile;
-  details: GoBoundsDetails;
+  go: GoBondsHelper;
   stage: NglWrapper;
-  points: ElasticOrGoBounds[];
   coords: [number, number, number][];
   links_component: NglComponent;
 }
@@ -20,23 +18,20 @@ export interface AddOrRemoveBoundParams {
  * 
  * {ngl_click_event}.atom.index + 1
  */
-export function addBond({ source, target, itp_file, details, stage, points, coords, links_component }: AddOrRemoveBoundParams) {
+export function addBond({ source, target, go, stage, coords, links_component }: AddOrRemoveBoundParams) {
   const go_i = source, go_j = target;
-  const go_i_name = details.index_to_name[go_i], go_j_name = details.index_to_name[go_j];
+  const go_i_name = go.goIndexToGoName(go_i), go_j_name = go.goIndexToGoName(go_j);
 
-  itp_file.headlines.push(`${go_i_name}    ${go_j_name}    1  0.7923518221  9.4140000000`);
+  go.add(go_i_name, go_j_name, `${go_i_name}    ${go_j_name}    1  0.7923518221  9.4140000000`);
  
   // Remove the old go bonds component
   stage.remove(links_component);
- 
-  // Add the relations i, j in the points
-  points.push([details.index_to_real[source], details.index_to_real[target]]);
- 
+
   // Redraw all the bounds (very quick)
-  const { component: new_cmp, representation } = drawBondsInStage(stage, points, coords, 'go');
+  const { component: new_cmp, representation } = drawBondsInStage(stage, go.bonds, coords, 'go');
  
   // Save the new component
-  return { component: new_cmp, representation, points };
+  return { component: new_cmp, representation };
 }
 
 /** 
@@ -46,37 +41,19 @@ export function addBond({ source, target, itp_file, details, stage, points, coor
  * {ngl_click_event}.object.name.startsWith("[GO]")
  * const [source, target] = {ngl_click_event}.object.name.split('atoms ')[1].split('-').map(Number)
  */
-export function removeBond({ source, target, itp_file, details, stage, points, coords, links_component }: AddOrRemoveBoundParams) {
-  const go_i = details.real_to_index[source], go_j = details.real_to_index[target];
-  const go_i_name = details.index_to_name[go_i], go_j_name = details.index_to_name[go_j];
+export function removeBond({ source, target, go, stage, coords, links_component }: AddOrRemoveBoundParams) {
+  const go_i_name = go.realIndexToGoName(source), go_j_name = go.realIndexToGoName(target);
+  
+  go.remove(go_i_name, go_j_name);
 
-  const index = itp_file.headlines.findIndex(e => {
-    const [name_1, name_2,] = e.split(/\s+/).filter(l => l); 
-
-    return (name_1 === go_i_name && name_2 === go_j_name) || (name_2 === go_i_name && name_1 === go_j_name);
-  });
-
-  if (index !== -1) {
-    // Remove line at index {index}
-    itp_file.headlines.splice(index, 1);
-  }
- 
   // Remove the old go bonds component
   stage.remove(links_component);
  
-  // Remove the relations i, j in the points
-  const new_points = points.filter(e => {
-    if (e[0] === source && e[1] === target) return false;
-    if (e[1] === source && e[0] === target) return false;
-    
-    return true;
-  });
- 
   // Redraw all the bounds (very quick)
-  const { component: new_cmp, representation } = drawBondsInStage(stage, new_points, coords, 'go');
+  const { component: new_cmp, representation } = drawBondsInStage(stage, go.bonds, coords, 'go');
  
   // Save the new component
-  return { component: new_cmp, representation, points: new_points };
+  return { component: new_cmp, representation };
 }
 
 /**
@@ -84,46 +61,19 @@ export function removeBond({ source, target, itp_file, details, stage, points, c
  * 
  * {source} is GO index + 1 !
  */
-export function removeAllOfBond({ source, itp_file, details, stage, points, coords, links_component }: AddOrRemoveBoundParams) {
-  const go_i = source;
-  const real_atom_i = details.index_to_real[go_i];
-  const go_i_name = details.index_to_name[go_i];
+export function removeAllOfBond({ source, go, stage, coords, links_component }: AddOrRemoveBoundParams) {  
+  const go_i_name = go.goIndexToGoName(source);
+  
+  go.remove(go_i_name);
 
-  const indexes: number[] = [];
-  let cur_i = 0;
-  for (const line of itp_file.headlines) {
-    const [name_1, name_2,] = line.split(/\s+/).filter(e => e); 
-
-    if (name_1 === go_i_name || name_2 === go_i_name) {
-      indexes.push(cur_i);
-    }
-
-    cur_i++;
-  }
-
-  console.log("Will remove", indexes);
-
-  for (const index of indexes) {
-    // NON OPTIMAL: TODO?
-    // Remove line at index {index}
-    itp_file.headlines.splice(index, 1);
-  }
- 
   // Remove the old go bonds component
   stage.remove(links_component);
  
-  // Remove the relations i, j in the points
-  const new_points = points.filter(e => {
-    if (e[0] === real_atom_i || e[1] === real_atom_i) return false;
-    
-    return true;
-  });
- 
   // Redraw all the bounds (very quick)
-  const { component: new_cmp, representation } = drawBondsInStage(stage, new_points, coords, 'go');
+  const { component: new_cmp, representation } = drawBondsInStage(stage, go.bonds, coords, 'go');
  
   // Save the new component
-  return { component: new_cmp, representation, points: new_points };
+  return { component: new_cmp, representation };
 }
 
 export const V_BONDS_DEFAULT_COLOR = new ngl.Color(0, 255, 0);
@@ -204,47 +154,26 @@ export async function addOrRemoveGoBonds(
   atom_index_2: number,
   mode: 'add' | 'remove' | 'remove_all',
 ) {
-  if (!files || !files.go_bonds || !files.go_details || !links_component) {
+  if (!files || !files.go || !links_component) {
     console.warn("One required element is missing", files, links_component);
     return;
   }
 
-  // Find which molecule type is affected.
-  // TODO multiple molecule support! It could be guessed with .count property of each molecule
-  // Now, it is just molecule_0
-  const mol_name = Object.keys(files.go_details)[0];
-
-  // Find the corresponding ITP
-  const itp_index = files.itps.findIndex(e => e.name.startsWith(mol_name + '_go-table_VirtGoSites'));
-  
-  if (itp_index === -1) {
-    console.log("ITP not found");
-    return;
-  }
-
-  // Read the ITP
-  const m_file = files.itps[itp_index];
-  const itp_file = ItpFile.readFromString(await m_file.content.text());
-
   const target_fn = mode === 'add' ? addBond : (mode === 'remove' ? removeBond : removeAllOfBond);
 
-  const { component, representation, points } = target_fn({
+  const { component, representation } = target_fn({
     source: atom_index_1,
     target: atom_index_2,
-    itp_file,
-    details: files.go_details[mol_name],
+    go: files.go,
     stage: ngl_wrapper,
-    points: files.go_bonds,
     coords: coordinates,
     links_component,
   });
 
-  files.go_bonds = points;
   representation.set({ opacity: virtual_link_opacity });
   representation.visible = virtual_link_visible;
 
-  // Save the ITP file
-  m_file.content = new File([itp_file.toString()], m_file.name, { type: m_file.type });
+  // Save the ITP file // TODO DO IT ON DOWNLOAD
 
   return { component, representation };
 }

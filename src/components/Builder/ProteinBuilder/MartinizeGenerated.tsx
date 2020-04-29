@@ -31,7 +31,8 @@ interface MartinizeGeneratedProps {
   representations: ViableRepresentation[];
   onRepresentationChange(_: any, values: ViableRepresentation[]): any;
 
-  saved: boolean;
+  saved: string | false;
+  edited: boolean;
   generatingFiles: boolean;
   onMoleculeDownload(): any;
 
@@ -246,7 +247,7 @@ export default function MartinizeGenerated(props: MartinizeGeneratedProps) {
         <Button 
           style={{ width: '100%' }} 
           color="secondary" 
-          disabled={props.saved}
+          disabled={!!props.saved && !props.edited}
           onClick={() => setSaverModal(props.allAtomName)}
         >
           <FaIcon save /> <span style={{ marginLeft: '.6rem' }}>Save</span>

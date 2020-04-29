@@ -12,7 +12,7 @@ import { RepresentationParameters } from '@mmsb/ngl/declarations/representation/
 import JSZip from 'jszip';
 import { blue } from '@material-ui/core/colors';
 import { applyUserRadius } from '../../nglhelpers';
-import StashedBuildHelper, { MartinizeFile, ElasticOrGoBounds, GoMoleculeDetails } from '../../StashedBuildHelper';
+import StashedBuildHelper, { MartinizeFile, ElasticOrGoBounds } from '../../StashedBuildHelper';
 import SocketIo from 'socket.io-client';
 import { SERVER_ROOT, STEPS } from '../../constants';
 import { v4 as uuid } from 'uuid';
@@ -23,9 +23,10 @@ import MartinizeForm from './ProteinBuilder/MartinizeForm';
 import MartinizeGenerated from './ProteinBuilder/MartinizeGenerated';
 import { drawBondsInStage, addOrRemoveGoBonds } from './ProteinBuilder/AddOrRemoveBonds';
 import GoEditor from './ProteinBuilder/GoEditor';
+import GoBondsHelper from './GoBondsHelper';
 
 // @ts-ignore
-window.NGL = ngl;
+window.NGL = ngl; window.GoBondsHelper = GoBondsHelper;
 
 interface MBProps {
   classes: Record<string, string>;
@@ -37,9 +38,8 @@ interface MartinizeFiles {
   itps: MartinizeFile[];
   radius: { [name: string]: number };
   top: MartinizeFile;
-  go_bonds?: ElasticOrGoBounds[];
+  go?: GoBondsHelper;
   elastic_bonds?: ElasticOrGoBounds[];
-  go_details?: GoMoleculeDetails;
 }
 
 interface AtomRadius { 
@@ -82,7 +82,8 @@ export interface MBState {
   
   files?: MartinizeFiles;
   generating_files: boolean;
-  saved: boolean;
+  saved: string | false;
+  edited: boolean;
   want_reset: boolean;
   want_go_back: boolean;
 
@@ -141,6 +142,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       representations: ['ball+stick'],
       theme: this.createTheme('light'),
       saved: false,
+      edited: false,
       want_reset: false,
       want_go_back: false,
       error: undefined,
@@ -152,20 +154,16 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
   }
 
   /* LOAD, RESET AND SAVE STAGES */
-  save(name: string) {
+  async save(name: string, overwrite_uuid?: string) {
     const saver = new StashedBuildHelper();
 
     if (!this.state.files) {
       return;
     }
 
-    this.setState({
-      saved: true,
-    });
-
     toast("Your molecule has been saved.", "info");
 
-    return saver.add({
+    const uuid = await saver.add({
       info: {
         created_at: new Date(),
         name,
@@ -185,8 +183,12 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       top_file: this.state.files.top,
       radius: this.state.files.radius,
       elastic_bonds: this.state.files.elastic_bonds,
-      go_bonds: this.state.files.go_bonds,
-      go_details: this.state.files.go_details,
+      go: this.state.files.go?.toJSON(),
+    }, overwrite_uuid);
+
+    this.setState({
+      saved: uuid,
+      edited: false,
     });
   }
 
@@ -209,15 +211,16 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     this.setState(infos);
 
     const cg_pdb = save.coarse_grained.content;
-    const mode = save.elastic_bonds ? 'elastic' : (save.go_bonds ? 'go' : undefined);
+    const mode = save.elastic_bonds ? 'elastic' : (save.go ? 'go' : undefined);
+
+    const go_details = save.go ? GoBondsHelper.fromJSON(save.go) : undefined;
 
     // Init PDB scene
     this.initCoarseGrainPdb({
       pdb: cg_pdb,
       radius: save.radius,
-      bonds: save.elastic_bonds ?? save.go_bonds,
+      bonds: save.elastic_bonds ?? go_details?.bonds,
       mode,
-      go_details: save.go_details,
     });
 
     this.setState({ 
@@ -226,11 +229,11 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
         itps: save.itp_files,
         pdb: save.coarse_grained,
         radius: save.radius,
-        go_bonds: save.go_bonds,
-        go_details: save.go_details,
+        go: go_details,
         elastic_bonds: save.elastic_bonds,
       },
-      saved: true,
+      saved: uuid,
+      edited: false,
     });
   }
 
@@ -285,7 +288,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     this.ngl.set({ backgroundColor: theme.palette.background.default });
   }
 
-  async initCoarseGrainPdb(options: { pdb: Blob, radius: AtomRadius, bonds?: ElasticOrGoBounds[], go_details?: GoMoleculeDetails, mode?: 'go' | 'elastic' }) {
+  async initCoarseGrainPdb(options: { pdb: Blob, radius: AtomRadius, bonds?: ElasticOrGoBounds[], mode?: 'go' | 'elastic' }) {
     let component: NglComponent;
 
     // Apply the NGL radius
@@ -361,16 +364,13 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     this.ngl.remove(links_component!);
     
     if (typeof highlight === 'number') {
-      const mol_name = Object.keys(files!.go_details!)[0];
-      const mol = files!.go_details![mol_name];
-
       // transform go index to real index
-      highlight = mol.index_to_real[highlight];
+      highlight = files!.go!.goIndexToRealIndex(highlight);
     }
 
     const { component, representation } = drawBondsInStage(
       this.ngl, 
-      files!.go_bonds!, 
+      files!.go!.bonds, 
       coordinates, 
       'go', 
       highlight, 
@@ -533,11 +533,9 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
       // When run ends
       socket.on('martinize end', (
-        { id, go_bonds, elastic_bonds, radius, go_details, }: { 
+        { id, elastic_bonds, radius }: { 
           id: string, 
-          go_bonds?: ElasticOrGoBounds[], 
           elastic_bonds?: ElasticOrGoBounds[], 
-          go_details?: GoMoleculeDetails,
           radius: { [name: string]: number; }, 
         }) => {
           if (id !== RUN_ID) {
@@ -545,9 +543,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
           }
 
           files.radius = radius;
-          files.go_bonds = go_bonds;
           files.elastic_bonds = elastic_bonds;
-          files.go_details = go_details;
 
           console.log(files);
 
@@ -569,15 +565,19 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       return;
     }
 
+    if (s.builder_mode === "go") {
+      // Init go sites
+      files.go = await GoBondsHelper.readFromItps(files.itps.map(e => e.content));
+    }
+
     this.setState({ files, martinize_step: "" });
 
-    const mode = files.elastic_bonds ? 'elastic' : (files.go_bonds ? 'go' : undefined);
+    const mode = files.elastic_bonds ? 'elastic' : (s.builder_mode === "go" ? 'go' : undefined);
 
     this.initCoarseGrainPdb({
       pdb: files.pdb.content,
       radius: files.radius,
-      bonds: files.elastic_bonds ?? files.go_bonds,
-      go_details: files.go_details,
+      bonds: files.elastic_bonds ?? files.go?.bonds,
       mode
     });
 
@@ -1053,6 +1053,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
                 onVirtualLinksOpacityChange={this.onVirtualLinksOpacityChange}
                 onVirtualLinksVisibilityChange={this.onVirtualLinksVisibilityChange}
                 saved={this.state.saved}
+                edited={this.state.edited}
                 generatingFiles={this.state.generating_files}
                 onGoEditorStart={this.onGoEditorStart}
               />}

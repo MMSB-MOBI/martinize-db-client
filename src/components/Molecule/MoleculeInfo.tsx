@@ -198,14 +198,16 @@ export default function MoleculeInfo<T extends StashedMolecule | Molecule>(props
         <Marger size="1rem" />
 
         <div>
-          <Typography>
-            Command line
-          </Typography>
-          <Typography component="pre">
-            <code>{molecule.command_line}</code>
-          </Typography>
+          {molecule.command_line && <React.Fragment>
+            <Typography>
+              Command line
+            </Typography>
+            <Typography component="pre">
+              <code>{molecule.command_line}</code>
+            </Typography>
 
-          <Marger size="1rem" />
+            <Marger size="1rem" />
+          </React.Fragment>}
 
           <Typography className={classes.version}>
             Created with force field <strong>{molecule.force_field}</strong> with version <strong>{molecule.martinize_version}</strong> of Martinize.
