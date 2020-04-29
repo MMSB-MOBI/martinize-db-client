@@ -22,7 +22,7 @@
     "@types/three": "^0.103.2",
     "@types/uuid": "^3.4.9",
     "clsx": "^1.1.0",
-    "itp-parser": "^1.4.0",
+    "itp-parser": "^1.4.1",
     "jszip": "^3.4.0",
     "localforage": "^1.7.3",
     "node-sass": "^4.14.0",
