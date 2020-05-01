@@ -5,6 +5,7 @@ import Representation, { RepresentationParameters } from '@mmsb/ngl/declarations
 import AtomProxy from '@mmsb/ngl/declarations/proxy/atom-proxy';
 import Surface from '@mmsb/ngl/declarations/surface/surface';
 import PickingProxy from '@mmsb/ngl/declarations/controls/picking-proxy';
+import BallAndStickRepresentation from '@mmsb/ngl/declarations/representation/ballandstick-representation';
 
 export class NglWrapper {
   stage: ngl.Stage;
@@ -145,9 +146,26 @@ export class NglRepresentation<T extends Representation> {
    * This can only work if the representation contains a structure.
    */
   atomIterator(callback: (ap: AtomProxy) => void) {
-    (this.representation.structure as ngl.Structure).eachAtom(ap => {
-      callback(ap);
-    });
+    (this.representation.structure as ngl.Structure).eachAtom(callback);
+  }
+
+  iterateOverSelection(selection: string, callback: (ap: AtomProxy) => void, on_end_selection = "*") {
+    const repr = this.representation as any as BallAndStickRepresentation;
+    const struct = (this.representation.structure as ngl.Structure);
+
+    repr.setSelection(selection);
+    // @ts-ignore
+    struct.eachAtom(callback, repr.selection);
+    repr.setSelection(on_end_selection);
+  }
+
+  iterateOverGoSitesOf(selection: string, callback: (ap: AtomProxy) => void, on_end_selection = ".CA") {
+    this.iterateOverSelection("(" + selection + ") and .CA", callback, on_end_selection);
+  }
+
+  applySelection(selection: string) {
+    const repr = this.representation as any as BallAndStickRepresentation;
+    repr.setSelection(selection);
   }
 }
 

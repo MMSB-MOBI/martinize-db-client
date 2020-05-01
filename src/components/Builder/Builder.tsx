@@ -16,14 +16,13 @@ import StashedBuildHelper, { MartinizeFile, ElasticOrGoBounds } from '../../Stas
 import SocketIo from 'socket.io-client';
 import { SERVER_ROOT, STEPS } from '../../constants';
 import { v4 as uuid } from 'uuid';
-import NglWrapper, { NglComponent, ViableRepresentation, NglRepresentation } from './NglWrapper';
+import NglWrapper, { NglComponent, ViableRepresentation } from './NglWrapper';
 import LoadPdb from './ProteinBuilder/LoadPdb';
 import { MZError } from './ProteinBuilder/MartinizeError';
 import MartinizeForm from './ProteinBuilder/MartinizeForm';
 import MartinizeGenerated from './ProteinBuilder/MartinizeGenerated';
-import { drawBondsInStage, addOrRemoveGoBonds } from './ProteinBuilder/AddOrRemoveBonds';
 import GoEditor from './ProteinBuilder/GoEditor';
-import GoBondsHelper from './GoBondsHelper';
+import GoBondsHelper, { BondsRepresentation } from './GoBondsHelper';
 
 // @ts-ignore
 window.NGL = ngl; window.GoBondsHelper = GoBondsHelper;
@@ -39,7 +38,7 @@ interface MartinizeFiles {
   radius: { [name: string]: number };
   top: MartinizeFile;
   go?: GoBondsHelper;
-  elastic_bonds?: ElasticOrGoBounds[];
+  elastic_bonds?: BondsRepresentation;
 }
 
 interface AtomRadius { 
@@ -57,10 +56,6 @@ export interface MBState {
 
   coarse_grain_pdb?: Blob;
   coarse_grain_ngl?: NglComponent;
-
-  virtual_links?: NglComponent;
-  virtual_links_repr?: NglRepresentation<ngl.BufferRepresentation>;
-  coordinates: [number, number, number][];
 
   builder_force_field: string;
   builder_mode: 'go' | 'classic' | 'elastic';
@@ -109,6 +104,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     vl_op: number;
     vl_enabled: boolean;
     representations: ViableRepresentation[];
+    go: GoBondsHelper;
   };
 
   componentDidMount() {
@@ -147,9 +143,6 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       want_go_back: false,
       error: undefined,
       martinize_step: '',
-      virtual_links: undefined,
-      virtual_links_repr: undefined,
-      coordinates: [],
     };
   }
 
@@ -182,7 +175,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       itp_files: this.state.files.itps,
       top_file: this.state.files.top,
       radius: this.state.files.radius,
-      elastic_bonds: this.state.files.elastic_bonds,
+      elastic_bonds: this.state.files.elastic_bonds?.bonds,
       go: this.state.files.go?.toJSON(),
     }, overwrite_uuid);
 
@@ -210,28 +203,33 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     // @ts-ignore
     this.setState(infos);
 
-    const cg_pdb = save.coarse_grained.content;
     const mode = save.elastic_bonds ? 'elastic' : (save.go ? 'go' : undefined);
 
-    const go_details = save.go ? GoBondsHelper.fromJSON(save.go) : undefined;
+    const go_details = save.go ? GoBondsHelper.fromJSON(this.ngl, save.go) : undefined;
+
+    let elastic_bonds: BondsRepresentation | undefined = undefined;
+    if (save.elastic_bonds) {
+      elastic_bonds = new BondsRepresentation(this.ngl);
+      elastic_bonds.bonds = save.elastic_bonds;
+    }
+
+    const files = {
+      top: save.top_file,
+      itps: save.itp_files,
+      pdb: save.coarse_grained,
+      radius: save.radius,
+      go: go_details,
+      elastic_bonds,
+    };
 
     // Init PDB scene
     this.initCoarseGrainPdb({
-      pdb: cg_pdb,
-      radius: save.radius,
-      bonds: save.elastic_bonds ?? go_details?.bonds,
+      files,
       mode,
     });
 
     this.setState({ 
-      files: {
-        top: save.top_file,
-        itps: save.itp_files,
-        pdb: save.coarse_grained,
-        radius: save.radius,
-        go: go_details,
-        elastic_bonds: save.elastic_bonds,
-      },
+      files,
       saved: uuid,
       edited: false,
     });
@@ -251,11 +249,6 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     for (const repr of this.state.coarse_grain_ngl!.representations) {
       repr.set(parameters);
     }
-  }
-
-  setVirtualLinksRepresentation(parameters: Partial<RepresentationParameters>) {
-    if (this.state.virtual_links_repr)
-      this.state.virtual_links_repr.set(parameters);
   }
 
   setAllAtomRepresentation(parameters: Partial<RepresentationParameters>) {
@@ -288,14 +281,14 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     this.ngl.set({ backgroundColor: theme.palette.background.default });
   }
 
-  async initCoarseGrainPdb(options: { pdb: Blob, radius: AtomRadius, bonds?: ElasticOrGoBounds[], mode?: 'go' | 'elastic' }) {
+  async initCoarseGrainPdb(options: { files: MartinizeFiles, mode?: 'go' | 'elastic' }) {
     let component: NglComponent;
 
     // Apply the NGL radius
-    applyUserRadius(options.radius);
+    applyUserRadius(options.files.radius);
 
     try {
-      component = await this.ngl.load(options.pdb, { ext: 'pdb', name: 'coarse_grain.pdb' });
+      component = await this.ngl.load(options.files.pdb.content);
     } catch (e) {
       console.error(e);
       toast("Unable to load generated PDB. Please retry by re-loading the page.");
@@ -309,25 +302,28 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
     this.setAllAtomRepresentation({ opacity: .3 });
 
-    if (options.bonds && options.mode) {
+    if (options.mode) {
       const coordinates: [number, number, number][] = [];
 
       repr.atomIterator(ap => {
         coordinates.push([ap.x, ap.y, ap.z]);
       });
 
-      const { component, representation } = drawBondsInStage(this.ngl, options.bonds, coordinates, options.mode);
-      this.setState({ 
-        virtual_links: component, 
-        virtual_links_repr: representation,
-        coordinates
-      });
+      // Init the bond helper 
+      if (options.mode === 'go' && options.files.go) {
+        options.files.go.representation.registerCoords(coordinates);
+        options.files.go.render();
+      }
+      else if (options.mode === 'elastic' && options.files.elastic_bonds) {
+        options.files.elastic_bonds.registerCoords(coordinates);
+        options.files.elastic_bonds.render();
+      }
     }
 
     // Register the component
     this.setState({
       running: 'done',
-      coarse_grain_pdb: options.pdb,
+      coarse_grain_pdb: options.files.pdb.content,
       coarse_grain_ngl: component,
     });
   }
@@ -346,41 +342,159 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
   }
 
   /* ADD OR REMOVE GO BONDS */
-  async addOrRemoveGoBond(atom_index_1: number, atom_index_2: number, mode: 'add' | 'remove' | 'remove_all') {
-    const value = await addOrRemoveGoBonds(this.state, this.ngl, atom_index_1, atom_index_2, mode);
-    
-    if (value) {
-      this.setState({
-        virtual_links: value.component,
-        virtual_links_repr: value.representation,
-        saved: false,
-      });
+  async addOrRemoveGoBond(options: {
+    mode: 'add' | 'remove',
+    /** For adding or removing a single bond. */
+    target?: [number, number],
+    /** For removing all nodes from atom */
+    target_single?: number,
+    /** For adding or removing all bonds between the set. */
+    target_ensembl?: [Set<number>, Set<number> | undefined],
+    /** Enable history push. */
+    enable_history?: boolean,
+  }) {
+    // atom_index_1: number, atom_index_2: number, mode: 'add' | 'remove' | 'remove_all'
+    // todo remove
+    if (!this.state.files || !this.state.files.go)
+      return;
+
+    const { target, target_single, target_ensembl } = options;
+
+    if (target === undefined && target_single === undefined && target_ensembl === undefined) {
+      throw new Error("No target");
     }
+
+    const files = this.state.files;
+
+    let go = files.go!;
+
+    if (options.enable_history !== false) {
+      go.historyPush();
+    }
+
+    if (options.mode === 'add') {
+      if (target !== undefined) {
+        // Add a single bond (Source&Target are GO index + 1)
+        const atom1 = go.goIndexToGoName(target[0]);
+        const atom2 = go.goIndexToGoName(target[1]);
+
+        go.add(go.createFakeLine(atom1, atom2));
+      }
+      else if (target_ensembl !== undefined && target_ensembl[1] !== undefined) {
+        // Add line between each element of set
+        for (const atom1 of target_ensembl[0]) {
+          const name1 = go.goIndexToGoName(atom1);
+
+          for (const atom2 of target_ensembl[1]) {
+            const name2 = go.goIndexToGoName(atom2);
+
+            go.add(go.createFakeLine(name1, name2));
+          }
+        }
+      }
+      else if (target_ensembl !== undefined && target_ensembl[1] === undefined) {
+        // Add line between each element of set
+        // Link all atoms of the set together
+        const name_set = new Set([...target_ensembl[0]].map(e => go.goIndexToGoName(e)));
+
+        for (const name of name_set) {
+          for (const counterpart of name_set) {
+            if (name !== counterpart && !go.has(name, counterpart)) {
+              go.add(go.createFakeLine(name, counterpart));
+            }
+          }
+        }
+      }
+    }
+    else {
+      if (target !== undefined) {
+        // Source&Target are REAL ATOM index 
+        // Remove a single bond
+        const [name1, name2] = target.map(e => go.realIndexToGoName(e));
+
+        go.remove(name1, name2);
+      }
+      else if (target_single !== undefined) {
+        // INDEX are GO Index + 1
+        // Remove every bond from this atom
+        const name = go.goIndexToGoName(target_single);
+
+        go.remove(name);
+      }
+      else if (target_ensembl !== undefined && target_ensembl[1] !== undefined) {
+        // INDEXES are GO Indexes + 1
+        // Convert every index to go name in a set
+        const counterpart = new Set([...target_ensembl[1]].map(e => go.goIndexToGoName(e)));
+
+        for (const atom of target_ensembl[0]) {
+          const name = go.goIndexToGoName(atom);
+
+          // Get the bonds linked to counterpart items
+          const bonds = go.findBondsOf(name).filter(n => counterpart.has(n));
+
+          // Remove every targeted bond
+          for (const bond of bonds) {
+            go.remove(name, bond);
+          }
+        }
+      }
+      else if (target_ensembl !== undefined && target_ensembl[1] === undefined) {
+        // INDEXES are GO Indexes + 1
+        // Unlink all atoms of the set together
+        const name_set = new Set([...target_ensembl[0]].map(e => go.goIndexToGoName(e)));
+
+        for (const name of name_set) {
+          // Get the bonds linked to atoms in name set
+          const bonds = go.findBondsOf(name).filter(n => name_set.has(n));
+
+          // Remove every targeted bond
+          for (const bond of bonds) {
+            go.remove(name, bond);
+          }
+        }
+      }
+    }
+
+    go.render(this.state.virtual_link_opacity);
+  
+    this.setState({
+      edited: true,
+    });
   }
 
-  redrawGoBonds = (highlight?: [number, number] | number, opacity?: number) => {
-    const { files, coordinates, virtual_links: links_component } = this.state;
-
-    this.ngl.remove(links_component!);
-    
+  redrawGoBonds = (highlight?: [number, number] | number, opacity?: number) => {    
     if (typeof highlight === 'number') {
       // transform go index to real index
-      highlight = files!.go!.goIndexToRealIndex(highlight);
+      highlight = this.state.files!.go!.goIndexToRealIndex(highlight);
     }
 
-    const { component, representation } = drawBondsInStage(
-      this.ngl, 
-      files!.go!.bonds, 
-      coordinates, 
-      'go', 
-      highlight, 
-      opacity ?? this.state.virtual_link_opacity
-    );
+    let h1 = 0, h2 = 0;
 
-    this.setState({
-      virtual_links: component,
-      virtual_links_repr: representation,
-    });
+    if (Array.isArray(highlight)) {
+      [h1, h2] = highlight;
+    }
+    else if (typeof highlight === 'number') {
+      // Highlight every link from highlight go atom
+      h1 = highlight;
+    }
+
+    // TODO improve
+    const predicate = highlight !== undefined ? ((atom1: number, atom2: number) => {
+      if (highlight && Array.isArray(highlight)) {
+        return (atom1 === h1 && atom2 === h2) || (atom2 === h1 && atom1 === h2);
+      }
+      // Highlight is a number
+      else if (h1) {
+        return atom1 === h1 || atom2 === h1;
+      }
+
+      return false;
+    }) : undefined;
+
+    this.state.files!.go!.render(
+      opacity ?? this.state.virtual_link_opacity,
+      predicate
+    );
   };
 
   setSchemeIdColorForCg = (id?: string) => {
@@ -391,6 +505,36 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       });
     }
   };
+
+  restoreSettingsAfterGo(revert_go_changes: boolean) {
+    // Restore all settings
+    if (this.saved_viz_params) {
+      const { aa_enabled, vl_enabled, vl_op, cg_op, cg_enabled, representations } = this.saved_viz_params;
+
+      this.onRepresentationChange(undefined, representations);
+      const go = this.state.files!.go!;
+
+      go.representation.set({ opacity: vl_op });
+      this.setCoarseGrainRepresentation({ opacity: cg_op });
+      
+      for (const repr of this.state.coarse_grain_ngl!.representations) {
+        repr.visible = cg_enabled;
+      }
+      for (const repr of this.state.all_atom_ngl!.representations) {
+        repr.visible = aa_enabled;
+      }
+      go.representation.visible = vl_enabled;
+
+      this.setState({ virtual_link_opacity: vl_op });
+
+      if (revert_go_changes) {
+        this.state.files!.go = this.saved_viz_params.go;
+        this.state.files!.go.render(vl_op);
+      }
+    }
+
+    this.setState({ running: 'done' });
+  }
 
   /* EVENTS */
 
@@ -543,7 +687,11 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
           }
 
           files.radius = radius;
-          files.elastic_bonds = elastic_bonds;
+
+          if (elastic_bonds) {
+            files.elastic_bonds = new BondsRepresentation(this.ngl);
+            files.elastic_bonds.bonds = elastic_bonds;
+          }
 
           console.log(files);
 
@@ -567,7 +715,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
     if (s.builder_mode === "go") {
       // Init go sites
-      files.go = await GoBondsHelper.readFromItps(files.itps.map(e => e.content));
+      files.go = await GoBondsHelper.readFromItps(this.ngl, files.itps.map(e => e.content));
     }
 
     this.setState({ files, martinize_step: "" });
@@ -575,9 +723,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     const mode = files.elastic_bonds ? 'elastic' : (s.builder_mode === "go" ? 'go' : undefined);
 
     this.initCoarseGrainPdb({
-      pdb: files.pdb.content,
-      radius: files.radius,
-      bonds: files.elastic_bonds ?? files.go?.bonds,
+      files,
       mode
     });
 
@@ -687,13 +833,26 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       virtual_link_opacity: value / 100
     });
 
-    this.setVirtualLinksRepresentation({ opacity: value / 100 });
+    if (this.state.files?.go) {
+      this.state.files.go.representation.set({ opacity: value / 100 });
+    }
+    else if (this.state.files?.elastic_bonds) {
+      this.state.files?.elastic_bonds.set({ opacity: value / 100 })
+    }
   };
 
   onVirtualLinksVisibilityChange = (_: any, checked: boolean) => {
-    const repr = this.state.virtual_links_repr;
-    if (repr)
-      repr.visible = checked;
+    const files = this.state.files;
+
+    if (!files)
+      return;
+
+    if (files.go) {
+      files.go.representation.visible = checked;
+    }
+    else if (files.elastic_bonds) {
+      files.elastic_bonds.visible = checked;
+    }
 
     this.setState({ virtual_link_visible: checked });
   };
@@ -851,38 +1010,46 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
   };
 
   onBondCreate = (go_atom_1: number, go_atom_2: number) => {
-    return this.addOrRemoveGoBond(go_atom_1 + 1, go_atom_2 + 1, 'add');
+    return this.addOrRemoveGoBond({
+      mode: 'add',
+      target: [go_atom_1 + 1, go_atom_2 + 1],
+    });
   };
 
   onBondRemove = (real_atom_1: number, real_atom_2: number) => {
-    this.addOrRemoveGoBond(real_atom_1, real_atom_2, 'remove');
+    return this.addOrRemoveGoBond({
+      mode: 'remove',
+      target: [real_atom_1, real_atom_2],
+    });
   };
 
   onAllBondRemove = (from_go_atom: number) => {
-    this.addOrRemoveGoBond(from_go_atom + 1, 0, 'remove_all');
+    return this.addOrRemoveGoBond({
+      mode: 'remove',
+      target_single: from_go_atom + 1,
+    });
+  };
+
+  onBondCreateFromSet = (set1: Set<number>, set2?: Set<number>) => {
+    this.addOrRemoveGoBond({
+      mode: 'add',
+      target_ensembl: [set1, set2],
+    });
+  };
+
+  onBondRemoveFromSet = (set1: Set<number>, set2?: Set<number>) => {
+    this.addOrRemoveGoBond({
+      mode: 'remove',
+      target_ensembl: [set1, set2],
+    });
+  };
+
+  onGoEditorValidate = () => {
+    this.restoreSettingsAfterGo(false);
   };
 
   onGoEditorCancel = () => {
-    // Restore all settings
-    if (this.saved_viz_params) {
-      const { aa_enabled, vl_enabled, vl_op, cg_op, cg_enabled, representations } = this.saved_viz_params;
-
-      this.onRepresentationChange(undefined, representations);
-
-      this.setVirtualLinksRepresentation({ opacity: vl_op });
-      this.setCoarseGrainRepresentation({ opacity: cg_op });
-      
-      for (const repr of this.state.coarse_grain_ngl!.representations) {
-        repr.visible = cg_enabled;
-      }
-      for (const repr of this.state.all_atom_ngl!.representations) {
-        repr.visible = aa_enabled;
-      }
-      this.state.virtual_links_repr!.visible = vl_enabled;
-      this.setState({ virtual_link_opacity: vl_op });
-    }
-
-    this.setState({ running: 'done' });
+    this.restoreSettingsAfterGo(true);
   };
 
   onGoEditorStart = () => {
@@ -894,6 +1061,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       cg_op: this.state.coarse_grain_opacity,
       vl_op: this.state.virtual_link_opacity,
       representations: this.state.representations,
+      go: this.state.files!.go!.clone(),
     };
 
     // Apply custom params
@@ -905,13 +1073,37 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     for (const repr of this.state.all_atom_ngl!.representations) {
       repr.visible = false;
     }
-    this.state.virtual_links_repr!.visible = true;
 
-    this.setVirtualLinksRepresentation({ opacity: 1 });
+    const vrepr = this.state.files!.go!.representation;
+    vrepr.visible = true;
+    vrepr.set({ opacity: 1 });
+
     this.setCoarseGrainRepresentation({ opacity: .7 });
 
     // Load the go editor
     this.setState({ running: 'go_editor', virtual_link_opacity: 1 });
+  };
+
+  onGoHistoryBack = (opacity?: number) => {
+    const go = this.state.files?.go;
+
+    if (!go)
+      return;
+
+    go.historyBack();
+    go.render(opacity ?? this.state.virtual_link_opacity);
+    this.setState({ edited: true });
+  };
+
+  onGoHistoryRevert = (opacity?: number) => {
+    const go = this.state.files?.go;
+
+    if (!go)
+      return;
+
+    go.historyRevert();
+    go.render(opacity ?? this.state.virtual_link_opacity);
+    this.setState({ edited: true });
   };
 
 
@@ -1084,12 +1276,19 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
               {this.state.running === 'go_editor' && <GoEditor 
                 stage={this.ngl}
+                cgCmp={this.state.coarse_grain_ngl!}
                 onBondRemove={this.onBondRemove}
                 onBondCreate={this.onBondCreate}
                 onAllBondRemove={this.onAllBondRemove}
+                onValidate={this.onGoEditorValidate}
                 onCancel={this.onGoEditorCancel}
                 onRedrawGoBonds={this.redrawGoBonds}
                 setColorForCgRepr={this.setSchemeIdColorForCg}
+                onBondCreateFromSet={this.onBondCreateFromSet}
+                onBondRemoveFromSet={this.onBondRemoveFromSet}
+                onGoHistoryBack={this.onGoHistoryBack}
+                onGoHistoryRevert={this.onGoHistoryRevert}
+                goInstance={this.state.files!.go!}
               />}
             </div>
           </Grid>

@@ -141,39 +141,37 @@ export function drawBondsInStage(
  * 
  * Return newly created virtual link component and representation.
  */
-export async function addOrRemoveGoBonds(
-  { 
-    files, 
-    coordinates, 
-    virtual_links: links_component, 
-    virtual_link_opacity, 
-    virtual_link_visible 
-  }: MBState, 
-  ngl_wrapper: NglWrapper,
-  atom_index_1: number, 
-  atom_index_2: number,
-  mode: 'add' | 'remove' | 'remove_all',
-) {
-  if (!files || !files.go || !links_component) {
-    console.warn("One required element is missing", files, links_component);
-    return;
-  }
+// export async function addOrRemoveGoBonds(
+//   { 
+//     files, 
+//     virtual_link_opacity, 
+//     virtual_link_visible 
+//   }: MBState, 
+//   ngl_wrapper: NglWrapper,
+//   atom_index_1: number, 
+//   atom_index_2: number,
+//   mode: 'add' | 'remove' | 'remove_all',
+// ) {
+//   if (!files || !files.go || !links_component) {
+//     console.warn("One required element is missing", files, links_component);
+//     return;
+//   }
 
-  const target_fn = mode === 'add' ? addBond : (mode === 'remove' ? removeBond : removeAllOfBond);
+//   const target_fn = mode === 'add' ? addBond : (mode === 'remove' ? removeBond : removeAllOfBond);
 
-  const { component, representation } = target_fn({
-    source: atom_index_1,
-    target: atom_index_2,
-    go: files.go,
-    stage: ngl_wrapper,
-    coords: coordinates,
-    links_component,
-  });
+//   const { component, representation } = target_fn({
+//     source: atom_index_1,
+//     target: atom_index_2,
+//     go: files.go,
+//     stage: ngl_wrapper,
+//     coords: coordinates,
+//     links_component,
+//   });
 
-  representation.set({ opacity: virtual_link_opacity });
-  representation.visible = virtual_link_visible;
+//   representation.set({ opacity: virtual_link_opacity });
+//   representation.visible = virtual_link_visible;
 
-  // Save the ITP file // TODO DO IT ON DOWNLOAD
+//   // Save the ITP file // TODO DO IT ON DOWNLOAD
 
-  return { component, representation };
-}
+//   return { component, representation };
+// }
