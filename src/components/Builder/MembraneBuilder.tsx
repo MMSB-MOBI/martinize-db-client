@@ -8,11 +8,12 @@ import MoleculeChooser, { MoleculeWithFiles } from './MembraneBuilder/MoleculeCh
 import LipidChooser, { ChoosenLipid } from './MembraneBuilder/LipidChooser';
 import SettingsChooser, { SettingsInsane } from './MembraneBuilder/SettingsChooser';
 import ApiHelper from '../../ApiHelper';
-import NglWrapper, { NglRepresentation } from './NglWrapper';
+import NglWrapper, { NglRepresentation, NglComponent } from './NglWrapper';
 import BallAndStickRepresentation from '@mmsb/ngl/declarations/representation/ballandstick-representation';
 import { toast } from '../Toaster';
 import JSZip from 'jszip';
 import { Molecule } from '../../types/entities';
+import { Alert, AlertTitle } from '@material-ui/lab';
 
 // @ts-ignore
 window.NGL = ngl;
@@ -47,10 +48,12 @@ interface MBuilderState {
 
   insane_error?: any;
   result?: InsaneResult;
-  opacity: number;
+  box_opacity: number;
   want_close_result: boolean;
   generating_files: boolean;
   with_water: boolean;
+  box_visible: boolean;
+  box_break: boolean;
 
   available_lipids: string[];
   no_lipid: boolean;
@@ -65,6 +68,7 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
   
   ngl!: NglWrapper;
   representation?: NglRepresentation<BallAndStickRepresentation>;
+  box?: [NglComponent, NglRepresentation<ngl.BufferRepresentation>];
   go_back_btn = React.createRef<any>();
 
   constructor(props: MBuilderProps) {
@@ -99,12 +103,14 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
       lipids: undefined,
       insane_error: undefined,
       result: undefined,
-      opacity: 1,
+      box_opacity: .3,
       want_close_result: false,
       generating_files: false,
       with_water: false,
       available_lipids: [],
       no_lipid: false,
+      box_visible: true,
+      box_break: false,
     };
   }
 
@@ -154,14 +160,33 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
         const repr = component.add<BallAndStickRepresentation>('ball+stick');
         this.representation = repr;
         component.center();
+
+        // Init box
+        const shape = repr.createShapeFromBox();
+        if (shape) {
+          if (!this.state.box_break && repr.hasAtomOuterTheBox()) {
+            toast("Built membrane exceed box boundaries. Please check your box settings.", "warning");
+            this.setState({ box_break: true });
+          }
+
+          const component = this.ngl.add(shape);
+          const representation = component.add<ngl.BufferRepresentation>('buffer', { opacity: .3 });
+
+          this.box = [component, representation];
+        }
       });
   }
 
   setOpacity(opacity: number) {
     opacity = opacity > 1 ? opacity / 100 : opacity;
 
-    if (this.representation)
-      this.representation.set({ opacity });
+    if (this.box)
+      this.box[1].set({ opacity });
+  }
+
+  setVisible(hint: boolean) {
+    if (this.box)
+      this.box[1].visible = hint;
   }
 
   async downloadLipids(force_field: string) {
@@ -278,7 +303,7 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
     }
 
     this.setState({
-      opacity: value / 100
+      box_opacity: value / 100
     });
 
     this.setOpacity(value);
@@ -298,8 +323,10 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
       want_close_result: false, 
       result: undefined, 
       running: 'choose_settings', 
-      opacity: 1,
+      box_opacity: .3,
       with_water: false,
+      box_break: false,
+      box_visible: true,
     });
   };
 
@@ -345,6 +372,12 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
     }
 
     this.setState({ with_water: checked });
+  };
+
+  onBoxVisibleChange = (_: any, checked: boolean) => {
+    this.setVisible(checked);
+
+    this.setState({ box_visible: checked });
   };
 
   /* RENDER FUNCTIONS */
@@ -507,13 +540,37 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
 
         <Marger size="2rem" />
 
-        {/* Opacity settings */}
+        {/* Box settings */}
         <Typography variant="h6">
+          Box
+        </Typography>
+
+        {this.state.box_break && <React.Fragment>
+          <Marger size=".5rem" />
+          <Alert severity="warning">
+            <AlertTitle>Box too small</AlertTitle>
+            Some atoms are positionned <strong>outside the box</strong>.
+          </Alert>
+          <Marger size=".5rem" />
+        </React.Fragment>}
+
+        <FormControl component="fieldset">
+          <FormGroup>
+            <FormControlLabel
+              control={<Checkbox value="visible" checked={this.state.box_visible} onChange={this.onBoxVisibleChange} />}
+              label="Visible box"
+            />
+          </FormGroup>
+        </FormControl>
+
+        <Marger size=".5rem" />
+
+        <Typography variant="body1" align="center">
           Opacity
         </Typography>
 
         <Slider
-          value={this.state.opacity * 100}
+          value={this.state.box_opacity * 100}
           valueLabelDisplay="auto"
           step={10}
           marks

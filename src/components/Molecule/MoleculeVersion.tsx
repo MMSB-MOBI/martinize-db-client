@@ -3,6 +3,7 @@ import { Molecule } from '../../types/entities';
 import { Marger } from '../../helpers';
 import { Typography, makeStyles, Link } from '@material-ui/core';
 import { TreeView, TreeItem } from '@material-ui/lab';
+import Settings from '../../Settings';
 
 const useStyles = makeStyles(theme => ({
   name: {
@@ -119,7 +120,7 @@ export default function MoleculeVersion(props: { versions: Molecule[], current: 
   }
 
   function formatDetails(molecule: Molecule) {
-    return `Martinize ${molecule.martinize_version}, ${molecule.force_field}`;
+    return `${Settings.martinize_variables.create_way[molecule.create_way]}, ${molecule.force_field}`;
   }
 
   function renderMoleculeLabel(molecule: Molecule) {

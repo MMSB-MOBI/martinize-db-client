@@ -1,6 +1,6 @@
 export interface SettingsJson {
   force_fields: string[];
-  martinize_versions: string[];
+  create_way: { [wayId: string]: string };
   category_tree: CategoryTree;
 }
 

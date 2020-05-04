@@ -3,6 +3,7 @@ import { Molecule } from '../../types/entities';
 import { Marger, dateFormatter } from '../../helpers';
 import { Link as RouterLink } from 'react-router-dom';
 import { Typography, makeStyles, Link } from '@material-ui/core';
+import Settings from '../../Settings';
 
 const useStyles = makeStyles(theme => ({
   version: {
@@ -33,7 +34,7 @@ export default function MoleculeParent(props: { parent?: Molecule }) {
   }
 
   function formatDetails(molecule: Molecule) {
-    return `Martinize ${molecule.martinize_version}, ${molecule.force_field} (created on ${dateFormatter("Y-m-d", new Date(molecule.created_at))})`;
+    return `${Settings.martinize_variables.create_way[molecule.create_way]}, ${molecule.force_field} (created on ${dateFormatter("Y-m-d", new Date(molecule.created_at))})`;
   }
 
   return (

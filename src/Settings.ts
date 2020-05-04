@@ -74,7 +74,7 @@ export const Settings = new class Settings {
   get martinize_variables() : SettingsJson {
     return this._settings ?? {
       force_fields: [],
-      martinize_versions: [],
+      create_way: {},
       category_tree: {}
     };
   }

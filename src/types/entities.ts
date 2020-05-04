@@ -5,12 +5,26 @@ export interface BaseMolecule {
   name: string;
   /** Molecule short alias */
   alias: string;
-  /** Mol formula */
-  formula: string;
-  /** Molecule version (free text) */
-  version: string;
+  /** Mol smiles formula (optional) */
+  smiles: string;
   /** Category, should be a GO Term */
   category: string;
+  /** Molecule version (free text) */
+  version: string;
+  /** Free comment text. */
+  comments: string;
+  /** Citation */
+  citation: string;
+  /** Information about a protein validation, model quality */
+  validation: string;
+  /** String version of the used command line (other parameters) */
+  command_line: string;
+  /** Way to create the martinized molecule (id that refers in create_way field of settings.json) */
+  create_way: string;
+  /** Force field version */
+  force_field: string;
+  /** Stringified ISO date of creation date */
+  created_at: string;
   /** Molecule parent version. If string, ref to <Molecule.id> */
   parent: null | string;
   /** Tree snowflake ID. Shared between parent and children */
@@ -21,16 +35,6 @@ export interface BaseMolecule {
   owner: string;
   /** ID of related file containing `.itp` and `.gro`/`.pdb` files */
   files: string;
-  /** Free comment text. */
-  comments: string;
-  /** Stringified ISO date of creation date */
-  created_at: string;
-  /** String version of the used command line (other parameters) */
-  command_line: string;
-  /** Martinize version used to generate files */
-  martinize_version: string;
-  /** Force field version */
-  force_field: string;
   /** Author (if fetched). */
   author?: string;
 }

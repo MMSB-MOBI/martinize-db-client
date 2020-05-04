@@ -120,7 +120,7 @@ export default function MoleculeFilters(props: {
   q?: string;
   author?: string;
   categories?: string[];
-  martinize_versions?: string[];
+  create_ways?: string[];
   name?: string;
   alias?: string;
   disableAuthor?: boolean;
@@ -156,15 +156,15 @@ export default function MoleculeFilters(props: {
           />
 
           <MultipleSelect 
-            options={settings.martinize_versions.map(e => ({ value: e }))} 
-            value={props.martinize_versions || []}
+            options={Object.entries(settings.create_way).map(([value, label]) => ({ value, label }))} 
+            value={props.create_ways || []}
             onChange={v => {
               const filters = getAllFilters();
-              filters.martinize_versions = v;
+              filters.create_ways = v;
               props.onFiltersChange(filters);
             }}
             id="mt-select"
-            label="Martinize version"
+            label="Creation way"
           />
 
           <MultipleSelect 

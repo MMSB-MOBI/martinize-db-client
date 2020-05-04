@@ -159,8 +159,8 @@ export default function MoleculeInfo<T extends StashedMolecule | Molecule>(props
             {category}
           </Typography>
 
-          {molecule.formula && <Typography color="textSecondary">
-            Formula: <code>{molecule.formula}</code>
+          {molecule.smiles && <Typography color="textSecondary">
+            SMILES formula: <code>{molecule.smiles}</code>
           </Typography>}
 
           <Marger size="1rem" />
@@ -210,7 +210,7 @@ export default function MoleculeInfo<T extends StashedMolecule | Molecule>(props
           </React.Fragment>}
 
           <Typography className={classes.version}>
-            Created with force field <strong>{molecule.force_field}</strong> with version <strong>{molecule.martinize_version}</strong> of Martinize.
+            Created with force field <strong>{molecule.force_field}</strong> (<strong>{Settings.martinize_variables.create_way[molecule.create_way]}</strong>).
           </Typography>
         </div>
       </Fragment>

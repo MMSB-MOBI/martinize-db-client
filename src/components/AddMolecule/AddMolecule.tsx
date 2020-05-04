@@ -1,54 +1,16 @@
 import React from 'react';
 import { BaseMolecule, Molecule, StashedMolecule } from '../../types/entities';
-import { Dialog, Slide, makeStyles, createStyles, Theme, Button, Container, AppBar, Toolbar, IconButton, Typography, TextField, Link } from '@material-ui/core';
+import { Dialog, Slide, makeStyles, createStyles, Theme, Button, Container, AppBar, Toolbar, IconButton, Typography, TextField, Link, withStyles } from '@material-ui/core';
 import { TransitionProps } from '@material-ui/core/transitions/transition';
 import { LoadFader, SimpleSelect } from '../../Shared';
 import CloseIcon from '@material-ui/icons/Close';
 import Settings from '../../Settings';
 import { flattenCategoryTree, Marger, notifyError } from '../../helpers';
 import { toast } from '../Toaster';
-import AddMoleculeFileInput from './AddMoleculeFileInput';
+import AddMoleculeFileInput, { MoleculeFilesInput } from './AddMoleculeFileInput';
 import ApiHelper from '../../ApiHelper';
 import { SERVER_ROOT } from '../../constants';
-
-const useStyles = makeStyles((theme: Theme) =>
-  createStyles({
-    appBar: {
-      position: 'relative',
-    },
-    title: {
-      marginLeft: theme.spacing(2),
-      flex: 1,
-    },
-    formControl: {
-      minWidth: 180,
-    },
-    parentFixedBlock: {
-      display: 'grid',
-      gap: '15px',
-      gridTemplateColumns: '1fr 1fr 1fr 1fr',
-      width: '100%',
-    },
-    commandLineAndVersionBlock: {
-      display: 'grid',
-      gap: '15px',
-      gridTemplateColumns: '3fr 1fr',
-      width: '100%',
-    },
-    martinizeVersionForceFieldBlock: {
-      display: 'grid',
-      gap: '15px',
-      gridTemplateColumns: '1fr 1fr',
-      width: '100%',
-    },
-    commentsBlock: {
-      width: '100%',
-    },
-    commentInput: {
-      width: '100%',
-    },
-  }),
-);
+import { SettingsJson } from '../../types/settings';
 
 interface AddMoleculeProps {
   /**
@@ -67,6 +29,7 @@ interface AddMoleculeProps {
   /** When user has added/modified a molecule, and the server has successfully received it. */
   onChange: (modified: StashedMolecule | Molecule) => void,
   stashed?: boolean,
+  classes: Record<string, string>;
 }
 
 const Transition = React.forwardRef<unknown, TransitionProps>(function Transition(props, ref) {
@@ -74,78 +37,118 @@ const Transition = React.forwardRef<unknown, TransitionProps>(function Transitio
   return <Slide direction="up" ref={ref} {...props} />;
 });
 
+interface AddMoleculeState {
+  files: string | MoleculeFilesInput;
+  name: string;
+  alias: string;
+  smiles: string;
+  category: string;
+  command_line: string;
+  version: string;
+  comments: string;
+  validation: string;
+  citation: string;
+  create_way: string;
+  force_field: string;
+  loading: boolean;
+}
 
-export default function AddMolecule(props: AddMoleculeProps) {
-  // string if files are already set, File[] if we want to set new files.
-  const [files, setFiles] = React.useState<string | { itp: File[], pdb: File | undefined, top: File | undefined }>(props.from?.files ?? "");
-  
-  const [name, setName] = React.useState(props.from?.name ?? (props.parent?.name ?? ""));
-  const [alias, setAlias] = React.useState(props.from?.alias ?? (props.parent?.alias ?? ""));
-  const [formula, setFormula] = React.useState(props.from?.formula ?? (props.parent?.formula ?? ""));
-  // todo refine categories
-  const [category, setCategory] = React.useState(props.from?.category ?? (props.parent?.category ?? ""));
+class AddMolecule extends React.Component<AddMoleculeProps, AddMoleculeState> {
+  protected settings = Settings.martinize_variables;
+  protected form_ref = React.createRef<HTMLFormElement>();
+  protected saved_settings?: [SettingsJson, { id: string, name: string }[]];
 
-  const [commandLine, setCommandLine] = React.useState(props.from?.command_line ?? "");
-  const [version, setVersion] = React.useState(props.from?.version ?? "");
-  const [comments, setComments] = React.useState(props.from?.comments ?? "");
-  const [martinizeVersion, setMartinizeVersion] = React.useState(props.from?.martinize_version ?? "");
-  const [forceField, setForceField] = React.useState(props.from?.force_field ?? "");
+  constructor(props: AddMoleculeProps) {
+    super(props);
 
-  const [loading, setLoading] = React.useState(false);
-  const settings = Settings.martinize_variables;
-  const categories = React.useMemo(() => flattenCategoryTree(settings.category_tree), [settings]);
+    this.state = {
+      loading: false,
+      files: props.from?.files ?? "",
+      name: props.from?.name ?? (props.parent?.name ?? ""),
+      alias: props.from?.alias ?? (props.parent?.alias ?? ""),
+      smiles: props.from?.smiles ?? (props.parent?.smiles ?? ""),
+      category: props.from?.category ?? (props.parent?.category ?? ""),
+      command_line: props.from?.command_line ?? "",
+      version: props.from?.version ?? "",
+      comments: props.from?.comments ?? "",
+      validation: props.from?.validation ?? "",
+      citation: props.from?.citation ?? "",
+      create_way: props.from?.create_way ?? "",
+      force_field: props.from?.force_field ?? "",
+    };
+  }
 
-  const classes = useStyles();
-  const formRef = React.createRef<HTMLFormElement>();
+  componentDidUpdate(old_props: AddMoleculeProps) {
+    if (this.props === old_props)
+      return;
 
-  React.useEffect(() => {
+    const props = this.props;
+
     if (props.from) {
-      setFiles(props.from.files);
-      setName(props.from.name);
-      setAlias(props.from.alias);
-      setFormula(props.from.formula);
-      setCategory(props.from.category);
-      setCommandLine(props.from.command_line);
-      setVersion(props.from.version);
-      setComments(props.from.comments);
-      setMartinizeVersion(props.from.martinize_version);
-      setForceField(props.from.force_field);
-      setLoading(false);
+      this.setState({
+        files: props.from.files,
+        name: props.from.name,
+        alias: props.from.alias,
+        smiles: props.from.smiles,
+        category: props.from.category,
+        command_line: props.from.command_line,
+        version: props.from.version,
+        comments: props.from.comments,
+        create_way: props.from.create_way,
+        force_field: props.from.force_field,
+        loading: false,
+      });
     }
     else {
       if (props.parent) {
-        setName(props.parent.name);
-        setAlias(props.parent.alias);
-        setFormula(props.parent.formula);
-        setCategory(props.parent.category);
+        this.setState({
+          name: props.parent.name,
+          alias: props.parent.alias,
+          smiles: props.parent.smiles,
+          category: props.parent.category,
+        });
       }
       else {
-        setName("");
-        setAlias("");
-        setFormula("");
-        setCategory("");
+        this.setState({
+          name: "",
+          alias: "",
+          smiles: "",
+          category: "",
+        });
       }
-      setFiles("");
-      setCommandLine("");
-      setVersion("");
-      setComments("");
-      setMartinizeVersion("");
-      setForceField("");
-      setLoading(false);
-    }
-  }, [props]);
 
-  function isDisabled() {
-    if (props.parent) {
+      this.setState({
+        files: "",
+        command_line: "",
+        version: "",
+        comments: "",
+        create_way: "",
+        force_field: "",
+        loading: false,
+      });
+    }
+  }
+
+  get is_disabled() {
+    if (this.props.parent) {
       return true;
     }
     return false;
   }
 
-  function sendMolecule() {
+  get categories() {
+    if (!this.saved_settings || this.settings !== this.saved_settings[0]) {
+      this.saved_settings = [this.settings, flattenCategoryTree(this.settings.category_tree)];
+    }
+
+    return this.saved_settings[1];
+  }
+
+  sendMolecule = () => {
     // todo send molecule to API
     // Check form data
-    const form = formRef.current!;
+    const form = this.form_ref.current!;
+    const { files, name, alias, category, create_way, version, force_field, command_line, comments, validation, citation, smiles } = this.state;
 
     if (typeof files === 'object') {
       if (files.itp.length === 0) {
@@ -172,67 +175,70 @@ export default function AddMolecule(props: AddMoleculeProps) {
       if (!category) {
         return toast("Molecule category is required.", "error")
       }
-      if (!martinizeVersion) {
-        return toast("Martinize version is required.", "error")
+      if (!create_way) {
+        return toast("Create way is required.", "error")
       }
       if (!version) {
         return toast("You must specify a molecule version name.", "error")
       }
-      if (!forceField) {
+      if (!force_field) {
         return toast("Targeted force field is required.", "error")
       }
 
       return toast("Form is not valid. Please check the fields.", "warning");
     }
 
-    let partial_molecule: Partial<Molecule> & { itp?: File[], pdb?: File, top?: File } = {
+    let partial_molecule: Partial<Molecule> & { itp?: File[], pdb?: File, top?: File, map?: File[] } = {
       name,
       alias,
-      formula,
+      smiles,
       version,
       category,
-      command_line: commandLine,
+      command_line,
       comments,
-      martinize_version: martinizeVersion,
-      force_field: forceField,
+      create_way,
+      force_field,
+      validation,
+      citation,
     };
 
-    if (props.from) {
-      partial_molecule = { ...props.from, ...partial_molecule };
+    if (this.props.from) {
+      partial_molecule = { ...this.props.from, ...partial_molecule };
     }
-    else if (props.parent) {
-      partial_molecule.parent = props.parent.id;
+    else if (this.props.parent) {
+      partial_molecule.parent = this.props.parent.id;
     }
     
     if (typeof files === 'object') {
       partial_molecule.itp = files.itp;
       partial_molecule.pdb = files.pdb;
       partial_molecule.top = files.top;
+      partial_molecule.map = files.map;
     }
     else {
       // This is a file ID reference, only for edit mode.
       partial_molecule.files = files;
     }
 
-    setLoading(true);
+    this.setState({ loading: true })
 
-    if (props.from) {
-      if (props.stashed) {
+    if (this.props.from) {
+      if (this.props.stashed) {
         // @ts-ignore
         partial_molecule.stashed = "1";
       }
 
-      ApiHelper.request((props.stashed ? 'moderation' : 'molecule') + '/edit', {
+      ApiHelper.request((this.props.stashed ? 'moderation' : 'molecule') + '/edit', {
         method: 'POST', 
         parameters: partial_molecule,
         body_mode: 'multipart',
       })
         .then((mol: BaseMolecule) => {
-          props.onChange(mol);
+          this.props.onChange(mol);
         })
         .catch(notifyError)
         .finally(() => {
-          setLoading(false);
+          this.setState({ loading: false });
         });
     }
     else {
@@ -242,194 +248,260 @@ export default function AddMolecule(props: AddMoleculeProps) {
         body_mode: 'multipart',
       })
         .then((mol: BaseMolecule) => {
-          props.onChange(mol);
+          this.props.onChange(mol);
         })
         .catch(notifyError)
         .finally(() => {
-          setLoading(false);
+          this.setState({ loading: false });
         });
     }
-  } 
+  };
 
-  return (
-    <Dialog fullScreen open={props.open} TransitionComponent={Transition}>
-      <AppBar className={classes.appBar}>
-        <Toolbar>
-          <IconButton edge="start" color="inherit" onClick={props.onClose}>
-            <CloseIcon />
-          </IconButton>
-          <Typography variant="h6" className={classes.title}>
-            {props.from ? "Edit " : "Add "} a molecule
-          </Typography>
-          <Button autoFocus color="inherit" onClick={sendMolecule}>
-            save
-          </Button>
-        </Toolbar>
-      </AppBar>
+  render() {
+    const classes = this.props.classes;
+    const props = this.props;
+    const { loading, files, force_field, name, alias, category, smiles } = this.state;
 
-      <LoadFader when={loading}>
-        <Container>
-
-          <form ref={formRef} onSubmit={e => e.preventDefault()}>
-            <Marger size={16} />
-
-            <Typography variant="h5">
-              Define here the details of your molecule.
+    return (
+      <Dialog fullScreen open={props.open} TransitionComponent={Transition}>
+        <AppBar className={classes.appBar}>
+          <Toolbar>
+            <IconButton edge="start" color="inherit" onClick={props.onClose}>
+              <CloseIcon />
+            </IconButton>
+            <Typography variant="h6" className={classes.title}>
+              {props.from ? "Edit " : "Add "} a molecule
             </Typography>
-
-            <Marger size="1.5rem" />
-
-            {/* Fixed elements when parent */}
-            <Typography variant="h6">
-              Informations
-            </Typography>
-
-            <Marger size="1rem" />
-
-            {props.parent && <Typography style={{ marginBottom: '1rem' }}>
-              The following values are fixed by the parent molecule.
-            </Typography>}
-            <div className={classes.parentFixedBlock}>
-              <TextField
-                label="Name" 
-                value={name}
-                onChange={v => {
-                  setName(v.target.value);
-                }}
-                variant="outlined"
-                disabled={isDisabled()}
-                required
-              />
-
-              <TextField
-                label="Alias" 
-                value={alias}
-                onChange={v => {
-                  setAlias(v.target.value);
-                }}
-                variant="outlined"
-                disabled={isDisabled()}
-                required
-              />
-
-              <TextField
-                label="Formula" 
-                value={formula}
-                onChange={v => {
-                  setFormula(v.target.value);
-                }}
-                variant="outlined"
-                disabled={isDisabled()}
-              />  
-
-              <SimpleSelect 
-                id="s-category-new"
-                label="Category"
-                onChange={v => setCategory(v)}
-                values={categories}
-                value={category}
-                disabled={isDisabled()}
-              />
-            </div>
-
-            <Marger size="2rem" />
-
-            <Typography variant="h6">
-              About this version
-            </Typography>
-
-            <Marger size="1rem" />
-
-            {/* Variable elements between each version */}
-            <div className={classes.commandLineAndVersionBlock}>
-              <TextField
-                label="Command line" 
-                value={commandLine}
-                onChange={v => {
-                  setCommandLine(v.target.value);
-                }}
-                variant="outlined"
-              />
-
-              <TextField
-                label="Molecule Version" 
-                value={version}
-                onChange={v => {
-                  setVersion(v.target.value);
-                }}
-                variant="outlined"
-                required
-              />
-            </div>
-
-            <Marger size="1rem" />
-
-            <div className={classes.martinizeVersionForceFieldBlock}>
-              <SimpleSelect 
-                id="s-martinize-v-new"
-                label="Martinize version"
-                onChange={v => setMartinizeVersion(v)}
-                values={settings.martinize_versions.map(m => ({ id: m, name: m }))}
-                value={martinizeVersion}
-              />
-
-              <SimpleSelect
-                id="s-ff-v-new"
-                label="Used force field"
-                onChange={v => setForceField(v)}
-                values={settings.force_fields.map(m => ({ id: m, name: m }))}
-                value={forceField}
-              />
-            </div>
-
-            <Marger size="1rem" />
-
-            <div className={classes.commentsBlock}>
-              <TextField
-                label="Comments (optional)" 
-                value={comments}
-                onChange={v => {
-                  setComments(v.target.value);
-                }}
-                variant="outlined"
-                multiline
-                rows="4"
-                className={classes.commentInput}
-              />
-            </div>
-
-            <Marger size="1.5rem" />
-
-            {/* Attached files */}
-            <Typography variant="h6">
-              Attached files
-            </Typography>
-              
-            {(!files || typeof files !== 'string') && <div>
-              <AddMoleculeFileInput 
-                onChange={files => setFiles(files)}
-              />
-            </div>}
-
-            {(files && typeof files === 'string') && <div>
-              <Typography>
-                A ZIP file is attached to this molecule. {" "}
-                <Link href={SERVER_ROOT + "api/molecule/download?id=" + files + "&filename=files.zip"} style={{ fontSize: '1.2rem' }}>
-                  <span>
-                    Download
-                  </span>
-                </Link>
+            <Button autoFocus color="inherit" onClick={this.sendMolecule}>
+              save
+            </Button>
+          </Toolbar>
+        </AppBar>
+  
+        <LoadFader when={loading}>
+          <Container>
+            <form ref={this.form_ref} onSubmit={e => e.preventDefault()}>
+              <Marger size={16} />
+  
+              <Typography variant="h5">
+                Define here the details of your molecule.
               </Typography>
-
-              <Button onClick={() => setFiles("")} color="secondary">
-                Delete related files
-              </Button>
-            </div>}
-
-            <Marger size="2.5rem" />
-          </form>
-        </Container>
-      </LoadFader>
-    </Dialog>
-  );
+  
+              <Marger size=".5rem" />
+  
+              <Typography variant="body2">
+                Fields marked with an asterisk (*) are mandatory.
+              </Typography>
+  
+              <Marger size="1.5rem" />
+  
+              {/* Fixed elements when parent */}
+              <Typography variant="h6">
+                Informations
+              </Typography>
+  
+              <Marger size="1rem" />
+  
+              {props.parent && <Typography style={{ marginBottom: '1rem' }}>
+                The following values are fixed by the parent molecule.
+              </Typography>}
+              <div className={classes.parentFixedBlock}>
+                <TextField
+                  label="Name" 
+                  value={name}
+                  onChange={v => this.setState({ name: v.target.value })}
+                  variant="outlined"
+                  disabled={this.is_disabled}
+                  required
+                />
+  
+                <TextField
+                  label="Alias" 
+                  value={alias}
+                  onChange={v => this.setState({ alias: v.target.value })}
+                  variant="outlined"
+                  disabled={this.is_disabled}
+                  required
+                />
+  
+                <TextField
+                  label="SMILES formula" 
+                  value={smiles}
+                  onChange={v => this.setState({ smiles: v.target.value })}
+                  variant="outlined"
+                  disabled={this.is_disabled}
+                />  
+  
+                <SimpleSelect 
+                  id="s-category-new"
+                  label="Category"
+                  onChange={v => this.setState({ category: v })}
+                  values={this.categories}
+                  value={category}
+                  disabled={this.is_disabled}
+                />
+              </div>
+  
+              <Marger size="2rem" />
+  
+              <Typography variant="h6">
+                About this version
+              </Typography>
+  
+              <Marger size="1rem" />
+  
+              {/* Variable elements between each version */}
+              <div className={classes.commandLineAndVersionBlock}>
+                <TextField
+                  label="Citations" 
+                  placeholder="PubMed IDs, authors..."
+                  value={this.state.citation}
+                  onChange={v => this.setState({ citation: v.target.value })}
+                  variant="outlined"
+                />
+  
+                <div className={classes.martinizeVersionForceFieldBlock}>
+                  <TextField
+                    label="Command line" 
+                    placeholder="If a software has been used"
+                    value={this.state.command_line}
+                    onChange={v => this.setState({ command_line: v.target.value })}
+                    variant="outlined"
+                  />
+  
+                  <TextField
+                    label="Molecule Version" 
+                    placeholder="Unique number to identify molecule"
+                    value={this.state.version}
+                    onChange={v => this.setState({ version: v.target.value })}
+                    variant="outlined"
+                    required
+                  />
+                </div>
+              </div>
+  
+              <Marger size="1rem" />
+  
+              <div className={classes.martinizeVersionForceFieldBlock}>
+                <SimpleSelect 
+                  id="s-martinize-creation-new"
+                  label="Creation way"
+                  onChange={v => this.setState({ create_way: v })}
+                  values={Object.entries(this.settings.create_way).map(([id, name]) => ({ id, name }))}
+                  value={this.state.create_way}
+                />
+  
+                <SimpleSelect
+                  id="s-ff-v-new"
+                  label="Used force field"
+                  onChange={v => this.setState({ force_field: v })}
+                  values={this.settings.force_fields.map(m => ({ id: m, name: m }))}
+                  value={force_field}
+                />
+              </div>
+  
+              <Marger size="1rem" />
+  
+              <div>
+                <TextField
+                  label="Validation information" 
+                  value={this.state.validation}
+                  onChange={v => this.setState({ validation: v.target.value })}
+                  variant="outlined"
+                  fullWidth
+                />
+              </div>
+  
+              <Marger size="1rem" />
+  
+              <div className={classes.commentsBlock}>
+                <TextField
+                  label="Comments" 
+                  value={this.state.comments}
+                  onChange={v => this.setState({ comments: v.target.value })}
+                  variant="outlined"
+                  multiline
+                  rows="4"
+                  className={classes.commentInput}
+                />
+              </div>
+  
+              <Marger size="1.5rem" />
+  
+              {/* Attached files */}
+              <Typography variant="h6">
+                Attached files
+              </Typography>
+                
+              {(!files || typeof files !== 'string') && <div>
+                <Marger size="1rem" />
+  
+                <AddMoleculeFileInput
+                  showMap 
+                  useGrid
+                  onChange={files => this.setState({ files })}
+                />
+              </div>}
+  
+              {(files && typeof files === 'string') && <div>
+                <Typography>
+                  A ZIP file is attached to this molecule. {" "}
+                  <Link href={SERVER_ROOT + "api/molecule/download?id=" + files + "&filename=files.zip"} style={{ fontSize: '1.2rem' }}>
+                    <span>
+                      Download
+                    </span>
+                  </Link>
+                </Typography>
+  
+                <Marger size="1rem" />
+  
+                <Button variant="outlined" onClick={() => this.setState({ files: "" })} color="secondary">
+                  Delete related files
+                </Button>
+              </div>}
+  
+              <Marger size="2.5rem" />
+            </form>
+          </Container>
+        </LoadFader>
+      </Dialog>
+    );
+  }
 }
+
+export default withStyles(theme => ({
+  appBar: {
+    position: 'relative',
+  },
+  title: {
+    marginLeft: theme.spacing(2),
+    flex: 1,
+  },
+  formControl: {
+    minWidth: 180,
+  },
+  parentFixedBlock: {
+    display: 'grid',
+    gap: '15px',
+    gridTemplateColumns: '1fr 1fr 1fr 1fr',
+    width: '100%',
+  },
+  commandLineAndVersionBlock: {
+    display: 'grid',
+    gap: '2%',
+    gridTemplateColumns: '49% 49%',
+    width: '100%',
+  },
+  martinizeVersionForceFieldBlock: {
+    display: 'grid',
+    gap: '2%',
+    gridTemplateColumns: '49% 49%',
+    width: '100%',
+  },
+  commentsBlock: {
+    width: '100%',
+  },
+  commentInput: {
+    width: '100%',
+  },
+}))(AddMolecule);

@@ -55,6 +55,17 @@ export class BondsRepresentation {
     this.coordinates = coordinates;
   }
 
+  getCoordinate(index: number) {
+    return this.coordinates[index];
+  }
+
+  distanceBetween(atom1: number, atom2: number) {
+    // d = ((x2 - x1)^2 + (y2 - y1)^2 + (z2 - z1)^2)^1/2 
+    const [x1, y1, z1] = this.coordinates[atom1];
+    const [x2, y2, z2] = this.coordinates[atom2];
+
+    return Math.sqrt(((x2 - x1) ** 2) + ((y2 - y1) ** 2) + ((z2 - z1) ** 2));
+  }
 
   protected cleanStage() {
     if (this.virtual_links_cmpt)
@@ -269,6 +280,27 @@ export default class GoBondsHelper {
 
   createFakeLine(atom1: GoAtomName, atom2: GoAtomName) {
     return `${atom1}    ${atom2}    1  0.7923518221  9.4140000000`;
+  }
+
+  createRealLine(atom1: GoAtomName, atom2: GoAtomName) {
+    const ri1 = this.goNameToRealIndex(atom1);
+    const ri2 = this.goNameToRealIndex(atom2);
+
+    if (ri1 === undefined || ri2 === undefined) {
+      console.warn("[Real line creator] Atoms", atom1, "and", atom2, "not found.");
+      return this.createFakeLine(atom1, atom2);
+    }
+
+    // rm is distance between 2 martini go bonds
+    // rm = (2^(1/6))*σ ≈ 1.122*σ
+    // σ = rm*2^(-1/6)
+    // Distance is in Angstrom, we expect it in nm (so we divide by 10)
+
+    // Real index in object starts at 1, distance between take 0-starting indexes
+    const rm = Math.abs(this.representation.distanceBetween(ri1 - 1, ri2 - 1)) / 10;
+    const result = rm * (2 ** (-(1/6)));
+
+    return `${atom1}    ${atom2}    1  ${result.toPrecision(11)}  9.4140000000`;
   }
 
   

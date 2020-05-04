@@ -55,11 +55,11 @@ export default function LoadPdb(props: LoadPdbProps) {
       <Marger size="1rem" />
 
       <Typography variant="h6">
-        Saved proteins
+        Saved molecules
       </Typography>
 
       <Typography>
-        You can use these proteins in the <Link 
+        You can use these molecules in the <Link 
           component={RouterLink} 
           to="/membrane_builder"
         >

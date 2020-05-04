@@ -92,12 +92,12 @@ class MoleculeChooser extends React.Component<MCProps, MCState> {
         <Marger size="2rem" />
 
         <Typography align="center" variant="h6">
-          Load from saved proteins
+          Load from saved molecules
         </Typography>
 
         <Typography align="center">
           <Link component={RouterLink} to="/builder">
-            Want to create a protein ?
+            Want to martinize a molecule ?
           </Link>
         </Typography>
         

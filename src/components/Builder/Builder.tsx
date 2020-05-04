@@ -378,7 +378,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
         const atom1 = go.goIndexToGoName(target[0]);
         const atom2 = go.goIndexToGoName(target[1]);
 
-        go.add(go.createFakeLine(atom1, atom2));
+        go.add(go.createRealLine(atom1, atom2));
       }
       else if (target_ensembl !== undefined && target_ensembl[1] !== undefined) {
         // Add line between each element of set
@@ -388,7 +388,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
           for (const atom2 of target_ensembl[1]) {
             const name2 = go.goIndexToGoName(atom2);
 
-            go.add(go.createFakeLine(name1, name2));
+            go.add(go.createRealLine(name1, name2));
           }
         }
       }
@@ -400,7 +400,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
         for (const name of name_set) {
           for (const counterpart of name_set) {
             if (name !== counterpart && !go.has(name, counterpart)) {
-              go.add(go.createFakeLine(name, counterpart));
+              go.add(go.createRealLine(name, counterpart));
             }
           }
         }
@@ -1192,7 +1192,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
             <div className={classes.paper}>
               <div className={classes.header}>
                 <Typography component="h1" variant="h3" align="center" style={{ fontWeight: 700, fontSize: '2.5rem', marginBottom: '1rem' }}>
-                  Martinize a protein
+                  Martinize a molecule
                 </Typography>
 
                 <div style={{ textAlign: 'center', marginBottom: '1rem' }}>

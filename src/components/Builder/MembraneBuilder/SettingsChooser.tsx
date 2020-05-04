@@ -141,8 +141,8 @@ class SettingsChooser extends React.Component<SCProps, SCState> {
   get box_is_error() {
     const items = this.state.box_size.split(',').map(e => !e ? NaN : Number(e));
 
-    // test: Number is not NaN, not <= 0, not a floating point number, and dimension is 3, 6 or 9.
-    return items.some(e => isNaN(e) || e <= 0 || e.toString().indexOf('.') !== -1) || ![3, 6, 9].includes(items.length);
+    // test: Number is not NaN, not < 0, not a floating point number, and dimension is 3, 6 or 9.
+    return items.some(e => isNaN(e) || e < 0 || e.toString().indexOf('.') !== -1) || ![3, 6, 9].includes(items.length);
   }
 
   get angle_is_error() {

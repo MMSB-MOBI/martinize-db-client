@@ -8,6 +8,10 @@ import PickingProxy from '@mmsb/ngl/declarations/controls/picking-proxy';
 import BallAndStickRepresentation from '@mmsb/ngl/declarations/representation/ballandstick-representation';
 
 export class NglWrapper {
+  static readonly BOX_X_HIGHLIGHT_COLOR = new ngl.Color(1, .1, .1);
+  static readonly BOX_Y_HIGHLIGHT_COLOR = new ngl.Color(.1, .1, 1);
+  static readonly BOX_Z_HIGHLIGHT_COLOR = new ngl.Color(.1, 1, .1);
+
   stage: ngl.Stage;
 
   constructor(target: string | HTMLElement, stage_params?: Partial<StageParameters>) {
@@ -166,6 +170,80 @@ export class NglRepresentation<T extends Representation> {
   applySelection(selection: string) {
     const repr = this.representation as any as BallAndStickRepresentation;
     repr.setSelection(selection);
+  }
+
+  hasAtomOuterTheBox() {
+    const box = this.box;
+
+    if (!box) {
+      return false;
+    }
+    
+    let has_outside = false;
+
+    // For PDBs with CRYST1 record, x, y & z are at indexes 0, 4 and 8
+    const { 0: x_box, 4: y_box, 8: z_box } = box;
+
+    this.atomIterator(ap => {
+      // For atom, coords are extracted from AtomProxy
+      const { x, y, z } = ap;
+
+      // With insane, it is simple: box bondaries starts at 0. No negative coords. 
+      // Just have to check if atom coords are at 0 <= x <= x_box and so on.
+
+      if (x < 0 || x > x_box || y < 0 || y > y_box || z < 0 || z > z_box) {
+        has_outside = true;
+      }
+    });
+    
+    return has_outside;
+  }
+
+  createShapeFromBox() {
+    const box = this.box;
+
+    if (!box) {
+      return undefined;
+    }
+
+    const shape = new ngl.Shape();
+
+    // For PDBs with CRYST1 record, x, y & z are at indexes 0, 4 and 8
+    const { 0: x_box, 4: y_box, 8: z_box } = box;
+    const text = "Box boundaries";
+
+    // Draw the bonds for x
+    shape.addCylinder([0, 0, 0], [x_box, 0, 0], NglWrapper.BOX_X_HIGHLIGHT_COLOR, .1, text);
+    shape.addCylinder([0, 0, z_box], [x_box, 0, z_box], NglWrapper.BOX_X_HIGHLIGHT_COLOR, .1, text);
+    shape.addCylinder([0, y_box, 0], [x_box, y_box, 0], NglWrapper.BOX_X_HIGHLIGHT_COLOR, .1, text);
+    shape.addCylinder([0, y_box, z_box], [x_box, y_box, z_box], NglWrapper.BOX_X_HIGHLIGHT_COLOR, .1, text);
+
+    // Draw the bonds for y
+    shape.addCylinder([0, 0, 0], [0, y_box, 0], NglWrapper.BOX_Y_HIGHLIGHT_COLOR, .1, text);
+    shape.addCylinder([0, 0, z_box], [0, y_box, z_box], NglWrapper.BOX_Y_HIGHLIGHT_COLOR, .1, text);
+    shape.addCylinder([x_box, 0, 0], [x_box, y_box, 0], NglWrapper.BOX_Y_HIGHLIGHT_COLOR, .1, text);
+    shape.addCylinder([x_box, 0, z_box], [x_box, y_box, z_box], NglWrapper.BOX_Y_HIGHLIGHT_COLOR, .1, text);
+
+    // Draw the bonds for z
+    shape.addCylinder([0, 0, 0], [0, 0, z_box], NglWrapper.BOX_Z_HIGHLIGHT_COLOR, .1, text);
+    shape.addCylinder([x_box, 0, 0], [x_box, 0, z_box], NglWrapper.BOX_Z_HIGHLIGHT_COLOR, .1, text);
+    shape.addCylinder([0, y_box, 0], [0, y_box, z_box], NglWrapper.BOX_Z_HIGHLIGHT_COLOR, .1, text);
+    shape.addCylinder([x_box, y_box, 0], [x_box, y_box, z_box], NglWrapper.BOX_Z_HIGHLIGHT_COLOR, .1, text);
+
+    // To apply it
+    // const component = stage.add(shape);
+    // const representation = component.add<ngl.BufferRepresentation>('buffer', { opacity });
+
+    return shape;
+  }
+
+  get box() {
+    const struct = (this.representation.structure as ngl.Structure);
+    
+    if (struct?.boxes?.length) {
+      return struct.boxes[0];
+    }
+    return undefined;
   }
 }
 
