@@ -353,8 +353,6 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     /** Enable history push. */
     enable_history?: boolean,
   }) {
-    // atom_index_1: number, atom_index_2: number, mode: 'add' | 'remove' | 'remove_all'
-    // todo remove
     if (!this.state.files || !this.state.files.go)
       return;
 
@@ -373,8 +371,9 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     }
 
     if (options.mode === 'add') {
+      // (Source&Target are GO index + 1)
       if (target !== undefined) {
-        // Add a single bond (Source&Target are GO index + 1)
+        // Add a single bond 
         const atom1 = go.goIndexToGoName(target[0]);
         const atom2 = go.goIndexToGoName(target[1]);
 

@@ -107,7 +107,6 @@ export default function MoleculeInfo<T extends StashedMolecule | Molecule>(props
       return;
 
     setLoading(true);
-    // todo make delete modal
     ApiHelper.request((props.stashed ? "moderation" : "molecule") + '/destroy/' + molecule.id, { method: 'DELETE' })
       .then(() => {
         window.location.pathname = "/explore";
@@ -123,7 +122,6 @@ export default function MoleculeInfo<T extends StashedMolecule | Molecule>(props
       return;
       
     setLoading(true);
-    // todo make accept modal
     ApiHelper.request('moderation/accept', { method: 'POST', parameters: { id: molecule.id } })
       .then(() => {
         window.location.pathname = "/moderation";

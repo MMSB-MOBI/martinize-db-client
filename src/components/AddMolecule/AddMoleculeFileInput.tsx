@@ -176,7 +176,7 @@ export default function AddMoleculeFileInput(props: {
         </Button>
       </div>
 
-      <div>
+      {props.showMap && <div>
         <Typography gutterBottom>
           Optional mapping files
         </Typography>
@@ -192,7 +192,7 @@ export default function AddMoleculeFileInput(props: {
         <Button color="primary" onClick={() => addInput('map')}>
           Add a MAP file
         </Button>
-      </div>
+      </div>}
     </ThreeGrid>
   )
 }

@@ -53,7 +53,7 @@ export function errorToText(error: [any, APIError] | APIError | number | undef
     case 307:
       return "One file is too large. Please take care of file size limit.";
     case 308:
-      return "Molecule files are invalid. Is format ok ?";
+      return "Molecule files are invalid. PDB/GRO does not match the provided system, or your files are incorrectly formatted.";
     case 309:
       return "Some needed files are missing. A single PDB plus at least one ITP is required.";
     case 310:

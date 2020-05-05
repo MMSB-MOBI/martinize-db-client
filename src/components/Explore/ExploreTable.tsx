@@ -87,7 +87,6 @@ export default function MoleculeTable(props: {
 
     const mol_id = deleteMol;
     setLoadModal(true);
-    // todo make delete modal
     ApiHelper.request((props.moderation ? "moderation" : "molecule") + '/destroy/' + mol_id, { method: 'DELETE' })
       .then(() => {
         if (props.onMoleculeDelete)

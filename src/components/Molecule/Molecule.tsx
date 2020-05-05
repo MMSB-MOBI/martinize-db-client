@@ -6,9 +6,10 @@ import { CenterComponent, BigPreloader } from '../../Shared';
 import EmbeddedError from '../Errors/Errors';
 import ApiHelper from '../../ApiHelper';
 import qs from 'qs';
-import { setPageTitle } from '../../helpers';
+import { setPageTitle, errorToText } from '../../helpers';
 import MoleculeInfo from './MoleculeInfo';
 import MoleculeVersion from './MoleculeVersion';
+import { toast } from '../Toaster';
 
 interface MPBP extends RouteComponentProps {
   theme: Theme;
@@ -89,7 +90,8 @@ class MoleculePageBase extends React.Component<MPBP, MPBS> {
         this.setState(mol);
       })
       .catch(e => {
-        // Todo print error code
+        toast(errorToText(e), "error");
+
         this.setState({
           error: 0
         });
@@ -105,7 +107,6 @@ class MoleculePageBase extends React.Component<MPBP, MPBS> {
   }
 
   renderError() {
-    // todo better error
     return (
       <EmbeddedError title="Unable to find molecule." text="Check the URL." />
     );

@@ -150,7 +150,7 @@ class AddMolecule extends React.Component<AddMoleculeProps, AddMoleculeState> {
   }
 
   onSave = () => {
-    // todo send molecule to API
+    // Send molecule to API
     // Check form data
     const form = this.form_ref.current!;
     const { files, name, alias, category, create_way, version, force_field } = this.state;

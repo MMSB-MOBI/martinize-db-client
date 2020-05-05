@@ -6,10 +6,11 @@ import { CenterComponent, BigPreloader } from '../../Shared';
 import EmbeddedError from '../Errors/Errors';
 import ApiHelper from '../../ApiHelper';
 import qs from 'qs';
-import { setPageTitle } from '../../helpers';
+import { setPageTitle, errorToText } from '../../helpers';
 import Settings, { LoginStatus } from '../../Settings';
 import MoleculeInfo from '../Molecule/MoleculeInfo';
 import MoleculeParent from '../Molecule/MoleculeParent';
+import { toast } from '../Toaster';
 
 interface StashedProps extends RouteComponentProps {
   theme: Theme;
@@ -78,7 +79,8 @@ class StashedPageBase extends React.Component<StashedProps, StashedState> {
         this.setState(mol);
       })
       .catch(e => {
-        // Todo print error code
+        toast(errorToText(e), "error");
+
         this.setState({
           error: 0
         });
@@ -94,7 +96,6 @@ class StashedPageBase extends React.Component<StashedProps, StashedState> {
   }
 
   renderError() {
-    // todo better error
     return (
       <EmbeddedError title="Unable to find molecule." text="Check the URL." />
     );
