@@ -32,7 +32,7 @@ function MyApp() {
 
 export default function IntegrationNotistack() {
   return (
-    <SnackbarProvider maxSnack={3} autoHideDuration={4000}>
+    <SnackbarProvider maxSnack={3} autoHideDuration={8000}>
       <MyApp />
     </SnackbarProvider>
   );

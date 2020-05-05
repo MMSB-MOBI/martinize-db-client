@@ -210,8 +210,16 @@ export default function MoleculeInfo<T extends StashedMolecule | Molecule>(props
           </React.Fragment>}
 
           <Typography className={classes.version}>
-            Created with force field <strong>{molecule.force_field}</strong> (<strong>{Settings.martinize_variables.create_way[molecule.create_way]}</strong>).
+            Created for force field <strong>{molecule.force_field}</strong> (<strong>{Settings.martinize_variables.create_way[molecule.create_way]}</strong>).
           </Typography>
+
+          {molecule.validation && <Typography className={classes.version}>
+            Validation informations: <strong>{molecule.validation}</strong>
+          </Typography>}
+
+          {molecule.citation && <Typography className={classes.version}>
+            For using this molecule, please cite: <strong>{molecule.citation}</strong>
+          </Typography>}
         </div>
       </Fragment>
 

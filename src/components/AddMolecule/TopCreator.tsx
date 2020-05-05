@@ -15,6 +15,9 @@ interface TCState {
   generated: string;
 }
 
+/**
+ * Create a generated TOP file for the given ITPs.
+ */
 export default class TopCreator extends React.Component<TCProps, TCState> {
   state: TCState = {
     loading: false,
@@ -58,6 +61,7 @@ export default class TopCreator extends React.Component<TCProps, TCState> {
     f.setField('system', ['This is an auto generated system']);
 
     // Read every ITP and extract molecule type
+    f.appendFieldLine('molecules', ';moleculetype\tcount');
     for (const itp of real_itps) {
       const locals = await ItpFile.readMany(itp);
 
@@ -140,4 +144,3 @@ export default class TopCreator extends React.Component<TCProps, TCState> {
     );
   }
 }
-
