@@ -592,7 +592,7 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
             color="secondary" 
             onClick={this.onWantCloseResultOpen}
           >
-            <FaIcon arrow-left /> <span style={{ marginLeft: '.6rem' }}>Back</span>
+            <FaIcon arrow-left /> <span style={{ marginLeft: '.6rem' }}>Build settings</span>
           </Button>
 
           <Marger size="1rem" />
@@ -643,9 +643,9 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
                     // When state is initial state (main loader), don't show the confirm modal
                     onClick={this.state.running !== 'choose_molecule' ? this.onWantGoBack : this.onGoBack}  
                   >
-                    <FaIcon arrow-left style={{ fontSize: '1rem' }} /> 
+                    <FaIcon home style={{ fontSize: '1rem' }} /> 
                     <span style={{ marginLeft: '.7rem', fontSize: '1.1rem' }}>
-                      Back to MArtini Database
+                      MAD Home
                     </span>
                   </Link>
 

@@ -41,3 +41,7 @@ code {
 a {
   cursor: pointer;
 }
+
+textarea[data-monospace] {
+  font-family: monospace !important;
+}

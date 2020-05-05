@@ -1,6 +1,6 @@
 import React from 'react';
 import { BaseMolecule, Molecule, StashedMolecule } from '../../types/entities';
-import { Dialog, Slide, makeStyles, createStyles, Theme, Button, Container, AppBar, Toolbar, IconButton, Typography, TextField, Link, withStyles } from '@material-ui/core';
+import { Dialog, Slide, Button, Container, AppBar, Toolbar, IconButton, Typography, TextField, Link, withStyles } from '@material-ui/core';
 import { TransitionProps } from '@material-ui/core/transitions/transition';
 import { LoadFader, SimpleSelect } from '../../Shared';
 import CloseIcon from '@material-ui/icons/Close';
@@ -11,6 +11,7 @@ import AddMoleculeFileInput, { MoleculeFilesInput } from './AddMoleculeFileInput
 import ApiHelper from '../../ApiHelper';
 import { SERVER_ROOT } from '../../constants';
 import { SettingsJson } from '../../types/settings';
+import TopCreator from './TopCreator';
 
 interface AddMoleculeProps {
   /**
@@ -51,6 +52,7 @@ interface AddMoleculeState {
   create_way: string;
   force_field: string;
   loading: boolean;
+  top_creator: boolean;
 }
 
 class AddMolecule extends React.Component<AddMoleculeProps, AddMoleculeState> {
@@ -75,6 +77,7 @@ class AddMolecule extends React.Component<AddMoleculeProps, AddMoleculeState> {
       citation: props.from?.citation ?? "",
       create_way: props.from?.create_way ?? "",
       force_field: props.from?.force_field ?? "",
+      top_creator: false,
     };
   }
 
@@ -97,6 +100,7 @@ class AddMolecule extends React.Component<AddMoleculeProps, AddMoleculeState> {
         create_way: props.from.create_way,
         force_field: props.from.force_field,
         loading: false,
+        top_creator: false
       });
     }
     else {
@@ -125,6 +129,7 @@ class AddMolecule extends React.Component<AddMoleculeProps, AddMoleculeState> {
         create_way: "",
         force_field: "",
         loading: false,
+        top_creator: false
       });
     }
   }
@@ -144,25 +149,29 @@ class AddMolecule extends React.Component<AddMoleculeProps, AddMoleculeState> {
     return this.saved_settings[1];
   }
 
-  sendMolecule = () => {
+  onSave = () => {
     // todo send molecule to API
     // Check form data
     const form = this.form_ref.current!;
-    const { files, name, alias, category, create_way, version, force_field, command_line, comments, validation, citation, smiles } = this.state;
+    const { files, name, alias, category, create_way, version, force_field } = this.state;
 
     if (typeof files === 'object') {
       if (files.itp.length === 0) {
         return toast("At least one ITP is required.", "error");
       }
       if (!files.pdb) {
-        return toast("PDB file is required.", "error")
-      }
-      if (!files.top) {
-        return toast("TOP file is required.", "error")
+        return toast("PDB/GRO file is required.", "error")
       }
     }
     else if (!files) {
-      return toast("You must specify ITP, TOP and PDB files.", "error");
+      return toast("You must specify at least one ITP and PDB/GRO file.", "error");
+    }
+
+    if (!category) {
+      return toast("Molecule category is required.", "error")
+    }
+    if (!force_field) {
+      return toast("Targeted force field is required.", "error")
     }
 
     if (!form.checkValidity()) {
@@ -172,21 +181,26 @@ class AddMolecule extends React.Component<AddMoleculeProps, AddMoleculeState> {
       if (!alias) {
         return toast("Molecule alias is required.", "error")
       }
-      if (!category) {
-        return toast("Molecule category is required.", "error")
-      }
       if (!create_way) {
         return toast("Create way is required.", "error")
       }
       if (!version) {
         return toast("You must specify a molecule version name.", "error")
       }
-      if (!force_field) {
-        return toast("Targeted force field is required.", "error")
-      }
 
       return toast("Form is not valid. Please check the fields.", "warning");
     }
+
+    if (typeof files === 'object' && !files.top) {
+      this.setState({ top_creator: true });
+      return;
+    }
+
+    this.sendMolecule();
+  };
+
+  sendMolecule() {
+    const { files, name, alias, category, create_way, version, force_field, command_line, comments, validation, citation, smiles } = this.state;
 
     let partial_molecule: Partial<Molecule> & { itp?: File[], pdb?: File, top?: File, map?: File[] } = {
       name,
@@ -212,8 +226,10 @@ class AddMolecule extends React.Component<AddMoleculeProps, AddMoleculeState> {
     if (typeof files === 'object') {
       partial_molecule.itp = files.itp;
       partial_molecule.pdb = files.pdb;
-      partial_molecule.top = files.top;
       partial_molecule.map = files.map;
+
+      if (files.top)
+        partial_molecule.top = files.top;
     }
     else {
       // This is a file ID reference, only for edit mode.
@@ -257,6 +273,27 @@ class AddMolecule extends React.Component<AddMoleculeProps, AddMoleculeState> {
     }
   };
 
+  renderTopCreator() {
+    if (typeof this.state.files === 'object') {
+      const files = this.state.files;
+
+      return (
+        <TopCreator 
+          open={this.state.top_creator}
+          itpFiles={files.itp}
+          onCancel={() => this.setState({ top_creator: false })}
+          onValidate={file => {
+            this.setState({
+              files: { ...files, top: file },
+              top_creator: false,
+            }, () => this.sendMolecule());
+          }}
+        />
+      );
+    }
+    return <React.Fragment />;
+  }
+
   render() {
     const classes = this.props.classes;
     const props = this.props;
@@ -272,11 +309,13 @@ class AddMolecule extends React.Component<AddMoleculeProps, AddMoleculeState> {
             <Typography variant="h6" className={classes.title}>
               {props.from ? "Edit " : "Add "} a molecule
             </Typography>
-            <Button autoFocus color="inherit" onClick={this.sendMolecule}>
+            <Button autoFocus color="inherit" onClick={this.onSave}>
               save
             </Button>
           </Toolbar>
         </AppBar>
+
+        {this.renderTopCreator()}
   
         <LoadFader when={loading}>
           <Container>
@@ -339,6 +378,7 @@ class AddMolecule extends React.Component<AddMoleculeProps, AddMoleculeState> {
                   values={this.categories}
                   value={category}
                   disabled={this.is_disabled}
+                  required
                 />
               </div>
   
@@ -389,6 +429,7 @@ class AddMolecule extends React.Component<AddMoleculeProps, AddMoleculeState> {
                   onChange={v => this.setState({ create_way: v })}
                   values={Object.entries(this.settings.create_way).map(([id, name]) => ({ id, name }))}
                   value={this.state.create_way}
+                  required
                 />
   
                 <SimpleSelect
@@ -397,6 +438,7 @@ class AddMolecule extends React.Component<AddMoleculeProps, AddMoleculeState> {
                   onChange={v => this.setState({ force_field: v })}
                   values={this.settings.force_fields.map(m => ({ id: m, name: m }))}
                   value={force_field}
+                  required
                 />
               </div>
   
@@ -439,6 +481,7 @@ class AddMolecule extends React.Component<AddMoleculeProps, AddMoleculeState> {
                 <AddMoleculeFileInput
                   showMap 
                   useGrid
+                  optionalTop
                   onChange={files => this.setState({ files })}
                 />
               </div>}

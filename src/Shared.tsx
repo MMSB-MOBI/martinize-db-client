@@ -35,6 +35,7 @@ export function SimpleSelect(props: {
   formControlClass?: string,
   variant?: "outlined" | "standard" | "filled",
   noMinWidth?: boolean,
+  required?: boolean,
 }) {
   const inputLabel = React.useRef<HTMLLabelElement>(null);
   const [labelWidth, setLabelWidth] = React.useState(0);
@@ -44,7 +45,7 @@ export function SimpleSelect(props: {
   }, [props]);
 
   return (
-    <FormControl className={props.formControlClass} variant={props.variant ?? "outlined"} style={{ minWidth: props.noMinWidth ? 0 : 180 }}>
+    <FormControl required={props.required} className={props.formControlClass} variant={props.variant ?? "outlined"} style={{ minWidth: props.noMinWidth ? 0 : 180 }}>
       <InputLabel ref={inputLabel} id={props.id}>
         {props.label}
       </InputLabel>

@@ -1201,9 +1201,9 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
                     // When state is initial state (main loader), don't show the confirm modal
                     onClick={this.state.running !== 'pdb' ? this.onWantGoBack : this.onGoBack}  
                   >
-                    <FaIcon arrow-left style={{ fontSize: '1rem' }} /> 
+                    <FaIcon home style={{ fontSize: '1rem' }} /> 
                     <span style={{ marginLeft: '.7rem', fontSize: '1.1rem' }}>
-                      Back to MArtini Database
+                      MAD Home
                     </span>
                   </Link>
 
