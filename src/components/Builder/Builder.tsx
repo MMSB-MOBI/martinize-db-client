@@ -571,7 +571,17 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
     // Run via socket.io
     const socket = SocketIo.connect(SERVER_ROOT);
-    const pdb_content = await s.all_atom_pdb!.arrayBuffer();
+    const pdb_content = await new Promise((resolve, reject) => {
+      const fr = new FileReader();
+
+      fr.onload = () => {
+        resolve(fr.result as ArrayBuffer);
+      };
+
+      fr.onerror = reject;
+
+      fr.readAsArrayBuffer(s.all_atom_pdb!);
+    }) as ArrayBuffer;
     const RUN_ID = uuid();
 
     const setMartinizeStep = (str: string) => {

@@ -75,10 +75,10 @@ export class MySubmissions extends React.Component<RouteComponentProps, MySubmis
     }
 
     const new_filters: Filters = {
-      q: query_string.q || "",
-      author: query_string.author || "",
-      name: query_string.name || "",
-      alias: query_string.alias || "",
+      q: (query_string.q as string) || "",
+      author: (query_string.author as string) || "",
+      name: (query_string.name as string) || "",
+      alias: (query_string.alias as string) || "",
       martinize_versions: parseArray('martinize_versions'),
       force_fields: parseArray('force_fields'),
       categories: parseArray('categories'),
