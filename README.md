@@ -17,10 +17,10 @@ git clone https://github.com/alkihis/ngl.git
 cd ngl
 npm i && npm run dts
 cp -R declarations ../martinize-db-client/node_modules/@mmsb/ngl
+cd ../martinize-db-client
 ```
 
-
-Just run `npm run build`. Copy content of the build folder, it is the whole website with `index.html` entry-point.
+After, run `npm run build`. Copy content of the build folder, it is the whole website with `index.html` entry-point.
 
 ## Available Scripts
 
