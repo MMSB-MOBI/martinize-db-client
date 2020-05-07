@@ -602,10 +602,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
         switch (step) {
           case STEPS.STEP_MARTINIZE_INIT:
-            setMartinizeStep("Martinize is initializing...");
-            break;
-          case STEPS.STEP_MARTINIZE_RUNNING:
-            setMartinizeStep("Current step: " + data[0]);
+            setMartinizeStep("Running Vermouth-Martinize");
             break;
           case STEPS.STEP_MARTINIZE_ENDED_FINE:
             setMartinizeStep("Martinize run ended fine");
