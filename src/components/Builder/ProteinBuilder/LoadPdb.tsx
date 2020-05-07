@@ -55,7 +55,7 @@ export default function LoadPdb(props: LoadPdbProps) {
       <Marger size="1rem" />
 
       <Typography variant="h6">
-        Saved molecules
+        Stashed molecules
       </Typography>
 
       <Typography>

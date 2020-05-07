@@ -16,11 +16,11 @@ export default function MoleculeSaverModal(props: {
   return (
     <Dialog open={props.open} onClose={props.onClose}>
       <DialogTitle>
-        Save this molecule
+        Stash this molecule
       </DialogTitle>
       <DialogContent>
         <DialogContentText>
-          You're about to save your molecule.
+          You're about to stash your molecule.
           Please specify a save name.
         </DialogContentText>
        
@@ -39,7 +39,7 @@ export default function MoleculeSaverModal(props: {
         </Button>
 
         <Button onClick={() => props.onConfirm(name)} color="primary">
-          Save
+          Stash
         </Button>
       </DialogActions>
     </Dialog>

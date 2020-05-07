@@ -92,7 +92,7 @@ class MoleculeChooser extends React.Component<MCProps, MCState> {
         <Marger size="2rem" />
 
         <Typography align="center" variant="h6">
-          Load from saved molecules
+          Load from stashed molecules
         </Typography>
 
         <Typography align="center">

@@ -70,7 +70,7 @@ export default class StashedBuild extends React.Component<StashedBuildProps, Sta
     return (
       <Dialog open={!!this.state.want_delete} onClose={this.onWantDeleteCancel}>
         <DialogTitle>
-          Delete this save ?
+          Delete this stashed molecule ?
         </DialogTitle>
 
         <DialogContent>
@@ -78,7 +78,7 @@ export default class StashedBuild extends React.Component<StashedBuildProps, Sta
             You won't be able to load it or use it in the Membrane Builder anymore.
           </DialogContentText>
           <DialogContentText>
-            You can't restore a deleted save.
+            You can't restore a deleted molecule.
           </DialogContentText>
         </DialogContent>
 

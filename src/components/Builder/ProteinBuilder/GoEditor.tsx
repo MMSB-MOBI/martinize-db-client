@@ -593,7 +593,7 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
 
         <Button color="secondary" onClick={this.onRemoveBondWithSet} style={{ width: '100%' }}>
           <FaIcon eraser /> 
-          <span style={{ marginLeft: '.6rem' }}>Delete every link</span>
+          <span style={{ marginLeft: '.6rem' }}>Delete every bond</span>
         </Button>
 
         <Button style={{ color: 'orange', width: '100%' }} onClick={this.onSelectionStop}>
