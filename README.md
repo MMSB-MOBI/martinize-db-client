@@ -2,6 +2,24 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
 
 ## Building project
 
+To build the project, type declarations of NGL are needed. You can find a copy in `utils/declarations` of this project.
+Otherwise, clone NGL from [here](https://github.com/alkihis/ngl), run `npm i` and `npm run dts`. 
+
+For the both methods, copy `declarations` folder in `node_modules/@mmsb/ngl`.
+
+```bash
+# Cached declarations
+cp -R utils/declarations node_modules/@mmsb/ngl
+
+# From scratch
+cd ..
+git clone https://github.com/alkihis/ngl.git
+cd ngl
+npm i && npm run dts
+cp -R declarations ../martinize-db-client/node_modules/@mmsb/ngl
+```
+
+
 Just run `npm run build`. Copy content of the build folder, it is the whole website with `index.html` entry-point.
 
 ## Available Scripts
