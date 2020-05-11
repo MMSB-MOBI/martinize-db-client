@@ -595,7 +595,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       socket.emit('martinize', Buffer.from(pdb_content), RUN_ID, form_data);
 
       // Martinize step
-      socket.on('martinize step', ({ step, id, data }: { step: string, id: string, data: any[] }) => {
+      socket.on('martinize step', ({ step, id }: { step: string, id: string }) => {
         if (id !== RUN_ID) {
           return;
         }
