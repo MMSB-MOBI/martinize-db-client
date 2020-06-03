@@ -140,7 +140,7 @@ export default function MoleculeInfo<T extends StashedMolecule | Molecule>(props
       <div className={classes.infoWrapper}>
         <div>
           <Typography variant="h4" className={classes.title}>
-            Informations
+            General information
           </Typography>
 
           <Marger size="1rem" />
@@ -212,7 +212,7 @@ export default function MoleculeInfo<T extends StashedMolecule | Molecule>(props
           </Typography>
 
           {molecule.validation && <Typography className={classes.version}>
-            Validation informations: <strong>{molecule.validation}</strong>
+            Validation information: <strong>{molecule.validation}</strong>
           </Typography>}
 
           {molecule.citation && <Typography className={classes.version}>

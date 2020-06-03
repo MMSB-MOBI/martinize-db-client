@@ -346,7 +346,7 @@ class AddMolecule extends React.Component<AddMoleculeProps, AddMoleculeState> {
   
               {/* Fixed elements when parent */}
               <Typography variant="h6">
-                Informations
+                General information
               </Typography>
   
               <Marger size="1rem" />

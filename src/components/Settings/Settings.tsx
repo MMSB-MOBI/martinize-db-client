@@ -52,7 +52,7 @@ export default function SettingsPage() {
     ApiHelper.request('user/update', { method: 'POST', parameters: { username, email } })
       .then((user: User) => {
         Settings.user = user;
-        toast("User informations has been updated.", "success");
+        toast("User data has been updated.", "success");
       })
       .catch(notifyError)
       .finally(() => {
