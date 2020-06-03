@@ -1,6 +1,6 @@
 import React from 'react';
 import { BaseMolecule, Molecule, StashedMolecule } from '../../types/entities';
-import { Dialog, Slide, Button, Container, AppBar, Toolbar, IconButton, Typography, TextField, Link, withStyles } from '@material-ui/core';
+import { Dialog, Slide, Button, Container, AppBar, Toolbar, IconButton, Typography, TextField, Link, withStyles, DialogTitle, DialogContent, DialogContentText, CircularProgress } from '@material-ui/core';
 import { TransitionProps } from '@material-ui/core/transitions/transition';
 import { LoadFader, SimpleSelect } from '../../Shared';
 import CloseIcon from '@material-ui/icons/Close';
@@ -300,8 +300,18 @@ class AddMolecule extends React.Component<AddMoleculeProps, AddMoleculeState> {
     const { loading, files, force_field, name, alias, category, smiles } = this.state;
 
     return (
-      <Dialog fullScreen open={props.open} TransitionComponent={Transition}>
-        <AppBar className={classes.appBar}>
+      <Dialog fullScreen open={props.open} TransitionComponent={Transition} disableEscapeKeyDown>
+        {loading && <WaiterModal 
+          open
+          title="Saving molecule..." 
+          content={`
+            Please wait a bit, your molecule is being saved. 
+            The server is validating fields and pre-process associated files. 
+            This may take a while.
+          `} 
+        />}
+
+        <AppBar>
           <Toolbar>
             <IconButton edge="start" color="inherit" onClick={props.onClose}>
               <CloseIcon />
@@ -309,7 +319,7 @@ class AddMolecule extends React.Component<AddMoleculeProps, AddMoleculeState> {
             <Typography variant="h6" className={classes.title}>
               {props.from ? "Edit " : "Add "} a molecule
             </Typography>
-            <Button autoFocus color="inherit" onClick={this.onSave}>
+            <Button color="inherit" onClick={this.onSave}>
               save
             </Button>
           </Toolbar>
@@ -318,7 +328,7 @@ class AddMolecule extends React.Component<AddMoleculeProps, AddMoleculeState> {
         {this.renderTopCreator()}
   
         <LoadFader when={loading}>
-          <Container>
+          <Container className={classes.root}>
             <form ref={this.form_ref} onSubmit={e => e.preventDefault()}>
               <Marger size={16} />
   
@@ -513,8 +523,11 @@ class AddMolecule extends React.Component<AddMoleculeProps, AddMoleculeState> {
 }
 
 export default withStyles(theme => ({
-  appBar: {
-    position: 'relative',
+  root: {
+    [theme.breakpoints.down('xs')]: {
+      paddingTop: '56px',
+    },
+    paddingTop: '64px',
   },
   title: {
     marginLeft: theme.spacing(2),
@@ -548,3 +561,23 @@ export default withStyles(theme => ({
     width: '100%',
   },
 }))(AddMolecule);
+
+function WaiterModal(props: { open: boolean, title: string, content: string, onClose?: () => void }) {
+  return (
+    <Dialog open={props.open} onClose={props.onClose} >
+      <DialogTitle>
+        {props.title}
+      </DialogTitle>
+
+      <DialogContent>
+        <div style={{ marginTop: '.5rem', textAlign: 'center', marginBottom: '2rem' }}>
+          <CircularProgress size={56} />
+        </div>
+
+        <DialogContentText>
+          {props.content}
+        </DialogContentText>
+      </DialogContent>
+    </Dialog>
+  );
+}
