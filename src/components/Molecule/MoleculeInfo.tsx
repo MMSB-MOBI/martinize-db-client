@@ -276,7 +276,6 @@ export default function MoleculeInfo<T extends StashedMolecule | Molecule>(props
         parent={props.parent}
         onChange={mol => {
           props.onMoleculeChange(mol as T);
-          toast("Changes had been saved.", "success");
           setEdit(false);
         }}
       />}
@@ -286,7 +285,6 @@ export default function MoleculeInfo<T extends StashedMolecule | Molecule>(props
         open
         onClose={() => setNewVersion(false)}
         onChange={() => {
-          toast("New molecule version has been submitted.", "success");
           setNewVersion(false);
         }}
       />}

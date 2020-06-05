@@ -1,6 +1,6 @@
 import React from 'react';
 import { BaseMolecule, Molecule, StashedMolecule } from '../../types/entities';
-import { Dialog, Slide, Button, Container, AppBar, Toolbar, IconButton, Typography, TextField, Link, withStyles, DialogTitle, DialogContent, DialogContentText, CircularProgress } from '@material-ui/core';
+import { Dialog, Slide, Button, Container, AppBar, Toolbar, IconButton, Typography, TextField, Link, withStyles, DialogTitle, DialogContent, DialogContentText, CircularProgress, DialogActions } from '@material-ui/core';
 import { TransitionProps } from '@material-ui/core/transitions/transition';
 import { LoadFader, SimpleSelect } from '../../Shared';
 import CloseIcon from '@material-ui/icons/Close';
@@ -53,6 +53,8 @@ interface AddMoleculeState {
   force_field: string;
   loading: boolean;
   top_creator: boolean;
+
+  complete: BaseMolecule | false;
 }
 
 class AddMolecule extends React.Component<AddMoleculeProps, AddMoleculeState> {
@@ -78,6 +80,7 @@ class AddMolecule extends React.Component<AddMoleculeProps, AddMoleculeState> {
       create_way: props.from?.create_way ?? "",
       force_field: props.from?.force_field ?? "",
       top_creator: false,
+      complete: false,
     };
   }
 
@@ -250,7 +253,7 @@ class AddMolecule extends React.Component<AddMoleculeProps, AddMoleculeState> {
         body_mode: 'multipart',
       })
         .then((mol: BaseMolecule) => {
-          this.props.onChange(mol);
+          this.setState({ complete: mol });
         })
         .catch(notifyError)
         .finally(() => {
@@ -264,13 +267,20 @@ class AddMolecule extends React.Component<AddMoleculeProps, AddMoleculeState> {
         body_mode: 'multipart',
       })
         .then((mol: BaseMolecule) => {
-          this.props.onChange(mol);
+          this.setState({ complete: mol });
         })
         .catch(notifyError)
         .finally(() => {
           this.setState({ loading: false });
         });
     }
+  };
+
+  complete = () => {
+    if (this.state.complete)
+      this.props.onChange(this.state.complete);
+
+    this.setState({ complete: false });
   };
 
   renderTopCreator() {
@@ -297,7 +307,7 @@ class AddMolecule extends React.Component<AddMoleculeProps, AddMoleculeState> {
   render() {
     const classes = this.props.classes;
     const props = this.props;
-    const { loading, files, force_field, name, alias, category, smiles } = this.state;
+    const { loading, files, force_field, name, alias, category, smiles, complete } = this.state;
 
     return (
       <Dialog fullScreen open={props.open} TransitionComponent={Transition} disableEscapeKeyDown>
@@ -309,6 +319,16 @@ class AddMolecule extends React.Component<AddMoleculeProps, AddMoleculeState> {
             The server is validating fields and pre-process associated files. 
             This may take a while.
           `} 
+        />}
+
+        {complete && <CompleteModal 
+          open
+          title="Molecule submitted" 
+          content={`
+            Your molecule has been successfully submitted.
+            ${this.props.from ? '' : 'A moderator will check and adjust submitted information, then your molecule will be publicly available.'}
+          `} 
+          onClose={this.complete}
         />}
 
         <AppBar>
@@ -578,6 +598,28 @@ function WaiterModal(props: { open: boolean, title: string, content: string, onC
           {props.content}
         </DialogContentText>
       </DialogContent>
+    </Dialog>
+  );
+}
+
+function CompleteModal(props: { open: boolean, title: string, content: string, onClose: () => void }) {
+  return (
+    <Dialog open={props.open}>
+      <DialogTitle>
+        {props.title}
+      </DialogTitle>
+
+      <DialogContent>
+        <DialogContentText>
+          {props.content}
+        </DialogContentText>
+      </DialogContent>
+
+      <DialogActions>
+        <Button style={{ color: 'green' }} onClick={props.onClose}>
+          Complete
+        </Button>
+      </DialogActions>
     </Dialog>
   );
 }

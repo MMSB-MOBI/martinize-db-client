@@ -247,7 +247,6 @@ export class Explore extends React.Component<RouteComponentProps, ExploreState> 
           open={this.state.add_open}
           onClose={() => this.setState({ add_open: false })}
           onChange={() => {
-            toast("You new molecule has been submitted.", "success");
             this.setState({ add_open: false });
           }}
         />
