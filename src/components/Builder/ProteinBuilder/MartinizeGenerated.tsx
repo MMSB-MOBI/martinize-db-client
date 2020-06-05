@@ -250,7 +250,7 @@ export default function MartinizeGenerated(props: MartinizeGeneratedProps) {
           disabled={!!props.saved && !props.edited}
           onClick={() => setSaverModal(props.allAtomName)}
         >
-          <FaIcon save /> <span style={{ marginLeft: '.6rem' }}>Save</span>
+          <FaIcon save /> <span style={{ marginLeft: '.6rem' }}>Stash for Membrane Builder</span>
         </Button>
 
         <Marger size="1rem" />
