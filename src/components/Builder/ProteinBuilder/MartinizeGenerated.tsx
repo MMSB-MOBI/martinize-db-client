@@ -3,6 +3,7 @@ import { Marger, FaIcon } from '../../../helpers';
 import { Button, Typography, FormControl, FormGroup, FormControlLabel, Switch, Slider, Divider, Box, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Theme } from '@material-ui/core';
 import { ToggleButtonGroup, ToggleButton } from '@material-ui/lab';
 import { ViableRepresentation } from '../NglWrapper';
+import Tooltip from '../../../Tooltip';
 import MoleculeSaverModal from './MoleculeSaverModal';
 
 interface MartinizeGeneratedProps {
@@ -220,19 +221,39 @@ export default function MartinizeGenerated(props: MartinizeGeneratedProps) {
           onChange={props.onRepresentationChange}
         >
           <ToggleButton value="ball+stick">
-            <FaIcon atom />
+            <Tooltip title="Ball + stick">
+              <span style={{ height: 24 }}>
+                <FaIcon atom />
+              </span>
+            </Tooltip>
           </ToggleButton>
           <ToggleButton value="ribbon">
-            <FaIcon ribbon />
+            <Tooltip title="Ribbon">
+              <span style={{ height: 24 }}>
+                <FaIcon ribbon />
+              </span>
+            </Tooltip>
           </ToggleButton>
           <ToggleButton value="surface">
-            <FaIcon bullseye />
+            <Tooltip title="Surface">
+              <span style={{ height: 24 }}>
+                <FaIcon bullseye />
+              </span>
+            </Tooltip>
           </ToggleButton>
           <ToggleButton value="hyperball">
-            <FaIcon expand-alt />
+            <Tooltip title="Hyperball">
+              <span style={{ height: 24 }}>
+                <FaIcon expand-alt />
+              </span>
+            </Tooltip>
           </ToggleButton>
           <ToggleButton value="line">
-            <FaIcon project-diagram />
+            <Tooltip title="Line">
+              <span style={{ height: 24 }}>
+                <FaIcon project-diagram />
+              </span>
+            </Tooltip>
           </ToggleButton>
         </ToggleButtonGroup>
       </div>
