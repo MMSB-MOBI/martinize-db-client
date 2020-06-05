@@ -8,7 +8,6 @@ import clsx from 'clsx';
 import AddMolecule from '../AddMolecule/AddMolecule';
 import ApiHelper from '../../ApiHelper';
 import { LoadFader } from '../../Shared';
-import { toast } from '../Toaster';
 import MoleculeViewer from './MoleculeViewer';
 
 const useStyles = makeStyles(theme => ({
