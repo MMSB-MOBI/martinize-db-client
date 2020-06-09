@@ -287,7 +287,16 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
         result, 
       });
     } catch (e) {
-      this.setState({ insane_error: e, running: 'choose_settings' });
+      if (Array.isArray(e) && e[0].status === 400) {
+        const error = e[1] as { error: string, trace?: string, zip: number[] };
+
+        toast('Run failed.', 'error');
+
+        this.setState({ insane_error: { error: error.error, zip: error.zip, trace: error.trace }, running: 'choose_settings' });
+      }
+      else {
+        this.setState({ insane_error: true, running: 'choose_settings' });
+      }
     }
   };
 
@@ -475,6 +484,7 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
           });
         }}
         hasUpperLayer={!!this.state.lipids?.upper}
+        error={this.state.insane_error}
       />
     );
   }

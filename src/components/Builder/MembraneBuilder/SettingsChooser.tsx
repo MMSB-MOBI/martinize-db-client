@@ -1,6 +1,6 @@
 import React from 'react';
-import { withStyles, Typography, Button, TextField, Box, FormControlLabel, Checkbox } from '@material-ui/core';
-import { Marger } from '../../../helpers';
+import { withStyles, Typography, Button, TextField, Box, FormControlLabel, Checkbox, Link, Divider } from '@material-ui/core';
+import { Marger, downloadBlob, dateFormatter } from '../../../helpers';
 import { SimpleSelect } from '../../../Shared';
 import { toast } from '../../Toaster';
 
@@ -26,6 +26,7 @@ interface SCProps {
   hasUpperLayer: boolean;
   onSettingsChoose(settings: SettingsInsane): any;
   onPrevious(): any;
+  error?: true | { error: string, trace?: string, zip: number[] };
 }
 
 interface SCState {
@@ -150,10 +151,57 @@ class SettingsChooser extends React.Component<SCProps, SCState> {
     return isNaN(angle) || angle < 0 || angle > 360;
   }
 
+  renderErrorText(text: string) {
+    switch (text) {
+      case 'insane_crash': return 'INSANE run failed';
+      case 'gromacs_crash': return 'GROMACS failed to compile membrane topology';
+      case 'top_file_crash': return 'System couldn\'t be properly created';
+      default: return 'Unknown error';
+    }
+  }
+
+  renderError() {
+    const error = this.props.error;
+
+    if (!error || error === true) {
+      return (
+        <Typography color="error">
+          Run failed with an unknown error.
+        </Typography>
+      );
+    }
+
+    const download_fn = () => {
+      const blob = new Blob([new Uint8Array(error.zip).buffer]);
+      downloadBlob(blob, "insane_run_" + dateFormatter("Y-m-d_H-i-s") + ".zip")
+    };
+
+    return (
+      <div>
+        <Typography color="error" style={{ fontWeight: 'bold', fontSize: '1.2rem' }}>
+          {this.renderErrorText(error.error)}.
+        </Typography>
+        <Typography style={{ marginBottom: '1rem' }}>
+          <Link href="#!" onClick={download_fn}>
+            Download a dump of this run
+          </Link>
+        </Typography>
+
+        <Divider />
+      </div>
+    );
+  }
+
   render() {
+    const error = this.props.error;
+
     return (
       <React.Fragment>
         <Marger size="1rem" />
+
+        {error && <Box textAlign="center" style={{ marginBottom: '1rem' }}>
+          {this.renderError()}
+        </Box>}
 
         <Typography align="center" variant="h5">
           INSANE settings
