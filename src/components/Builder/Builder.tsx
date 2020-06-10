@@ -593,6 +593,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
       // Begin the run
       socket.emit('martinize', Buffer.from(pdb_content), RUN_ID, form_data);
+      this.setState({ martinize_step: 'Sending your files to server' });
 
       // Martinize step
       socket.on('martinize step', ({ step, id }: { step: string, id: string }) => {
