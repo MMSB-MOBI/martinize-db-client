@@ -321,7 +321,7 @@ export default class GoBondsHelper {
    */
   toOriginalFiles() {
     // Try to reconstruct the original files based on go atom names.
-    const files: { [molecule_name: string]: string } = {};
+    const files: { [molecule_name: string]: string } = Object.create(null);
 
     for (const [name1, , line] of this) {
       const mol_type_arr = /^(\w+)_\d+$/.exec(name1);
