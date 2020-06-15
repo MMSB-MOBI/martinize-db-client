@@ -11,7 +11,7 @@ import { Container, Typography } from '@material-ui/core';
 
 // Icon <Icon className="fas fa-camera" />
 
-const DEFAULT_ROWS_PER_PAGE = 5;
+const DEFAULT_ROWS_PER_PAGE = 15;
 
 type ModerationState = {
   molecules: { length: number, molecules: Molecule[] },

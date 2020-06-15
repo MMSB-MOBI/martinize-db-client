@@ -36,7 +36,7 @@ function getRealFilters(filters: Filters) {
   return to_send;
 }
 
-const DEFAULT_ROWS_PER_PAGE = 5;
+const DEFAULT_ROWS_PER_PAGE = 15;
 
 type ExploreState = {
   filters?: Filters,
