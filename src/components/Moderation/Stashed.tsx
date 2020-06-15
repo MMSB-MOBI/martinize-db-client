@@ -116,6 +116,10 @@ class StashedPageBase extends React.Component<StashedProps, StashedState> {
     )
   }
 
+  onDelete = () => {
+    window.location.pathname = "/moderation";
+  };
+
   render() {
     if (Settings.logged !== LoginStatus.Admin) {
       return this.renderForbidden();
@@ -154,6 +158,7 @@ class StashedPageBase extends React.Component<StashedProps, StashedState> {
             molecule={molecule}
             stashed
             onMoleculeChange={mol => this.setState({ molecule: mol })}
+            onDelete={this.onDelete}
           />
 
           <Divider />

@@ -64,6 +64,7 @@ export default function MoleculeInfo<T extends StashedMolecule | Molecule>(props
   addOnStartup?: boolean,
   editOnStartup?: boolean,
   parent?: Molecule,
+  onDelete: () => void,
 }) {
   const { molecule, stashed } = props;
 
@@ -108,11 +109,12 @@ export default function MoleculeInfo<T extends StashedMolecule | Molecule>(props
     setLoading(true);
     ApiHelper.request((props.stashed ? "moderation" : "molecule") + '/destroy/' + molecule.id, { method: 'DELETE' })
       .then(() => {
-        window.location.pathname = "/explore";
+        props.onDelete();
       })
       .catch(notifyError)
       .finally(() => {
         setLoading(false);
+        setDeleteMol(false);
       });
   };
 
@@ -123,7 +125,7 @@ export default function MoleculeInfo<T extends StashedMolecule | Molecule>(props
     setLoading(true);
     ApiHelper.request('moderation/accept', { method: 'POST', parameters: { id: molecule.id } })
       .then(() => {
-        window.location.pathname = "/moderation";
+        window.location.pathname = '/moderation';
       })
       .catch(notifyError)
       .finally(() => {
