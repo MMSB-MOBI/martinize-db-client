@@ -18,6 +18,7 @@ import CreateAccount from '../pages/CreateAccount/CreateAccount';
 import ContactPage from '../Contact/Contact';
 import MartinizeBuilder from '../Builder/Builder';
 import MembraneBuilder from '../Builder/MembraneBuilder';
+import ForceField from '../ForceField/ForceField';
 
 function LoadAppDrawer(props: RouteComponentProps) {
   return <ApplicationDrawer {...props} />;
@@ -45,6 +46,7 @@ const RouterCmpt = () => {
         <Route path="/settings" component={LoadDrawer} />
         <Route path="/users" component={LoadDrawer} />
         <Route path="/contact" component={LoadDrawer} />
+        <Route path="/force_fields" component={LoadDrawer} />
 
         {/* Not found */}
         <Route component={NotFound} />
@@ -119,6 +121,7 @@ export const DrawerContentRouter = (props: RouteComponentProps) => {
     <Switch>
       <Route path="/explore" exact component={Explore} />
       <Route path="/molecule/:alias" component={MoleculePage} />
+      <Route path="/force_fields" component={ForceField} />
       <Route path="/submissions" component={MySubmissions} />
       <Route path="/contact" component={ContactPage} />
       <Route path="/settings" component={LoadSettingsDrawer} />

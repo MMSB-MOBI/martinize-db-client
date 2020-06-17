@@ -135,6 +135,12 @@ function DrawerElements(props: RouteComponentProps) {
         link: true,
         icon: "envelope",
         text: "Contact"
+      },
+      {
+        path: '/force_fields',
+        link: true,
+        icon: "download",
+        text: "Force fields"
       }
     ]
   ];
