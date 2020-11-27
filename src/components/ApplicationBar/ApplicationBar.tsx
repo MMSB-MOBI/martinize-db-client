@@ -10,12 +10,19 @@ import ListItemText from '@material-ui/core/ListItemText';
 import MenuIcon from '@material-ui/icons/Menu';
 import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
+import { Alert } from '@material-ui/lab';
 import { makeStyles, useTheme, Theme, createStyles } from '@material-ui/core/styles';
 import { RouteComponentProps, Link } from 'react-router-dom';
 import { DrawerContentRouter } from '../Router';
 import { Icon, Dialog, DialogTitle, DialogContent, DialogActions, Button, DialogContentText, ListItemAvatar, Avatar } from '@material-ui/core';
 import Settings, { LoginStatus } from '../../Settings';
+import { Badge } from '@material-ui/core';
 import PersonIcon from '@material-ui/icons/Person';
+import ApiHelper from '../../ApiHelper';
+import { toast } from '../Toaster';
+import { errorToText } from '../../helpers';
+
+//import { WarnBeta } from '../WarnBeta';
 
 const drawerWidth = 240;
 
@@ -61,10 +68,39 @@ interface DrawerElement {
   icon?: string;
   text?: string;
   condition?: boolean;
+  count?: Countable; 
   render?: () => JSX.Element;
 }
 
+type Countable = "molecules" | "users" 
+
+function BadgedIcon(props: {
+  icon:string | undefined, 
+  toCount:Countable
+}){    
+    const [count, setCount] = React.useState(0); 
+
+
+    React.useEffect(() => {
+      const request_url = props.toCount === "molecules" ? 'moderation/list' : 'user/list/waiting'
+      ApiHelper.request(request_url)
+        .then(answer => {
+          setCount(answer.length)
+        })
+        .catch(e => {
+          console.error(e)
+          toast(errorToText(e));
+          })
+    }, [])
+
+    return(
+    <Badge badgeContent={count} color="secondary" >
+      <Icon className={"fas fa-" + props.icon} />
+    </Badge>)
+}
+
 function DrawerElements(props: RouteComponentProps) {
+  
   const elements: DrawerElement[][] = [
     [
       {
@@ -91,8 +127,9 @@ function DrawerElements(props: RouteComponentProps) {
         path: '/moderation',
         link: true,
         icon: "inbox",
-        text: "Moderation",
+        text: `Moderation`,
         condition: Settings.logged === LoginStatus.Admin,
+        count: "molecules"
       },
       {
         path: '/users',
@@ -100,6 +137,7 @@ function DrawerElements(props: RouteComponentProps) {
         icon: "user",
         text: "Users",
         condition: Settings.logged === LoginStatus.Admin,
+        count: "users"
       },
     ],
     [
@@ -169,7 +207,10 @@ function DrawerElements(props: RouteComponentProps) {
           selected={props.location.pathname === e.path}
         >
           <ListItemIcon>
-            <Icon className={"fas fa-" + e.icon} />
+            {e.count ? 
+              <BadgedIcon icon={e.icon} toCount={e.count}/> :
+              <Icon className={"fas fa-" + e.icon}/>
+            }
           </ListItemIcon>
           <ListItemText primary={e.text} />
         </ListItem>
@@ -232,7 +273,6 @@ export default function ApplicationDrawer(props: RouteComponentProps) {
           <AppBarContent />
         </Toolbar>
       </AppBar>
-
       {/* Drawer */}
       <nav className={classes.drawer}>
         <Hidden smUp implementation="css">
@@ -267,7 +307,6 @@ export default function ApplicationDrawer(props: RouteComponentProps) {
       {/* Main content */}
       <main className={classes.content}>
         <div className={classes.toolbar} />
-        
         <DrawerContentRouter {...props} />
       </main>
     </div>
