@@ -14,6 +14,8 @@ import { toast } from '../Toaster';
 import JSZip from 'jszip';
 import { Molecule } from '../../types/entities';
 import { Alert, AlertTitle } from '@material-ui/lab';
+import { BetaWarning } from '../../Shared'; 
+
 
 // @ts-ignore
 window.NGL = ngl;
@@ -633,7 +635,7 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
     return (
       <ThemeProvider theme={this.state.theme}>
         {this.renderModalBackToDatabase()}
-
+        <BetaWarning/>
         <Grid
           container 
           component="main" 

@@ -23,6 +23,7 @@ import MartinizeForm from './ProteinBuilder/MartinizeForm';
 import MartinizeGenerated from './ProteinBuilder/MartinizeGenerated';
 import GoEditor from './ProteinBuilder/GoEditor';
 import GoBondsHelper, { BondsRepresentation } from './GoBondsHelper';
+import { BetaWarning } from '../../Shared'; 
 
 // @ts-ignore
 window.NGL = ngl; window.GoBondsHelper = GoBondsHelper;
@@ -1187,7 +1188,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     return (
       <ThemeProvider theme={this.state.theme}>
         {this.renderModalBackToDatabase()}
-
+        <BetaWarning/>
         <Grid 
           container 
           component="main" 

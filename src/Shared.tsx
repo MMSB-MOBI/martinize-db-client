@@ -1,5 +1,6 @@
 import React from 'react';
 import { Grid, CircularProgress, FormControl, InputLabel, Select, MenuItem } from "@material-ui/core";
+import { Alert } from '@material-ui/lab';
 import clsx from 'clsx';
 
 export const CenterComponent = (props: any) => {
@@ -62,3 +63,7 @@ export function SimpleSelect(props: {
     </FormControl>
   )
 }
+
+export const BetaWarning = () => {
+  return <Alert severity="warning" style = {{justifyContent:'center'}}> This is a beta version of MAD service. If you have any suggestions or problems, please contact us at mad-support@ibcp.fr or use contact page. </Alert>
+} 

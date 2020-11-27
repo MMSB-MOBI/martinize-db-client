@@ -10,7 +10,6 @@ import ListItemText from '@material-ui/core/ListItemText';
 import MenuIcon from '@material-ui/icons/Menu';
 import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
-import { Alert } from '@material-ui/lab';
 import { makeStyles, useTheme, Theme, createStyles } from '@material-ui/core/styles';
 import { RouteComponentProps, Link } from 'react-router-dom';
 import { DrawerContentRouter } from '../Router';
@@ -21,6 +20,8 @@ import PersonIcon from '@material-ui/icons/Person';
 import ApiHelper from '../../ApiHelper';
 import { toast } from '../Toaster';
 import { errorToText } from '../../helpers';
+import { BetaWarning } from '../../Shared'; 
+
 
 //import { WarnBeta } from '../WarnBeta';
 
@@ -307,6 +308,7 @@ export default function ApplicationDrawer(props: RouteComponentProps) {
       {/* Main content */}
       <main className={classes.content}>
         <div className={classes.toolbar} />
+        <BetaWarning/>
         <DrawerContentRouter {...props} />
       </main>
     </div>
