@@ -66,6 +66,7 @@ export default class LoginWaiter extends React.Component<LWProps, LWState> {
   }
 
   renderNotAllowed() {
+
     if (this.props.onNotAllowed) {
       if (React.isValidElement(this.props.onNotAllowed)) {
         return this.props.onNotAllowed;
@@ -76,8 +77,20 @@ export default class LoginWaiter extends React.Component<LWProps, LWState> {
       }
     }
 
+    //Adapt error message
+    let error_text:string = "You can't access this page" 
+    switch(this.state.logged){
+      case "none" : error_text = error_text + " as simple user. You may login or make request for an account.";
+        break; 
+      case "curator" : error_text = error_text + " as curator."
+        break; 
+      case "admin" : error_text = error_text + " as admin."
+        break; 
+    }
+    
+
     return <FullError
-      text="You can't access this page."
+      text={error_text}
       button={{
         link: "/",
         text: "Home"
