@@ -1,6 +1,6 @@
 import React from 'react';
 import { Marger, FaIcon } from '../../../helpers';
-import { Button, Typography, FormControl, FormGroup, FormControlLabel, Switch, Slider, Divider, Box, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Theme } from '@material-ui/core';
+import { Button, Typography, FormControl, FormGroup, FormControlLabel, Switch, Slider, Divider, Box, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Theme, Slide } from '@material-ui/core';
 import { ToggleButtonGroup, ToggleButton } from '@material-ui/lab';
 import { ViableRepresentation } from '../NglWrapper';
 import Tooltip from '../../../Tooltip';
@@ -10,7 +10,7 @@ interface MartinizeGeneratedProps {
   onReset(): any;
   theme: Theme;
   onThemeChange(): any;
-  virtualLinks: 'go' | 'elastic' | '';
+  virtualLinks: 'go' | 'elastic' | '' ;
 
   allAtomName: string;
 
@@ -39,14 +39,37 @@ interface MartinizeGeneratedProps {
 
   onGoEditorStart(): any;
   onSave(name: string): any;
+
+  stdout?: any;
 }
 
 export default function MartinizeGenerated(props: MartinizeGeneratedProps) {
   const [wantReset, setWantReset] = React.useState(false);
   const [saverModal, setSaverModal] = React.useState("");
 
+  const [warning, setWarning] = React.useState(true);
+
   return (
     <React.Fragment>
+      {props.stdout != [] && <Dialog
+        open={warning}
+        fullWidth={true}
+        maxWidth="lg"
+        >
+        <DialogTitle>Gromacs encountered the following warnings :</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            {props.stdout.map((line : any) => <div>{line}<br></br><br></br></div>)}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setWarning(false)} color="primary">
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>}
+
+
       <MoleculeSaverModal
         open={!!saverModal} 
         onClose={() => setSaverModal("")}

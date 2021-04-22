@@ -151,6 +151,7 @@ export class NglRepresentation<T extends Representation> {
    */
   atomIterator(callback: (ap: AtomProxy) => void) {
     (this.representation.structure as ngl.Structure).eachAtom(callback);
+
   }
 
   iterateOverSelection(selection: string, callback: (ap: AtomProxy) => void, on_end_selection = "*") {

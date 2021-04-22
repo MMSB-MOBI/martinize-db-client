@@ -24,6 +24,8 @@ import MartinizeGenerated from './ProteinBuilder/MartinizeGenerated';
 import GoEditor from './ProteinBuilder/GoEditor';
 import GoBondsHelper, { BondsRepresentation } from './GoBondsHelper';
 import { BetaWarning } from '../../Shared'; 
+import { stdout } from 'process';
+
 
 // @ts-ignore
 window.NGL = ngl; window.GoBondsHelper = GoBondsHelper;
@@ -52,6 +54,8 @@ export interface MBState {
   martinize_error?: MZError;
   martinize_step: string;
 
+  stdout?: any;
+
   all_atom_pdb?: File;
   all_atom_ngl?: NglComponent;
 
@@ -67,6 +71,14 @@ export interface MBState {
   builder_ea: string;
   builder_ep: string;
   builder_em: string;
+  cTer: string;
+  nTer: string;
+  sc_fix: string;
+  cystein_bridge: string;
+
+  advanced: string;
+  commandline: string;
+
 
   all_atom_opacity: number;
   all_atom_visible: boolean;
@@ -114,6 +126,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     window.MoleculeBuilder = this;
 
     this.ngl = new NglWrapper("ngl-stage", { backgroundColor: this.props.theme.palette.background.default });
+    this.changeCommandline('');
   }
 
   protected get original_state() : MBState {
@@ -128,6 +141,12 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       builder_ea: '0',
       builder_ep: '0',
       builder_em: '0',
+      cTer: 'COOH-ter',
+      nTer: 'NH2-ter',
+      sc_fix: 'false',
+      cystein_bridge: 'none',
+      advanced: 'false',
+      commandline: '',
       martinize_error: undefined,
       coarse_grain_opacity: 1,
       coarse_grain_visible: true,
@@ -146,6 +165,8 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       martinize_step: '',
     };
   }
+
+
 
   /* LOAD, RESET AND SAVE STAGES */
   async save(name: string, overwrite_uuid?: string) {
@@ -170,6 +191,12 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
         builder_eu: this.state.builder_eu,
         builder_ep: this.state.builder_ep,
         builder_em: this.state.builder_em,
+        cTer: this.state.cTer,
+        nTer: this.state.nTer,
+        sc_fix: this.state.sc_fix,
+        cystein_bridge: this.state.cystein_bridge,
+        advanced: this.state.advanced,
+        commandline: this.state.commandline,
       },
       all_atom: this.state.all_atom_pdb!,
       coarse_grained: this.state.files.pdb,
@@ -542,11 +569,14 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     e.preventDefault();
     
     const form_data: any = {};
-    
     const s = this.state;
 
     form_data.ff = s.builder_force_field;
     form_data.position = s.builder_positions;
+    form_data.cter = s.cTer;
+    form_data.nter = s.nTer;
+    form_data.sc_fix = s.sc_fix;
+    form_data.cystein_bridge = s.cystein_bridge;
 
     if (s.builder_mode === "elastic") {
       form_data.elastic = "true";
@@ -561,6 +591,8 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       form_data.use_go = "true";
       form_data.sc_fix = "true";
     }
+    form_data.advanced = s.advanced;
+    form_data.commandline = s.commandline;
 
     // form_data.pdb = s.all_atom_pdb;
 
@@ -683,6 +715,10 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
         setMartinizeStep("Finishing...");
       });
 
+      socket.on('martinize stderr', ( stdout : any ) => {
+        this.setState({stdout: stdout}, () => {console.log(stdout)});
+      });
+
       // When run ends
       socket.on('martinize end', (
         { id, elastic_bonds, radius }: { 
@@ -701,8 +737,6 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
             files.elastic_bonds.bonds = elastic_bonds;
           }
 
-          console.log(files);
-
           resolve(files as MartinizeFiles);
       });
     }).catch(error => {
@@ -711,6 +745,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
         martinize_step: '',
         martinize_error: error
       });
+
 
       return undefined;
     });
@@ -1181,6 +1216,42 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     )
   }
 
+  changeCommandline(value: string) {
+    if (this.state.advanced === 'true') {
+      this.setState({commandline: value}, () => {})
+    } else {
+      const s = this.state
+      const socket = SocketIo.connect(SERVER_ROOT);
+      const form_data: any = {};
+
+      form_data.ff = s.builder_force_field;
+      form_data.position = s.builder_positions;
+      form_data.cter = s.cTer;
+      form_data.nter = s.nTer;
+      form_data.sc_fix = s.sc_fix;
+      form_data.cystein_bridge = s.cystein_bridge;
+      form_data.advanced = s.advanced;
+
+      if (s.builder_mode === "elastic") {
+        form_data.elastic = "true";
+        form_data.ef = s.builder_ef;
+        form_data.el = s.builder_el;
+        form_data.eu = s.builder_eu;
+        form_data.ea = s.builder_ea;
+        form_data.ep = s.builder_ep;
+        form_data.em = s.builder_em;
+      }
+      else if (s.builder_mode === "go") {
+        form_data.use_go = "true";
+        form_data.sc_fix = "true";
+      }
+      socket.emit('previewMartinize', form_data);
+      socket.on('martinizePreviewContent', (data: any) => {
+        this.setState({commandline: data}, () => {})
+      })
+    }
+  }
+
   render() {
     const classes = this.props.classes;
     const is_dark = this.state.theme.palette.type === 'dark';
@@ -1232,15 +1303,16 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
               {(this.state.running === 'martinize_params' || this.state.running === 'martinize_error') && <MartinizeForm 
                 martinizeError={this.state.martinize_error}
-                onBuilderModeChange={value => this.setState({ builder_mode: value as any })}
-                onBuilderPositionChange={value => this.setState({ builder_positions: value as any })}
-                onForceFieldChange={value => this.setState({ builder_force_field: value })}
+                onBuilderModeChange={value => this.setState({ builder_mode: value as any }, () => {this.changeCommandline(value)})}
+                onBuilderPositionChange={value => this.setState({ builder_positions: value as any }, () => {this.changeCommandline(value)})}
+                onForceFieldChange={value => this.setState({ builder_force_field: value }, () => {this.changeCommandline(value)})}
                 onMartinizeBegin={this.handleMartinizeBegin}
                 onReset={() => this.reset()}
                 onElasticChange={(type, value) => {
                   // @ts-ignore
-                  this.setState({ [type]: value })
+                  this.setState({ [type]: value }, () => {this.changeCommandline(value)})
                 }}
+                onAdvancedChange={value => {this.changeCommandline(value)}}
                 builderForceField={this.state.builder_force_field}
                 builderMode={this.state.builder_mode}
                 builderPosition={this.state.builder_positions}
@@ -1250,11 +1322,25 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
                 builderEm={this.state.builder_em}
                 builderEp={this.state.builder_ep}
                 builderEu={this.state.builder_eu}
+                cTer={this.state.cTer}
+                nTer={this.state.nTer}
+                sc_fix={this.state.sc_fix}
+                cystein_bridge={this.state.cystein_bridge}
+                advanced={this.state.advanced}
+                commandline={this.state.commandline}
+                advancedActivate={() => {if(this.state.advanced === 'true') {
+                  this.setState({advanced: 'false'}, () => this.changeCommandline(''))
+                } else {
+                  this.setState({advanced: 'true'})
+                }}}
               />}
 
               {this.state.running === 'martinize_generate' && this.martinizeGenerating()}
 
               {this.state.running === 'done' && <MartinizeGenerated 
+
+                stdout={this.state.stdout}
+
                 onReset={() => this.reset()}
                 theme={this.state.theme}
                 allAtomName={this.state.all_atom_pdb!.name.split('.')[0]}

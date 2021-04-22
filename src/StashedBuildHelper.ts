@@ -20,6 +20,13 @@ export interface StashedBuildInfo {
   builder_ea: string;
   builder_ep: string;
   builder_em: string;
+  cTer: string;
+  nTer: string;
+  sc_fix: string;
+  cystein_bridge: string;
+
+  advanced: string;
+  commandline: string;
 }
 
 export interface MartinizeFile {

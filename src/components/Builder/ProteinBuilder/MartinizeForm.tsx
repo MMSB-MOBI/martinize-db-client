@@ -1,9 +1,27 @@
 import React from 'react';
 import { Marger } from '../../../helpers';
 import MartinizeError, { MZError } from './MartinizeError';
-import { Typography, Grid, Box, Button, makeStyles, TextField } from '@material-ui/core';
+import { Typography, Grid, Box, Button, makeStyles, TextField, FormLabel, RadioGroup, FormControlLabel, Radio, Checkbox, MenuItem } from '@material-ui/core';
 import { SimpleSelect } from '../../../Shared';
 import Settings from '../../../Settings';
+import { Autocomplete } from '@material-ui/lab';
+
+import { CheckBoxOutlineBlank } from '@material-ui/icons';
+import { CheckBox } from '@material-ui/icons';
+
+const CTER = ['COOH-ter', ''] as const;
+const NTER = ['NH2-ter', ''] as const;
+
+let CIS = ['6', '12', '18', '24', '32'];
+let cys_bridges: any[] = [];
+let cys_selected: any[] = [];
+
+for (let i1 = 0; i1 < CIS.length; i1++) {
+  for (let i2 = i1+1; i2 < CIS.length; i2++) {
+    cys_bridges.push([CIS[i1],CIS[i2]])
+    console.log(CIS[i1]+'-'+CIS[i2])
+  }
+}
 
 const useStyles = makeStyles(theme => ({
   form: {
@@ -19,7 +37,7 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-type ElasticParam = 'builder_ef' | 'builder_el' | 'builder_eu' | 'builder_ea' | 'builder_ep' | 'builder_em';
+type ElasticParam = 'builder_ef' | 'builder_el' | 'builder_eu' | 'builder_ea' | 'builder_ep' | 'builder_em' | 'nTer' | 'cTer' | 'sc_fix' | 'cystein_bridge' ;
 
 export interface MartinizeFormProps {
   martinizeError?: MZError;
@@ -37,7 +55,16 @@ export interface MartinizeFormProps {
   builderEa: string;
   builderEp: string;
   builderEm: string;
+  cTer: string;
+  nTer: string;
+  sc_fix: string;
+  cystein_bridge: string;
+
+  advanced: string;
+  commandline: string;
   onElasticChange(type: ElasticParam, value: string): any
+  onAdvancedChange(value: string) :any
+  advancedActivate(): any
 }
 
 export default function MartinizeForm(props: MartinizeFormProps) {
@@ -56,10 +83,11 @@ export default function MartinizeForm(props: MartinizeFormProps) {
     ];
   }
 
+
   return (
     <div>
       <Marger size="1rem" />
-
+      "neutral"
       {props.martinizeError && <MartinizeError 
         error={props.martinizeError}
       />}
@@ -79,6 +107,7 @@ export default function MartinizeForm(props: MartinizeFormProps) {
             label="Force field"
             values={force_fields}
             id="builder_ff"
+            disabled={props.advanced === 'true'}
             value={props.builderForceField}
             onChange={props.onForceFieldChange}
           />
@@ -92,6 +121,7 @@ export default function MartinizeForm(props: MartinizeFormProps) {
             label="Position restrains"
             values={[{ id: 'none', name: 'None' }, { id: 'all', name: 'All' }, { id: 'backbone', name: 'Backbone' }]}
             id="builder_position_restrains"
+            disabled={props.advanced === 'true'}
             value={props.builderPosition}
             onChange={props.onBuilderPositionChange}
           />
@@ -105,10 +135,66 @@ export default function MartinizeForm(props: MartinizeFormProps) {
             label="Mode"
             values={getAvailableModes()}
             id="builder_mode"
+            disabled={props.advanced === 'true'}
             value={props.builderMode}
             onChange={props.onBuilderModeChange}
           />
         </Grid>
+
+        {props.builderMode != 'advanced' && <React.Fragment>
+          <Grid item xs={12} sm={6} className={classes.formContainer}>
+              <SimpleSelect
+                label="C-terminal"
+                variant="standard"
+                id="cTer"
+                disabled={props.advanced === 'true'}
+                values={CTER.map(e => ({ id: e, name: e }))}
+                value={props.cTer}
+                onChange={val => {
+                  props.onElasticChange('cTer', val)
+                }}
+                noMinWidth
+                formControlClass={classes.textField}
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6} className={classes.formContainer}>
+              <SimpleSelect
+                label="N-terminal"
+                variant="standard"
+                id="nTer"
+                disabled={props.advanced === 'true'}
+                values={NTER.map(e => ({ id: e, name: e }))}
+                value={props.nTer}
+                onChange={val => {
+                  props.onElasticChange('nTer', val)
+                }}
+                noMinWidth
+                formControlClass={classes.textField}
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6} className={classes.formContainer}>
+              <FormLabel component="legend">Side-Chain fix</FormLabel>
+              <RadioGroup row name="scfix" value={props.sc_fix} onChange={e => {
+                  props.onElasticChange( 'sc_fix', e.target.value)
+                }}>
+                <FormControlLabel value="false" disabled={props.advanced === 'true'} control={<Radio />} label="no" />
+                <FormControlLabel value="true" disabled={props.advanced === 'true'} control={<Radio />} label="yes" />
+              </RadioGroup>
+            </Grid>
+          
+
+            <Grid item xs={12} sm={6} className={classes.formContainer}>
+              <FormLabel component="legend">Cystein Bridge</FormLabel>
+              <RadioGroup row name="cys" value={props.cystein_bridge} onChange={e => {
+                  props.onElasticChange( 'cystein_bridge', e.target.value)
+                }}>
+                <FormControlLabel value="none" disabled={props.advanced === 'true'} control={<Radio />} label="none" />
+                <FormControlLabel value="auto" disabled={props.advanced === 'true'} control={<Radio />} label="auto" />
+              </RadioGroup>
+            </Grid>
+        </React.Fragment>}
 
         {props.builderMode === 'elastic' && <React.Fragment>
           <Grid item xs={12} sm={6} className={classes.formContainer}>
@@ -117,8 +203,9 @@ export default function MartinizeForm(props: MartinizeFormProps) {
               className={classes.textField}
               label="Force constant"
               type="number"
+              disabled={props.advanced === 'true'}
               value={props.builderEf}
-              onChange={e => props.onElasticChange('builder_ef', e.target.value)}
+              onChange={e => {props.onElasticChange('builder_ef', e.target.value)}}
             />
           </Grid>
 
@@ -128,8 +215,9 @@ export default function MartinizeForm(props: MartinizeFormProps) {
               className={classes.textField}
               label="Lower cutoff"
               type="number"
+              disabled={props.advanced === 'true'}
               value={props.builderEl}
-              onChange={e => props.onElasticChange('builder_el', e.target.value)}
+              onChange={e => {props.onElasticChange('builder_el', e.target.value)}}
             />
           </Grid>
 
@@ -139,8 +227,9 @@ export default function MartinizeForm(props: MartinizeFormProps) {
               className={classes.textField}
               label="Upper cutoff"
               type="number"
+              disabled={props.advanced === 'true'}
               value={props.builderEu}
-              onChange={e => props.onElasticChange('builder_eu', e.target.value)}
+              onChange={e => {props.onElasticChange('builder_eu', e.target.value)}}
             />
           </Grid>
 
@@ -150,8 +239,9 @@ export default function MartinizeForm(props: MartinizeFormProps) {
               className={classes.textField} 
               label="Decay factor a"
               type="number"
+              disabled={props.advanced === 'true'}
               value={props.builderEa}
-              onChange={e => props.onElasticChange('builder_ea', e.target.value)}
+              onChange={e => {props.onElasticChange('builder_ea', e.target.value)}}
             />
           </Grid>
 
@@ -161,8 +251,9 @@ export default function MartinizeForm(props: MartinizeFormProps) {
               className={classes.textField}
               label="Decay power p"
               type="number"
+              disabled={props.advanced === 'true'}
               value={props.builderEp}
-              onChange={e => props.onElasticChange('builder_ep', e.target.value)}
+              onChange={e => {props.onElasticChange('builder_ep', e.target.value)}}
             />
           </Grid>
 
@@ -172,11 +263,38 @@ export default function MartinizeForm(props: MartinizeFormProps) {
               className={classes.textField}
               label="Minimum force"
               type="number"
+              disabled={props.advanced === 'true'}
               value={props.builderEm}
-              onChange={e => props.onElasticChange('builder_em', e.target.value)}
+              onChange={e => {props.onElasticChange('builder_em', e.target.value)}}
             />
           </Grid>
         </React.Fragment>}
+
+        <Grid item xs={12} sm={12} className={classes.formContainer}>
+          <FormControlLabel
+              control={<Checkbox 
+                value={props.advanced}
+                checked={props.advanced === 'true'} 
+                onChange={props.advancedActivate} 
+              />}
+              label="Activate advanced mode"
+            />
+        </Grid>
+
+
+          <Grid item xs={12} sm={12} className={classes.formContainer}>
+            <TextField 
+              variant="outlined"
+              className={classes.textField}
+              label="Command Line"
+              type="text"
+              disabled={props.advanced === 'false'}
+              value={props.commandline}
+              onChange={e => {props.onAdvancedChange(e.target.value)}}
+            />
+          </Grid>
+
+        
 
         <Marger size="2rem" />
 
