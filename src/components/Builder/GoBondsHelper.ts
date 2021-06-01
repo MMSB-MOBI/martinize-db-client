@@ -2,131 +2,27 @@ import ItpFile from 'itp-parser';
 import ReversibleKeyMap from 'reversible-key-map';
 import { ElasticOrGoBounds } from '../../StashedBuildHelper';
 import NglWrapper, { NglComponent, NglRepresentation } from './NglWrapper';
-import { BufferRepresentation } from '@mmsb/ngl';
-import { RepresentationParameters } from '@mmsb/ngl/declarations/representation/representation';
-import * as ngl from '@mmsb/ngl';
+import BaseBondsHelper, { BaseBondsHelperJSON, Relations } from './BaseBondsHelper';
 
 type GoAtomName = string;
-type GoRelations = ReversibleKeyMap<GoAtomName, GoAtomName, string>;
+//type GoRelations = ReversibleKeyMap<GoAtomName, GoAtomName, string>;
 type IndexToName = { [index: number]: string };
 type NameToIndex = { [name: string]: number };
 type IndexToReal = { [index: number]: number };
 type RealToIndex = { [index: number]: number };
-type AtomCoordinates = [number, number, number];
 
-export interface GoBondsHelperJSON {
+export interface GoBondsHelperJSON extends BaseBondsHelperJSON {
   real_to_index: RealToIndex;
   name_to_index: NameToIndex;
-  relations: [[GoAtomName, GoAtomName], string][];
+  //relations: [[number, number], string][];
 }
 
-export class BondsRepresentation {
-  static readonly V_BONDS_DEFAULT_COLOR = new ngl.Color(0, 255, 0);
-  static readonly V_BONDS_HIGHLIGHT_COLOR = new ngl.Color(1, .1, .1);
 
-  protected virtual_links_cmpt?: NglComponent;
-  protected virtual_links_repr?: NglRepresentation<BufferRepresentation>;
-  protected coordinates: AtomCoordinates[] = [];
-  public bonds: ElasticOrGoBounds[] = []; 
-
-  constructor(public readonly stage: NglWrapper) {}
-
-  /* REPRESENTATION */
-  
-  set(parameters: Partial<RepresentationParameters>) {
-    if (this.virtual_links_repr)
-      this.virtual_links_repr.set(parameters);
-  }
-
-  get visible() {
-    if (!this.virtual_links_repr) 
-      return false;
-    return this.virtual_links_repr.visible;
-  }
-
-  set visible(v: boolean) {
-    if (this.virtual_links_repr)
-      this.virtual_links_repr.visible = v;
-  }
-
-  /* COORDINATES */
-
-  registerCoords(coordinates: AtomCoordinates[]) {
-    this.coordinates = coordinates;
-  }
-
-  getCoordinate(index: number) {
-    return this.coordinates[index];
-  }
-
-  distanceBetween(atom1: number, atom2: number) {
-    // d = ((x2 - x1)^2 + (y2 - y1)^2 + (z2 - z1)^2)^1/2 
-    const [x1, y1, z1] = this.coordinates[atom1];
-    const [x2, y2, z2] = this.coordinates[atom2];
-
-    return Math.sqrt(((x2 - x1) ** 2) + ((y2 - y1) ** 2) + ((z2 - z1) ** 2));
-  }
-
-  protected cleanStage() {
-    if (this.virtual_links_cmpt)
-      this.stage.remove(this.virtual_links_cmpt);
-
-    this.virtual_links_cmpt = undefined;
-    this.virtual_links_repr = undefined;
-  }
-
-  render(
-    mode: 'elastic' | 'go' = 'elastic', 
-    bonds = this.bonds, 
-    opacity = .2, 
-    hightlight_predicate?: (atom1_index: number, atom2_index: number) => boolean
-  ) {
-    this.bonds = bonds;
-    const coords = this.coordinates;
-
-    const shape = new ngl.Shape("add-bonds");
-    const upper_mode = mode.toLocaleUpperCase();
-    
-    for (const [atom1_index, atom2_index] of bonds) {
-      // atom index starts at 1, atom array stats to 0
-      const atom1 = coords[atom1_index - 1];
-      const atom2 = coords[atom2_index - 1];
-      
-      if (!atom1 || !atom2) {
-        console.warn("Not found atom", atom1_index, atom2_index, coords);
-        continue;
-      }
-      
-      const name = `[${upper_mode}] Bond w/ atoms ${atom1_index}-${atom2_index}`;
-      if (hightlight_predicate && hightlight_predicate(atom1_index, atom2_index)) {
-        shape.addCylinder(atom1, atom2, BondsRepresentation.V_BONDS_HIGHLIGHT_COLOR, .1, name);
-        continue;
-      }
-
-      shape.addCylinder(atom1, atom2, BondsRepresentation.V_BONDS_DEFAULT_COLOR, .1, name);
-    }
-
-    this.cleanStage();
-    const component = this.stage.add(shape);
-    const representation = component.add<ngl.BufferRepresentation>('buffer', { opacity });
-
-    this.virtual_links_cmpt = component;
-    this.virtual_links_repr = representation;
-  }
-}
 
 /**
  * Handle boilerplate for Go bond creation, removal and sync modifications with ITP files.
  */
-export default class GoBondsHelper {
-  /**
-   * VAtom 1 <> VAtom 2: ITP line
-   */
-  protected relations: GoRelations = new ReversibleKeyMap();
-  public readonly representation: BondsRepresentation;
-
-  protected history: GoRelations[] = [];
-  protected reverse_history: GoRelations[] = [];
+export default class GoBondsHelper extends BaseBondsHelper {
 
   /** Define the constructor as protected */
   protected constructor(
@@ -136,29 +32,15 @@ export default class GoBondsHelper {
     protected index_to_name: IndexToName = {},
     protected real_to_index: RealToIndex = {}
   ) {
-    this.representation = new BondsRepresentation(stage);
+    super(stage);
   }
 
-  /** Access the computed bonds. */
-  get bonds() : ElasticOrGoBounds[] {
-    const bonds: ElasticOrGoBounds[] = [];
-
-    for (const [atom1_name, atom2_name] of this.relations.keysCouples()) {
-      const real1 = this.goNameToRealIndex(atom1_name), real2 = this.goNameToRealIndex(atom2_name);
-
-      if (real1 !== undefined && real2 !== undefined) {
-        bonds.push([real1, real2]);
-      }
-    }
-
-    return bonds;
-  }
 
   /** Get bonds related to an go atom. */
-  findBondsOf(atom_name: GoAtomName) {
-    const keys = this.relations.getAllFrom(atom_name)?.keys();
-    return keys ? [...keys] : [];
-  }
+  // findBondsOf(atom_name: GoAtomName) {
+  //   const keys = this.relations.getAllFrom(atom_name)?.keys();
+  //   return keys ? [...keys] : [];
+  // }
 
   render(opacity = .2, hightlight_predicate?: (atom1_index: number, atom2_index: number) => boolean) {
     return this.representation.render(
@@ -201,8 +83,9 @@ export default class GoBondsHelper {
   /**
    * Create a new go bonds set through a filter.
    */
-  filter(predicate: (atom1: GoAtomName, atom2: GoAtomName, line: string) => boolean) {
-    const new_map: GoRelations = new ReversibleKeyMap();
+  // @ts-ignore
+  filter(predicate: (atom1: number, atom2: number, line: string) => boolean) {
+    const new_map: Relations = new ReversibleKeyMap();
 
     for (const [keys, value] of this.relations) {
       if (predicate(keys[0], keys[1], value)) {
@@ -228,29 +111,21 @@ export default class GoBondsHelper {
   }
 
   /**
-   * Modify the actual object through a filter.
-   */
-  filterSelf(predicate: (atom1: GoAtomName, atom2: GoAtomName, line: string) => boolean) {
-    const new_one = this.filter(predicate);
-    this.relations = new_one.relations;
-
-    return this;
-  }
-
-  /**
    * Add a new line inside the ITP.
    */
   add(line: string): this;
-  add(atom1: GoAtomName, atom2: GoAtomName, line: string): this;
-  add(atom1_or_line: GoAtomName | string, atom2?: GoAtomName, line?: string) {
+  add(atom1: number, atom2: number, line: string): this;
+  add(atom1_or_line: number | string, atom2?: number, line?: string) {
     if (atom2 === undefined || line === undefined) {
       // atom1 is a full line
-      const [name1, name2, ] = atom1_or_line.split(ItpFile.BLANK_REGEX).filter(e => e);
-
-      if (name1 !== name2)
-        this.relations.set(name1, name2, atom1_or_line);
+      if(typeof atom1_or_line === 'string') {
+        const [name1, name2, ] = atom1_or_line.split(ItpFile.BLANK_REGEX).filter(e => e);
+        if (name1 !== name2){
+          this.relations.set(this.goNameToRealIndex(name1), this.goNameToRealIndex(name2), atom1_or_line);
+        }
+      }
     }
-    else {
+    else if(typeof atom1_or_line === 'number') {
       if (atom1_or_line !== atom2)
         this.relations.set(atom1_or_line, atom2, line);
     }
@@ -258,37 +133,19 @@ export default class GoBondsHelper {
     return this;
   }
 
-  /**
-   * Test if bond {atom1}<>{atom2} exists.
-   */
-  has(atom1: GoAtomName, atom2: GoAtomName) {
-    return this.relations.hasCouple(atom1, atom2);
-  }
-
-  remove(from_atom: GoAtomName): this;
-  remove(atom1: GoAtomName, atom2: GoAtomName): this;
-  remove(atom1: GoAtomName, atom2?: GoAtomName) {
-    if (atom2 === undefined) {
-      this.relations.deleteAllFrom(atom1);
-    }
-    else {
-      this.relations.delete(atom1, atom2);
-    }
-
-    return this;
-  }
-
+  /*
   createFakeLine(atom1: GoAtomName, atom2: GoAtomName) {
     return `${atom1}    ${atom2}    1  0.7923518221  9.4140000000`;
   }
+  */
 
-  createRealLine(atom1: GoAtomName, atom2: GoAtomName) {
-    const ri1 = this.goNameToRealIndex(atom1);
-    const ri2 = this.goNameToRealIndex(atom2);
+  createRealLine(ri1: number, ri2: number) {
+    const atom1 = this.realIndexToGoName(ri1);
+    const atom2 = this.realIndexToGoName(ri2);
 
-    if (ri1 === undefined || ri2 === undefined) {
+    if (atom1 === undefined || atom2 === undefined) {
       console.warn("[Real line creator] Atoms", atom1, "and", atom2, "not found.");
-      return this.createFakeLine(atom1, atom2);
+      return `${atom1}    ${atom2}    1  0.7923518221  9.4140000000`;
     }
 
     // rm is distance between 2 martini go bonds
@@ -300,17 +157,12 @@ export default class GoBondsHelper {
     const rm = Math.abs(this.representation.distanceBetween(ri1 - 1, ri2 - 1)) / 10;
     const result = rm * (2 ** (-(1/6)));
 
+
     return `${atom1}    ${atom2}    1  ${result.toPrecision(11)}  9.4140000000`;
   }
 
   
-  /* ITERATION OF BONDS */
-
-  *[Symbol.iterator]() {
-    for (const [keys, line] of this.relations) {
-      yield [keys[0], keys[1], line] as const;
-    }
-  }
+  
 
 
   /* COMPUTED ITP FILES */
@@ -323,21 +175,25 @@ export default class GoBondsHelper {
     // Try to reconstruct the original files based on go atom names.
     const files: { [molecule_name: string]: string } = Object.create(null);
 
-    for (const [name1, , line] of this) {
+    for (const [index1, , line] of this) {
+      let name1 = this.realIndexToGoName(index1);
       const mol_type_arr = /^(\w+)_\d+$/.exec(name1);
 
       if (!mol_type_arr) {
         continue;
       }
 
+      // Récupère le nom de la molécule (molecule_0)
       const type = mol_type_arr[1];
       if (type in files) {
+        // type = molecule_0. Réécris les lignes du fichier
         files[type] += line + '\n';
       }
       else {
         files[type] = line + '\n';
       }
     }
+    
 
     // Generate the index and files
     const index_filename = 'go-table_VirtGoSites.itp';
@@ -377,15 +233,7 @@ export default class GoBondsHelper {
     return `#include "${name}"\n`;
   }
 
-  toString() {
-    let res_str = "";
-
-    for (const line of this.relations.values()) {
-      res_str += line + "\n";
-    }
-
-    return res_str;
-  }
+  
 
   /* SERIALIZATION */
 
@@ -406,52 +254,6 @@ export default class GoBondsHelper {
   }
 
 
-  /* HISTORY */
-
-  /** Save the current state in the history. */
-  historyPush() {
-    this.history.push(new ReversibleKeyMap(this.relations.entries()));
-    this.reverse_history = [];
-  }
-
-  historyRevert() {
-    const last = this.reverse_history.pop();
-
-    if (last) {
-      this.history.push(this.relations);
-      this.relations = last;
-    }
-  }
-
-  /** Loose the current state and load the last saved state in the history. If the history is empty, nothing happend. */
-  historyBack() {
-    const last = this.history.pop();
-
-    if (last) {
-      // Save this.relations in reverse history
-      this.reverse_history.push(this.relations);
-
-      // Overwrite current relations
-      this.relations = last;
-    }
-  }
-
-  /** Clear history. */
-  historyClear() {
-    this.history = [];
-    this.reverse_history = [];
-  }
-
-  /** Number of saved states. When `.history_length === 0`, `.historyBack()` does nothing. */
-  get history_length() {
-    return this.history.length;
-  }
-  
-  /** Number of reverse-saved states. When `.history_length === 0`, `.historyRevert()` does nothing. */
-  get reverse_history_length() {
-    return this.reverse_history.length;
-  }
-
 
   /* STATIC CONSTRUCTORS */
 
@@ -461,6 +263,8 @@ export default class GoBondsHelper {
   static fromJSON(stage: NglWrapper, data: GoBondsHelperJSON) {
     const index_to_name: IndexToName = {};
     const index_to_real: IndexToReal = {};
+
+    console.log("relations", data.relations);
 
     // Create the non saved properties
     for (const prop in data.name_to_index) {
@@ -591,7 +395,7 @@ export default class GoBondsHelper {
         }
 
         // We add the bonds in the object
-        bonds.add(name1, name2, line);
+        bonds.add(real_index_1, real_index_2, line);
       }
       // Increment i by number of atoms
       i += all_atom_count;

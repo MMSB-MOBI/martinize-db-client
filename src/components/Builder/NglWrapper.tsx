@@ -167,6 +167,9 @@ export class NglRepresentation<T extends Representation> {
   iterateOverGoSitesOf(selection: string, callback: (ap: AtomProxy) => void, on_end_selection = ".CA") {
     this.iterateOverSelection("(" + selection + ") and .CA", callback, on_end_selection);
   }
+  iterateOverElasticSitesOf(selection: string, callback: (ap: AtomProxy) => void, on_end_selection = ".BB") {
+    this.iterateOverSelection("(" + selection + ") and .BB", callback, on_end_selection);
+  }
 
   applySelection(selection: string) {
     const repr = this.representation as any as BallAndStickRepresentation;

@@ -1,27 +1,14 @@
 import React from 'react';
 import { Marger } from '../../../helpers';
 import MartinizeError, { MZError } from './MartinizeError';
-import { Typography, Grid, Box, Button, makeStyles, TextField, FormLabel, RadioGroup, FormControlLabel, Radio, Checkbox, MenuItem } from '@material-ui/core';
+import { Typography, Grid, Box, Button, makeStyles, TextField, FormLabel, RadioGroup, FormControlLabel, Radio, Checkbox, MenuItem, Icon, IconButton, SvgIcon, Snackbar } from '@material-ui/core';
 import { SimpleSelect } from '../../../Shared';
 import Settings from '../../../Settings';
-import { Autocomplete } from '@material-ui/lab';
-
-import { CheckBoxOutlineBlank } from '@material-ui/icons';
-import { CheckBox } from '@material-ui/icons';
+import { Alert, Autocomplete } from '@material-ui/lab';
 
 const CTER = ['COOH-ter', ''] as const;
 const NTER = ['NH2-ter', ''] as const;
 
-let CIS = ['6', '12', '18', '24', '32'];
-let cys_bridges: any[] = [];
-let cys_selected: any[] = [];
-
-for (let i1 = 0; i1 < CIS.length; i1++) {
-  for (let i2 = i1+1; i2 < CIS.length; i2++) {
-    cys_bridges.push([CIS[i1],CIS[i2]])
-    console.log(CIS[i1]+'-'+CIS[i2])
-  }
-}
 
 const useStyles = makeStyles(theme => ({
   form: {
@@ -84,10 +71,11 @@ export default function MartinizeForm(props: MartinizeFormProps) {
   }
 
 
+  const [openCopied, setOpenCopied] = React.useState(false)
+
   return (
     <div>
       <Marger size="1rem" />
-      "neutral"
       {props.martinizeError && <MartinizeError 
         error={props.martinizeError}
       />}
@@ -281,8 +269,8 @@ export default function MartinizeForm(props: MartinizeFormProps) {
             />
         </Grid>
 
-
-          <Grid item xs={12} sm={12} className={classes.formContainer}>
+              
+          <Grid item xs={12} sm={10} className={classes.formContainer}>
             <TextField 
               variant="outlined"
               className={classes.textField}
@@ -293,6 +281,23 @@ export default function MartinizeForm(props: MartinizeFormProps) {
               onChange={e => {props.onAdvancedChange(e.target.value)}}
             />
           </Grid>
+          <Grid item xs={12} sm={2} className={classes.formContainer}>
+            <IconButton aria-label="copy" onClick={() => {
+              navigator.clipboard.writeText(props.commandline);
+              setOpenCopied(true);
+            }}>
+              <SvgIcon>
+                <path d="M4 7V21H18V23H4C2.9 23 2 22.1 2 21V7H4M20 3C21.1 3 22 3.9 22 5V17C22 18.1 21.1 19 20 19H8C6.9 19 6 18.1 6 17V5C6 3.9 6.9 3 8 3H11.18C11.6 1.84 12.7 1 14 1C15.3 1 16.4 1.84 16.82 3H20M14 3C13.45 3 13 3.45 13 4C13 4.55 13.45 5 14 5C14.55 5 15 4.55 15 4C15 3.45 14.55 3 14 3M10 7V5H8V17H20V5H18V7H10Z" />
+              </SvgIcon>
+            </IconButton>
+          </Grid>
+
+          <Snackbar anchorOrigin={{vertical: "bottom", horizontal: "left"}} open={openCopied} autoHideDuration={2000} onClose={() => setOpenCopied(false)}>
+            <Alert variant="filled" severity="success">
+              Command line copied to clipboard
+            </Alert>
+          </Snackbar>
+          
 
         
 

@@ -48,7 +48,7 @@ export default function MoleculeTable(props: {
   onMoleculeDelete?: (id: string) => void,
   moderation?: boolean,
   withVersion?: boolean,
-}) {
+  }) {
   const classes = useStyles();
   const { loading, molecules, length, rowsPerPage, page, onChangePage } = props;
   const [deleteMol, setDeleteMol] = React.useState("");
@@ -63,7 +63,7 @@ export default function MoleculeTable(props: {
       label: 'Category',
       minWidth: 170,
       align: 'right',
-      format: (value: string) => findInCategoryTree(categories, value)
+      format: (value: string[]) => value.map(val => findInCategoryTree(categories, val)).join(', '),
     },
     {
       id: 'created_at',

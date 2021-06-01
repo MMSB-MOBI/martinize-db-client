@@ -59,6 +59,9 @@ interface MBuilderState {
 
   available_lipids: string[];
   no_lipid: boolean;
+
+  ph_upp: number;
+  ph_low: number;
 }
 
 function isMolecule(data: any) : data is Molecule {
@@ -113,6 +116,8 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
       no_lipid: false,
       box_visible: true,
       box_break: false,
+      ph_upp: 7,
+      ph_low: 7,
     };
   }
 
@@ -226,7 +231,7 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
   };
 
   startInsane = async () => {
-    const { settings, lipids, molecule } = this.state;
+    const { settings, lipids, molecule, ph_upp, ph_low } = this.state;
     const parameters: any = {};
 
     if (!molecule || !settings || !lipids) {
@@ -250,6 +255,10 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
 
     parameters.box = settings.box_size.join(',');
     parameters.pbc = settings.box_type;
+
+    // pH params
+    parameters.ph_upp = ph_upp;
+    parameters.ph_low = ph_low;
 
     // Area params
     parameters.area_per_lipid = settings.area_per_lipid;
@@ -468,6 +477,27 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
         }}
         lipids={this.state.available_lipids}
         noLipid={this.state.no_lipid}
+        ph_upp={this.state.ph_upp}
+        ph_low={this.state.ph_low}
+        phUppChange={(_: any, value: number | number[])=> {
+          if (Array.isArray(value)) {
+            value = value[0];
+          }
+          this.setState({ph_upp: value});
+        }}
+        phLowChange={(_: any, value: number | number[])=> {
+          if (Array.isArray(value)) {
+            value = value[0];
+          }
+          this.setState({ph_low: value});
+        }}
+        phLipidsChange={(_: any, value: number | number[])=> {
+          if (Array.isArray(value)) {
+            value = value[0];
+          }
+          this.setState({ph_upp: value});
+          this.setState({ph_low: value});
+        }}
       />
     );
   }

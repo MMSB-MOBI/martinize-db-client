@@ -1,7 +1,7 @@
 import React from 'react';
 import { Marger, FaIcon } from '../../../helpers';
 import { Button, Typography, FormControl, FormGroup, FormControlLabel, Switch, Slider, Divider, Box, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Theme, Slide } from '@material-ui/core';
-import { ToggleButtonGroup, ToggleButton } from '@material-ui/lab';
+import { ToggleButtonGroup, ToggleButton, Alert } from '@material-ui/lab';
 import { ViableRepresentation } from '../NglWrapper';
 import Tooltip from '../../../Tooltip';
 import MoleculeSaverModal from './MoleculeSaverModal';
@@ -47,19 +47,32 @@ export default function MartinizeGenerated(props: MartinizeGeneratedProps) {
   const [wantReset, setWantReset] = React.useState(false);
   const [saverModal, setSaverModal] = React.useState("");
 
-  const [warning, setWarning] = React.useState(true);
+  const [warning, setWarning] = React.useState(false);
 
   return (
     <React.Fragment>
-      {props.stdout != [] && <Dialog
+      {(props.stdout!.length != 0 ? true : false) &&
+
+      <Alert severity="warning" action={
+        <Button 
+          size="medium"
+          color="inherit" 
+          onClick={() => setWarning(true)}
+        >
+          Warnings were encountered
+        </Button>
+      }>
+      </Alert>}
+
+      <Dialog
         open={warning}
         fullWidth={true}
         maxWidth="lg"
         >
-        <DialogTitle>Gromacs encountered the following warnings :</DialogTitle>
+        <DialogTitle>Gromacs encountered {props.stdout!.length} warnings : </DialogTitle>
         <DialogContent>
           <DialogContentText>
-            {props.stdout.map((line : any) => <div>{line}<br></br><br></br></div>)}
+            {props.stdout ? props.stdout.map((line : any) => <span>{line}<br></br><br></br></span>) : ''}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
@@ -67,8 +80,7 @@ export default function MartinizeGenerated(props: MartinizeGeneratedProps) {
             Close
           </Button>
         </DialogActions>
-      </Dialog>}
-
+      </Dialog>
 
       <MoleculeSaverModal
         open={!!saverModal} 
@@ -88,7 +100,7 @@ export default function MartinizeGenerated(props: MartinizeGeneratedProps) {
           </DialogContentText>
           <DialogContentText>
             If you want to use this molecule in Membrane Builder or get back to this page later,
-            you must save the molecule firt, using the appropriate button.
+            you must save the molecule first, using the appropriate button.
           </DialogContentText>
         </DialogContent>
 
@@ -188,12 +200,22 @@ export default function MartinizeGenerated(props: MartinizeGeneratedProps) {
       {/* Go / Elastic networks virtual bonds */}
       {props.virtualLinks && <React.Fragment>
         <Typography variant="h6">
-          Virtual {props.virtualLinks === "go" ? "Go" : "elastic"} bonds
+          Virtual {props.virtualLinks === "go" ? "Go" : "Elastic"} bonds
         </Typography>
 
         <Marger size=".5rem" />
 
         {props.virtualLinks === "go" && <Box alignContent="center" justifyContent="center" width="100%">
+          <Button 
+            style={{ width: '100%' }} 
+            color="primary" 
+            onClick={props.onGoEditorStart}
+          >
+            <FaIcon pen /> <span style={{ marginLeft: '.6rem' }}>Edit</span>
+          </Button>
+        </Box>}
+
+        {props.virtualLinks === "elastic" && <Box alignContent="center" justifyContent="center" width="100%">
           <Button 
             style={{ width: '100%' }} 
             color="primary" 

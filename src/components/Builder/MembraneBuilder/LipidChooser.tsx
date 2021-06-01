@@ -1,5 +1,5 @@
-import React from 'react';
-import { withStyles, Typography, Button, TextField, IconButton, CircularProgress, FormControlLabel, Checkbox, makeStyles } from '@material-ui/core';
+import React, { ChangeEvent } from 'react';
+import { withStyles, Typography, Button, TextField, IconButton, CircularProgress, FormControlLabel, Checkbox, makeStyles, Slider } from '@material-ui/core';
 import { toast } from '../../Toaster';
 import { Marger, FaIcon } from '../../../helpers';
 import { SimpleSelect } from '../../../Shared';
@@ -21,6 +21,11 @@ interface LCProps {
   onPrevious(): any;
   lipids: string[];
   noLipid: boolean;
+  ph_upp: number;
+  ph_low: number;
+  phUppChange(_: any, value: number | number[]) : any;
+  phLowChange(_: any, value: number | number[]) : any;
+  phLipidsChange(_: any, value: number | number[]) : any;
 }
 
 interface LCState {
@@ -226,6 +231,19 @@ class LipidChooser extends React.Component<LCProps, LCState> {
             onItemChange={this.onUpperLipidChange}
             onItemDelete={this.onUpperLipidDelete}
           />
+          <Typography gutterBottom>
+            pH
+          </Typography>
+          <Slider
+            value={this.props.ph_upp}
+            valueLabelDisplay="auto"
+            step={0.1}
+            marks
+            min={0.1}
+            max={13.9}
+            onChange={this.props.phUppChange}
+            color="secondary"
+          />
 
           <Marger size="1rem" />
         </React.Fragment>}
@@ -240,6 +258,20 @@ class LipidChooser extends React.Component<LCProps, LCState> {
           onItemAdd={this.onLipidAdd}
           onItemChange={this.onLipidChange}
           onItemDelete={this.onLipidDelete}
+        />
+
+        <Typography gutterBottom>
+          pH
+        </Typography>
+        <Slider
+          value={this.props.ph_low}
+          valueLabelDisplay="auto"
+          step={0.1}
+          marks
+          min={0.1}
+          max={13.9}
+          onChange={!this.state.upper_separated ? this.props.phLipidsChange : this.props.phLowChange}
+          color="secondary"
         />
 
         <Marger size="1rem" />

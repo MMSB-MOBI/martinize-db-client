@@ -1,5 +1,6 @@
 import LocalForage from 'localforage';
 import uuid from 'uuid/v4';
+import { BaseBondsHelperJSON } from './components/Builder/BaseBondsHelper';
 import { GoBondsHelperJSON } from './components/Builder/GoBondsHelper';
 
 /**
@@ -43,7 +44,7 @@ export interface StashedBuild {
   radius: { [atomName: string]: number };
   elastic_bonds?: ElasticOrGoBounds[];
   info: StashedBuildInfo;
-  go?: GoBondsHelperJSON;
+  go?: BaseBondsHelperJSON | GoBondsHelperJSON;
 }
 
 /**
@@ -110,6 +111,10 @@ export default class StashedBuildHelper {
     const info = await this.store_infos.getItem<StashedBuildInfo>(uuid);
     
     return !!info;
+  }
+
+  async checkName(name: string) {
+    //const molecule = await this.store_infos.iterate()
   }
 
   async list() {

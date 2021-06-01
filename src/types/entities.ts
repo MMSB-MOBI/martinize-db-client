@@ -8,7 +8,7 @@ export interface BaseMolecule {
   /** Mol smiles formula (optional) */
   smiles: string;
   /** Category, should be a GO Term */
-  category: string;
+  category: string[];
   /** Molecule version (free text) */
   version: string;
   /** Free comment text. */
