@@ -202,6 +202,7 @@ export class Explore extends React.Component<RouteComponentProps, ExploreState> 
 
   protected changeFilters(filters: Filters) {
     this.setState({ filters });
+    this.setState({ page: 0 });
   }
   
   render() {
