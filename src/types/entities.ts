@@ -62,6 +62,8 @@ export interface User {
   /** User role */
   role: UserRole;
   approved: boolean;
+  fullname: string; 
+  affiliation: string; 
 }
 
 export interface Token {
