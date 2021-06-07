@@ -1,5 +1,5 @@
 import React from 'react';
-import { makeStyles, Paper, TableContainer, Table, TableHead, TableRow, TableCell, TableBody, TableFooter, CircularProgress, createStyles, IconButton, TablePagination } from '@material-ui/core';
+import { makeStyles, Paper, TableContainer, Table, TableHead, TableRow, TableCell, TableBody, TableFooter, CircularProgress, createStyles, IconButton, TablePagination, FormControlLabel, Checkbox } from '@material-ui/core';
 import clsx from 'clsx';
 import FirstPageIcon from '@material-ui/icons/FirstPage';
 import KeyboardArrowLeft from '@material-ui/icons/KeyboardArrowLeft';
@@ -12,13 +12,18 @@ import { DeleteModal } from '../Molecule/MoleculeInfo';
 import ApiHelper from '../../ApiHelper';
 import { notifyError, findInCategoryTree, dateFormatter } from '../../helpers';
 import Settings from '../../Settings';
+import { FavoriteBorder, Favorite, CheckBoxOutlineBlank } from '@material-ui/icons';
+import EmojiFoodBeverageOutlinedIcon from '@material-ui/icons/EmojiFoodBeverageOutlined';
+import EmojiFoodBeverageIcon from '@material-ui/icons/EmojiFoodBeverage';
+import JSZip from 'jszip';
+import { SERVER_ROOT } from '../../constants';
 
 const useStyles = makeStyles(theme => ({
   paperRoot: {
     width: '100%',
   },
   container: {
-    maxHeight: '80vh',
+    //maxHeight: '80vh',
   },
   moleculeLink: {
     color: theme.palette.primary.main,
@@ -38,6 +43,28 @@ interface Column {
   format?: (value: any) => string;
 }
 
+async function downloadMolecules(moleculeList: BaseMolecule[]) {
+  if (moleculeList.length === 0) {
+    //console.warn("Hey, files should be present in component when this method is called.");
+    return;
+  }
+
+  //this.setState({ generating_files: true });
+
+  //try {
+    const zip = new JSZip();
+    /*
+    moleculeList.forEach(mol => {
+      zip.folder(mol.name);
+      ApiHelper.request('molecule', { mol.alias })  
+    */
+}
+
+function addMoleculesToDownload(molecule: BaseMolecule, moleculeList: BaseMolecule[]) {
+  moleculeList.push(molecule);
+  return moleculeList;
+}
+
 export default function MoleculeTable(props: {
   loading?: boolean,
   molecules: BaseMolecule[],
@@ -49,6 +76,7 @@ export default function MoleculeTable(props: {
   moderation?: boolean,
   withVersion?: boolean,
   }) {
+  let molToDownload: BaseMolecule[] = [];
   const classes = useStyles();
   const { loading, molecules, length, rowsPerPage, page, onChangePage } = props;
   const [deleteMol, setDeleteMol] = React.useState("");
@@ -126,11 +154,19 @@ export default function MoleculeTable(props: {
               {molecules.map(row => {
                 return (
                   <TableRow hover role="checkbox" tabIndex={-1} key={row.id}>
-                    {props.moderation && <TableCell align="left">
+                    {/*props.moderation && <TableCell align="left">
                       <IconButton onClick={() => setDeleteMol(row.id)}>
                         <DeleteIcon />
                       </IconButton>
-                    </TableCell>}
+                    </TableCell>*/}
+
+                    <TableCell align="left" size="small">
+                      <FormControlLabel
+                        control={<Checkbox size="small" //icon={<CheckBoxOutlineBlank />} checkedIcon={<Checkbox />} 
+                        name="checkedH" onClick={() => addMoleculesToDownload(row, molToDownload)}/>}
+                        label=''
+                      />
+                    </TableCell>
 
                     {columns.map(column => {
                       const value = row[column.id];

@@ -11,7 +11,7 @@ import MoleculeFilters, { Filters } from './ExploreFilters';
 import AddMolecule from '../AddMolecule/AddMolecule';
 import { Link, Icon, Container, Typography } from '@material-ui/core';
 import clsx from 'clsx';
-import Settings from '../../Settings';
+import Settings, { LoginStatus } from '../../Settings';
 
 // Icon <Icon className="fas fa-camera" />
 
@@ -251,6 +251,8 @@ export class Explore extends React.Component<RouteComponentProps, ExploreState> 
             this.setState({ add_open: false });
           }}
         />
+
+        <Marger size={30} />
       </Container>
     );
   }
