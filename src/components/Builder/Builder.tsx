@@ -138,7 +138,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
   protected get original_state() : MBState {
     return {
       running: 'pdb',
-      builder_force_field: 'martini304',
+      builder_force_field: 'martini3001',
       builder_mode: 'classic',
       builder_positions: 'backbone',
       builder_ef: '500',
