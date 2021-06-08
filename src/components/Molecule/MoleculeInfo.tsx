@@ -26,9 +26,16 @@ const useStyles = makeStyles(theme => ({
     justifyContent: 'space-between',
     gridTemplateColumns: '47% 50%',
     rowGap: '1rem',
-    [theme.breakpoints.down('sm')]: {
-      gridTemplateColumns: '1fr',
+    [theme.breakpoints.down('md')]: {
+      gridTemplateColumns: '97%',
     },
+  },
+  comments: {
+    whiteSpace: 'pre-line',
+    maxHeight: '400px',
+    overflowY: 'scroll',
+    outline: '0.01rem dashed',
+    padding: '0.3rem',
   },
   alias: {
     fontSize: '1.3rem',
@@ -90,7 +97,7 @@ export default function MoleculeInfo<T extends StashedMolecule | Molecule>(props
   const lu_date = 'last_update' in molecule && dateFormatter("Y-m-d H:i", new Date(molecule.last_update));
 
   const show_last_update = !!lu_date && lu_date !== ca_date;
-  const category = React.useMemo(() => findInCategoryTree(Settings.martinize_variables.category_tree, molecule.category), [molecule]);
+  const category = React.useMemo(() => molecule.category.map(val => findInCategoryTree(Settings.martinize_variables.category_tree, val)).join(', '), [molecule]);
 
   /** BUTTONS */
   let is_same_as_logged = false;
@@ -133,6 +140,22 @@ export default function MoleculeInfo<T extends StashedMolecule | Molecule>(props
       });
   };
 
+  /*
+  const regex2 = new RegExp(/(doi:\S+)/g);
+  let citations = molecule.citation.split(regex2); ///(doi:\S+ ;)/);
+  let citations_str = '';
+  for (let i = 0; i < citations.length; i++) {
+    citations_str += citations[i];
+    if (i%2 === 0 && i !== 0) {
+      citations_str += ' split ';
+    } else if (i !== 0 && i%2 === 1) {
+      citations_str += ' ';
+    }
+    
+  }
+  citations = citations_str.split(' split ');
+  */
+
   return (
     <Fragment>
       <Marger size="1.5rem" />
@@ -147,15 +170,15 @@ export default function MoleculeInfo<T extends StashedMolecule | Molecule>(props
           <Marger size="1rem" />
 
           <Typography className={classes.name}>
-            {molecule.name}
+            Name : {molecule.name}
           </Typography>
 
           <Typography className={classes.alias}>
-            {molecule.alias}
+            Alias : {molecule.alias}
           </Typography>
 
           <Typography className={classes.category}>
-            {category}
+            Categories : {category}
           </Typography>
 
           {molecule.smiles && <Typography color="textSecondary">
@@ -164,11 +187,14 @@ export default function MoleculeInfo<T extends StashedMolecule | Molecule>(props
 
           <Marger size="1rem" />
 
-          <Typography component="pre">
+          {molecule.comments && <Typography>
+            Comments :
+          </Typography>}
+          {molecule.comments && <Typography className={classes.comments} component="pre">
             {molecule.comments}
-          </Typography>
+          </Typography>}
 
-          <Marger size="1rem" />
+          <Marger size="2rem" />
 
           <Typography className={classes.version}>
             Version <strong>{molecule.version}</strong> created at {ca_date}.
@@ -212,12 +238,14 @@ export default function MoleculeInfo<T extends StashedMolecule | Molecule>(props
             Created for force field <strong>{molecule.force_field}</strong> (<strong>{Settings.martinize_variables.create_way[molecule.create_way]}</strong>).
           </Typography>
 
+          <Marger size="1rem" />
           {molecule.validation && <Typography className={classes.version}>
             Validation information: <strong>{molecule.validation}</strong>
           </Typography>}
 
+          <Marger size="1rem" />
           {molecule.citation && <Typography className={classes.version}>
-            For using this molecule, please cite: <strong>{molecule.citation}</strong>
+            For using this molecule, please cite:<br /> {molecule.citation}
           </Typography>}
         </div>
       </Fragment>

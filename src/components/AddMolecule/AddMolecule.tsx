@@ -12,6 +12,7 @@ import ApiHelper from '../../ApiHelper';
 import { SERVER_ROOT } from '../../constants';
 import { SettingsJson } from '../../types/settings';
 import TopCreator from './TopCreator';
+import { MultipleSelect } from '../Explore/ExploreFilters';
 
 interface AddMoleculeProps {
   /**
@@ -43,7 +44,7 @@ interface AddMoleculeState {
   name: string;
   alias: string;
   smiles: string;
-  category: string;
+  category: string[];
   command_line: string;
   version: string;
   comments: string;
@@ -71,7 +72,7 @@ class AddMolecule extends React.Component<AddMoleculeProps, AddMoleculeState> {
       name: props.from?.name ?? (props.parent?.name ?? ""),
       alias: props.from?.alias ?? (props.parent?.alias ?? ""),
       smiles: props.from?.smiles ?? (props.parent?.smiles ?? ""),
-      category: props.from?.category ?? (props.parent?.category ?? ""),
+      category: props.from?.category ?? (props.parent?.category ?? [""]),
       command_line: props.from?.command_line ?? "",
       version: props.from?.version ?? "",
       comments: props.from?.comments ?? "",
@@ -120,7 +121,7 @@ class AddMolecule extends React.Component<AddMoleculeProps, AddMoleculeState> {
           name: "",
           alias: "",
           smiles: "",
-          category: "",
+          category: [],
         });
       }
 
@@ -400,12 +401,12 @@ class AddMolecule extends React.Component<AddMoleculeProps, AddMoleculeState> {
                   variant="outlined"
                   disabled={this.is_disabled}
                 />  
-  
-                <SimpleSelect 
+
+                <MultipleSelect 
                   id="s-category-new"
                   label="Category"
                   onChange={v => this.setState({ category: v })}
-                  values={this.categories}
+                  options={this.categories.map(e => ({ value: e.id, label: e.name }))} 
                   value={category}
                   disabled={this.is_disabled}
                   required
