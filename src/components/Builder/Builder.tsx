@@ -24,6 +24,9 @@ import MartinizeGenerated from './ProteinBuilder/MartinizeGenerated';
 import GoEditor from './ProteinBuilder/GoEditor';
 import GoBondsHelper, { BondsRepresentation } from './GoBondsHelper';
 import { BetaWarning } from '../../Shared'; 
+import Settings, { LoginStatus } from '../../Settings';
+import EmbeddedError from '../Errors/Errors';
+
 
 // @ts-ignore
 window.NGL = ngl; window.GoBondsHelper = GoBondsHelper;
@@ -110,6 +113,15 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
   componentDidMount() {
     setPageTitle('Protein Builder');
+    console.log("Builder mount")
+    console.log(Settings.logged); 
+    console.log(LoginStatus.None);
+
+    if (Settings.logged === LoginStatus.None) {
+      console.log("OOOOO")
+      return;
+    }
+
     // @ts-ignore
     window.MoleculeBuilder = this;
 
@@ -119,7 +131,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
   protected get original_state() : MBState {
     return {
       running: 'pdb',
-      builder_force_field: 'martini304',
+      builder_force_field: 'martini3001',
       builder_mode: 'classic',
       builder_positions: 'backbone',
       builder_ef: '500',
@@ -1185,6 +1197,10 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     const classes = this.props.classes;
     const is_dark = this.state.theme.palette.type === 'dark';
 
+    if (Settings.logged === LoginStatus.None) {
+      return <EmbeddedError title="Forbidden" text="You can't access the molecule builder page without account" />
+    }
+
     return (
       <ThemeProvider theme={this.state.theme}>
         {this.renderModalBackToDatabase()}
@@ -1202,7 +1218,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
                 <Typography component="h1" variant="h3" align="center" style={{ fontWeight: 700, fontSize: '2.5rem', marginBottom: '1rem' }}>
                   Martinize a molecule
                 </Typography>
-
+                
                 <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
                   <Link 
                     href="#!" 
