@@ -15,6 +15,9 @@ import JSZip from 'jszip';
 import { Molecule } from '../../types/entities';
 import { Alert, AlertTitle } from '@material-ui/lab';
 import { BetaWarning } from '../../Shared'; 
+import EmbeddedError from '../Errors/Errors';
+import Settings, { LoginStatus } from '../../Settings';
+
 
 
 // @ts-ignore
@@ -85,6 +88,10 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
   async componentDidMount() {
     // Init ngl stage
     setPageTitle('Membrane Builder');
+    if (Settings.logged === LoginStatus.None) {
+      return;
+    }
+
     // @ts-ignore
     window.MembraneBuilder = this;
 
@@ -661,6 +668,10 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
       lipids: this.state.running === 'choose_lipids',
       settings: this.state.running === 'choose_settings',
     };
+
+    if (Settings.logged === LoginStatus.None) {
+      return <EmbeddedError title="Forbidden" text="You can't access the membrane builder page without account" />
+    }
 
     return (
       <ThemeProvider theme={this.state.theme}>

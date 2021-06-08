@@ -28,6 +28,8 @@ import { BetaWarning } from '../../Shared';
 import { stdout } from 'process';
 import BaseBondsHelper from './BaseBondsHelper';
 import ElasticBondHelper from './ElasticBondHelper';
+import Settings, { LoginStatus } from '../../Settings';
+import EmbeddedError from '../Errors/Errors';
 
 
 // @ts-ignore
@@ -127,6 +129,15 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
   componentDidMount() {
     setPageTitle('Protein Builder');
+    console.log("Builder mount")
+    console.log(Settings.logged); 
+    console.log(LoginStatus.None);
+
+    if (Settings.logged === LoginStatus.None) {
+      console.log("OOOOO")
+      return;
+    }
+
     // @ts-ignore
     window.MoleculeBuilder = this;
 
@@ -1380,6 +1391,10 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
   render() {
     const classes = this.props.classes;
     const is_dark = this.state.theme.palette.type === 'dark';
+
+    if (Settings.logged === LoginStatus.None) {
+      return <EmbeddedError title="Forbidden" text="You can't access the molecule builder page without account" />
+    }
 
     return (
       <ThemeProvider theme={this.state.theme}>
