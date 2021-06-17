@@ -6,6 +6,7 @@ import { toast } from '../../Toaster';
 import { errorToText, Marger, setPageTitle } from '../../../helpers';
 import UserIcon from '@material-ui/icons/PersonAdd';
 import { Link as RouterLink } from 'react-router-dom';
+import { Alert } from '@material-ui/lab';
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -96,6 +97,10 @@ export default function CreateAccount() {
       <Typography component="h1" variant="h5">
         Create an account
       </Typography>
+
+      <Marger size="1rem" />
+
+      <Alert severity="warning"> This service is still under development and test phase. If you're not a tester, your account request will only be accepted around September 2021. </Alert>
 
       <Marger size="1rem" />
 

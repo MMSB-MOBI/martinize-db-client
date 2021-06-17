@@ -1393,7 +1393,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     const is_dark = this.state.theme.palette.type === 'dark';
 
     if (Settings.logged === LoginStatus.None) {
-      return <EmbeddedError title="Forbidden" text="You can't access the molecule builder page without account" />
+      return <EmbeddedError title="Forbidden" text="You can't access the Molecule Builder page without account. New accounts for using beta versions of Molecule Builder will be available starting September 1st 2021." />
     }
 
     return (

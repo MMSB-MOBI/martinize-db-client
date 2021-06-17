@@ -65,5 +65,10 @@ export function SimpleSelect(props: {
 }
 
 export const BetaWarning = () => {
-  return <Alert severity="warning" style = {{justifyContent:'center'}}> This is a beta version of MAD service. If you have any suggestions or problems, please contact us at mad-support@ibcp.fr or use contact page. </Alert>
+  return <Alert severity="warning" style = {{justifyContent:'center', alignItems: 'center'}}>
+    <div>
+     <div>This is a beta version of MAD service. If you have any suggestions or problems, please contact us at mad-support@ibcp.fr or use contact page. </div>
+     <div> New accounts for using beta versions of Molecule Builder and System Builder will be available starting September 1st 2021. </div>
+    </div>
+  </Alert>
 } 

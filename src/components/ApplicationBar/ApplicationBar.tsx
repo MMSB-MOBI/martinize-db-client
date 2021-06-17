@@ -70,6 +70,7 @@ interface DrawerElement {
   text?: string;
   condition?: boolean;
   count?: Countable; 
+  font?: number | "-moz-initial" | "inherit" | "initial" | "revert" | "unset" | "normal" | "bold" | "bolder" | "lighter" ; 
   render?: () => JSX.Element;
 }
 
@@ -109,7 +110,33 @@ function DrawerElements(props: RouteComponentProps) {
         link: true,
         icon: "compass",
         text: "Explore",
+        font : "bold"
       },
+      {
+        path: '/builder',
+        link: true,
+        icon: 'atom',
+        text: 'Molecule builder',
+        //condition: !!Settings.logged,
+        font : "bold"
+      },
+      {
+        path: '/membrane_builder',
+        link: true,
+        icon: 'virus',
+        text: 'System builder',
+        //condition: !!Settings.logged,
+        font : "bold"
+      },
+      {
+        path: '/force_fields',
+        link: true,
+        icon: "download",
+        text: "Force fields",
+        font: "bold"
+      }
+    ],
+    [
       {
         path: '/submissions',
         link: true,
@@ -140,22 +167,7 @@ function DrawerElements(props: RouteComponentProps) {
         condition: Settings.logged === LoginStatus.Admin,
         count: "users"
       },
-    ],
-    [
-      {
-        path: '/builder',
-        link: true,
-        icon: 'atom',
-        text: 'Molecule builder',
-        condition: !!Settings.logged,
-      },
-      {
-        path: '/membrane_builder',
-        link: true,
-        icon: 'virus',
-        text: 'Membrane builder',
-        condition: !!Settings.logged,
-      }
+
     ],
     [
       {
@@ -176,12 +188,6 @@ function DrawerElements(props: RouteComponentProps) {
         link: true,
         icon: "envelope",
         text: "Contact"
-      },
-      {
-        path: '/force_fields',
-        link: true,
-        icon: "download",
-        text: "Force fields"
       }
     ]
   ];
@@ -208,14 +214,16 @@ function DrawerElements(props: RouteComponentProps) {
           component={e.link ? Link : "div"} 
           to={e.path}
           selected={props.location.pathname === e.path}
+          style={{fontWeight : 600}}
+          
         >
           <ListItemIcon>
             {e.count ? 
               <BadgedIcon icon={e.icon} toCount={e.count}/> :
-              <Icon className={"fas fa-" + e.icon}/>
+              <Icon className={"fas fa-" + e.icon} style={{color: e.font ? 'black' : ''}}/>
             }
           </ListItemIcon>
-          <ListItemText primary={e.text} />
+          <ListItemText primary={<Typography style={{ fontWeight: e.font ? e.font : 'normal' }}>{e.text}</Typography>}/>
         </ListItem>
       );
       i++;

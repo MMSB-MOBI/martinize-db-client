@@ -8,6 +8,8 @@ import { APIError } from '../../ApiHelper';
 import { errorToText } from '../../helpers';
 import { CenterComponent } from '../../Shared';
 import './Errors.scss';
+import { Link as RouterLink } from 'react-router-dom';
+import { FaIcon } from '../../helpers'; 
 
 type EEProp = {
   error?: APIError | number;
@@ -93,6 +95,12 @@ const EmbeddedError: React.FC<EEProp> = props => {
       </Link>}
 
       {props.children}
+      <div style = {{paddingTop:'1rem'}}>
+      <RouterLink to="/" > 
+          <FaIcon home style={{ fontSize: '1rem' }} /> 
+          <span style={{fontSize : '1rem'}}> MAD Home </span> 
+      </RouterLink>
+      </div>
     </CenterComponent>
   )
 };
