@@ -63,7 +63,7 @@ export default function LoadPdb(props: LoadPdbProps) {
           component={RouterLink} 
           to="/membrane_builder"
         >
-          membrane builder
+          system builder
         </Link>.
       </Typography>
 

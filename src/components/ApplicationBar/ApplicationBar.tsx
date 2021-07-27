@@ -152,7 +152,7 @@ function DrawerElements(props: RouteComponentProps) {
         path: '/membrane_builder',
         link: true,
         icon: 'virus',
-        text: 'Membrane builder',
+        text: 'System builder',
       }
     ],
     [

@@ -1,6 +1,6 @@
 import React from 'react';
 import * as ngl from '@mmsb/ngl';
-import { withStyles, ThemeProvider, Theme, withTheme, Grid, Link, Typography, Paper, Divider, createMuiTheme, Dialog, DialogTitle, DialogContent, DialogContentText, Button, DialogActions, Box, CircularProgress, FormControl, FormGroup, FormControlLabel, Switch, Slider, Checkbox } from '@material-ui/core';
+import { withStyles, ThemeProvider, Theme, withTheme, Grid, Link, Typography, Paper, Divider, createMuiTheme, Dialog, DialogTitle, DialogContent, DialogContentText, Button, DialogActions, Box, CircularProgress, FormControl, FormGroup, FormControlLabel, Switch, Slider, Checkbox, FormLabel, Radio, RadioGroup } from '@material-ui/core';
 import { Link as RouterLink } from 'react-router-dom';
 import { FaIcon, setPageTitle, Marger, downloadBlob } from '../../helpers';
 import { blue } from '@material-ui/core/colors';
@@ -13,8 +13,9 @@ import BallAndStickRepresentation from '@mmsb/ngl/declarations/representation/ba
 import { toast } from '../Toaster';
 import JSZip from 'jszip';
 import { Molecule } from '../../types/entities';
-import { Alert, AlertTitle } from '@material-ui/lab';
-import { BetaWarning } from '../../Shared'; 
+import { Alert, AlertTitle, TabContext, TabPanel } from '@material-ui/lab';
+import { BetaWarning, SimpleSelect } from '../../Shared'; 
+import Settings from '../../Settings';
 
 
 // @ts-ignore
@@ -45,7 +46,7 @@ interface MBuilderState {
   want_go_back: boolean;
 
   molecule?: Molecule | MoleculeWithFiles;
-  lipids?: { lower: ChoosenLipid[], upper?: ChoosenLipid[] };
+  lipids?: { lower?: ChoosenLipid[], upper?: ChoosenLipid[] };
   settings?: SettingsInsane;
 
   insane_error?: any;
@@ -62,6 +63,10 @@ interface MBuilderState {
 
   ph_upp: number;
   ph_low: number;
+
+  addMolecule: string;
+  addLipids: string;
+  ff: string;
 }
 
 function isMolecule(data: any) : data is Molecule {
@@ -84,7 +89,7 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
 
   async componentDidMount() {
     // Init ngl stage
-    setPageTitle('Membrane Builder');
+    setPageTitle('System Builder');
     // @ts-ignore
     window.MembraneBuilder = this;
 
@@ -118,6 +123,9 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
       box_break: false,
       ph_upp: 7,
       ph_low: 7,
+      addMolecule: "true",
+      addLipids: "true",
+      ff: Settings.martinize_variables.force_fields[Settings.martinize_variables.force_fields.length -1],
     };
   }
 
@@ -234,23 +242,40 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
     const { settings, lipids, molecule, ph_upp, ph_low } = this.state;
     const parameters: any = {};
 
-    if (!molecule || !settings || !lipids) {
+    if ((!molecule && this.state.addMolecule === "true") || !settings || (!lipids && this.state.addLipids === "true")) {
       return;
     }
 
-    if (lipids.upper) {
-      parameters.upper_leaflet = lipids.upper.map(e => `${e.name}:${e.ratio}`).join(',');
+    parameters.lipids_added = this.state.addLipids;
+    parameters.molecule_added = this.state.addMolecule;
+
+    if (this.state.addLipids === "true"){
+      //@ts-ignore
+      if (lipids.upper) {
+        //@ts-ignore
+        parameters.upper_leaflet = lipids.upper.map(e => `${e.name}:${e.ratio}`).join(',');
+      }
+      //@ts-ignore
+      parameters.lipids = lipids.lower.map(e => `${e.name}:${e.ratio}`).join(',');
     }
-    parameters.lipids = lipids.lower.map(e => `${e.name}:${e.ratio}`).join(',');
-    
-    if (isMolecule(molecule)) {
-      parameters.from_id = molecule.id;
+
+    if (this.state.addMolecule === "true"){
+      if (isMolecule(molecule)) {
+        parameters.from_id = molecule.id;
+      }
+      else {
+        //@ts-ignore
+        parameters.pdb = molecule.pdb;
+        //@ts-ignore
+        parameters.top = molecule.top;
+        //@ts-ignore
+        parameters.itp = molecule.itps;
+        //@ts-ignore
+        parameters.force_field = molecule.force_field;
+      }
     }
     else {
-      parameters.pdb = molecule.pdb;
-      parameters.top = molecule.top;
-      parameters.itp = molecule.itps;
-      parameters.force_field = molecule.force_field;
+      parameters.force_field = this.state.ff;
     }
 
     parameters.box = settings.box_size.join(',');
@@ -279,10 +304,18 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
       parameters.rotate_angle = settings.rotate_angle;
 
     // Boolean params
-    if (settings.center_protein)
-      parameters.center = "true";
-    if (settings.orient_protein)
-      parameters.orient = "true";
+    if(this.state.addMolecule === "true" && this.state.addLipids === "true") {
+      if (settings.center_protein)
+        parameters.center = "true";
+      if (settings.orient_protein)
+        parameters.orient = "true";
+    }
+
+    // Water, salt and solvent related params
+    parameters.salt_concentration = settings.salt_concentration;
+    parameters.charge = settings.charge;
+    parameters.solvent_type = settings.solvent_type;
+
     
     try {
       const res = await ApiHelper.request('molecule/membrane_builder', {
@@ -435,7 +468,7 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
 
         <DialogContent>
           <DialogContentText>
-            You will definitively lose unsaved changes made into Membrane Builder.
+            You will definitively lose unsaved changes made into System Builder.
           </DialogContentText>
         </DialogContent>
 
@@ -449,62 +482,96 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
 
   renderChooseMolecule() {
     return (
-      <MoleculeChooser
-        onMoleculeChoose={molecule => {
-          this.setState({
-            molecule,
-            running: 'choose_lipids',
-            available_lipids: [],
-          });
+      <React.Fragment>
+        <Marger size="1rem"/>
+        <FormLabel className={this.props.classes.formLabel} component="legend">Do you want to add a molecule ?</FormLabel>
+        <RadioGroup className={this.props.classes.radioGroup} row name="scfix" value={this.state.addLipids === "true" ? this.state.addMolecule : "false"} onChange={e => this.setState({addMolecule: e.target.value})}>
+          <FormControlLabel value="false" control={<Radio />} disabled={this.state.addLipids === "false"} label="no" />
+          <FormControlLabel value="true" control={<Radio />} disabled={this.state.addLipids === "false"} label="yes" />
+        </RadioGroup>
+        {this.state.addMolecule === "false" && <SimpleSelect 
+            label="Used force field"
+            variant="standard"
+            values={Settings.martinize_variables.force_fields.map(e => ({ id: e, name: e }))}
+            id="ff"
+            value={this.state.ff}
+            onChange={e => this.setState({ff: e})}
+            formControlClass={this.props.classes.ff_select}
+            required
+          />}
+        <MoleculeChooser
+          Force_field={this.state.ff !== ''}
+          AddMolecule={this.state.addMolecule}
+          onMoleculeChoose={molecule => {
+            console.log(molecule)
+            this.setState({
+              molecule,
+              running: 'choose_lipids',
+              available_lipids: [],
+            });
 
-          this.downloadLipids(molecule.force_field);
-        }}
-      />
+            molecule !== undefined ? this.downloadLipids(molecule.force_field) : this.downloadLipids(this.state.ff);
+          }}
+        />
+      </React.Fragment>
     );
   }
   
   renderChooseLipids() {
     return (
-      <LipidChooser 
-        onLipidChoose={lipids => {
-          // Next page: settings
-          this.setState({ running: 'choose_settings', lipids });
-        }}
-        onPrevious={() => {
-          this.setState({ 
-            running: 'choose_molecule', 
-          });
-        }}
-        lipids={this.state.available_lipids}
-        noLipid={this.state.no_lipid}
-        ph_upp={this.state.ph_upp}
-        ph_low={this.state.ph_low}
-        phUppChange={(_: any, value: number | number[])=> {
-          if (Array.isArray(value)) {
-            value = value[0];
-          }
-          this.setState({ph_upp: value});
-        }}
-        phLowChange={(_: any, value: number | number[])=> {
-          if (Array.isArray(value)) {
-            value = value[0];
-          }
-          this.setState({ph_low: value});
-        }}
-        phLipidsChange={(_: any, value: number | number[])=> {
-          if (Array.isArray(value)) {
-            value = value[0];
-          }
-          this.setState({ph_upp: value});
-          this.setState({ph_low: value});
-        }}
-      />
+      <React.Fragment>
+        <Marger size="1rem"/>
+        <FormLabel className={this.props.classes.formLabel} component="legend">Do you want to add lipids ?</FormLabel>
+        <RadioGroup className={this.props.classes.radioGroup} row name="scfix" value={this.state.addMolecule === "true" ? this.state.addLipids : "true"} onChange={e => {this.setState({addLipids: e.target.value})}}>
+          <FormControlLabel value="false" control={<Radio />} disabled={this.state.addMolecule === "false"} label="no" />
+          <FormControlLabel value="true" control={<Radio />} disabled={this.state.addMolecule === "false"} label="yes" />
+        </RadioGroup>
+        <LipidChooser 
+          AddLipids={this.state.addLipids}
+          onLipidChoose={lipids => {
+            // Next page: settings
+            this.setState({ running: 'choose_settings', lipids });
+          }}
+          onPrevious={() => {
+            this.setState({ 
+              running: 'choose_molecule', 
+              addLipids : "true", 
+              addMolecule : "true",
+            });
+          }}
+          lipids={this.state.available_lipids}
+          noLipid={this.state.no_lipid}
+          ph_upp={this.state.ph_upp}
+          ph_low={this.state.ph_low}
+          phUppChange={(_: any, value: number | number[])=> {
+            if (Array.isArray(value)) {
+              value = value[0];
+            }
+            this.setState({ph_upp: value});
+          }}
+          phLowChange={(_: any, value: number | number[])=> {
+            if (Array.isArray(value)) {
+              value = value[0];
+            }
+            this.setState({ph_low: value});
+          }}
+          phLipidsChange={(_: any, value: number | number[])=> {
+            if (Array.isArray(value)) {
+              value = value[0];
+            }
+            this.setState({ph_upp: value});
+            this.setState({ph_low: value});
+          }}
+        />
+      </React.Fragment>
     );
   }
 
   renderChooseSettings() {
     return (
       <SettingsChooser 
+        addLipids={this.state.addLipids}
+        addMolecule={this.state.addMolecule}
         onSettingsChoose={settings => {
           this.setState({
             running: 'insane_wait', settings,
@@ -676,7 +743,7 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
             <div className={classes.paper}>
               <div className={classes.header}>
                 <Typography component="h1" variant="h3" align="center" style={{ fontWeight: 700, fontSize: '2.5rem', marginBottom: '1rem' }}>
-                  Membrane builder
+                  System builder
                 </Typography>
 
                 <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
@@ -753,4 +820,19 @@ export default withStyles(theme => ({
     overflow: 'auto', 
     maxHeight: '100vh',
   },
+  ff_select: {
+    width: '100%'
+  },
+  formLabel: {
+    width: "100%",
+    textAlign: "center",
+    color: "black",
+    fontSize: "20px",
+    fontWeight: "bold",
+  },
+  radioGroup: {
+    marginLeft: "auto",
+    marginRight: "auto",
+    width: "10em",
+  }
 }))(withTheme(MembraneBuilder));
