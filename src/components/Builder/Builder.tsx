@@ -214,6 +214,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
         cystein_bridge: this.state.cystein_bridge,
         advanced: this.state.advanced,
         commandline: this.state.commandline,
+        stdout: this.state.stdout
       },
       all_atom: this.state.all_atom_pdb!,
       coarse_grained: this.state.files.pdb,
@@ -1031,7 +1032,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     try {
       const zip = new JSZip();
       const files = this.state.files;
-  
+
       zip.file(files.pdb.name, files.pdb.content);
       zip.file(files.top.name, files.top.content);
 

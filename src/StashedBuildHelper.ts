@@ -28,6 +28,7 @@ export interface StashedBuildInfo {
 
   advanced: string;
   commandline: string;
+  stdout : string[]; //To handle warnings
 }
 
 export interface MartinizeFile {
