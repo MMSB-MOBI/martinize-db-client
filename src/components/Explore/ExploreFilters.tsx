@@ -51,12 +51,14 @@ const MenuProps: any = {
   variant: 'menu',
 };
 
-function MultipleSelect(props: { 
+export function MultipleSelect(props: { 
   value: string[], 
   options: { value: string, label?: string }[], 
   onChange: (values: string[]) => void,
   label: string,
   id: string,
+  disabled?: boolean,
+  required?: boolean,
 }) {
   const handleChange = (event: React.ChangeEvent<{ value: unknown }>) => {
     props.onChange(event.target.value as string[]);
@@ -73,9 +75,12 @@ function MultipleSelect(props: {
 
   return (
     <FormControl variant="outlined" className={classes.formControl}>
-      <InputLabel ref={inputLabel} id={props.id}>{props.label}</InputLabel>
+      <InputLabel ref={inputLabel} id={props.id}>
+        {props.label}
+      </InputLabel>
       <Select 
         multiple 
+        labelId={props.id}
         value={props.value}
         onChange={handleChange}
         labelWidth={labelWidth}
@@ -83,6 +88,8 @@ function MultipleSelect(props: {
           name: 'age',
           id: props.id,
         }}
+        required
+        disabled={props.disabled}
         MenuProps={MenuProps}
       >
         {props.options.map(v => <MenuItem key={v.value} value={v.value} style={getStyles(v.value, props.value, theme)}>

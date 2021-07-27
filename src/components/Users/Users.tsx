@@ -1,10 +1,11 @@
 import React from 'react';
-import { Container, Typography, withStyles, List, ListItem, ListItemAvatar, Avatar, ListItemText, Button, Paper, CircularProgress, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@material-ui/core';
+import { Container, Typography, withStyles, List, ListItem, ListItemAvatar, Avatar, ListItemText, Button, Paper, CircularProgress, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Card, CardContent } from '@material-ui/core';
 import { Marger, notifyError, setPageTitle } from '../../helpers';
 import { User } from '../../types/entities';
 import ApiHelper from '../../ApiHelper';
 import { CenterComponent, LoadFader } from '../../Shared';
 import Settings from '../../Settings';
+
 
 interface UserState {
   loading: boolean;
@@ -57,7 +58,9 @@ class Users extends React.Component<{ classes: Record<string, string> }, UserSta
               >
                 <strong>{user.name}</strong> 
               </Typography>
-              {" — "}{user.email}
+              {" - "}{user.email}
+              <p style={{margin:0, marginTop:'0.2rem'}}> <strong>Full name : </strong>{user.fullname} </p>
+              <p style={{margin:0}}> <strong> Affiliation :  </strong> {user.affiliation}</p>
             </React.Fragment>
           }
           secondary={

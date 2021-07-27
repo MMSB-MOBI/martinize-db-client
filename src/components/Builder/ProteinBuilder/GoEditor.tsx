@@ -9,6 +9,8 @@ import { Marger, FaIcon } from '../../../helpers';
 import BallAndStickRepresentation from '@mmsb/ngl/declarations/representation/ballandstick-representation';
 import { toast } from '../../Toaster';
 import GoBondsHelper from '../GoBondsHelper';
+import BaseBondsHelper from '../BaseBondsHelper';
+import { CollectionsBookmarkSharp } from '@material-ui/icons';
 
 interface GoEditorProps {
   stage: NglWrapper;
@@ -21,6 +23,7 @@ interface GoEditorProps {
   onBondRemoveFromSet(atoms: Set<number>, target?: Set<number>): any;
   onGoHistoryBack(opacity?: number): any;
   onGoHistoryRevert(opacity?: number): any;
+  onHistoryDownload(): any;
 
   onValidate(): any;
   onCancel(): any;
@@ -28,7 +31,8 @@ interface GoEditorProps {
   onRedrawGoBonds(highlight?: number | [number, number], opacity?: number): any;
   setColorForCgRepr(schemeId?: string): any;
 
-  goInstance: GoBondsHelper;
+  goInstance: BaseBondsHelper;
+  mode: "go" | "elastic" | "classic";
 }
 
 interface GoEditorState {
@@ -91,7 +95,13 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
     if (this.state.show_side_chains) {
       return ".CA or .SC1 or .BB or .SC2 or .SC3 or .SC4";
     }
-    return ".CA";
+    if(this.props.mode === "go") {
+      return ".CA";
+    } else if (this.props.mode === "elastic") {
+      return ".BB";
+    }
+    return "";
+    
   }
 
   componentDidMount() {
@@ -136,7 +146,7 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
 
     // Detect type
     // If go atom, pp.atom.element === "CA"
-    if (pp.atom?.element === "CA") {
+    if ((this.props.mode === "go" && pp.atom?.element === "CA") || (this.props.mode === "elastic" && pp.atom?.atomname === "BB")) {
       // GO atom
       let source_or_target = pp.atom.index;
       // Get the residue index (this is the needed thing to highlight it)
@@ -187,7 +197,7 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
       // this might be a go bond...
       const obj = pp.object as PickedGoBond;
 
-      if (!obj.name.startsWith('[GO]')) {
+      if (!obj.name.startsWith('[GO]') && !obj.name.startsWith('[ELASTIC]')) {
         return;
       }
 
@@ -222,7 +232,7 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
 
   highlightAtom(atom_index: number) {
     const schemeId = ngl.ColormakerRegistry.addSelectionScheme([
-      ["red", `@${atom_index}`],
+      ["orange", `@${atom_index}`],
       // @ts-ignore
       ["element", "*"],
     ], "test");
@@ -323,19 +333,35 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
     let g2_indexes: Set<number> | undefined = undefined;
 
     // Get all indexes of go sites for g1
-    this.repr.iterateOverGoSitesOf(g1, ap => {
-      g1_indexes.add(ap.index + 1);
-    }, this.selection_suffix);
+    if(this.props.mode === "go") {
+      this.repr.iterateOverGoSitesOf(g1, ap => {
+        g1_indexes.add(ap.index + 1);
+      }, this.selection_suffix);
+    } 
+    else if(this.props.mode === "elastic") {
+      this.repr.iterateOverElasticSitesOf(g1, ap => {
+        g1_indexes.add(ap.index + 1);
+      }, this.selection_suffix);
+    }
+    
 
     if (g2) {
       const index_to_residue: { [index: number]: number } = {};
       g2_indexes = new Set();
 
       // Get all indexes of sites for g2
-      this.repr.iterateOverGoSitesOf(g2, ap => {
-        g2_indexes!.add(ap.index + 1);
-        index_to_residue[ap.index + 1] = ap.resno;
-      }, this.selection_suffix);
+      if(this.props.mode === "go") {
+        this.repr.iterateOverGoSitesOf(g2, ap => {
+          g2_indexes!.add(ap.index + 1);
+          index_to_residue[ap.index + 1] = ap.resno;
+        }, this.selection_suffix);
+      } 
+      else if(this.props.mode === "elastic") {
+        this.repr.iterateOverElasticSitesOf(g2, ap => {
+          g2_indexes!.add(ap.index + 1);
+          index_to_residue[ap.index + 1] = ap.resno;
+        }, this.selection_suffix);
+      }
 
       // Test for overlapping indexes
       const overlaps: number[] = [];
@@ -380,7 +406,6 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
 
     // Make the coloration
     this.highlightGroup(g1_indexes, g2_indexes);
-    console.log("Group 1", g1_indexes, "Group 2", g2_indexes);
 
     // Save the selection
     this.setState({
@@ -425,15 +450,18 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
 
     return (
       <React.Fragment>
+        <Typography variant="h6" align="center">
+          Single atom selection
+        </Typography>
         <Typography align="center">
-          Atom #<strong>{this.state.selected.source}</strong> selected.
+          Atom #<strong>{this.state.selected.source +1}</strong> selected.
         </Typography>
 
         <Marger size="1rem" />
 
         <Typography variant="body2" align="center">
-          You can add a new bond between this atom and another Go virtual site, or
-          you can remove every go bond attached to this atom.
+          You can add a new bond between this atom and another {this.props.mode === 'go' ? "Go virtual site" : 'atom'}, or
+          you can remove every {this.props.mode} bond attached to this atom.
         </Typography>
         <Typography variant="body2" align="center">
           To remove a specific bond, just click on it.
@@ -447,7 +475,7 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
             color="primary" 
             onClick={this.onAddLinkEnable}
           >
-            <FaIcon plus /> <span style={{ marginLeft: '.6rem' }}>Add Go bond</span>
+            <FaIcon plus /> <span style={{ marginLeft: '.6rem' }}>Add new {this.props.mode === 'go' ? "Go" : "Elastic"} bond</span>
           </Button>
 
           <Marger size=".2rem" />
@@ -457,7 +485,14 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
             color="secondary" 
             onClick={this.onRemoveAllBonds}
           >
-            <FaIcon trash /> <span style={{ marginLeft: '.6rem' }}>Remove all Go links of atom</span>
+            <FaIcon trash /> <span style={{ marginLeft: '.6rem' }}>Remove all {this.props.mode === 'go' ? "Go" : "Elastic"} links of atom</span>
+          </Button>
+
+          <Button 
+            style={{ width: '100%' , color: 'orange'}} 
+            onClick={this.onSelectionStop}
+          >
+            <FaIcon check /> <span style={{ marginLeft: '.6rem' }}>Validate bonds</span>
           </Button>
         </Box>
       </React.Fragment>
@@ -471,12 +506,15 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
 
     return (
       <React.Fragment>
+        <Typography variant="h6" align="center">
+          Single atom selection
+        </Typography>
         <Typography align="center">
-          Creating a link between atom #<strong>{this.state.selected!.source}</strong> and another.
+          Creating a link between atom #<strong>{this.state.selected!.source +1}</strong> and another.
         </Typography>
 
         <Typography variant="body2" align="center">
-          Please select another Go atom to create link, or click below to cancel operation.
+          Please select another {this.props.mode === 'go' ? "Go" : ""} atom to create link, or click below to cancel operation.
         </Typography>
 
         <Marger size="1rem" />
@@ -501,6 +539,9 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
 
     return (
       <React.Fragment>
+        <Typography variant="h6" align="center">
+          Link selection
+        </Typography>
         <Typography align="center">
           Link between atoms #<strong>{this.state.selected!.source}</strong> and #<strong>{this.state.selected!.target}</strong>.
         </Typography>
@@ -513,8 +554,7 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
 
         <Box alignContent="center" justifyContent="center" width="100%" flexDirection="column">
           <Button 
-            style={{ width: '100%' }} 
-            color="secondary" 
+            style={{ width: '100%', color:"#ff9800" }}  
             onClick={this.onRemoveBond}
           >
             <FaIcon trash /> <span style={{ marginLeft: '.6rem' }}>Remove</span>
@@ -534,6 +574,9 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
     if (selection.s2) {
       return (
         <React.Fragment>
+          <Typography variant="h6" align="center">
+          Group selection
+        </Typography>
           <Typography variant="h6" align="center">
             First selected group
           </Typography>
@@ -556,7 +599,7 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
     return (
       <React.Fragment>
         <Typography variant="h6" align="center">
-          Selected group
+          Group selection
         </Typography>
         <Typography component="pre">
           <code>{this.state.select_1}</code>
@@ -598,7 +641,7 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
 
         <Button style={{ color: 'orange', width: '100%' }} onClick={this.onSelectionStop}>
           <FaIcon arrow-left /> 
-          <span style={{ marginLeft: '.6rem' }}>Back</span>
+          <span style={{ marginLeft: '.6rem' }}>Back to Settings</span>
         </Button>
       </React.Fragment>
     );
@@ -642,13 +685,13 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
         </Typography>
 
         <Typography align="center">
-          Please select virtual Go atom or bond by clicking on them in the molecule representation.
+          Please select {this.props.mode === 'go' ? "a virtual Go atom or" : "an atom or Elastic"} bond by clicking on them in the molecule representation.
         </Typography>
 
         <Marger size=".7rem" />
 
         <Typography variant="body2" align="center">
-          Go atoms and bonds are highlighted in green.
+        {this.props.mode === 'go' ? "Go atoms and bonds" : "atoms and Elastic bonds"} are highlighted in green.
         </Typography>
 
         <Marger size="1.5rem" />
@@ -658,7 +701,7 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
         </Typography>
 
         <Typography align="center">
-          Select groups of go sites using the {" "}
+          Select groups of {this.props.mode} sites using the {" "}
           <strong>
             <Link href="http://nglviewer.org/ngl/api/manual/selection-language.html" target="_blank">
               NGL selection language
@@ -671,7 +714,7 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
         </Typography>
 
         <Typography variant="body2" align="center">
-          By selecting one group, you can link all the selected go sites together.
+          By selecting one group, you can link all the selected {this.props.mode} sites together.
           If you select two groups, you can link every site of group 1 to every site of group 2.
         </Typography>
 
@@ -716,13 +759,14 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
   }
 
   render() {
+    let hist = this.props.goInstance.customBondsGet()
     return (
       <React.Fragment>
         <Marger size="1rem" />
 
         {/* Theme */}
         <Typography variant="h5" align="center">
-          Edit Go virtual bonds
+          Edit {this.props.mode === 'go' ? "Go" : "Elastic"} virtual bonds
         </Typography>
 
         <Marger size="1rem" />
@@ -750,7 +794,7 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
               color="primary" 
               onClick={this.props.onValidate}
             >
-              <FaIcon check /> <span style={{ marginLeft: '.6rem' }}>Validate Go bonds</span>
+              <FaIcon check /> <span style={{ marginLeft: '.6rem' }}>Validate all modifications</span>
             </Button>
 
             <Marger size=".5rem" />
@@ -762,12 +806,23 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
             >
               <FaIcon ban /> <span style={{ marginLeft: '.6rem' }}>Cancel modifications</span>
             </Button>
+
+            <Marger size="1rem" />
+
+            <Divider style={{ width: '100%' }} />
           </React.Fragment>}
         </Box>
         
-        <Marger size=".5rem" />
+        <Marger size="1rem" />
 
-        <Box display="grid" gridTemplateColumns="1fr min-content 1fr">
+        <Button disabled style={{ color: this.state.enable_history ? 'black' : undefined }}>
+          <FaIcon history /> 
+          <span style={{ marginLeft: '.6rem' }}>History</span>
+        </Button>
+
+        <Marger size="0.5rem" />
+
+        <Box display="grid" gridTemplateColumns="1fr 1fr">
 
           <Button 
             style={{ color: this.can_go_back ? 'orange' : undefined }} 
@@ -775,22 +830,32 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
             disabled={!this.can_go_back || !this.state.enable_history}
             title="Back"
           >
-            <FaIcon arrow-left /> 
+            <FaIcon undo /> 
+            <span style={{ marginLeft: '.6rem' }}>Undo</span>
           </Button>
 
-          <Button disabled style={{ color: this.state.enable_history ? 'black' : undefined }}>
-            <FaIcon history /> 
-          </Button>
-          
           <Button 
             style={{ color: this.can_go_further ? 'green' : undefined }} 
             onClick={this.onGoHistoryRevert}
             disabled={!this.can_go_further || !this.state.enable_history}
             title="Forward"
           >
-            <FaIcon arrow-right /> 
+            <span style={{ marginRight: '.6rem' }}>Redo</span>
+            <FaIcon redo /> 
+            
           </Button>
         </Box>
+
+        <Marger size="1rem" />
+        <Typography variant='body1'>
+          {hist.map((link: any) => <span>{link}<br></br></span>)}
+        </Typography>
+
+        <Marger size="1rem" />
+        <Button onClick={() => this.props.onHistoryDownload()} color="primary">
+          <FaIcon download /> <span style={{ marginLeft: '.6rem' }}>Download history</span>
+        </Button>
+
       </React.Fragment>
     );
   }

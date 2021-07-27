@@ -13,17 +13,17 @@ import { makeStyles } from '@material-ui/core/styles';
 import ApiHelper, { APIError } from '../../../ApiHelper';
 import { User } from '../../../types/entities';
 import Settings from '../../../Settings';
-import { loginErrorToText, setPageTitle } from '../../../helpers';
+import { loginErrorToText, setPageTitle, Marger } from '../../../helpers';
 import { LoadFader } from '../../../Shared';
 import { toast } from '../../Toaster';
+import { Alert } from '@material-ui/lab';
+
+
 
 function Copyright() {
   return (
     <Typography variant="body2" color="textSecondary" align="center">
-      <Link color="inherit" href="https://material-ui.com/">
-        MArtini Database
-      </Link>{' '}
-      {new Date().getFullYear()}
+      MArtini Database {new Date().getFullYear()}
     </Typography>
   );
 }
@@ -113,6 +113,10 @@ export default function Login() {
           <Typography component="h1" variant="h5">
             Sign in
           </Typography>
+
+          <Marger size="1rem" />
+
+          <Alert severity="warning" style={{textAlign:'center', alignItems:'center'}}> New accounts for using beta versions of Molecule Builder and System Builder will be available starting September 1st 2021. </Alert> 
 
           {error && <Typography variant="body1" color="error">
             {loginErrorToText(error.code)}.

@@ -15,6 +15,9 @@ import JSZip from 'jszip';
 import { Molecule } from '../../types/entities';
 import { Alert, AlertTitle } from '@material-ui/lab';
 import { BetaWarning } from '../../Shared'; 
+import EmbeddedError from '../Errors/Errors';
+import Settings, { LoginStatus } from '../../Settings';
+
 
 
 // @ts-ignore
@@ -59,6 +62,9 @@ interface MBuilderState {
 
   available_lipids: string[];
   no_lipid: boolean;
+
+  ph_upp: number;
+  ph_low: number;
 }
 
 function isMolecule(data: any) : data is Molecule {
@@ -82,6 +88,10 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
   async componentDidMount() {
     // Init ngl stage
     setPageTitle('Membrane Builder');
+    if (Settings.logged === LoginStatus.None) {
+      return;
+    }
+
     // @ts-ignore
     window.MembraneBuilder = this;
 
@@ -113,6 +123,8 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
       no_lipid: false,
       box_visible: true,
       box_break: false,
+      ph_upp: 7,
+      ph_low: 7,
     };
   }
 
@@ -226,7 +238,7 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
   };
 
   startInsane = async () => {
-    const { settings, lipids, molecule } = this.state;
+    const { settings, lipids, molecule, ph_upp, ph_low } = this.state;
     const parameters: any = {};
 
     if (!molecule || !settings || !lipids) {
@@ -250,6 +262,10 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
 
     parameters.box = settings.box_size.join(',');
     parameters.pbc = settings.box_type;
+
+    // pH params
+    parameters.ph_upp = ph_upp;
+    parameters.ph_low = ph_low;
 
     // Area params
     parameters.area_per_lipid = settings.area_per_lipid;
@@ -468,6 +484,27 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
         }}
         lipids={this.state.available_lipids}
         noLipid={this.state.no_lipid}
+        ph_upp={this.state.ph_upp}
+        ph_low={this.state.ph_low}
+        phUppChange={(_: any, value: number | number[])=> {
+          if (Array.isArray(value)) {
+            value = value[0];
+          }
+          this.setState({ph_upp: value});
+        }}
+        phLowChange={(_: any, value: number | number[])=> {
+          if (Array.isArray(value)) {
+            value = value[0];
+          }
+          this.setState({ph_low: value});
+        }}
+        phLipidsChange={(_: any, value: number | number[])=> {
+          if (Array.isArray(value)) {
+            value = value[0];
+          }
+          this.setState({ph_upp: value});
+          this.setState({ph_low: value});
+        }}
       />
     );
   }
@@ -631,6 +668,10 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
       lipids: this.state.running === 'choose_lipids',
       settings: this.state.running === 'choose_settings',
     };
+
+    if (Settings.logged === LoginStatus.None) {
+      return <EmbeddedError title="Forbidden" text="You can't access the System Builder page without account. New accounts for using beta versions of Molecule Builder will be available starting September 1st 2021." />
+    }
 
     return (
       <ThemeProvider theme={this.state.theme}>

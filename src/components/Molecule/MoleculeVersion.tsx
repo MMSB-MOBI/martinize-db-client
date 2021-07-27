@@ -19,6 +19,13 @@ const useStyles = makeStyles(theme => ({
   category: {
     fontSize: '1.1rem',
   },
+  comments: {
+    whiteSpace: 'pre-line',
+    height: '400px',
+    overflowY: 'scroll',
+    outline: '0.01rem dashed',
+    padding: '0.3rem',
+  },
   actionButtons: {
     display: 'flex',
     flexDirection: 'row',

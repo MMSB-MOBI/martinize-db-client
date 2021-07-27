@@ -6,6 +6,7 @@ import { toast } from '../../Toaster';
 import { errorToText, Marger, setPageTitle } from '../../../helpers';
 import UserIcon from '@material-ui/icons/PersonAdd';
 import { Link as RouterLink } from 'react-router-dom';
+import { Alert } from '@material-ui/lab';
 
 const useStyles = makeStyles(theme => ({
   root: {
@@ -37,9 +38,11 @@ export default function CreateAccount() {
   const [error, setError] = React.useState<APIError | undefined>();
   const [sended, setSended] = React.useState(false);
   const [username, setUsername] = React.useState("");
+  const [affiliation, setAffiliation] = React.useState("");
   const [email, setEmail] = React.useState("");
   const [password1, setPassword1] = React.useState("");
   const [password2, setPassword2] = React.useState("");
+  const [fullname, setFullname] = React.useState(""); 
   const classes = useStyles();
 
   React.useEffect(() => {
@@ -68,7 +71,7 @@ export default function CreateAccount() {
 
     setLoading(true);
 
-    ApiHelper.request('user/create', { parameters: { username, email, password: password1 }, method: 'POST', auth: false })
+    ApiHelper.request('user/create', { parameters: { username, email, password: password1, fullname, affiliation }, method: 'POST', auth: false })
       .then(() => {
         toast("Your account request has been successfully made.", "info");
         setSended(true);
@@ -97,6 +100,10 @@ export default function CreateAccount() {
 
       <Marger size="1rem" />
 
+      <Alert severity="warning"> This service is still under development and test phase. If you're not a tester, your account request will only be accepted around September 2021. </Alert>
+
+      <Marger size="1rem" />
+
       {error && <Typography variant="body1" color="error">
         {errorToText(error.code)}
       </Typography>}
@@ -122,6 +129,35 @@ export default function CreateAccount() {
                 onChange={evt => setUsername(evt.target.value)}
               />
             </Grid>
+
+            <Grid item xs={12} sm={6} style={{ padding: '0 .3rem' }}>
+              <TextField
+                variant="outlined"
+                margin="normal"
+                required
+                fullWidth
+                label="Full name"
+                //autoComplete="full_name"
+                type="text"
+                value={fullname}
+                onChange={evt => setFullname(evt.target.value)}
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6} style={{ padding: '0 .3rem' }}>
+              <TextField
+                variant="outlined"
+                margin="normal"
+                required
+                fullWidth
+                label="Affiliation"
+                //autoComplete="name"
+                type="text"
+                value={affiliation}
+                onChange={evt => setAffiliation(evt.target.value)}
+              />
+            </Grid>
+
 
             <Grid item xs={12} sm={6} style={{ padding: '0 .3rem' }}>
               <TextField

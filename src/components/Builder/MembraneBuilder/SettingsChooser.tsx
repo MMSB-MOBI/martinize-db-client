@@ -1,8 +1,10 @@
 import React from 'react';
-import { withStyles, Typography, Button, TextField, Box, FormControlLabel, Checkbox, Link, Divider } from '@material-ui/core';
+import { withStyles, Typography, Button, TextField, Box, FormControlLabel, Checkbox, Link, Divider, RadioGroup, FormLabel, Radio } from '@material-ui/core';
 import { Marger, downloadBlob, dateFormatter } from '../../../helpers';
 import { SimpleSelect } from '../../../Shared';
 import { toast } from '../../Toaster';
+import { ControlCamera } from '@material-ui/icons';
+import { Console } from 'console';
 
 export interface SettingsInsane {
   box_type: string;
@@ -44,6 +46,9 @@ interface SCState {
   hydrophobic_ratio: string;
   fudge_factor: string;
   shift_protein: string;
+
+  advanced: string;
+  commandline: string;
 }
 
 function lte0orNaN(value: string) {
@@ -74,6 +79,9 @@ class SettingsChooser extends React.Component<SCProps, SCState> {
     hydrophobic_ratio: '4.0',
     fudge_factor: '0.1',
     shift_protein: '0',
+
+    advanced: 'false',
+    commandline: '',
   };
 
   refreshCheckbox(field: keyof SCState) {
@@ -236,6 +244,7 @@ class SettingsChooser extends React.Component<SCProps, SCState> {
             helperText="3, 6 or 9 positive integers separated by commas"
             label="Box size"
             style={{ width: '100%' }}
+            className={this.props.classes.form}
           />
         </div>
 
@@ -308,6 +317,10 @@ class SettingsChooser extends React.Component<SCProps, SCState> {
         <Typography align="center" variant="h6">
           Protein options
         </Typography>
+
+        {
+        ///
+        }
 
         {/* Center and orientation */}
         <Box width="100%" display="flex" justifyContent="center">

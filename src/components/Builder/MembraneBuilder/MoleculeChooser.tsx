@@ -35,7 +35,7 @@ class MoleculeChooser extends React.Component<MCProps, MCState> {
   state: MCState = {
     itps: [],
     modal_chooser: false,
-    ff: 'martini22',
+    ff: 'martini3001',
   };
 
   nextFromFiles = () => {

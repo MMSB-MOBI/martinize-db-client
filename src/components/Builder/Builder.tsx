@@ -22,11 +22,18 @@ import { MZError } from './ProteinBuilder/MartinizeError';
 import MartinizeForm from './ProteinBuilder/MartinizeForm';
 import MartinizeGenerated from './ProteinBuilder/MartinizeGenerated';
 import GoEditor from './ProteinBuilder/GoEditor';
-import GoBondsHelper, { BondsRepresentation } from './GoBondsHelper';
+import GoBondsHelper from './GoBondsHelper';
+import { BondsRepresentation } from './BondsRepresentation';
 import { BetaWarning } from '../../Shared'; 
+import { stdout } from 'process';
+import BaseBondsHelper from './BaseBondsHelper';
+import ElasticBondHelper from './ElasticBondHelper';
+import Settings, { LoginStatus } from '../../Settings';
+import EmbeddedError from '../Errors/Errors';
+
 
 // @ts-ignore
-window.NGL = ngl; window.GoBondsHelper = GoBondsHelper;
+window.NGL = ngl; window.BaseBondsHelper = BaseBondsHelper;
 
 interface MBProps {
   classes: Record<string, string>;
@@ -38,7 +45,7 @@ interface MartinizeFiles {
   itps: MartinizeFile[];
   radius: { [name: string]: number };
   top: MartinizeFile;
-  go?: GoBondsHelper;
+  go?: BaseBondsHelper;
   elastic_bonds?: BondsRepresentation;
 }
 
@@ -51,6 +58,8 @@ export interface MBState {
   error?: any;
   martinize_error?: MZError;
   martinize_step: string;
+
+  stdout?: any;
 
   all_atom_pdb?: File;
   all_atom_ngl?: NglComponent;
@@ -67,6 +76,14 @@ export interface MBState {
   builder_ea: string;
   builder_ep: string;
   builder_em: string;
+  cTer: string;
+  nTer: string;
+  sc_fix: string;
+  cystein_bridge: string;
+
+  advanced: string;
+  commandline: string;
+
 
   all_atom_opacity: number;
   all_atom_visible: boolean;
@@ -84,6 +101,8 @@ export interface MBState {
   want_go_back: boolean;
 
   theme: Theme;
+
+  version?: string;
 }
 
 /**
@@ -105,21 +124,32 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     vl_op: number;
     vl_enabled: boolean;
     representations: ViableRepresentation[];
-    go: GoBondsHelper;
+    go: BaseBondsHelper;
   };
 
   componentDidMount() {
     setPageTitle('Protein Builder');
+    console.log("Builder mount")
+    console.log(Settings.logged); 
+    console.log(LoginStatus.None);
+
+    if (Settings.logged === LoginStatus.None) {
+      console.log("OOOOO")
+      return;
+    }
+
     // @ts-ignore
     window.MoleculeBuilder = this;
 
     this.ngl = new NglWrapper("ngl-stage", { backgroundColor: this.props.theme.palette.background.default });
+    this.changeCommandline('');
+    this.getMartinizeVersion();
   }
 
   protected get original_state() : MBState {
     return {
       running: 'pdb',
-      builder_force_field: 'martini304',
+      builder_force_field: 'martini3001',
       builder_mode: 'classic',
       builder_positions: 'backbone',
       builder_ef: '500',
@@ -128,6 +158,12 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       builder_ea: '0',
       builder_ep: '0',
       builder_em: '0',
+      cTer: 'COOH-ter',
+      nTer: 'NH2-ter',
+      sc_fix: 'false',
+      cystein_bridge: 'none',
+      advanced: 'false',
+      commandline: '',
       martinize_error: undefined,
       coarse_grain_opacity: 1,
       coarse_grain_visible: true,
@@ -146,6 +182,8 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       martinize_step: '',
     };
   }
+
+
 
   /* LOAD, RESET AND SAVE STAGES */
   async save(name: string, overwrite_uuid?: string) {
@@ -170,6 +208,13 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
         builder_eu: this.state.builder_eu,
         builder_ep: this.state.builder_ep,
         builder_em: this.state.builder_em,
+        cTer: this.state.cTer,
+        nTer: this.state.nTer,
+        sc_fix: this.state.sc_fix,
+        cystein_bridge: this.state.cystein_bridge,
+        advanced: this.state.advanced,
+        commandline: this.state.commandline,
+        stdout: this.state.stdout
       },
       all_atom: this.state.all_atom_pdb!,
       coarse_grained: this.state.files.pdb,
@@ -186,6 +231,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     });
   }
 
+  /* pas le load quand nouveau martinize, mais quand load molecule enregistrée */
   async load(uuid: string) {
     const saver = new StashedBuildHelper();
     
@@ -204,14 +250,22 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     // @ts-ignore
     this.setState(infos);
 
-    const mode = save.elastic_bonds ? 'elastic' : (save.go ? 'go' : undefined);
+    const mode = save.info.builder_mode ? 'elastic' : (save.info.builder_mode ? 'go' : undefined);
+    //const mode = save.elastic_bonds ? 'elastic' : (save.go ? 'go' : undefined);
 
-    const go_details = save.go ? GoBondsHelper.fromJSON(this.ngl, save.go) : undefined;
+    let go_details: GoBondsHelper | ElasticBondHelper | undefined;
+    if (mode === "go") {
+      // @ts-ignore
+      go_details = save.go ? GoBondsHelper.fromJSON(this.ngl, save.go) : undefined;
+    } else if(mode === "elastic") {
+      // @ts-ignore
+      go_details = save.go ? ElasticBondHelper.fromJSON(this.ngl, save.go) : undefined;
+    }
 
     let elastic_bonds: BondsRepresentation | undefined = undefined;
     if (save.elastic_bonds) {
-      elastic_bonds = new BondsRepresentation(this.ngl);
-      elastic_bonds.bonds = save.elastic_bonds;
+      elastic_bonds = go_details!.representation; //new BondsRepresentation(this.ngl);
+      //elastic_bonds.bonds = save.elastic_bonds;
     }
 
     const files = {
@@ -240,6 +294,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     if (this.ngl)
       this.ngl.reset();
     this.setState(this.original_state);
+    this.changeCommandline('');
     this.changeTheme('light');
   }
 
@@ -296,6 +351,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       return;
     }
 
+
     const repr = component.add<BallAndStickRepresentation>("ball+stick");
     // repr.name => "ball+stick"
 
@@ -311,14 +367,16 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       });
 
       // Init the bond helper 
-      if (options.mode === 'go' && options.files.go) {
+      if ((options.mode === 'go' || options.mode === "elastic") && options.files.go) {
         options.files.go.representation.registerCoords(coordinates);
         options.files.go.render();
       }
+      /*
       else if (options.mode === 'elastic' && options.files.elastic_bonds) {
         options.files.elastic_bonds.registerCoords(coordinates);
         options.files.elastic_bonds.render();
       }
+      */
     }
 
     // Register the component
@@ -353,7 +411,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     target_ensembl?: [Set<number>, Set<number> | undefined],
     /** Enable history push. */
     enable_history?: boolean,
-  }) {
+    }) {
     if (!this.state.files || !this.state.files.go)
       return;
 
@@ -368,6 +426,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     let go = files.go!;
 
     if (options.enable_history !== false) {
+      
       go.historyPush();
     }
 
@@ -375,32 +434,63 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       // (Source&Target are GO index + 1)
       if (target !== undefined) {
         // Add a single bond 
-        const atom1 = go.goIndexToGoName(target[0]);
-        const atom2 = go.goIndexToGoName(target[1]);
+        let atom1; let atom2;
+        if(this.state.builder_mode == "go") {
+          // @ts-ignore
+          atom1 = go.goIndexToRealIndex(target[0]);
+          // @ts-ignore
+          atom2 = go.goIndexToRealIndex(target[1]);
+        } else {
+          atom1 = target[0];
+          atom2 = target[1];
+        }
 
         go.add(go.createRealLine(atom1, atom2));
+
+        go.addCustomBonds(atom1, atom2);
       }
       else if (target_ensembl !== undefined && target_ensembl[1] !== undefined) {
         // Add line between each element of set
         for (const atom1 of target_ensembl[0]) {
-          const name1 = go.goIndexToGoName(atom1);
+          let index1;
+          if(this.state.builder_mode == "go") {
+            // @ts-ignore
+            index1 = go.goIndexToRealIndex(atom1);
+          }
+          else {
+            index1 = atom1;
+          }
 
           for (const atom2 of target_ensembl[1]) {
-            const name2 = go.goIndexToGoName(atom2);
+            let index2;
+            if(this.state.builder_mode == "go") {
+              // @ts-ignore
+              index2 = go.goIndexToRealIndex(atom2);
+            } else {
+              index2 = atom2;
+            }
+            go.add(go.createRealLine(index1, index2));
 
-            go.add(go.createRealLine(name1, name2));
+            go.addCustomBonds(index1, index2);
           }
         }
       }
       else if (target_ensembl !== undefined && target_ensembl[1] === undefined) {
         // Add line between each element of set
         // Link all atoms of the set together
-        const name_set = new Set([...target_ensembl[0]].map(e => go.goIndexToGoName(e)));
+        let index_set;
+        if(this.state.builder_mode == "go") {
+          // @ts-ignore
+          index_set = new Set([...target_ensembl[0]].map(e => go.goIndexToRealIndex(e)));
+        } else {
+          index_set = new Set([...target_ensembl[0]].map(e => e));
+        }
 
-        for (const name of name_set) {
-          for (const counterpart of name_set) {
-            if (name !== counterpart && !go.has(name, counterpart)) {
-              go.add(go.createRealLine(name, counterpart));
+        for (const index of index_set) {
+          for (const counterpart of index_set) {
+            if (index !== counterpart && !go.has(index, counterpart)) {
+              go.add(go.createRealLine(index, counterpart));
+              go.addCustomBonds(index, counterpart);
             }
           }
         }
@@ -410,46 +500,78 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       if (target !== undefined) {
         // Source&Target are REAL ATOM index 
         // Remove a single bond
-        const [name1, name2] = target.map(e => go.realIndexToGoName(e));
+        const [name1, name2] = target //.map(e => go.realIndexToGoName(e));
 
         go.remove(name1, name2);
+
+        go.rmCustomBonds(name1, name2);
       }
       else if (target_single !== undefined) {
         // INDEX are GO Index + 1
         // Remove every bond from this atom
-        const name = go.goIndexToGoName(target_single);
+        let index;
+        if(this.state.builder_mode == "go") {
+          // @ts-ignore
+          index = go.goIndexToRealIndex(target_single);
+        } else {
+          index = target_single;
+        }
 
-        go.remove(name);
+        go.remove(index);
+
+        go.rmCustomBonds(index);
       }
       else if (target_ensembl !== undefined && target_ensembl[1] !== undefined) {
         // INDEXES are GO Indexes + 1
         // Convert every index to go name in a set
-        const counterpart = new Set([...target_ensembl[1]].map(e => go.goIndexToGoName(e)));
+        let counterpart: Set<any>;
+        if(this.state.builder_mode == "go") {
+          // @ts-ignore
+          counterpart = new Set([...target_ensembl[1]].map(e => go.goIndexToRealIndex(e)));
+        } else {
+          counterpart = new Set([...target_ensembl[1]].map(e => e))
+        }
 
         for (const atom of target_ensembl[0]) {
-          const name = go.goIndexToGoName(atom);
+          let index;
+          if(this.state.builder_mode == "go") {
+            // @ts-ignore
+            index = go.goIndexToRealIndex(atom);
+          } else {
+            index = atom;
+          }
 
           // Get the bonds linked to counterpart items
-          const bonds = go.findBondsOf(name).filter(n => counterpart.has(n));
+          const bonds = go.findBondsOf(index).filter((n: any) => counterpart.has(n));
 
           // Remove every targeted bond
           for (const bond of bonds) {
-            go.remove(name, bond);
+            go.remove(index, bond);
+
+            go.rmCustomBonds(index, bond);
           }
         }
       }
       else if (target_ensembl !== undefined && target_ensembl[1] === undefined) {
         // INDEXES are GO Indexes + 1
         // Unlink all atoms of the set together
-        const name_set = new Set([...target_ensembl[0]].map(e => go.goIndexToGoName(e)));
+        let index_set: Set<any>;
+        if(this.state.builder_mode == "go") {
+          // @ts-ignore
+          index_set = new Set([...target_ensembl[0]].map(e => go.goIndexToRealIndex(e)));
+        } else {
+          index_set = new Set([...target_ensembl[0]].map(e => e));
+        }
 
-        for (const name of name_set) {
+        for (const index of index_set) {
           // Get the bonds linked to atoms in name set
-          const bonds = go.findBondsOf(name).filter(n => name_set.has(n));
+          const bonds = go.findBondsOf(index).filter((n: any) => index_set.has(n));
 
           // Remove every targeted bond
           for (const bond of bonds) {
-            go.remove(name, bond);
+            go.remove(index, bond);
+
+            go.rmCustomBonds(index, bond);
           }
         }
       }
@@ -465,7 +587,10 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
   redrawGoBonds = (highlight?: [number, number] | number, opacity?: number) => {    
     if (typeof highlight === 'number') {
       // transform go index to real index
-      highlight = this.state.files!.go!.goIndexToRealIndex(highlight);
+      if(this.state.builder_mode == "go") {
+        // @ts-ignore
+        highlight = this.state.files!.go!.goIndexToRealIndex(highlight);
+      }
     }
 
     let h1 = 0, h2 = 0;
@@ -542,11 +667,14 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     e.preventDefault();
     
     const form_data: any = {};
-    
     const s = this.state;
 
     form_data.ff = s.builder_force_field;
     form_data.position = s.builder_positions;
+    form_data.cter = s.cTer;
+    form_data.nter = s.nTer;
+    form_data.sc_fix = s.sc_fix;
+    form_data.cystein_bridge = s.cystein_bridge;
 
     if (s.builder_mode === "elastic") {
       form_data.elastic = "true";
@@ -561,6 +689,8 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       form_data.use_go = "true";
       form_data.sc_fix = "true";
     }
+    form_data.advanced = s.advanced;
+    form_data.commandline = s.commandline;
 
     // form_data.pdb = s.all_atom_pdb;
 
@@ -683,6 +813,10 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
         setMartinizeStep("Finishing...");
       });
 
+      socket.on('martinize stderr', ( stdout : any ) => {
+        this.setState({stdout: stdout}, () => {console.log(stdout)});
+      });
+
       // When run ends
       socket.on('martinize end', (
         { id, elastic_bonds, radius }: { 
@@ -696,12 +830,12 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
           files.radius = radius;
 
+          /*
           if (elastic_bonds) {
             files.elastic_bonds = new BondsRepresentation(this.ngl);
             files.elastic_bonds.bonds = elastic_bonds;
           }
-
-          console.log(files);
+          */
 
           resolve(files as MartinizeFiles);
       });
@@ -711,6 +845,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
         martinize_step: '',
         martinize_error: error
       });
+
 
       return undefined;
     });
@@ -724,11 +859,14 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     if (s.builder_mode === "go") {
       // Init go sites
       files.go = await GoBondsHelper.readFromItps(this.ngl, files.itps.map(e => e.content));
+    } else if (s.builder_mode === "elastic") {
+      files.go = await ElasticBondHelper.readFromItps(this.ngl, files.itps.map(e => e.content));
     }
 
     this.setState({ files, martinize_step: "" });
 
-    const mode = files.elastic_bonds ? 'elastic' : (s.builder_mode === "go" ? 'go' : undefined);
+    const mode = s.builder_mode === 'elastic' ? 'elastic' : (s.builder_mode === "go" ? 'go' : undefined);
+    //const mode = files.elastic_bonds ? 'elastic' : (s.builder_mode === "go" ? 'go' : undefined);
 
     this.initCoarseGrainPdb({
       files,
@@ -844,9 +982,11 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     if (this.state.files?.go) {
       this.state.files.go.representation.set({ opacity: value / 100 });
     }
+    /*
     else if (this.state.files?.elastic_bonds) {
       this.state.files?.elastic_bonds.set({ opacity: value / 100 })
     }
+    */
   };
 
   onVirtualLinksVisibilityChange = (_: any, checked: boolean) => {
@@ -858,12 +998,28 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     if (files.go) {
       files.go.representation.visible = checked;
     }
+    /*
     else if (files.elastic_bonds) {
       files.elastic_bonds.visible = checked;
     }
+    */
 
     this.setState({ virtual_link_visible: checked });
   };
+
+  onHistoryDownload = async () => {
+    if (!this.state.files!.go) {
+      return false;
+    }
+
+    try {
+      const name = this.state.all_atom_pdb!.name.slice(0, this.state.all_atom_pdb!.name.indexOf('.pdb')) + '_modification_history.txt';
+      let history_file = new File(this.state.files!.go.customBondsGet(), name);
+      downloadBlob(history_file, name);
+    } catch (error) {
+      console.warn("Failed to download history", error);
+    }
+  }
 
   onMoleculeDownload = async () => {
     if (!this.state.files) {
@@ -876,7 +1032,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     try {
       const zip = new JSZip();
       const files = this.state.files;
-  
+
       zip.file(files.pdb.name, files.pdb.content);
       zip.file(files.top.name, files.top.content);
 
@@ -884,9 +1040,17 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
       // Take the right itps
       if (files.go) {
-        const to_replace = files.go.toOriginalFiles();
+        let to_replace: File[];
+        if (this.state.builder_mode === "go") {
+          // @ts-ignore
+          to_replace = files.go.toOriginalFiles();
+        }
+        else if (this.state.builder_mode === "elastic") {
+          to_replace = await files.go.toOriginalFiles(itps[0].content);
+        }
+        
 
-        for (const file of to_replace) {
+        for (const file of to_replace!) {
           const index = itps.findIndex(e => e.name === file.name);
           const m_file = {
             name: file.name,
@@ -1069,6 +1233,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       cg_op: this.state.coarse_grain_opacity,
       vl_op: this.state.virtual_link_opacity,
       representations: this.state.representations,
+      // @ts-ignore
       go: this.state.files!.go!.clone(),
     };
 
@@ -1181,9 +1346,56 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     )
   }
 
+  getMartinizeVersion() {
+    const socket = SocketIo.connect(SERVER_ROOT);
+    socket.on('martinizeVersion', (data: any) => {
+      this.setState({version: data}, ()=>{});
+    })  
+  }
+
+  changeCommandline(value: string) {
+    if (this.state.advanced === 'true') {
+      this.setState({commandline: value}, () => {})
+    } else {
+      const s = this.state
+      const socket = SocketIo.connect(SERVER_ROOT);
+      const form_data: any = {};
+
+      form_data.ff = s.builder_force_field;
+      form_data.position = s.builder_positions;
+      form_data.cter = s.cTer;
+      form_data.nter = s.nTer;
+      form_data.sc_fix = s.sc_fix;
+      form_data.cystein_bridge = s.cystein_bridge;
+      form_data.advanced = s.advanced;
+
+      if (s.builder_mode === "elastic") {
+        form_data.elastic = "true";
+        form_data.ef = s.builder_ef;
+        form_data.el = s.builder_el;
+        form_data.eu = s.builder_eu;
+        form_data.ea = s.builder_ea;
+        form_data.ep = s.builder_ep;
+        form_data.em = s.builder_em;
+      }
+      else if (s.builder_mode === "go") {
+        form_data.use_go = "true";
+        form_data.sc_fix = "true";
+      }
+      socket.emit('previewMartinize', form_data);
+      socket.on('martinizePreviewContent', (data: any) => {
+        this.setState({commandline: data}, () => {})
+      })
+    }
+  }
+
   render() {
     const classes = this.props.classes;
     const is_dark = this.state.theme.palette.type === 'dark';
+
+    if (Settings.logged === LoginStatus.None) {
+      return <EmbeddedError title="Forbidden" text="You can't access the Molecule Builder page without account. New accounts for using beta versions of Molecule Builder will be available starting September 1st 2021." />
+    }
 
     return (
       <ThemeProvider theme={this.state.theme}>
@@ -1199,8 +1411,11 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
           <Grid item sm={8} md={4} component={Paper} elevation={6} className={classes.side} style={{ backgroundColor: is_dark ? '#232323' : '' }} square>
             <div className={classes.paper}>
               <div className={classes.header}>
-                <Typography component="h1" variant="h3" align="center" style={{ fontWeight: 700, fontSize: '2.5rem', marginBottom: '1rem' }}>
+                <Typography component="h1" variant="h3" align="center" style={{ fontWeight: 700, fontSize: '2.5rem', marginBottom: '0rem' }}>
                   Martinize a molecule
+                </Typography>
+                <Typography variant="subtitle1" align="center" style={{fontSize: '0.7rem', fontStyle: 'italic', marginBottom: '1rem'}}>
+                  {this.state.version}
                 </Typography>
 
                 <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
@@ -1232,15 +1447,16 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
               {(this.state.running === 'martinize_params' || this.state.running === 'martinize_error') && <MartinizeForm 
                 martinizeError={this.state.martinize_error}
-                onBuilderModeChange={value => this.setState({ builder_mode: value as any })}
-                onBuilderPositionChange={value => this.setState({ builder_positions: value as any })}
-                onForceFieldChange={value => this.setState({ builder_force_field: value })}
+                onBuilderModeChange={value => this.setState({ builder_mode: value as any }, () => {this.changeCommandline(value)})}
+                onBuilderPositionChange={value => this.setState({ builder_positions: value as any }, () => {this.changeCommandline(value)})}
+                onForceFieldChange={value => this.setState({ builder_force_field: value }, () => {this.changeCommandline(value)})}
                 onMartinizeBegin={this.handleMartinizeBegin}
                 onReset={() => this.reset()}
                 onElasticChange={(type, value) => {
                   // @ts-ignore
-                  this.setState({ [type]: value })
+                  this.setState({ [type]: value }, () => {this.changeCommandline(value)})
                 }}
+                onAdvancedChange={value => {this.changeCommandline(value)}}
                 builderForceField={this.state.builder_force_field}
                 builderMode={this.state.builder_mode}
                 builderPosition={this.state.builder_positions}
@@ -1250,11 +1466,25 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
                 builderEm={this.state.builder_em}
                 builderEp={this.state.builder_ep}
                 builderEu={this.state.builder_eu}
+                cTer={this.state.cTer}
+                nTer={this.state.nTer}
+                sc_fix={this.state.sc_fix}
+                cystein_bridge={this.state.cystein_bridge}
+                advanced={this.state.advanced}
+                commandline={this.state.commandline}
+                advancedActivate={() => {if(this.state.advanced === 'true') {
+                  this.setState({advanced: 'false'}, () => this.changeCommandline(''))
+                } else {
+                  this.setState({advanced: 'true'})
+                }}}
               />}
 
               {this.state.running === 'martinize_generate' && this.martinizeGenerating()}
 
               {this.state.running === 'done' && <MartinizeGenerated 
+
+                stdout={this.state.stdout}
+
                 onReset={() => this.reset()}
                 theme={this.state.theme}
                 allAtomName={this.state.all_atom_pdb!.name.split('.')[0]}
@@ -1297,6 +1527,8 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
                 onGoHistoryBack={this.onGoHistoryBack}
                 onGoHistoryRevert={this.onGoHistoryRevert}
                 goInstance={this.state.files!.go!}
+                mode={this.state.builder_mode}
+                onHistoryDownload={this.onHistoryDownload}
               />}
             </div>
           </Grid>
