@@ -236,8 +236,6 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     
     const save = await saver.get(uuid);
 
-    console.log(save); 
-
     if (!save) {
       return;
     }
@@ -276,7 +274,6 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       radius: save.radius,
       go: go_details,
       elastic_bonds,
-      warnings: save.warnings
     };
 
     // Init PDB scene
