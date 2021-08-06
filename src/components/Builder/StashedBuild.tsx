@@ -75,7 +75,7 @@ export default class StashedBuild extends React.Component<StashedBuildProps, Sta
 
         <DialogContent>
           <DialogContentText>
-            You won't be able to load it or use it in the Membrane Builder anymore.
+            You won't be able to load it or use it in the System Builder anymore.
           </DialogContentText>
           <DialogContentText>
             You can't restore a deleted molecule.

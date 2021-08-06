@@ -99,7 +99,7 @@ export default function MartinizeGenerated(props: MartinizeGeneratedProps) {
             You will lose unsaved actions.
           </DialogContentText>
           <DialogContentText>
-            If you want to use this molecule in Membrane Builder or get back to this page later,
+            If you want to use this molecule in System Builder or get back to this page later,
             you must save the molecule first, using the appropriate button.
           </DialogContentText>
         </DialogContent>
@@ -316,7 +316,7 @@ export default function MartinizeGenerated(props: MartinizeGeneratedProps) {
           disabled={!!props.saved && !props.edited}
           onClick={() => setSaverModal(props.allAtomName)}
         >
-          <FaIcon save /> <span style={{ marginLeft: '.6rem' }}>Stash for Membrane Builder</span>
+          <FaIcon save /> <span style={{ marginLeft: '.6rem' }}>Stash for System Builder</span>
         </Button>
 
         <Marger size="1rem" />

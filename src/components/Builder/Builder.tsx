@@ -1014,7 +1014,9 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
     try {
       const name = this.state.all_atom_pdb!.name.slice(0, this.state.all_atom_pdb!.name.indexOf('.pdb')) + '_modification_history.txt';
-      let history_file = new File(this.state.files!.go.customBondsGet(), name);
+      let content = [];
+      content.push(this.state.files!.go.customBondsGet().join('\n'));
+      let history_file = new File(content, name);
       downloadBlob(history_file, name);
     } catch (error) {
       console.warn("Failed to download history", error);

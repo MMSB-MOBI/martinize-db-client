@@ -1,24 +1,26 @@
 import React from 'react';
-import { makeStyles, Paper, TableContainer, Table, TableHead, TableRow, TableCell, TableBody, TableFooter, CircularProgress, createStyles, IconButton, TablePagination } from '@material-ui/core';
+import { makeStyles, Paper, TableContainer, Table, TableHead, TableRow, TableCell, TableBody, TableFooter, CircularProgress, createStyles, IconButton, TablePagination, FormControlLabel, Checkbox, Button, Icon, Link as MLink } from '@material-ui/core';
 import clsx from 'clsx';
 import FirstPageIcon from '@material-ui/icons/FirstPage';
 import KeyboardArrowLeft from '@material-ui/icons/KeyboardArrowLeft';
 import KeyboardArrowRight from '@material-ui/icons/KeyboardArrowRight';
 import LastPageIcon from '@material-ui/icons/LastPage';
-import { BaseMolecule } from '../../types/entities';
+import { BaseMolecule, Molecule } from '../../types/entities';
 import { Link } from 'react-router-dom';
-import DeleteIcon from '@material-ui/icons/Delete';
 import { DeleteModal } from '../Molecule/MoleculeInfo';
 import ApiHelper from '../../ApiHelper';
-import { notifyError, findInCategoryTree, dateFormatter } from '../../helpers';
+import { notifyError, findInCategoryTree, dateFormatter, downloadBlob } from '../../helpers';
 import Settings from '../../Settings';
+import { SERVER_ROOT } from '../../constants';
+import { couldStartTrivia } from 'typescript';
+import JSZip from 'jszip';
 
 const useStyles = makeStyles(theme => ({
   paperRoot: {
     width: '100%',
   },
   container: {
-    maxHeight: '80vh',
+    //maxHeight: '80vh',
   },
   moleculeLink: {
     color: theme.palette.primary.main,
@@ -29,7 +31,6 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-
 interface Column {
   id: 'name' | 'alias' | 'category' | 'created_at' | 'version';
   label: string;
@@ -37,6 +38,8 @@ interface Column {
   align?: 'right';
   format?: (value: any) => string;
 }
+
+
 
 export default function MoleculeTable(props: {
   loading?: boolean,
@@ -49,6 +52,8 @@ export default function MoleculeTable(props: {
   moderation?: boolean,
   withVersion?: boolean,
   }) {
+    
+  let molToDownload : string[] = [];
   const classes = useStyles();
   const { loading, molecules, length, rowsPerPage, page, onChangePage } = props;
   const [deleteMol, setDeleteMol] = React.useState("");
@@ -80,6 +85,23 @@ export default function MoleculeTable(props: {
     columns = [...columns.slice(0, 2), version_column, ...columns.slice(2)];
   }
 
+  async function downloadMolecules(moleculeList: string[]) {
+    if (moleculeList.length === 0) {
+      //console.warn("Hey, files should be present in component when this method is called.");
+      return;
+    }
+    
+    ApiHelper.request("molecule/download?molecules="+moleculeList, {mode : undefined}).then((res) => {
+      console.log()
+    } ).catch(e => console.log("error", e))
+  
+  }
+  
+  function addMoleculesToDownload(molecule: BaseMolecule, moleculeList: string[]) {
+    // todo : if uncheck
+    moleculeList.push("{\'id\' :\'"+ molecule.files+"\', \'filename\':\'" +molecule.alias + ".zip\'};");
+    return moleculeList;
+  }
 
   const deleteMolecule = () => {
     if (loadModal)
@@ -126,11 +148,22 @@ export default function MoleculeTable(props: {
               {molecules.map(row => {
                 return (
                   <TableRow hover role="checkbox" tabIndex={-1} key={row.id}>
-                    {props.moderation && <TableCell align="left">
+                    {/*props.moderation && <TableCell align="left">
                       <IconButton onClick={() => setDeleteMol(row.id)}>
                         <DeleteIcon />
                       </IconButton>
-                    </TableCell>}
+                    </TableCell>*/}
+
+                    <TableCell align="left" size="small">
+                      <FormControlLabel
+                        control={<Checkbox size="small" //icon={<CheckBoxOutlineBlank />} checkedIcon={<Checkbox />} 
+                        name="checkedH" onClick={() => {
+                          addMoleculesToDownload(row, molToDownload)
+                          console.log(molToDownload)
+                      }}/>}
+                        label=''
+                      />
+                    </TableCell>
 
                     {columns.map(column => {
                       const value = row[column.id];
@@ -168,7 +201,7 @@ export default function MoleculeTable(props: {
                     <em>Loading...</em>
                   </span>
                 </TableCell>}
-                
+
                 <TablePagination
                   count={length}
                   rowsPerPage={rowsPerPage}
@@ -191,6 +224,14 @@ export default function MoleculeTable(props: {
         onClose={() => setDeleteMol("")}
         loading={loadModal}
       />}
+
+
+      <MLink 
+        onClick={() => downloadMolecules(molToDownload)}
+        style={{ fontSize: '1.3rem', fontWeight: 'bold' }} 
+        >
+            Download files
+        </MLink>
     </div>
   );
 }

@@ -167,7 +167,6 @@ function DrawerElements(props: RouteComponentProps) {
         condition: Settings.logged === LoginStatus.Admin,
         count: "users"
       },
-
     ],
     [
       {

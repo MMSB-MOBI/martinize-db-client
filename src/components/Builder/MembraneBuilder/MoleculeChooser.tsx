@@ -19,8 +19,10 @@ export interface MoleculeWithFiles {
 }
 
 interface MCProps {
+  Force_field : boolean;
+  AddMolecule: string;
   classes: Record<string, string>;
-  onMoleculeChoose(molecule: MoleculeWithFiles | Molecule): any;
+  onMoleculeChoose(molecule: MoleculeWithFiles | Molecule | undefined): any;
 }
 
 interface MCState {
@@ -38,17 +40,23 @@ class MoleculeChooser extends React.Component<MCProps, MCState> {
     ff: 'martini3001',
   };
 
+  // here
   nextFromFiles = () => {
-    const { pdb, top, itps, ff } = this.state;
+    if (this.props.AddMolecule === "true"){
+      const { pdb, top, itps, ff } = this.state;
 
-    if (pdb && top && itps.length) {
-      this.props.onMoleculeChoose({
-        pdb, top, itps, force_field: ff,
-      });
+      if (pdb && top && itps.length) {
+        this.props.onMoleculeChoose({
+          pdb, top, itps, force_field: ff,
+        });
+      }
+      else {
+        toast("Some required files are missing.", "error");
+      }
+    } else {
+      this.props.onMoleculeChoose(undefined);
     }
-    else {
-      toast("Some required files are missing.", "error");
-    }
+    
   };
 
   nextFromMolecule = (molecule: Molecule) => {
@@ -56,10 +64,16 @@ class MoleculeChooser extends React.Component<MCProps, MCState> {
     this.props.onMoleculeChoose(molecule);
   };
 
+  // here
   get can_continue() {
-    const { pdb, top, itps } = this.state;
+    if(this.props.AddMolecule === "false") {
+      return this.props.Force_field;
+    }
+    else {
+      const { pdb, top, itps } = this.state;
 
-    return !!(pdb && top && itps.length);
+      return !!(pdb && top && itps.length);
+    }
   }
 
   get force_fields() {
@@ -69,92 +83,96 @@ class MoleculeChooser extends React.Component<MCProps, MCState> {
   render() {
     return (
       <React.Fragment>
-        <ModalMoleculeSelector
-          open={this.state.modal_chooser}
-          onChoose={this.nextFromMolecule}
-          onCancel={() => this.setState({ modal_chooser: false })}
-        />
+        {this.props.AddMolecule === "true" && <React.Fragment>
+          <ModalMoleculeSelector
+            open={this.state.modal_chooser}
+            onChoose={this.nextFromMolecule}
+            onCancel={() => this.setState({ modal_chooser: false })}
+          />
 
-        <Marger size="1rem" />
+          <Marger size="1rem" />
 
-        <Typography align="center" variant="h6">
-          Load from database
-        </Typography>
+          <Typography align="center" variant="h6">
+            Load from database
+          </Typography>
 
-        <Marger size="1rem" />
+          <Marger size="1rem" />
 
-        <div style={{ textAlign: 'center' }}>
-          <Button variant="outlined" color="primary" onClick={() => this.setState({ modal_chooser: true })}>
-            Search a molecule
-          </Button>
-        </div>
+          <div style={{ textAlign: 'center' }}>
+            <Button variant="outlined" color="primary" onClick={() => this.setState({ modal_chooser: true })}>
+              Search a molecule
+            </Button>
+          </div>
 
-        <Marger size="2rem" />
+          <Marger size="2rem" />
 
-        <Typography align="center" variant="h6">
-          Load from stashed molecules
-        </Typography>
+          <Typography align="center" variant="h6">
+            Load from stashed molecules
+          </Typography>
 
-        <Typography align="center">
-          <Link component={RouterLink} to="/builder">
-            Want to martinize a molecule ?
-          </Link>
-        </Typography>
-        
-        <StashedBuild 
-          onSelect={async uuid => {
-            const helper = new StashedBuildHelper();
-            const save = await helper.get(uuid);
+          <Typography align="center">
+            <Link component={RouterLink} to="/builder">
+              Want to martinize a molecule ?
+            </Link>
+          </Typography>
+          
+          <StashedBuild 
+            onSelect={async uuid => {
+              const helper = new StashedBuildHelper();
+              const save = await helper.get(uuid);
 
-            if (save) {
+              if (save) {
+                this.setState({
+                  pdb: new File([save.coarse_grained.content], save.coarse_grained.name),
+                  top: new File([save.top_file.content], save.top_file.name),
+                  itps: save.itp_files.map(e => new File([e.content], e.name)),
+                  ff: save.info.builder_force_field,
+                }, this.nextFromFiles);
+              }
+            }}
+          />
+
+          <Marger size="1rem" />
+
+          <Typography align="center" variant="h6">
+            Upload a molecule
+          </Typography>
+          
+          <Marger size="1rem" />
+          
+          <SimpleSelect
+            label="Used force field"
+            variant="standard"
+            id="ff_select"
+            values={this.force_fields.map(e => ({ id: e, name: e }))}
+            value={this.state.ff}
+            onChange={val => this.setState({ ff: val })}
+            noMinWidth
+            formControlClass={this.props.classes.ff_select}
+          />
+
+          <Marger size="1rem" />
+
+          <AddMoleculeFileInput 
+            onChange={({ itp, top, pdb }) => {
               this.setState({
-                pdb: new File([save.coarse_grained.content], save.coarse_grained.name),
-                top: new File([save.top_file.content], save.top_file.name),
-                itps: save.itp_files.map(e => new File([e.content], e.name)),
-                ff: save.info.builder_force_field,
-              }, this.nextFromFiles);
-            }
-          }}
-        />
+                pdb,
+                top,
+                itps: itp,
+              });
+            }}
+          />
 
-        <Marger size="1rem" />
+          </React.Fragment>}
 
-        <Typography align="center" variant="h6">
-          Upload a molecule
-        </Typography>
-        
-        <Marger size="1rem" />
-        
-        <SimpleSelect
-          label="Used force field"
-          variant="standard"
-          id="ff_select"
-          values={this.force_fields.map(e => ({ id: e, name: e }))}
-          value={this.state.ff}
-          onChange={val => this.setState({ ff: val })}
-          noMinWidth
-          formControlClass={this.props.classes.ff_select}
-        />
+          <Marger size="1rem" />
 
-        <Marger size="1rem" />
-
-        <AddMoleculeFileInput 
-          onChange={({ itp, top, pdb }) => {
-            this.setState({
-              pdb,
-              top,
-              itps: itp,
-            });
-          }}
-        />
-
-        <Marger size="1rem" />
-
-        <div style={{ textAlign: 'right' }}>
-          <Button variant="outlined" color="primary" disabled={!this.can_continue} onClick={this.nextFromFiles}>
-            Next
-          </Button>
-        </div>
+          <div style={{ textAlign: 'right' }}>
+            <Button variant="outlined" color="primary" disabled={!this.can_continue} 
+            onClick={this.nextFromFiles}>
+              Next
+            </Button>
+          </div>
       </React.Fragment>
     );
   }
