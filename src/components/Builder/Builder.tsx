@@ -47,7 +47,6 @@ interface MartinizeFiles {
   top: MartinizeFile;
   go?: BaseBondsHelper;
   elastic_bonds?: BondsRepresentation;
-  warnings?: MartinizeFile; 
 }
 
 interface AtomRadius { 
@@ -59,6 +58,8 @@ export interface MBState {
   error?: any;
   martinize_error?: MZError;
   martinize_step: string;
+
+  stdout?: any;
 
   all_atom_pdb?: File;
   all_atom_ngl?: NglComponent;
@@ -213,6 +214,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
         cystein_bridge: this.state.cystein_bridge,
         advanced: this.state.advanced,
         commandline: this.state.commandline,
+        stdout: this.state.stdout
       },
       all_atom: this.state.all_atom_pdb!,
       coarse_grained: this.state.files.pdb,
@@ -221,7 +223,6 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       radius: this.state.files.radius,
       elastic_bonds: this.state.files.elastic_bonds?.bonds,
       go: this.state.files.go?.toJSON(),
-      warnings: this.state.files.warnings    
     }, overwrite_uuid);
 
     this.setState({
@@ -722,7 +723,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       const files: Partial<MartinizeFiles> = {};
 
       // Begin the run
-      socket.emit('martinize', Buffer.from(pdb_content), RUN_ID, form_data, Settings.user?.id);
+      socket.emit('martinize', Buffer.from(pdb_content), RUN_ID, form_data);
       this.setState({ martinize_step: 'Sending your files to server' });
 
       // Martinize step
@@ -756,7 +757,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
           return;
         }
         setMartinizeStep("Downloading results");
-       
+
         switch (type) {
           case 'chemical/x-pdb': {
             // pdb file
@@ -789,14 +790,6 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
             });
             break;
           }
-          case 'martinize-warnings': {
-            if (file.byteLength !== 0) files.warnings = {
-              name, 
-              content: new File([file], name, { type }),
-              type,
-            };
-            break; 
-          }
         }
 
         ok_cb();
@@ -820,6 +813,10 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
         setMartinizeStep("Finishing...");
       });
 
+      socket.on('martinize stderr', ( stdout : any ) => {
+        this.setState({stdout: stdout}, () => {console.log(stdout)});
+      });
+
       // When run ends
       socket.on('martinize end', (
         { id, elastic_bonds, radius }: { 
@@ -839,6 +836,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
             files.elastic_bonds.bonds = elastic_bonds;
           }
           */
+
           resolve(files as MartinizeFiles);
       });
     }).catch(error => {
@@ -1484,6 +1482,9 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
               {this.state.running === 'martinize_generate' && this.martinizeGenerating()}
 
               {this.state.running === 'done' && <MartinizeGenerated 
+
+                stdout={this.state.stdout}
+
                 onReset={() => this.reset()}
                 theme={this.state.theme}
                 allAtomName={this.state.all_atom_pdb!.name.split('.')[0]}
@@ -1509,7 +1510,6 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
                 edited={this.state.edited}
                 generatingFiles={this.state.generating_files}
                 onGoEditorStart={this.onGoEditorStart}
-                warnings={this.state.files?.warnings?.content}
               />}
 
               {this.state.running === 'go_editor' && <GoEditor 

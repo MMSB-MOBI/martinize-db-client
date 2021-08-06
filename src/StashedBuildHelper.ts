@@ -28,6 +28,7 @@ export interface StashedBuildInfo {
 
   advanced: string;
   commandline: string;
+  stdout : string[]; //To handle warnings
 }
 
 export interface MartinizeFile {
@@ -45,7 +46,6 @@ export interface StashedBuild {
   elastic_bonds?: ElasticOrGoBounds[];
   info: StashedBuildInfo;
   go?: BaseBondsHelperJSON | GoBondsHelperJSON;
-  warnings?: MartinizeFile; 
 }
 
 /**

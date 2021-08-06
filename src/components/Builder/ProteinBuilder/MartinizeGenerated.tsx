@@ -5,7 +5,6 @@ import { ToggleButtonGroup, ToggleButton, Alert } from '@material-ui/lab';
 import { ViableRepresentation } from '../NglWrapper';
 import Tooltip from '../../../Tooltip';
 import MoleculeSaverModal from './MoleculeSaverModal';
-import PopUpAlert from './PopUpAlert'; 
 
 interface MartinizeGeneratedProps {
   onReset(): any;
@@ -41,18 +40,47 @@ interface MartinizeGeneratedProps {
   onGoEditorStart(): any;
   onSave(name: string): any;
 
-  warnings?: File; 
+  stdout?: any;
 }
-
-
 
 export default function MartinizeGenerated(props: MartinizeGeneratedProps) {
   const [wantReset, setWantReset] = React.useState(false);
   const [saverModal, setSaverModal] = React.useState("");
 
+  const [warning, setWarning] = React.useState(false);
+
   return (
     <React.Fragment>
-      {(props.warnings) && <PopUpAlert buttonText="Warnings were encountered" contentTitle="Martinize encountered warnings :" contentFile={props.warnings}/>}
+      {(props.stdout!.length != 0 ? true : false) &&
+
+      <Alert severity="warning" action={
+        <Button 
+          size="medium"
+          color="inherit" 
+          onClick={() => setWarning(true)}
+        >
+          Warnings were encountered
+        </Button>
+      }>
+      </Alert>}
+
+      <Dialog
+        open={warning}
+        fullWidth={true}
+        maxWidth="lg"
+        >
+        <DialogTitle>Gromacs encountered {props.stdout!.length} warnings : </DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            {props.stdout ? props.stdout.map((line : any) => <span>{line}<br></br><br></br></span>) : ''}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setWarning(false)} color="primary">
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <MoleculeSaverModal
         open={!!saverModal} 
