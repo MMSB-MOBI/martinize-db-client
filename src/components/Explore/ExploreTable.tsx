@@ -154,7 +154,7 @@ export default function MoleculeTable(props: {
                       </IconButton>
                     </TableCell>*/}
 
-                    <TableCell align="left" size="small">
+                    {/*<TableCell align="left" size="small">
                       <FormControlLabel
                         control={<Checkbox size="small" //icon={<CheckBoxOutlineBlank />} checkedIcon={<Checkbox />} 
                         name="checkedH" onClick={() => {
@@ -163,7 +163,7 @@ export default function MoleculeTable(props: {
                       }}/>}
                         label=''
                       />
-                    </TableCell>
+                    </TableCell>*/}
 
                     {columns.map(column => {
                       const value = row[column.id];
@@ -226,12 +226,12 @@ export default function MoleculeTable(props: {
       />}
 
 
-      <MLink 
+      {/*<MLink 
         onClick={() => downloadMolecules(molToDownload)}
         style={{ fontSize: '1.3rem', fontWeight: 'bold' }} 
         >
             Download files
-        </MLink>
+      </MLink>*/}
     </div>
   );
 }
