@@ -555,7 +555,7 @@ class SettingsChooser extends React.Component<SCProps, SCState> {
           </Button>
 
           <Button variant="outlined" color="primary" disabled={!this.can_continue} onClick={this.next}>
-            Create membrane
+            Create system
           </Button>
         </div>
       </React.Fragment>

@@ -242,7 +242,7 @@ class LipidChooser extends React.Component<LCProps, LCState> {
               onItemChange={this.onUpperLipidChange}
               onItemDelete={this.onUpperLipidDelete}
             />
-            <Typography gutterBottom>
+            {/*<Typography gutterBottom>
               pH
             </Typography>
             <Slider
@@ -254,7 +254,7 @@ class LipidChooser extends React.Component<LCProps, LCState> {
               max={13.9}
               onChange={this.props.phUppChange}
               color="secondary"
-            />
+            />*/}
 
             <Marger size="1rem" />
           </React.Fragment>}
@@ -271,7 +271,7 @@ class LipidChooser extends React.Component<LCProps, LCState> {
             onItemDelete={this.onLipidDelete}
           />
 
-          <Typography gutterBottom>
+          {/*<Typography gutterBottom>
             pH
           </Typography>
           <Slider
@@ -283,7 +283,7 @@ class LipidChooser extends React.Component<LCProps, LCState> {
             max={13.9}
             onChange={!this.state.upper_separated ? this.props.phLipidsChange : this.props.phLowChange}
             color="secondary"
-          />
+          />*/}
 
           <Marger size="1rem" />
 
