@@ -6,6 +6,7 @@ import { toast } from '../../Toaster';
 import { ControlCamera } from '@material-ui/icons';
 import { Console } from 'console';
 import { TabContext, TabPanel } from '@material-ui/lab';
+import Settings from '../../../Settings';
 
 export interface SettingsInsane {
   box_type: string;
@@ -33,6 +34,7 @@ interface SCProps {
   addMolecule: string;
   classes: Record<string, string>;
   hasUpperLayer: boolean;
+  forceField: string; 
   onSettingsChoose(settings: SettingsInsane): any;
   onPrevious(): any;
   error?: true | { error: string, trace?: string, zip: number[] };
@@ -109,6 +111,11 @@ class SettingsChooser extends React.Component<SCProps, SCState> {
     const { grid_spacing_orientation, hydrophobic_ratio, fudge_factor, shift_protein } = this.state;
     const { salt_concentration, charge, solvent_type } = this.state;
 
+    if (!this.polarizable_compatibility){
+      toast("Water and protein/lipids polarization are incompatible", "error")
+      return; 
+    }
+
     if (!this.can_continue) {
       toast("Invalid parameters.", "error");
       return;
@@ -171,6 +178,12 @@ class SettingsChooser extends React.Component<SCProps, SCState> {
   get angle_is_error() {
     const angle = Number(this.state.rotate_angle);
     return isNaN(angle) || angle < 0 || angle > 360;
+  }
+
+  get polarizable_compatibility(): boolean{
+    const water_polarization = true ? this.state.solvent_type === "PW" : false
+    if (water_polarization === Settings.martinize_variables.force_fields_info[this.props.forceField].polarizable) return true
+    else return false
   }
 
   renderErrorText(text: string) {

@@ -590,6 +590,7 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
         }}
         hasUpperLayer={!!this.state.lipids?.upper}
         error={this.state.insane_error}
+        forceField={this.state.ff}
       />
     );
   }
