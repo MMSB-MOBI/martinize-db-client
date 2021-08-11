@@ -528,10 +528,10 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
       <React.Fragment>
         <Marger size="1rem"/>
         
-        {!this.state.addMolecule && <div><FormLabel className={this.props.classes.formLabel} component="legend">Do you want to add lipids ?</FormLabel>
+        {this.state.addMolecule === "true" && <div><FormLabel className={this.props.classes.formLabel} component="legend">Do you want to add lipids ?</FormLabel>
         <RadioGroup className={this.props.classes.radioGroup} row name="scfix" value={this.state.addMolecule === "true" ? this.state.addLipids : "true"} onChange={e => {this.setState({addLipids: e.target.value})}}>
-          <FormControlLabel value="false" control={<Radio />} disabled={this.state.addMolecule === "false"} label="no" />
-          <FormControlLabel value="true" control={<Radio />} disabled={this.state.addMolecule === "false"} label="yes" />
+          <FormControlLabel value="false" control={<Radio />} label="no" />
+          <FormControlLabel value="true" control={<Radio />} label="yes" />
         </RadioGroup></div>
         }
         
