@@ -509,14 +509,18 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
           Force_field={this.state.ff !== ''}
           AddMolecule={this.state.addMolecule}
           onMoleculeChoose={molecule => {
-            console.log(molecule)
             this.setState({
               molecule,
               running: 'choose_lipids',
-              available_lipids: [],
+              available_lipids: []
             });
-
-            molecule !== undefined ? this.downloadLipids(molecule.force_field) : this.downloadLipids(this.state.ff);
+            if( molecule !== undefined){
+              this.downloadLipids(molecule.force_field)
+              this.setState({ff:molecule.force_field})
+            }
+            else{
+              this.downloadLipids(this.state.ff);
+            }
           }}
         />
       </React.Fragment>
