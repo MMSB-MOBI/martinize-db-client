@@ -30,6 +30,7 @@ import BaseBondsHelper from './BaseBondsHelper';
 import ElasticBondHelper from './ElasticBondHelper';
 import Settings, { LoginStatus } from '../../Settings';
 import EmbeddedError from '../Errors/Errors';
+import ApiHelper from "../../ApiHelper";
 
 
 // @ts-ignore
@@ -1349,10 +1350,9 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
   }
 
   getMartinizeVersion() {
-    const socket = SocketIo.connect(SERVER_ROOT);
-    socket.on('martinizeVersion', (data: any) => {
-      this.setState({version: data}, ()=>{});
-    })  
+    ApiHelper.request('molecule/martinize/version').then(request_res => {
+      this.setState({version: request_res.version})
+    }).catch(err => {console.error(err)})
   }
 
   changeCommandline(value: string) {
@@ -1417,7 +1417,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
                   Martinize a molecule
                 </Typography>
                 <Typography variant="subtitle1" align="center" style={{fontSize: '0.7rem', fontStyle: 'italic', marginBottom: '1rem'}}>
-                  {this.state.version}
+                  martinize version : {this.state.version}
                 </Typography>
 
                 <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
