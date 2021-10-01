@@ -145,6 +145,13 @@ function DrawerElements(props: RouteComponentProps) {
         condition: !!Settings.logged,
       },
       {
+        path: '/history', 
+        link: true, 
+        icon : "history", 
+        text: "My builder history", 
+        condition: !!Settings.logged
+      }, 
+      {
         path: '/settings',
         link: true,
         icon: "cog",
