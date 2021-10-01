@@ -30,6 +30,7 @@ import BaseBondsHelper from './BaseBondsHelper';
 import ElasticBondHelper from './ElasticBondHelper';
 import Settings, { LoginStatus } from '../../Settings';
 import EmbeddedError from '../Errors/Errors';
+import { dateFormatter } from '../../helpers'; 
 
 
 // @ts-ignore
@@ -702,6 +703,11 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
     // Run via socket.io
     const socket = SocketIo.connect(SERVER_ROOT);
+
+    socket.on("history error", (errorMsg: string) => {alert("HISTORY ERROR"); alert(errorMsg)})
+
+    socket.on("history ok", () => alert("history ok"))
+
     const pdb_content = await new Promise((resolve, reject) => {
       const fr = new FileReader();
 
@@ -723,7 +729,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       const files: Partial<MartinizeFiles> = {};
 
       // Begin the run
-      socket.emit('martinize', Buffer.from(pdb_content), RUN_ID, form_data);
+      socket.emit('martinize', Buffer.from(pdb_content), RUN_ID, form_data, Settings.user?.id, dateFormatter("Y-m-d H:i")); //+userID
       this.setState({ martinize_step: 'Sending your files to server' });
 
       // Martinize step
@@ -836,7 +842,6 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
             files.elastic_bonds.bonds = elastic_bonds;
           }
           */
-
           resolve(files as MartinizeFiles);
       });
     }).catch(error => {
