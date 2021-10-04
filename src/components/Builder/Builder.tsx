@@ -12,7 +12,7 @@ import { RepresentationParameters } from '@mmsb/ngl/declarations/representation/
 import JSZip from 'jszip';
 import { blue } from '@material-ui/core/colors';
 import { applyUserRadius } from '../../nglhelpers';
-import StashedBuildHelper, { MartinizeFile, ElasticOrGoBounds } from '../../StashedBuildHelper';
+import StashedBuildHelper, { MartinizeFile, ElasticOrGoBounds, StashedBuildInfo } from '../../StashedBuildHelper';
 import SocketIo from 'socket.io-client';
 import { SERVER_ROOT, STEPS } from '../../constants';
 import { v4 as uuid } from 'uuid';
@@ -27,10 +27,14 @@ import { BondsRepresentation } from './BondsRepresentation';
 import { BetaWarning } from '../../Shared'; 
 import { stdout } from 'process';
 import BaseBondsHelper from './BaseBondsHelper';
+import { BaseBondsHelperJSON } from './BaseBondsHelper';
+import { GoBondsHelperJSON } from './GoBondsHelper';
 import ElasticBondHelper from './ElasticBondHelper';
 import Settings, { LoginStatus } from '../../Settings';
 import EmbeddedError from '../Errors/Errors';
 import { dateFormatter } from '../../helpers'; 
+
+import ApiHelper from '../../ApiHelper'
 
 
 // @ts-ignore
@@ -53,6 +57,25 @@ interface MartinizeFiles {
 interface AtomRadius { 
   [atom: string]: number;
 }
+
+interface Job {
+  userId : string; 
+  id : string; 
+  date: string; 
+  type : BuilderType; 
+  molecule : {
+    all_atom?: string;
+    coarse_grained: string;
+    itp_files: string[];
+    top_file: string;
+    radius: { [atomName: string]: number };
+    elastic_bonds?: ElasticOrGoBounds[];
+    info: StashedBuildInfo;
+    go?: BaseBondsHelperJSON | GoBondsHelperJSON;
+    }
+}
+
+type BuilderType = "martinize" | "insane"
 
 export interface MBState {
   running: 'pdb' | 'pdb_read' | 'martinize_params' | 'martinize_generate' | 'martinize_error' | 'done' | 'go_editor';
@@ -127,6 +150,8 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     representations: ViableRepresentation[];
     go: BaseBondsHelper;
   };
+
+  protected jobId: string = ""; 
 
   componentDidMount() {
     setPageTitle('Protein Builder');
@@ -230,6 +255,59 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       saved: uuid,
       edited: false,
     });
+  }
+
+  async saveToHistory(builderType: BuilderType){ 
+    if (!this.state.files) {
+      toast("Can't save to history, files are missing", "error")
+      return;
+    }
+
+    if (!Settings.user?.id){
+      toast("Can't save to history, user is missing", "error")
+      return; 
+    }
+
+    console.log("UUUUU", this.jobId)
+
+    const toSend : Job = {
+      userId : Settings.user.id, 
+      id : this.jobId, 
+      date : dateFormatter("Y-m-d H:i"),
+      type : builderType,
+      molecule : {
+        info: {
+            name : "", 
+            created_at: new Date(),
+            builder_force_field: this.state.builder_force_field,
+            builder_mode: this.state.builder_mode,
+            builder_positions: this.state.builder_positions,
+            builder_ef: this.state.builder_ef,
+            builder_el: this.state.builder_el,
+            builder_ea: this.state.builder_ea,
+            builder_eu: this.state.builder_eu,
+            builder_ep: this.state.builder_ep,
+            builder_em: this.state.builder_em,
+            cTer: this.state.cTer,
+            nTer: this.state.nTer,
+            sc_fix: this.state.sc_fix,
+            cystein_bridge: this.state.cystein_bridge,
+            advanced: this.state.advanced,
+            commandline: this.state.commandline,
+            stdout: this.state.stdout
+          }, 
+          all_atom: this.state.all_atom_pdb?.name,
+          coarse_grained: this.state.files.pdb.name,
+          itp_files: this.state.files.itps.map(itp => itp.name),
+          top_file: this.state.files.top.name,
+          radius: this.state.files.radius,
+          elastic_bonds: this.state.files.elastic_bonds?.bonds,
+          go: this.state.files.go?.toJSON(),
+      }
+    }
+    const res = await ApiHelper.request("history/save", {parameters: toSend, method: 'POST'})
+    if("ok" in res) toast("Your job has been saved to history", "info")
+    else toast("Your job hasn't been saved to history. An error occured", "error")
   }
 
   /* pas le load quand nouveau martinize, mais quand load molecule enregistrée */
@@ -704,10 +782,6 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     // Run via socket.io
     const socket = SocketIo.connect(SERVER_ROOT);
 
-    socket.on("history error", (errorMsg: string) => {alert("HISTORY ERROR"); alert(errorMsg)})
-
-    socket.on("history ok", () => alert("history ok"))
-
     const pdb_content = await new Promise((resolve, reject) => {
       const fr = new FileReader();
 
@@ -729,7 +803,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       const files: Partial<MartinizeFiles> = {};
 
       // Begin the run
-      socket.emit('martinize', Buffer.from(pdb_content), RUN_ID, form_data, Settings.user?.id, dateFormatter("Y-m-d H:i")); //+userID
+      socket.emit('martinize', Buffer.from(pdb_content), RUN_ID, form_data, s.all_atom_pdb?.name);
       this.setState({ martinize_step: 'Sending your files to server' });
 
       // Martinize step
@@ -825,16 +899,18 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
       // When run ends
       socket.on('martinize end', (
-        { id, elastic_bonds, radius }: { 
+        { id, elastic_bonds, radius, jobId }: { 
           id: string, 
           elastic_bonds?: ElasticOrGoBounds[], 
           radius: { [name: string]: number; }, 
+          jobId: string; 
         }) => {
           if (id !== RUN_ID) {
             return;
           }
 
           files.radius = radius;
+          this.jobId = jobId
 
           /*
           if (elastic_bonds) {
@@ -878,6 +954,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       mode
     });
 
+    await this.saveToHistory("martinize")
     // AJAX METHOD
     //
     // ApiHelper.request('molecule/martinize', {
