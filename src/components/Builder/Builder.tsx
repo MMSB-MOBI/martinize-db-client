@@ -43,6 +43,7 @@ window.NGL = ngl; window.BaseBondsHelper = BaseBondsHelper;
 interface MBProps {
   classes: Record<string, string>;
   theme: Theme;
+  location : any; 
 }
 
 interface MartinizeFiles {
@@ -170,6 +171,35 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     this.ngl = new NglWrapper("ngl-stage", { backgroundColor: this.props.theme.palette.background.default });
     this.changeCommandline('');
     this.getMartinizeVersion();
+
+    if(this.props.location.state){
+      console.log("from somewhere else")
+      const jobId = this.props.location.state.jobId
+      ApiHelper.request(`history/get?jobId=${jobId}`).then(async (job) => {
+        const allAtomFile = this.parseAllAtomFile(job.files)
+        const martinizeFiles = this.parseFiles(job.files)
+        console.log(martinizeFiles)
+        //const parsedFiles = this.parseFiles(job.files)
+        this.setState({stdout: []})
+        await this.initAllAtomPdb(allAtomFile)
+        await this.initCoarseGrainPdb({files : martinizeFiles})
+        
+      }).catch(e => console.error(e))
+    }
+  }
+
+  protected parseAllAtomFile(files:any){
+    return new File([files.all_atom.content], files.all_atom.name, { type: files.all_atom.type })
+
+  }
+
+  protected parseFiles(files:any) {
+    return {
+      pdb : {name : files.coarse_grained.name, type : files.coarse_grained.type, content : new File([files.coarse_grained.content], files.coarse_grained.name)},
+      itps : files.itp_files.map((itp : any) => ({name : itp.name, type : itp.type, content : new File([itp.content], itp.name)})), 
+      top : {name : files.top_file.name, type : files.top_file.type, content : new File([files.top_file.content], files.top_file.name)},
+      radius : {"A" : 12}
+    }
   }
 
   protected get original_state() : MBState {
@@ -467,6 +497,8 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
   }
 
   async initAllAtomPdb(file: File) {
+    console.log("initAllAtomPdb")
+    console.log(file); 
     const component = await this.ngl.load(file);
 
     component.add<BallAndStickRepresentation>("ball+stick");
@@ -803,7 +835,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       const files: Partial<MartinizeFiles> = {};
 
       // Begin the run
-      socket.emit('martinize', Buffer.from(pdb_content), RUN_ID, form_data, s.all_atom_pdb?.name);
+      socket.emit('martinize', Buffer.from(pdb_content), RUN_ID, form_data, Settings.user?.id, s.all_atom_pdb?.name);
       this.setState({ martinize_step: 'Sending your files to server' });
 
       // Martinize step
@@ -899,18 +931,16 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
       // When run ends
       socket.on('martinize end', (
-        { id, elastic_bonds, radius, jobId }: { 
+        { id, elastic_bonds, radius }: { 
           id: string, 
           elastic_bonds?: ElasticOrGoBounds[], 
           radius: { [name: string]: number; }, 
-          jobId: string; 
         }) => {
           if (id !== RUN_ID) {
             return;
           }
 
           files.radius = radius;
-          this.jobId = jobId
 
           /*
           if (elastic_bonds) {
@@ -954,7 +984,6 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       mode
     });
 
-    await this.saveToHistory("martinize")
     // AJAX METHOD
     //
     // ApiHelper.request('molecule/martinize', {
@@ -1568,7 +1597,6 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
               {this.state.running === 'done' && <MartinizeGenerated 
 
                 stdout={this.state.stdout}
-
                 onReset={() => this.reset()}
                 theme={this.state.theme}
                 allAtomName={this.state.all_atom_pdb!.name.split('.')[0]}
