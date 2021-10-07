@@ -36,13 +36,13 @@ import { dateFormatter } from '../../helpers';
 
 import ApiHelper from '../../ApiHelper'
 
+
 // @ts-ignore
 window.NGL = ngl; window.BaseBondsHelper = BaseBondsHelper;
 
 interface MBProps {
   classes: Record<string, string>;
   theme: Theme;
-  location: any; 
 }
 
 interface MartinizeFiles {
@@ -133,7 +133,6 @@ export interface MBState {
  * The protein builder.
  */
 class MartinizeBuilder extends React.Component<MBProps, MBState> {
-  
   state = this.original_state;
 
   protected ngl_stage?: Stage;
@@ -161,6 +160,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     console.log(LoginStatus.None);
 
     if (Settings.logged === LoginStatus.None) {
+      console.log("OOOOO")
       return;
     }
 
@@ -170,17 +170,6 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     this.ngl = new NglWrapper("ngl-stage", { backgroundColor: this.props.theme.palette.background.default });
     this.changeCommandline('');
     this.getMartinizeVersion();
-
-    if(this.props.location.state){
-      console.log("I'm from somewhere else")
-      const jobId = this.props.location.state.jobId
-      const parameters = {jobId : jobId}
-      console.log(parameters)
-      ApiHelper.request('history/get', {
-        parameters, method: 'POST',
-      }).then(job => console.log(job));
-    }
-
   }
 
   protected get original_state() : MBState {
@@ -278,6 +267,8 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       toast("Can't save to history, user is missing", "error")
       return; 
     }
+
+    console.log("UUUUU", this.jobId)
 
     const toSend : Job = {
       userId : Settings.user.id, 
@@ -476,7 +467,6 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
   }
 
   async initAllAtomPdb(file: File) {
-
     const component = await this.ngl.load(file);
 
     component.add<BallAndStickRepresentation>("ball+stick");
@@ -808,14 +798,12 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     const setMartinizeStep = (str: string) => {
       this.setState({ martinize_step: str });
     };
-    
-
 
     const files: MartinizeFiles | undefined = await new Promise<MartinizeFiles>((resolve, reject) => {
       const files: Partial<MartinizeFiles> = {};
 
       // Begin the run
-      socket.emit('martinize', Buffer.from(pdb_content), RUN_ID, form_data, Settings.user?.id, s.all_atom_pdb?.name);
+      socket.emit('martinize', Buffer.from(pdb_content), RUN_ID, form_data, s.all_atom_pdb?.name);
       this.setState({ martinize_step: 'Sending your files to server' });
 
       // Martinize step
@@ -848,8 +836,6 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
         if (id !== RUN_ID) {
           return;
         }
-        console.log("A", file)
-
         setMartinizeStep("Downloading results");
 
         switch (type) {
@@ -913,17 +899,18 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
       // When run ends
       socket.on('martinize end', (
-        { id, elastic_bonds, radius }: { 
+        { id, elastic_bonds, radius, jobId }: { 
           id: string, 
           elastic_bonds?: ElasticOrGoBounds[], 
-          radius: { [name: string]: number; },  
+          radius: { [name: string]: number; }, 
+          jobId: string; 
         }) => {
           if (id !== RUN_ID) {
             return;
           }
 
           files.radius = radius;
-          //this.jobId = jobId
+          this.jobId = jobId
 
           /*
           if (elastic_bonds) {
@@ -967,7 +954,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       mode
     });
 
-    //await this.saveToHistory("martinize")
+    await this.saveToHistory("martinize")
     // AJAX METHOD
     //
     // ApiHelper.request('molecule/martinize', {
@@ -1581,6 +1568,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
               {this.state.running === 'done' && <MartinizeGenerated 
 
                 stdout={this.state.stdout}
+
                 onReset={() => this.reset()}
                 theme={this.state.theme}
                 allAtomName={this.state.all_atom_pdb!.name.split('.')[0]}

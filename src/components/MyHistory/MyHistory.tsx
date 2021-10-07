@@ -52,6 +52,12 @@ export class MyHistory extends React.Component<RouteComponentProps, MyHistorySta
   }
 
   render() {
+    const test = [{
+      id: "1111",
+      date : "fdfdslfdsf",
+      type : "pouet"
+
+    }]
     if (Settings.logged === LoginStatus.None) {
       return <EmbeddedError title="Forbidden" text="You can't access this page." />;
     }

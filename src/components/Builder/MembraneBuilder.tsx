@@ -328,8 +328,6 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
         parameters, body_mode: 'multipart', method: 'POST',
       });
 
-      console.log("INSANE", res); 
-
       const result = this.parseInsaneResult(res);
 
       this.initNglWithResult(result, 'no_water');
