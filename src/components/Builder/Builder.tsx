@@ -35,6 +35,8 @@ import EmbeddedError from '../Errors/Errors';
 import { dateFormatter } from '../../helpers'; 
 
 import ApiHelper from '../../ApiHelper'
+import ElasticBondsHelper from './ElasticBondHelper';
+import { JobDoc, JobFiles } from './types'; 
 
 
 // @ts-ignore
@@ -172,33 +174,35 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     this.changeCommandline('');
     this.getMartinizeVersion();
 
-    if(this.props.location.state){
+    if(this.props.location.state && this.props.location.state.from === "history"){
       console.log("from somewhere else")
       const jobId = this.props.location.state.jobId
-      ApiHelper.request(`history/get?jobId=${jobId}`).then(async (job) => {
-        const allAtomFile = this.parseAllAtomFile(job.files)
-        const martinizeFiles = this.parseFiles(job.files)
-        console.log(martinizeFiles)
-        //const parsedFiles = this.parseFiles(job.files)
-        this.setState({stdout: []})
-        await this.initAllAtomPdb(allAtomFile)
-        await this.initCoarseGrainPdb({files : martinizeFiles})
-        
-      }).catch(e => console.error(e))
+      this.loadFromHistory(jobId)
     }
   }
 
-  protected parseAllAtomFile(files:any){
+  protected parseAllAtomFile(files: JobFiles) : File{
     return new File([files.all_atom.content], files.all_atom.name, { type: files.all_atom.type })
 
   }
 
-  protected parseFiles(files:any) {
+  async loadMartinizeFiles(job: JobDoc) : Promise<MartinizeFiles> {
+    const files = job.files
+    const itps = files.itp_files.map((itp : any) => ({name : itp.name, type : itp.type, content : new File([itp.content], itp.name)}))
+    const builderMode = "elastic" in job.settings && job.settings.elastic ? "elastic" : ("use_go" in job.settings && job.settings.use_go ? "go" : undefined)
+    const bonds = (builderMode && builderMode === "go") ? await GoBondsHelper.readFromItps(this.ngl,  itps.map((e:MartinizeFile) => e.content)) : (builderMode && builderMode === "elastic" ? await ElasticBondsHelper.readFromItps(this.ngl, itps.map((e:MartinizeFile) => e.content)): undefined);
+    const elastic_bonds = bonds?.representation
+
+    this.setState({builder_mode : !builderMode ? "classic" : builderMode})
+
     return {
+      radius : job.radius,
+      elastic_bonds,
+      go: bonds,
       pdb : {name : files.coarse_grained.name, type : files.coarse_grained.type, content : new File([files.coarse_grained.content], files.coarse_grained.name)},
-      itps : files.itp_files.map((itp : any) => ({name : itp.name, type : itp.type, content : new File([itp.content], itp.name)})), 
+      itps, 
       top : {name : files.top_file.name, type : files.top_file.type, content : new File([files.top_file.content], files.top_file.name)},
-      radius : {"A" : 12}
+
     }
   }
 
@@ -341,6 +345,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
   }
 
   /* pas le load quand nouveau martinize, mais quand load molecule enregistrée */
+
   async load(uuid: string) {
     const saver = new StashedBuildHelper();
     
@@ -399,6 +404,33 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     });
   }
 
+  async loadFromHistory(jobId: string){
+    try {
+
+      const job : JobDoc = await ApiHelper.request(`history/get?jobId=${jobId}`)
+      const allAtomFile = this.parseAllAtomFile(job.files)
+      const martinizeFiles = await this.loadMartinizeFiles(job)
+
+      this.initAllAtomPdb(allAtomFile);
+
+      this.setState({stdout : []})
+
+      this.initCoarseGrainPdb({
+        files : martinizeFiles,
+        mode : this.state.builder_mode === "classic" ? undefined : this.state.builder_mode,
+      });
+      
+      this.setState({ 
+        files : martinizeFiles
+      });
+
+    }catch (e){
+      console.log(e)
+      console.error(e)
+    }
+
+  }
+
   reset() {
     if (this.ngl)
       this.ngl.reset();
@@ -406,7 +438,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     this.changeCommandline('');
     this.changeTheme('light');
   }
-
+  
 
   /* SET SETTINGS FOR REPRESENTATIONS */
 
@@ -802,6 +834,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     }
     form_data.advanced = s.advanced;
     form_data.commandline = s.commandline;
+    form_data.builder_mode = s.builder_mode
 
     // form_data.pdb = s.all_atom_pdb;
 
