@@ -67,7 +67,7 @@ export default function HistoryTable(props : {
             props.onNeedUpdate(); 
             
         }catch(e){
-            console.error(e); 
+            notifyError(e); 
         }
 
     }
