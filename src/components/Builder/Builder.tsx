@@ -1,6 +1,6 @@
 import React from 'react';
 import { withStyles, Grid, Typography, Paper, Button, withTheme, Theme, CircularProgress, Divider, createMuiTheme, ThemeProvider, Link, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@material-ui/core';
-import { Marger, FaIcon, downloadBlob, setPageTitle } from '../../helpers';
+import { Marger, FaIcon, downloadBlob, setPageTitle, notifyError } from '../../helpers';
 import { Link as RouterLink } from 'react-router-dom';
 
 import { Stage } from '@mmsb/ngl';
@@ -12,7 +12,7 @@ import { RepresentationParameters } from '@mmsb/ngl/declarations/representation/
 import JSZip from 'jszip';
 import { blue } from '@material-ui/core/colors';
 import { applyUserRadius } from '../../nglhelpers';
-import StashedBuildHelper, { MartinizeFile, ElasticOrGoBounds, StashedBuildInfo } from '../../StashedBuildHelper';
+import StashedBuildHelper, { ElasticOrGoBounds, StashedBuildInfo } from '../../StashedBuildHelper';
 import SocketIo from 'socket.io-client';
 import { SERVER_ROOT, STEPS } from '../../constants';
 import { v4 as uuid } from 'uuid';
@@ -32,11 +32,11 @@ import { GoBondsHelperJSON } from './GoBondsHelper';
 import ElasticBondHelper from './ElasticBondHelper';
 import Settings, { LoginStatus } from '../../Settings';
 import EmbeddedError from '../Errors/Errors';
-import { dateFormatter } from '../../helpers'; 
+import { dateFormatter, downloadMartinize } from '../../helpers'; 
 
 import ApiHelper from '../../ApiHelper'
 import ElasticBondsHelper from './ElasticBondHelper';
-import { JobDoc, JobFiles } from './types'; 
+import { MartinizeFile, MartinizeMode } from '../../types/entities'; 
 
 
 // @ts-ignore
@@ -48,7 +48,7 @@ interface MBProps {
   location : any; 
 }
 
-interface MartinizeFiles {
+export interface MartinizeFiles {
   pdb: MartinizeFile;
   itps: MartinizeFile[];
   radius: { [name: string]: number };
@@ -95,7 +95,7 @@ export interface MBState {
   coarse_grain_ngl?: NglComponent;
 
   builder_force_field: string;
-  builder_mode: 'go' | 'classic' | 'elastic';
+  builder_mode: MartinizeMode; 
   builder_positions: 'none' | 'all' | 'backbone';
   builder_ef: string;
   builder_el: string;
@@ -158,12 +158,8 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
   componentDidMount() {
     setPageTitle('Protein Builder');
-    console.log("Builder mount")
-    console.log(Settings.logged); 
-    console.log(LoginStatus.None);
 
     if (Settings.logged === LoginStatus.None) {
-      console.log("OOOOO")
       return;
     }
 
@@ -176,34 +172,17 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
     if(this.props.location.state && this.props.location.state.from === "history"){
       console.log("from somewhere else")
-      const jobId = this.props.location.state.jobId
-      this.loadFromHistory(jobId)
+      const allAtomFile = this.props.location.state.allAtomFile
+      const martinizeFiles = this.props.location.state.martinizeFiles
+      const mode = this.props.location.state.martinizeMode
+      this.reloadJob(allAtomFile, martinizeFiles, mode); 
     }
   }
 
-  protected parseAllAtomFile(files: JobFiles) : File{
-    return new File([files.all_atom.content], files.all_atom.name, { type: files.all_atom.type })
-
-  }
-
-  async loadMartinizeFiles(job: JobDoc) : Promise<MartinizeFiles> {
-    const files = job.files
-    const itps = files.itp_files.map((itp : any) => ({name : itp.name, type : itp.type, content : new File([itp.content], itp.name)}))
-    const builderMode = "elastic" in job.settings && job.settings.elastic ? "elastic" : ("use_go" in job.settings && job.settings.use_go ? "go" : undefined)
-    const bonds = (builderMode && builderMode === "go") ? await GoBondsHelper.readFromItps(this.ngl,  itps.map((e:MartinizeFile) => e.content)) : (builderMode && builderMode === "elastic" ? await ElasticBondsHelper.readFromItps(this.ngl, itps.map((e:MartinizeFile) => e.content)): undefined);
+  async loadBonds(martinizeFiles: MartinizeFiles, mode : "go" | "elastic"){
+    const bonds = mode === "go" ? await GoBondsHelper.readFromItps(this.ngl,  martinizeFiles.itps.map((e:MartinizeFile) => e.content)) : mode === "elastic" ? await ElasticBondsHelper.readFromItps(this.ngl, martinizeFiles.itps.map((e:MartinizeFile) => e.content)) : undefined
     const elastic_bonds = bonds?.representation
-
-    this.setState({builder_mode : !builderMode ? "classic" : builderMode})
-
-    return {
-      radius : job.radius,
-      elastic_bonds,
-      go: bonds,
-      pdb : {name : files.coarse_grained.name, type : files.coarse_grained.type, content : new File([files.coarse_grained.content], files.coarse_grained.name)},
-      itps, 
-      top : {name : files.top_file.name, type : files.top_file.type, content : new File([files.top_file.content], files.top_file.name)},
-
-    }
+    return {...martinizeFiles, elastic_bonds, go: bonds}
   }
 
   protected get original_state() : MBState {
@@ -404,30 +383,17 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     });
   }
 
-  async loadFromHistory(jobId: string){
+  async reloadJob(allAtomFile : File, martinizeFiles : MartinizeFiles, builder_mode : MartinizeMode){
     try {
-
-      const job : JobDoc = await ApiHelper.request(`history/get?jobId=${jobId}`)
-      const allAtomFile = this.parseAllAtomFile(job.files)
-      const martinizeFiles = await this.loadMartinizeFiles(job)
-
-      this.initAllAtomPdb(allAtomFile);
-
-      this.setState({stdout : []})
-
+      const completeFiles = builder_mode === "go" || builder_mode === "elastic" ? await this.loadBonds(martinizeFiles, builder_mode) : martinizeFiles
+      this.initAllAtomPdb(allAtomFile); 
       this.initCoarseGrainPdb({
-        files : martinizeFiles,
-        mode : this.state.builder_mode === "classic" ? undefined : this.state.builder_mode,
+        files : completeFiles,
+        mode : builder_mode === "classic" ? undefined : builder_mode
       });
-      
-      this.setState({ 
-        files : martinizeFiles
-      });
-
-    }catch (e){
-      console.log(e)
-      console.error(e)
-    }
+      this.setState({files: completeFiles, stdout : [], builder_mode})
+    }catch(e) { notifyError(e) }
+    
 
   }
 
@@ -1176,61 +1142,10 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     this.setState({ generating_files: true });
 
     try {
-      const zip = new JSZip();
-      const files = this.state.files;
-
-      zip.file(files.pdb.name, files.pdb.content);
-      zip.file(files.top.name, files.top.content);
-
-      const itps = [...files.itps];
-
-      // Take the right itps
-      if (files.go) {
-        let to_replace: File[];
-        if (this.state.builder_mode === "go") {
-          // @ts-ignore
-          to_replace = files.go.toOriginalFiles();
-        }
-        else if (this.state.builder_mode === "elastic") {
-          to_replace = await files.go.toOriginalFiles(itps[0].content);
-        }
-        
-
-        for (const file of to_replace!) {
-          const index = itps.findIndex(e => e.name === file.name);
-          const m_file = {
-            name: file.name,
-            content: file,
-            type: 'chemical/x-include-topology',
-          };
-
-          if (index !== -1) {
-            console.log("Replaced file", itps[index], 'with', m_file)
-            itps[index] = m_file;
-          }
-          else {
-            itps.push(m_file);
-          }
-        }
-      }
-
-      for (const itp of itps) {
-        zip.file(itp.name, itp.content);
-      }
-  
-      const generated = await zip.generateAsync({
-        type: 'blob',
-        compression: 'DEFLATE',
-        compressionOptions: {
-          level: 7
-        }
-      });
-
-      const original_name = this.state.all_atom_pdb!.name;
-      const without_extension = original_name.slice(0, original_name.indexOf('.pdb')) + '-CG';
-
-      downloadBlob(generated, without_extension + '.zip');
-    } catch (e) {
+      const original_name = this.state.all_atom_pdb!.name
+      const name = original_name.slice(0, original_name.indexOf('.pdb')) + '-CG'
+      await downloadMartinize(this.state.files, this.state.builder_mode, name)
+    }catch(e){
       console.warn("Failed to build zip.", e);
     } finally {
       this.setState({ generating_files: false });

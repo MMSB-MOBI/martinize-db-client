@@ -2,6 +2,7 @@ import LocalForage from 'localforage';
 import uuid from 'uuid/v4';
 import { BaseBondsHelperJSON } from './components/Builder/BaseBondsHelper';
 import { GoBondsHelperJSON } from './components/Builder/GoBondsHelper';
+import { MartinizeFile } from './types/entities'
 
 /**
  * Tuple of two integers: [{from} atom index, {to} atom index]
@@ -29,12 +30,6 @@ export interface StashedBuildInfo {
   advanced: string;
   commandline: string;
   stdout : string[]; //To handle warnings
-}
-
-export interface MartinizeFile {
-  name: string;
-  content: File;
-  type: string;
 }
 
 export interface StashedBuild {
