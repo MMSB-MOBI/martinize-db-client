@@ -930,10 +930,11 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
       // When run ends
       socket.on('martinize end', (
-        { id, elastic_bonds, radius }: { 
+        { id, elastic_bonds, radius, savedToHistory }: { 
           id: string, 
           elastic_bonds?: ElasticOrGoBounds[], 
           radius: { [name: string]: number; }, 
+          savedToHistory : boolean
         }) => {
           if (id !== RUN_ID) {
             return;
@@ -947,6 +948,8 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
             files.elastic_bonds.bonds = elastic_bonds;
           }
           */
+          if(savedToHistory) toast("Your job has been saved to history", "success")
+          else toast("Your job can't be saved to history. An error occured with the server.", "warning")
           resolve(files as MartinizeFiles);
       });
     }).catch(error => {
