@@ -3,7 +3,7 @@ import NglWrapper, { NglComponent, NglRepresentation } from '../NglWrapper';
 import PickingProxy from '@mmsb/ngl/declarations/controls/picking-proxy';
 import { Vector3 } from 'three';
 import { Shape } from '@mmsb/ngl';
-import { Typography, Divider, Button, Box, Link, TextField, FormControlLabel, Checkbox } from '@material-ui/core';
+import { Typography, Divider, Button, Box, Link, TextField, FormControlLabel, Checkbox, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@material-ui/core';
 import * as ngl from '@mmsb/ngl';
 import { Marger, FaIcon } from '../../../helpers';
 import BallAndStickRepresentation from '@mmsb/ngl/declarations/representation/ballandstick-representation';
@@ -53,6 +53,7 @@ interface GoEditorState {
   select_2: string;
   show_side_chains: boolean;
   enable_history: boolean;
+  want_save_bonds: boolean; 
 }
 
 interface PickedGoBond {
@@ -77,6 +78,7 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
     select_2: '',
     show_side_chains: false,
     enable_history: true,
+    want_save_bonds: false
   };
 
   protected get repr() {
@@ -443,6 +445,7 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
     this.props.onGoHistoryRevert(1);
   };
 
+
   renderAtomSelected() {
     if (this.state.selected?.type !== 'atom') {
       return <React.Fragment />;
@@ -758,10 +761,32 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
     );
   }
 
+  renderModalSaveBonds() {
+    return(
+    <Dialog open={!!this.state.want_save_bonds}>
+        <DialogTitle>
+          Save bonds ?
+        </DialogTitle>
+
+        <DialogContent>
+          <DialogContentText>
+            Do you want to save your new bonds to history ? It will erase the previous save for this molecule.
+          </DialogContentText>
+        </DialogContent>
+
+        <DialogActions>
+          <Button color="primary" onClick={() => this.setState({want_save_bonds:false})}>No</Button>
+          <Button color="secondary" onClick={this.props.onValidate}>Yes</Button>
+        </DialogActions>
+      </Dialog>
+    )
+  }
+
   render() {
     let hist = this.props.goInstance.customBondsGet()
     return (
       <React.Fragment>
+        {this.renderModalSaveBonds()}
         <Marger size="1rem" />
 
         {/* Theme */}
@@ -792,7 +817,7 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
             <Button 
               style={{ width: '100%' }} 
               color="primary" 
-              onClick={this.props.onValidate}
+              onClick={() => this.setState({want_save_bonds : true})}
             >
               <FaIcon check /> <span style={{ marginLeft: '.6rem' }}>Validate all modifications</span>
             </Button>

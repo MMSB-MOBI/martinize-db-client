@@ -49,6 +49,7 @@ const RouterCmpt = () => {
         <Route path="/users" component={LoadDrawer} />
         <Route path="/contact" component={LoadDrawer} />
         <Route path="/force_fields" component={LoadDrawer} />
+        <Route path="/builder/:id" exact component={LoadMartinizeBuilder} />
 
         {/* Not found */}
         <Route component={NotFound} />

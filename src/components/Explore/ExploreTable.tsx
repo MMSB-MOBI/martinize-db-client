@@ -208,7 +208,7 @@ export default function MoleculeTable(props: {
                   rowsPerPageOptions={[rowsPerPage]}
                   page={length ? page : 0}
                   className={clsx("can-load", loading && "in")}
-                  onChangePage={(_, page) => {
+                  onPageChange={(_, page) => {
                     onChangePage(page);
                   }}
                   ActionsComponent={TablePaginationActions}

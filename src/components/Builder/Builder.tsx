@@ -1,7 +1,7 @@
 import React from 'react';
 import { withStyles, Grid, Typography, Paper, Button, withTheme, Theme, CircularProgress, Divider, createMuiTheme, ThemeProvider, Link, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@material-ui/core';
 import { Marger, FaIcon, downloadBlob, setPageTitle, notifyError } from '../../helpers';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, RouteComponentProps } from 'react-router-dom';
 
 import { Stage } from '@mmsb/ngl';
 import BallAndStickRepresentation from '@mmsb/ngl/declarations/representation/ballandstick-representation';
@@ -32,17 +32,18 @@ import { GoBondsHelperJSON } from './GoBondsHelper';
 import ElasticBondHelper from './ElasticBondHelper';
 import Settings, { LoginStatus } from '../../Settings';
 import EmbeddedError from '../Errors/Errors';
-import { dateFormatter, downloadMartinize } from '../../helpers'; 
+import { dateFormatter, downloadMartinize, errorToText } from '../../helpers'; 
 
 import ApiHelper from '../../ApiHelper'
 import ElasticBondsHelper from './ElasticBondHelper';
-import { MartinizeFile, MartinizeMode } from '../../types/entities'; 
+import { MartinizeFile, MartinizeMode, JobFiles, JobDoc } from '../../types/entities'; 
+import { Alert } from '@material-ui/lab'
 
 
 // @ts-ignore
 window.NGL = ngl; window.BaseBondsHelper = BaseBondsHelper;
 
-interface MBProps {
+interface MBProps extends RouteComponentProps {
   classes: Record<string, string>;
   theme: Theme;
   location : any; 
@@ -81,7 +82,7 @@ interface Job {
 type BuilderType = "martinize" | "insane"
 
 export interface MBState {
-  running: 'pdb' | 'pdb_read' | 'martinize_params' | 'martinize_generate' | 'martinize_error' | 'done' | 'go_editor';
+  running: 'pdb' | 'pdb_read' | 'martinize_params' | 'martinize_generate' | 'martinize_error' | 'done' | 'go_editor' | 'load_error';
   error?: any;
   martinize_error?: MZError;
   martinize_step: string;
@@ -130,6 +131,9 @@ export interface MBState {
   theme: Theme;
 
   version?: string;
+
+  load_error_message?:string; 
+
 }
 
 /**
@@ -163,6 +167,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       return;
     }
 
+
     // @ts-ignore
     window.MoleculeBuilder = this;
 
@@ -170,13 +175,54 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     this.changeCommandline('');
     this.getMartinizeVersion();
 
-    if(this.props.location.state && this.props.location.state.from === "history"){
-      console.log("from somewhere else")
-      const allAtomFile = this.props.location.state.allAtomFile
-      const martinizeFiles = this.props.location.state.martinizeFiles
-      const mode = this.props.location.state.martinizeMode
-      this.reloadJob(allAtomFile, martinizeFiles, mode); 
+    if ('id' in this.props.match.params){
+      //Reload an history job
+      const params = this.props.match.params as any
+      const jobId = params.id
+      this.loadFromHistory(jobId)
+
     }
+   
+  }
+
+  async loadFromHistory(jobId: string){
+    try {
+      this.jobId = jobId; 
+      const job : JobDoc = await ApiHelper.request(`history/get?jobId=${jobId}`)
+      const [allAtomFile, martinizeFiles] = await Promise.all([this.loadAllAtomFile(job.files), this.loadMartinizeFiles(job)])
+      this.reloadJob(allAtomFile, martinizeFiles, job.settings.builder_mode)
+    }catch(e) {
+      console.error("POUET ERROR HIHIERROR")
+      console.error(e)
+      this.setState({load_error_message : errorToText(e), running: 'load_error'})
+    }
+    
+
+  }
+
+  async loadMartinizeFiles(job: JobDoc) : Promise<MartinizeFiles> {
+    const files = job.files
+    const itps = files.itp_files.map((itp : any) => ({name : itp.name, type : itp.type, content : new File([itp.content], itp.name)}))
+    const builderMode = "elastic" in job.settings && job.settings.elastic ? "elastic" : ("use_go" in job.settings && job.settings.use_go ? "go" : undefined)
+    const bonds = (builderMode && builderMode === "go") ? await GoBondsHelper.readFromItps(this.ngl,  itps.map((e:MartinizeFile) => e.content)) : (builderMode && builderMode === "elastic" ? await ElasticBondsHelper.readFromItps(this.ngl, itps.map((e:MartinizeFile) => e.content)): undefined);
+    const elastic_bonds = bonds?.representation
+
+    this.setState({builder_mode : !builderMode ? "classic" : builderMode})
+
+    return {
+      radius : job.radius,
+      elastic_bonds,
+      go: bonds,
+      pdb : {name : files.coarse_grained.name, type : files.coarse_grained.type, content : new File([files.coarse_grained.content], files.coarse_grained.name)},
+      itps, 
+      top : {name : files.top_file.name, type : files.top_file.type, content : new File([files.top_file.content], files.top_file.name)},
+
+    }
+  }
+
+
+  async loadAllAtomFile(files: JobFiles) : Promise<File> {
+    return new File([files.all_atom.content], files.all_atom.name, { type: files.all_atom.type })
   }
 
   async loadBonds(martinizeFiles: MartinizeFiles, mode : "go" | "elastic"){
@@ -269,61 +315,6 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       edited: false,
     });
   }
-
-  async saveToHistory(builderType: BuilderType){ 
-    if (!this.state.files) {
-      toast("Can't save to history, files are missing", "error")
-      return;
-    }
-
-    if (!Settings.user?.id){
-      toast("Can't save to history, user is missing", "error")
-      return; 
-    }
-
-    console.log("UUUUU", this.jobId)
-
-    const toSend : Job = {
-      userId : Settings.user.id, 
-      id : this.jobId, 
-      date : dateFormatter("Y-m-d H:i"),
-      type : builderType,
-      molecule : {
-        info: {
-            name : "", 
-            created_at: new Date(),
-            builder_force_field: this.state.builder_force_field,
-            builder_mode: this.state.builder_mode,
-            builder_positions: this.state.builder_positions,
-            builder_ef: this.state.builder_ef,
-            builder_el: this.state.builder_el,
-            builder_ea: this.state.builder_ea,
-            builder_eu: this.state.builder_eu,
-            builder_ep: this.state.builder_ep,
-            builder_em: this.state.builder_em,
-            cTer: this.state.cTer,
-            nTer: this.state.nTer,
-            sc_fix: this.state.sc_fix,
-            cystein_bridge: this.state.cystein_bridge,
-            advanced: this.state.advanced,
-            commandline: this.state.commandline,
-            stdout: this.state.stdout
-          }, 
-          all_atom: this.state.all_atom_pdb?.name,
-          coarse_grained: this.state.files.pdb.name,
-          itp_files: this.state.files.itps.map(itp => itp.name),
-          top_file: this.state.files.top.name,
-          radius: this.state.files.radius,
-          elastic_bonds: this.state.files.elastic_bonds?.bonds,
-          go: this.state.files.go?.toJSON(),
-      }
-    }
-    const res = await ApiHelper.request("history/save", {parameters: toSend, method: 'POST'})
-    if("ok" in res) toast("Your job has been saved to history", "info")
-    else toast("Your job hasn't been saved to history. An error occured", "error")
-  }
-
-  /* pas le load quand nouveau martinize, mais quand load molecule enregistrée */
 
   async load(uuid: string) {
     const saver = new StashedBuildHelper();
@@ -930,16 +921,18 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
       // When run ends
       socket.on('martinize end', (
-        { id, elastic_bonds, radius, savedToHistory }: { 
+        { id, elastic_bonds, radius, savedToHistory, jobId }: { 
           id: string, 
           elastic_bonds?: ElasticOrGoBounds[], 
           radius: { [name: string]: number; }, 
-          savedToHistory : boolean
+          savedToHistory : boolean,
+          jobId: string,
         }) => {
           if (id !== RUN_ID) {
             return;
           }
-
+          
+          this.jobId = jobId; 
           files.radius = radius;
 
           /*
@@ -1145,9 +1138,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     this.setState({ generating_files: true });
 
     try {
-      const original_name = this.state.all_atom_pdb!.name
-      const name = original_name.slice(0, original_name.indexOf('.pdb')) + '-CG'
-      await downloadMartinize(this.state.files, this.state.builder_mode, name)
+      await this.downloadMolecule(); 
     }catch(e){
       console.warn("Failed to build zip.", e);
     } finally {
@@ -1280,8 +1271,35 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     });
   };
 
-  onGoEditorValidate = () => {
+  onGoEditorValidate = async () => {
+    console.log("I SAVE BONDS"); 
     this.restoreSettingsAfterGo(false);
+
+    if (!this.state.files){
+      console.error("files are not registered in state, should not happen")
+      return; 
+    }
+
+    if (!this.jobId){
+      console.error("job id is not registered, should not happen")
+      return; 
+    }
+
+    try {
+      await this.applyBondsToFiles(); 
+    } catch(e) {
+      toast("Can't apply new bonds to itp files", "error")
+      console.error(e); 
+    }
+
+    ApiHelper.request('history/update', { method: 'POST', 
+    parameters:  {jobId : this.jobId, files:this.state.files.itps.map(itp => itp.content)}, body_mode : 'multipart'}).then(() => {
+      console.log("END API REQUEST")
+      toast(`Job ${this.jobId} has been updated in history`, "success")
+    }).catch(e => {
+      toast(`Job ${this.jobId} can't be updated in history, an error occured`, "error")
+      console.error(e); 
+    })
   };
 
   onGoEditorCancel = () => {
@@ -1343,6 +1361,81 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     this.setState({ edited: true });
   };
 
+  applyBondsToFiles = async () => {
+    if (!this.state.files){
+      console.warn("Files should be loaded into component to apply bonds")
+      return
+    }
+    const files = this.state.files
+    const itps = [...files.itps]
+    if (files.go){
+      let to_replace: File[];
+      if (this.state.builder_mode === "go") {
+        // @ts-ignore
+        to_replace = files.go.toOriginalFiles();
+      }
+      else if (this.state.builder_mode === "elastic") {
+        to_replace = await files.go.toOriginalFiles(itps[0].content);
+      }
+      
+
+      for (const file of to_replace!) {
+        const index = itps.findIndex(e => e.name === file.name);
+        const m_file = {
+          name: file.name,
+          content: file,
+          type: 'chemical/x-include-topology',
+        };
+
+        if (index !== -1) {
+          console.log("Replaced file", itps[index], 'with', m_file)
+          itps[index] = m_file;
+        }
+        else {
+          itps.push(m_file);
+        }
+
+        this.setState({files: {
+          top : this.state.files.top,
+          pdb : this.state.files.pdb,
+          radius : this.state.files.radius, 
+          elastic_bonds : this.state.files.elastic_bonds,
+          itps
+          }
+        })
+
+      }
+
+    }
+  }
+
+  downloadMolecule = async () => {
+    if (!this.state.files){
+      console.warn("files should be loaded into component to download them.")
+      return; 
+    }
+
+    const zip = new JSZip(); 
+    const files = this.state.files
+    zip.file(files.pdb.name, files.pdb.content);
+    zip.file(files.top.name, files.top.content);
+    for (const itp of files.itps) {
+      zip.file(itp.name, itp.content);
+    }
+
+    const generated = await zip.generateAsync({
+      type: 'blob',
+      compression: 'DEFLATE',
+      compressionOptions: {
+        level: 7
+      }
+    });
+
+    const original_name = this.state.all_atom_pdb!.name
+    const name = original_name.slice(0, original_name.indexOf('.pdb')) + '-CG'
+
+    downloadBlob(generated, name + '.zip');
+  }
 
   /* RENDERING */
 
@@ -1465,6 +1558,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       <ThemeProvider theme={this.state.theme}>
         {this.renderModalBackToDatabase()}
         <BetaWarning/>
+        
         <Grid 
           container 
           component="main" 
@@ -1472,6 +1566,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
           ref={this.root} 
           style={{ backgroundColor: this.state.theme.palette.background.default }}
         >
+           
           <Grid item sm={8} md={4} component={Paper} elevation={6} className={classes.side} style={{ backgroundColor: is_dark ? '#232323' : '' }} square>
             <div className={classes.paper}>
               <div className={classes.header}>
@@ -1595,10 +1690,15 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
               />}
             </div>
           </Grid>
-
+          
           <Grid item sm={4} md={8}>
-            <div id="ngl-stage" style={{ height: 'calc(100% - 5px)' }} />
+            {this.state.running === 'load_error' && 
+              <Alert severity="error">{this.state.load_error_message}</Alert>
+            }
+            <div id="ngl-stage" style={{ height: 'calc(100% - 5px)' }}/> 
+                      
           </Grid>
+          
         </Grid>
       </ThemeProvider>
     );
