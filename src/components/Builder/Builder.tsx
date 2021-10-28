@@ -192,8 +192,6 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       const [allAtomFile, martinizeFiles] = await Promise.all([this.loadAllAtomFile(job.files), this.loadMartinizeFiles(job)])
       this.reloadJob(allAtomFile, martinizeFiles, job.settings.builder_mode)
     }catch(e) {
-      console.error("POUET ERROR HIHIERROR")
-      console.error(e)
       this.setState({load_error_message : errorToText(e), running: 'load_error'})
     }
     
@@ -1400,7 +1398,8 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
           pdb : this.state.files.pdb,
           radius : this.state.files.radius, 
           elastic_bonds : this.state.files.elastic_bonds,
-          itps
+          itps, 
+          go : this.state.files.go
           }
         })
 

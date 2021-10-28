@@ -19,6 +19,7 @@ interface EnhancedTableProps {
     order: Order;
     orderBy: string;
     rowCount: number;
+    onDeleteSelectionClick: () => void; 
 }
 
 interface HeadCell {
@@ -114,12 +115,13 @@ function formatData(jobs : JobDoc[]): FormattedJob[] {
         ff : job.settings.ff, 
         mode : job.settings.builder_mode,
         type : job.type, 
-        settings : job.settings
+        settings : job.settings,
+        manual_bonds_edition : job.manual_bonds_edition
     }))
 }
 
 function EnhancedTableHead(props:EnhancedTableProps) {
-    const { onSelectAllClick, order, orderBy, numSelected, rowCount, onRequestSort } =
+    const { onSelectAllClick, order, orderBy, numSelected, rowCount, onRequestSort, onDeleteSelectionClick } =
 props;
 
     const createSortHandler =
@@ -164,7 +166,7 @@ props;
                     ))}
                 <TableCell/>
                 <TableCell/>
-                <TableCell/>
+                <TableCell> {numSelected !== 0 ? <Link onClick={onDeleteSelectionClick}>Delete selection</Link> : ""} </TableCell>
             </TableRow>
         </TableHead>
     )
@@ -241,7 +243,7 @@ export default function HistoryTable(props : {
     const [rowsPerPage, setRowsPerPage] = React.useState(10); 
     const [order, setOrder] = React.useState<Order>('desc');
     const [orderBy, setOrderBy] = React.useState<SortableKeys>('date');
-    const [selected, setSelected] = React.useState<readonly string[]>([]);
+    const [selected, setSelected] = React.useState<string[]>([]);
     const [dense, setDense] = React.useState(false);
 
     
@@ -280,9 +282,9 @@ export default function HistoryTable(props : {
         window.open('/builder/' + jobId);
     }
 
-    const deleteJob = async (jobId: string) => {
+    const deleteJobs = async (jobIds: string[]) => {
         try {
-            await ApiHelper.request(`history/delete?jobId=${jobId}`)
+            await ApiHelper.request("history/delete", { parameters: {jobIds} })
             props.onNeedUpdate(); 
             
         }catch(e){
@@ -325,7 +327,7 @@ export default function HistoryTable(props : {
 
     const handleClick = (id: string) => {
         const selectedIndex = selected.indexOf(id);
-        let newSelected: readonly string[] = [];
+        let newSelected: string[] = [];
     
         if (selectedIndex === -1) {
           newSelected = newSelected.concat(selected, id);
@@ -342,6 +344,10 @@ export default function HistoryTable(props : {
     
         setSelected(newSelected);
       };
+
+    const handleDeleteSelection = () => {
+      deleteJobs(selected); 
+    }
 
       const Row = (props: {job:FormattedJob, index:number}) => {
         const [open, setOpen] = React.useState(false);
@@ -388,7 +394,7 @@ export default function HistoryTable(props : {
                     <TableCell> {job.type} </TableCell>
                     <TableCell> <Link onClick={() => visualizeJob(job.id)}> Visualize </Link> </TableCell>
                     <TableCell> <Link onClick={() => downloadJob(job.id)}> Download </Link> </TableCell>
-                    <TableCell> <Link onClick={() => deleteJob(job.id)}> Delete </Link> </TableCell>
+                    <TableCell> <Link onClick={() => deleteJobs([job.id])}> Delete </Link> </TableCell>
                 </TableRow>
                 <TableRow>
                 <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={10}>
@@ -423,6 +429,7 @@ export default function HistoryTable(props : {
                             onSelectAllClick={handleSelectAllClick}
                             onRequestSort={handleRequestSort}
                             rowCount={jobs.length}
+                            onDeleteSelectionClick={handleDeleteSelection}
                         />
                         
                         <TableBody>
