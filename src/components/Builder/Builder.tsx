@@ -133,6 +133,7 @@ export interface MBState {
   version?: string;
 
   load_error_message?:string; 
+  send_mail: boolean; 
 
 }
 
@@ -263,6 +264,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       want_go_back: false,
       error: undefined,
       martinize_step: '',
+      send_mail: true
     };
   }
 
@@ -823,7 +825,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       const files: Partial<MartinizeFiles> = {};
 
       // Begin the run
-      socket.emit('martinize', Buffer.from(pdb_content), RUN_ID, form_data, Settings.user?.id, s.all_atom_pdb?.name);
+      socket.emit('martinize', Buffer.from(pdb_content), RUN_ID, form_data, Settings.user?.id, this.state.send_mail, s.all_atom_pdb?.name);
       this.setState({ martinize_step: 'Sending your files to server' });
 
       // Martinize step
@@ -1635,6 +1637,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
                 } else {
                   this.setState({advanced: 'true'})
                 }}}
+                doSendMail={(bool) => this.setState({send_mail:bool})}
               />}
 
               {this.state.running === 'martinize_generate' && this.martinizeGenerating()}
