@@ -1,4 +1,4 @@
-import ItpFile from 'itp-parser';
+import ItpFile from 'itp-parser-forked';
 import ReversibleKeyMap from 'reversible-key-map';
 import { ElasticOrGoBounds } from '../../StashedBuildHelper';
 import NglWrapper, { NglComponent, NglRepresentation } from './NglWrapper';

@@ -2,7 +2,7 @@ import ReversibleKeyMap from "reversible-key-map";
 import { ElasticOrGoBounds } from "../../StashedBuildHelper";
 import BaseBondsHelper, { BaseBondsHelperJSON, Relations } from "./BaseBondsHelper";
 import NglWrapper from "./NglWrapper";
-import ItpFile from 'itp-parser';
+import ItpFile from 'itp-parser-forked';
 import { resolve } from "dns";
 
 export default class ElasticBondsHelper extends BaseBondsHelper {
@@ -142,37 +142,23 @@ static fromJSON(stage: NglWrapper, data: BaseBondsHelperJSON) {
 static async readFromItps(stage: NglWrapper, itp_files: File[]) {
     const bonds = new ElasticBondsHelper(stage);
 
-    const molecule_file = itp_files.find(e => e.name === "molecule_0.itp");
-    if (!molecule_file) {
-        throw new Error("Need the molecule_0.itp file.");
+    const elastic_itps = itp_files.filter(e => e.name.includes("rubber_band"));
+    if (elastic_itps.length === 0) {
+        throw new Error("No itp with elastic bonds description");
     }
-    const molecule = await ItpFile.read(molecule_file);
 
-    let seen_bond_comment = false;
-
-    for (const bond_line of molecule.bonds) {
-        if (bond_line.startsWith('; Rubber band')) {
-            seen_bond_comment = true;
-            continue;
+    for (const itp of elastic_itps){
+        const molecule = await ItpFile.read(itp); 
+        const elastic_bonds = molecule.getSubfield("bonds", "Rubber band", false)
+        if (elastic_bonds.length === 0) console.warn(`${itp.name} doesn't have elastic bonds`)
+        for (const bond of elastic_bonds){
+            bonds.add(bond); 
         }
-
-        if (!seen_bond_comment) {
-            continue;
-        }
-
-        if (bond_line.startsWith('; Side chain bonds')) {
-            break;
-        }
-
-        const line = bond_line;
-        //const [index1, index2, ] = bond_line.split(ItpFile.BLANK_REGEX);
-        bonds.add(line);
-
-        }
+        
+    }
 
     return bonds;
 }
-
     
 
 
