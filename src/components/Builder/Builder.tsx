@@ -264,7 +264,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       want_go_back: false,
       error: undefined,
       martinize_step: '',
-      send_mail: true
+      send_mail: false
     };
   }
 

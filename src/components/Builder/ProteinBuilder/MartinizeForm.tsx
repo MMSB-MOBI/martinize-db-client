@@ -301,9 +301,8 @@ export default function MartinizeForm(props: MartinizeFormProps) {
         
           <Grid item xs={12} sm={12} className={classes.formContainer}>
           <FormControlLabel
-              control={<Switch defaultChecked 
+              control={<Switch 
                 onChange={e => {
-                  console.log(e.target.checked) 
                   props.doSendMail(e.target.checked)}} 
               />}
               label="Send me email when my job is done"
