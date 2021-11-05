@@ -12,7 +12,7 @@ import { RepresentationParameters } from '@mmsb/ngl/declarations/representation/
 import JSZip from 'jszip';
 import { blue } from '@material-ui/core/colors';
 import { applyUserRadius } from '../../nglhelpers';
-import StashedBuildHelper, { ElasticOrGoBounds, StashedBuildInfo } from '../../StashedBuildHelper';
+import StashedBuildHelper, { ElasticOrGoBounds, ElasticOrGoBoundsRegistered, StashedBuildInfo } from '../../StashedBuildHelper';
 import SocketIo from 'socket.io-client';
 import { SERVER_ROOT, STEPS } from '../../constants';
 import { v4 as uuid } from 'uuid';
@@ -32,7 +32,7 @@ import { GoBondsHelperJSON } from './GoBondsHelper';
 import ElasticBondHelper from './ElasticBondHelper';
 import Settings, { LoginStatus } from '../../Settings';
 import EmbeddedError from '../Errors/Errors';
-import { dateFormatter, downloadMartinize, errorToText } from '../../helpers'; 
+import { dateFormatter, errorToText } from '../../helpers'; 
 
 import ApiHelper from '../../ApiHelper'
 import ElasticBondsHelper from './ElasticBondHelper';
@@ -73,10 +73,10 @@ interface Job {
     itp_files: string[];
     top_file: string;
     radius: { [atomName: string]: number };
-    elastic_bonds?: ElasticOrGoBounds[];
+    elastic_bonds?: ElasticOrGoBoundsRegistered;
     info: StashedBuildInfo;
-    go?: BaseBondsHelperJSON | GoBondsHelperJSON;
-    }
+    go?: any
+    } 
 }
 
 type BuilderType = "martinize" | "insane"
@@ -193,7 +193,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       const [allAtomFile, martinizeFiles] = await Promise.all([this.loadAllAtomFile(job.files), this.loadMartinizeFiles(job)])
       this.reloadJob(allAtomFile, martinizeFiles, job.settings.builder_mode)
     }catch(e) {
-      this.setState({load_error_message : errorToText(e), running: 'load_error'})
+      this.setState({load_error_message : errorToText(e as any), running: 'load_error'})
     }
     
 
@@ -271,7 +271,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
 
   /* LOAD, RESET AND SAVE STAGES */
-  async save(name: string, overwrite_uuid?: string) {
+  /*async save(name: string, overwrite_uuid?: string) {
     const saver = new StashedBuildHelper();
 
     if (!this.state.files) {
@@ -314,7 +314,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       saved: uuid,
       edited: false,
     });
-  }
+  }*/
 
   async load(uuid: string) {
     const saver = new StashedBuildHelper();
@@ -328,7 +328,9 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     this.initAllAtomPdb(save.all_atom);
 
     const infos = { ...save.info };
+    // @ts-ignore
     delete infos.created_at;
+    // @ts-ignore
     delete infos.name;
 
     // @ts-ignore
@@ -383,7 +385,8 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
         mode : builder_mode === "classic" ? undefined : builder_mode
       });
       this.setState({files: completeFiles, stdout : [], builder_mode})
-    }catch(e) { notifyError(e) }
+    }catch(e) { 
+      notifyError(e as any) }
     
 
   }
@@ -458,10 +461,11 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     this.setAllAtomRepresentation({ opacity: .3 });
 
     if (options.mode) {
-      const coordinates: [number, number, number][] = [];
+      const coordinates: [number, number, number][][] = [];
 
       repr.atomIterator(ap => {
-        coordinates.push([ap.x, ap.y, ap.z]);
+        if(ap.chainIndex in coordinates) coordinates[ap.chainIndex].push([ap.x, ap.y, ap.z])
+        else coordinates[ap.chainIndex] = [[ap.x, ap.y, ap.z]];
       });
 
       // Init the bond helper 
@@ -511,11 +515,19 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     target_ensembl?: [Set<number>, Set<number> | undefined],
     /** Enable history push. */
     enable_history?: boolean,
+    chain: number,
     }) {
+
+    
     if (!this.state.files || !this.state.files.go)
       return;
 
-    const { target, target_single, target_ensembl } = options;
+    const { target, target_single, target_ensembl, chain } = options;
+
+    console.log("target", target)
+    console.log("target_single", target_single)
+    console.log("target_ensembl", target_ensembl)
+    console.log("chain", chain)
 
     if (target === undefined && target_single === undefined && target_ensembl === undefined) {
       throw new Error("No target");
@@ -525,10 +537,12 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
     let go = files.go!;
 
+    console.log("addOrRemove relations", go.relations); 
+
     if (options.enable_history !== false) {
-      
       go.historyPush();
     }
+
 
     if (options.mode === 'add') {
       // (Source&Target are GO index + 1)
@@ -545,7 +559,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
           atom2 = target[1];
         }
 
-        go.add(go.createRealLine(atom1, atom2));
+        go.add(0, go.createRealLine(atom1, atom2));
 
         go.addCustomBonds(atom1, atom2);
       }
@@ -569,7 +583,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
             } else {
               index2 = atom2;
             }
-            go.add(go.createRealLine(index1, index2));
+            go.add(0, go.createRealLine(index1, index2));
 
             go.addCustomBonds(index1, index2);
           }
@@ -588,8 +602,8 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
         for (const index of index_set) {
           for (const counterpart of index_set) {
-            if (index !== counterpart && !go.has(index, counterpart)) {
-              go.add(go.createRealLine(index, counterpart));
+            if (index !== counterpart && !go.has(index, counterpart, 0)) {
+              go.add(0, go.createRealLine(index, counterpart));
               go.addCustomBonds(index, counterpart);
             }
           }
@@ -602,7 +616,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
         // Remove a single bond
         const [name1, name2] = target //.map(e => go.realIndexToGoName(e));
 
-        go.remove(name1, name2);
+        go.remove(chain, name1, name2);
 
         go.rmCustomBonds(name1, name2);
       }
@@ -617,7 +631,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
           index = target_single;
         }
 
-        go.remove(index);
+        go.remove(chain, index);
 
         go.rmCustomBonds(index);
       }
@@ -642,11 +656,11 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
           }
 
           // Get the bonds linked to counterpart items
-          const bonds = go.findBondsOf(index).filter((n: any) => counterpart.has(n));
+          const bonds = go.findBondsOf(index, chain).filter((n: any) => counterpart.has(n));
 
           // Remove every targeted bond
           for (const bond of bonds) {
-            go.remove(index, bond);
+            go.remove(chain, index, bond);
 
             go.rmCustomBonds(index, bond);
           }
@@ -665,17 +679,18 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
         for (const index of index_set) {
           // Get the bonds linked to atoms in name set
-          const bonds = go.findBondsOf(index).filter((n: any) => index_set.has(n));
+          const bonds = go.findBondsOf(index, chain).filter((n: any) => index_set.has(n));
 
           // Remove every targeted bond
           for (const bond of bonds) {
-            go.remove(index, bond);
+            go.remove(chain, index, bond);
 
             go.rmCustomBonds(index, bond);
           }
         }
       }
     }
+
 
     go.render(this.state.virtual_link_opacity);
   
@@ -1236,38 +1251,43 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     this.setState({ builder_force_field: ff });
   };
 
-  onBondCreate = (go_atom_1: number, go_atom_2: number) => {
+  onBondCreate = (chain: number, go_atom_1: number, go_atom_2: number) => {
     return this.addOrRemoveGoBond({
       mode: 'add',
       target: [go_atom_1 + 1, go_atom_2 + 1],
+      chain
     });
   };
 
-  onBondRemove = (real_atom_1: number, real_atom_2: number) => {
+  onBondRemove = (chain: number, real_atom_1: number, real_atom_2: number) => {
     return this.addOrRemoveGoBond({
       mode: 'remove',
       target: [real_atom_1, real_atom_2],
+      chain 
     });
   };
 
-  onAllBondRemove = (from_go_atom: number) => {
+  onAllBondRemove = (chain: number, from_go_atom: number) => {
     return this.addOrRemoveGoBond({
       mode: 'remove',
       target_single: from_go_atom + 1,
+      chain
     });
   };
 
-  onBondCreateFromSet = (set1: Set<number>, set2?: Set<number>) => {
+  onBondCreateFromSet = (chain: number, set1: Set<number>, set2?: Set<number>) => {
     this.addOrRemoveGoBond({
       mode: 'add',
       target_ensembl: [set1, set2],
+      chain
     });
   };
 
-  onBondRemoveFromSet = (set1: Set<number>, set2?: Set<number>) => {
+  onBondRemoveFromSet = (chain: number, set1: Set<number>, set2?: Set<number>) => {
     this.addOrRemoveGoBond({
       mode: 'remove',
       target_ensembl: [set1, set2],
+      chain
     });
   };
 
@@ -1346,6 +1366,9 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       return;
 
     go.historyBack();
+    console.log("opacity",opacity)
+    console.log(this.state.virtual_link_opacity); 
+    console.log("go.relations", go.relations)
     go.render(opacity ?? this.state.virtual_link_opacity);
     this.setState({ edited: true });
   };
@@ -1375,7 +1398,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
         to_replace = files.go.toOriginalFiles();
       }
       else if (this.state.builder_mode === "elastic") {
-        to_replace = await files.go.toOriginalFiles(itps[0].content);
+        to_replace = await files.go.toOriginalFiles();
       }
       
 
@@ -1655,7 +1678,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
                 onAllAtomOpacityChange={this.onAllAtomOpacityChange}
                 onAllAtomVisibilityChange={this.onAllAtomVisibilityChange}
                 onMoleculeDownload={this.onMoleculeDownload}
-                onSave={name => this.save(name)}
+                //onSave={name => this.save(name)}
                 onRepresentationChange={this.onRepresentationChange}
                 representations={this.state.representations}
                 coarseGrainedOpacity={this.state.coarse_grain_opacity}

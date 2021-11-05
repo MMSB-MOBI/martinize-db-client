@@ -8,6 +8,7 @@ import { MartinizeFile } from './types/entities'
  * Tuple of two integers: [{from} atom index, {to} atom index]
  */
 export type ElasticOrGoBounds = [number, number];
+export type ElasticOrGoBoundsRegistered =  ElasticOrGoBounds[][]
 
 export interface StashedBuildInfo {
   created_at: Date;
@@ -38,7 +39,7 @@ export interface StashedBuild {
   itp_files: MartinizeFile[];
   top_file: MartinizeFile;
   radius: { [atomName: string]: number };
-  elastic_bonds?: ElasticOrGoBounds[];
+  elastic_bonds?: ElasticOrGoBoundsRegistered;
   info: StashedBuildInfo;
   go?: BaseBondsHelperJSON | GoBondsHelperJSON;
 }

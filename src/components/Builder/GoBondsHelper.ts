@@ -85,12 +85,13 @@ export default class GoBondsHelper extends BaseBondsHelper {
    */
   // @ts-ignore
   filter(predicate: (atom1: number, atom2: number, line: string) => boolean) {
-    const new_map: Relations = new ReversibleKeyMap();
+    const new_map: Relations = [];
 
-    for (const [keys, value] of this.relations) {
-      if (predicate(keys[0], keys[1], value)) {
-        new_map.set(keys[0], keys[1], value);
-      }
+      for (const [keys, value] of this.relations[0]) {
+        if (predicate(keys[0], keys[1], value)) {
+          new_map[0].set(keys[0], keys[1], value);
+        }
+    
     }
 
     // Create a copy of current object
@@ -113,21 +114,23 @@ export default class GoBondsHelper extends BaseBondsHelper {
   /**
    * Add a new line inside the ITP.
    */
-  add(line: string): this;
-  add(atom1: number, atom2: number, line: string): this;
-  add(atom1_or_line: number | string, atom2?: number, line?: string) {
+  add(chain: number, line: string): this;
+  add(chain: number, atom1: number, atom2: number, line: string): this;
+  add(chain: number, atom1_or_line: number | string, atom2?: number, line?: string, ) {
     if (atom2 === undefined || line === undefined) {
       // atom1 is a full line
       if(typeof atom1_or_line === 'string') {
         const [name1, name2, ] = atom1_or_line.split(ItpFile.BLANK_REGEX).filter(e => e);
         if (name1 !== name2){
-          this.relations.set(this.goNameToRealIndex(name1), this.goNameToRealIndex(name2), atom1_or_line);
+          if (!(chain in this.relations)) this.relations[chain] = new ReversibleKeyMap(); 
+          this.relations[chain].set(this.goNameToRealIndex(name1), this.goNameToRealIndex(name2), atom1_or_line);
         }
       }
     }
     else if(typeof atom1_or_line === 'number') {
       if (atom1_or_line !== atom2)
-        this.relations.set(atom1_or_line, atom2, line);
+        if (!(chain in this.relations)) this.relations[chain] = new ReversibleKeyMap(); 
+        this.relations[chain].set(atom1_or_line, atom2, line);
     }
 
     return this;
@@ -139,7 +142,7 @@ export default class GoBondsHelper extends BaseBondsHelper {
   }
   */
 
-  createRealLine(ri1: number, ri2: number) {
+  createRealLine(ri1: number, ri2: number, chain:number = 0) {
     const atom1 = this.realIndexToGoName(ri1);
     const atom2 = this.realIndexToGoName(ri2);
 
@@ -154,7 +157,7 @@ export default class GoBondsHelper extends BaseBondsHelper {
     // Distance is in Angstrom, we expect it in nm (so we divide by 10)
 
     // Real index in object starts at 1, distance between take 0-starting indexes
-    const rm = Math.abs(this.representation.distanceBetween(ri1 - 1, ri2 - 1)) / 10;
+    const rm = Math.abs(this.representation.distanceBetween(ri1 - 1, ri2 - 1, chain)) / 10;
     const result = rm * (2 ** (-(1/6)));
 
 
@@ -175,8 +178,8 @@ export default class GoBondsHelper extends BaseBondsHelper {
     // Try to reconstruct the original files based on go atom names.
     const files: { [molecule_name: string]: string } = Object.create(null);
 
-    for (const [index1, , line] of this) {
-      let name1 = this.realIndexToGoName(index1);
+    for (const [keys, line] of this.relations[0]) {
+      let name1 = this.realIndexToGoName(keys[0]);
       const mol_type_arr = /^(\w+)_\d+$/.exec(name1);
 
       if (!mol_type_arr) {
@@ -237,12 +240,13 @@ export default class GoBondsHelper extends BaseBondsHelper {
 
   /* SERIALIZATION */
 
-  toJSON() : GoBondsHelperJSON {
-    return {
+  toJSON() : GoBondsHelperJSON[] {
+    return [{
       real_to_index: this.real_to_index,
       name_to_index: this.name_to_index,
-      relations: [...this.relations.entries()],
-    };
+      relations: [...this.relations[0].entries()],
+      chain: 0
+    }];
   }
 
   clone() {
@@ -260,28 +264,27 @@ export default class GoBondsHelper extends BaseBondsHelper {
   /**
    * Construct a GoBondsHelper from a save made with `instance.toJSON()`.
    */
-  static fromJSON(stage: NglWrapper, data: GoBondsHelperJSON) {
+  static fromJSON(stage: NglWrapper, data: GoBondsHelperJSON[]) {
     const index_to_name: IndexToName = {};
     const index_to_real: IndexToReal = {};
 
-    console.log("relations", data.relations);
 
     // Create the non saved properties
-    for (const prop in data.name_to_index) {
-      index_to_name[data.name_to_index[prop]] = prop;
+    for (const prop in data[0].name_to_index) {
+      index_to_name[data[0].name_to_index[prop]] = prop;
     }
-    for (const prop in data.real_to_index) {
-      index_to_real[data.real_to_index[prop]] = Number(prop);
+    for (const prop in data[0].real_to_index) {
+      index_to_real[data[0].real_to_index[prop]] = Number(prop);
     }
 
     const obj = new GoBondsHelper(
       stage,
       index_to_real,
-      data.name_to_index,
+      data[0].name_to_index,
       index_to_name,
-      data.real_to_index
+      data[0].real_to_index
     );
-    obj.relations = new ReversibleKeyMap(data.relations);
+    obj.relations = [new ReversibleKeyMap(data[0].relations)];
 
     return obj;
   }
@@ -395,7 +398,7 @@ export default class GoBondsHelper extends BaseBondsHelper {
         }
 
         // We add the bonds in the object
-        bonds.add(real_index_1, real_index_2, line);
+        bonds.add(0, real_index_1, real_index_2, line);
       }
       // Increment i by number of atoms
       i += all_atom_count;

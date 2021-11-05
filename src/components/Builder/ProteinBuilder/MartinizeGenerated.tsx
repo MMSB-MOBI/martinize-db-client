@@ -38,7 +38,6 @@ interface MartinizeGeneratedProps {
   onMoleculeDownload(): any;
 
   onGoEditorStart(): any;
-  onSave(name: string): any;
 
   stdout?: any;
 }
@@ -82,12 +81,12 @@ export default function MartinizeGenerated(props: MartinizeGeneratedProps) {
         </DialogActions>
       </Dialog>
 
-      <MoleculeSaverModal
+      {/*<MoleculeSaverModal
         open={!!saverModal} 
         onClose={() => setSaverModal("")}
         onConfirm={name => { props.onSave(name); setSaverModal(""); }}
         defaultName={saverModal}
-      />
+      />*/}
 
       <Dialog open={wantReset} onClose={() => setWantReset(false)}>
         <DialogTitle>

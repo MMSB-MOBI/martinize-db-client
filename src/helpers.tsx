@@ -286,56 +286,6 @@ export function downloadBlob(file: Blob, filename: string) {
 
 }
 
-export async function downloadMartinize(files : MartinizeFiles, builder_mode:string, name: string){
-  const zip = new JSZip(); 
-  zip.file(files.pdb.name, files.pdb.content);
-  zip.file(files.top.name, files.top.content);
-
-  const itps = [...files.itps];
-
-  if (files.go) {
-    let to_replace: File[];
-    if (builder_mode === "go") {
-      // @ts-ignore
-      to_replace = files.go.toOriginalFiles();
-    }
-    else if (builder_mode === "elastic") {
-      to_replace = await files.go.toOriginalFiles(itps[0].content);
-    }
-    
-
-    for (const file of to_replace!) {
-      const index = itps.findIndex(e => e.name === file.name);
-      const m_file = {
-        name: file.name,
-        content: file,
-        type: 'chemical/x-include-topology',
-      };
-
-      if (index !== -1) {
-        console.log("Replaced file", itps[index], 'with', m_file)
-        itps[index] = m_file;
-      }
-      else {
-        itps.push(m_file);
-      }
-    }
-  }
-
-  for (const itp of itps) {
-    zip.file(itp.name, itp.content);
-  }
-
-  const generated = await zip.generateAsync({
-    type: 'blob',
-    compression: 'DEFLATE',
-    compressionOptions: {
-      level: 7
-    }
-  });
-
-  downloadBlob(generated, name + '.zip');
-}
 
 export async function loadMartinizeFiles(job: JobDoc){
   const files = job.files

@@ -15,12 +15,12 @@ import { CollectionsBookmarkSharp } from '@material-ui/icons';
 interface GoEditorProps {
   stage: NglWrapper;
   cgCmp: NglComponent;
-  onBondCreate(go_atom_1: number, go_atom_2: number): Promise<any>;
-  onBondRemove(real_atom_1: number, real_atom_2: number): any;
-  onAllBondRemove(from_go_atom: number): any;
+  onBondCreate(chain: number, go_atom_1: number, go_atom_2: number): Promise<any>;
+  onBondRemove(chain: number, real_atom_1: number, real_atom_2: number): any;
+  onAllBondRemove(chain: number, from_go_atom: number): any;
 
-  onBondCreateFromSet(atoms: Set<number>, target?: Set<number>): any;
-  onBondRemoveFromSet(atoms: Set<number>, target?: Set<number>): any;
+  onBondCreateFromSet(chain: number, atoms: Set<number>, target?: Set<number>): any;
+  onBondRemoveFromSet(chain: number, atoms: Set<number>, target?: Set<number>): any;
   onGoHistoryBack(opacity?: number): any;
   onGoHistoryRevert(opacity?: number): any;
   onHistoryDownload(): any;
@@ -40,14 +40,17 @@ interface GoEditorState {
   selected?: {
     type: 'atom',
     source: number,
+    chain: number,
   } | { 
     type: 'link',
     source: number,
     target: number,
+    chain: number, 
   } | {
     type: 'selection',
     s1: Set<number>,
     s2?: Set<number>,
+    chain: number, 
   };
   select_1: string;
   select_2: string;
@@ -128,6 +131,8 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
       return;
     }
 
+    console.log("ngl click", pp)
+
     if (!pp) {
       // Disable selection. De-highlight all only if not in atom selection
       if (this.state.mode === 'idle') {
@@ -148,8 +153,12 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
 
     // Detect type
     // If go atom, pp.atom.element === "CA"
+
+    
+
     if ((this.props.mode === "go" && pp.atom?.element === "CA") || (this.props.mode === "elastic" && pp.atom?.atomname === "BB")) {
       // GO atom
+      const chain = pp.atom.chainIndex; 
       let source_or_target = pp.atom.index;
       // Get the residue index (this is the needed thing to highlight it)
 
@@ -157,7 +166,7 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
         const go_atom_1 = this.state.selected.source;
         // Create the bond if possible
         if (this.state.selected.source !== source_or_target) {
-          this.props.onBondCreate(go_atom_1, source_or_target)
+          this.props.onBondCreate(chain, go_atom_1, source_or_target)
             .then(() => {
               // redraw the bonds for selected atom
               this.highlightBond(go_atom_1 + 1);
@@ -187,6 +196,7 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
         selected: {
           type: 'atom',
           source: source_or_target,
+          chain : chain
         }
       });
     }
@@ -210,17 +220,24 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
       
       // Get atoms
       const [source, target] = obj.name.split('atoms ')[1].split('-').map(Number);
+      const chain = obj.name.split(' ')[1]
+      if(! (chain.startsWith('#'))) throw new Error("Something wrong with chain label on bonds ngl cylinder representation")
+      else {
+        const chainIdx = parseInt(chain.replace('#',''))
+        if (isNaN(chainIdx)) throw new Error("Chain id is not a number")
+        this.highlightBond([source, target]);
 
+        this.setState({
+          selected: {
+            type: 'link',
+            source,
+            target,
+            chain : chainIdx
+          }
+        });
+      }
       // Highlight the bond
-      this.highlightBond([source, target]);
-
-      this.setState({
-        selected: {
-          type: 'link',
-          source,
-          target,
-        }
-      });
+      
     }
   };
 
@@ -284,7 +301,7 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
       return;
     }
 
-    this.props.onAllBondRemove(selected.source);
+    this.props.onAllBondRemove(selected.chain, selected.source);
   };
 
   onRemoveBond = () => {
@@ -293,7 +310,9 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
       return;
     }
 
-    this.props.onBondRemove(selected.source, selected.target);
+    console.log("remove", selected)
+
+    this.props.onBondRemove(selected.chain, selected.source, selected.target);
     this.setState({ mode: 'idle', selected: undefined });
   };
 
@@ -303,7 +322,7 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
       return;
     }
 
-    this.props.onBondCreateFromSet(selected.s1, selected.s2);
+    this.props.onBondCreateFromSet(selected.chain, selected.s1, selected.s2);
   };
 
   onRemoveBondWithSet = () => {
@@ -312,7 +331,7 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
       return;
     }
 
-    this.props.onBondRemoveFromSet(selected.s1, selected.s2);
+    this.props.onBondRemoveFromSet(selected.chain, selected.s1, selected.s2);
   };
 
   onSelectionStop = () => {
@@ -416,6 +435,7 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
         type: 'selection',
         s1: g1_indexes,
         s2: g2_indexes,
+        chain : 0
       }
     });
   };
