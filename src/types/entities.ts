@@ -133,6 +133,7 @@ export interface MartinizeFile {
   name: string;
   content: File;
   type: string;
+  mol_idx?: number; 
 }
 
 type AvailableForceFields = "martini3001" | "elnedyn22" | "elnedyn22p" | "elnedyn" | "martini22" | "martini22p"

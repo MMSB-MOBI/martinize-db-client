@@ -51,7 +51,7 @@ interface MBProps extends RouteComponentProps {
 
 export interface MartinizeFiles {
   pdb: MartinizeFile;
-  itps: MartinizeFile[];
+  itps: MartinizeFile[]; // One array of itps for each molecule of the system
   radius: { [name: string]: number };
   top: MartinizeFile;
   go?: BaseBondsHelper;
@@ -203,7 +203,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     const files = job.files
     const itps = files.itp_files.map((itp : any) => ({name : itp.name, type : itp.type, content : new File([itp.content], itp.name)}))
     const builderMode = "elastic" in job.settings && job.settings.elastic ? "elastic" : ("use_go" in job.settings && job.settings.use_go ? "go" : undefined)
-    const bonds = (builderMode && builderMode === "go") ? await GoBondsHelper.readFromItps(this.ngl,  itps.map((e:MartinizeFile) => e.content)) : (builderMode && builderMode === "elastic" ? await ElasticBondsHelper.readFromItps(this.ngl, itps.map((e:MartinizeFile) => e.content)): undefined);
+    const bonds = (builderMode && builderMode === "go") ? await GoBondsHelper.readFromItps(this.ngl,  itps.map((e:MartinizeFile) => e.content)) : (builderMode && builderMode === "elastic" ? await ElasticBondsHelper.readFromItps(this.ngl, itps.map((e:MartinizeFile) => ({mol_idx : e.mol_idx, content : e.content}))): undefined);
     const elastic_bonds = bonds?.representation
 
     this.setState({builder_mode : !builderMode ? "classic" : builderMode})
@@ -225,7 +225,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
   }
 
   async loadBonds(martinizeFiles: MartinizeFiles, mode : "go" | "elastic"){
-    const bonds = mode === "go" ? await GoBondsHelper.readFromItps(this.ngl,  martinizeFiles.itps.map((e:MartinizeFile) => e.content)) : mode === "elastic" ? await ElasticBondsHelper.readFromItps(this.ngl, martinizeFiles.itps.map((e:MartinizeFile) => e.content)) : undefined
+    const bonds = mode === "go" ? await GoBondsHelper.readFromItps(this.ngl,  martinizeFiles.itps.map((e:MartinizeFile) => e.content)) : mode === "elastic" ? await ElasticBondsHelper.readFromItps(this.ngl, martinizeFiles.itps.map((e:MartinizeFile) => ({content: e.content, mol_idx: e.mol_idx}))) : undefined
     const elastic_bonds = bonds?.representation
     return {...martinizeFiles, elastic_bonds, go: bonds}
   }
@@ -524,11 +524,6 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
     const { target, target_single, target_ensembl, chain } = options;
 
-    console.log("target", target)
-    console.log("target_single", target_single)
-    console.log("target_ensembl", target_ensembl)
-    console.log("chain", chain)
-
     if (target === undefined && target_single === undefined && target_ensembl === undefined) {
       throw new Error("No target");
     }
@@ -537,27 +532,74 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
     let go = files.go!;
 
-    console.log("addOrRemove relations", go.relations); 
-
     if (options.enable_history !== false) {
       go.historyPush();
     }
 
+    if (options.mode === "add") {
+      if(target !== undefined){
+        //Add a single bond
+        const atom1 = go.nglIndexToRealIndex(target[0])
+        const atom2 = go.nglIndexToRealIndex(target[1])
+        if (atom1.chain !== atom2.chain){
+          toast("You can't add bonds between 2 different chains", "error")
+          return
+        }
+        const chain = atom1.chain; 
+        go.add(chain, go.createRealLine(atom1.atom, atom2.atom));
+      }
+    } 
+    else { //REMOVE
+      if (target !== undefined) {
+        // Source&Target are REAL ATOM index 
+        // Remove a single bond
+        const [name1, name2] = target //.map(e => go.realIndexToGoName(e));
 
-    if (options.mode === 'add') {
+        go.remove(chain, name1, name2);
+
+        go.rmCustomBonds(name1, name2);
+      }
+      else if (target_single !== undefined) {
+        // INDEX are GO Index + 1
+        // Remove every bond from this atom
+
+        const {chain, atom} = go.nglIndexToRealIndex(target_single)
+
+        go.remove(chain, atom);
+
+        go.rmCustomBonds(atom);
+      }
+      else if (target_ensembl !== undefined && target_ensembl[1] === undefined) {
+        console.log("OOOOO", target_ensembl[0]); 
+        // INDEXES are GO Indexes + 1
+        // Unlink all atoms of the set together
+        const atom_set = new Set([...target_ensembl[0]].map(e => go.nglIndexToRealIndex(e)))
+
+        for (const atom of atom_set) {
+          // Get the bonds linked to atoms in name set
+          const bonds = go.findBondsOf(atom.atom, atom.chain).filter((n: any) => atom_set.has(n));
+          console.log(bonds); 
+
+          // Remove every targeted bond
+          for (const bond of bonds) {
+            go.remove(atom.chain, atom.atom, bond);
+
+            go.rmCustomBonds(atom.atom, bond);
+          }
+        }
+      }
+     
+    }
+
+    
+
+
+    /*if (options.mode === 'add') {
       // (Source&Target are GO index + 1)
       if (target !== undefined) {
         // Add a single bond 
-        let atom1; let atom2;
-        if(this.state.builder_mode == "go") {
-          // @ts-ignore
-          atom1 = go.goIndexToRealIndex(target[0]);
-          // @ts-ignore
-          atom2 = go.goIndexToRealIndex(target[1]);
-        } else {
-          atom1 = target[0];
-          atom2 = target[1];
-        }
+        const atom1 = go.nglIndexToRealIndex(target[0])
+        const atom2 = go.nglIndexToRealIndex(target[1])
 
         go.add(0, go.createRealLine(atom1, atom2));
 
@@ -624,6 +666,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
         // INDEX are GO Index + 1
         // Remove every bond from this atom
         let index;
+
         if(this.state.builder_mode == "go") {
           // @ts-ignore
           index = go.goIndexToRealIndex(target_single);
@@ -689,7 +732,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
           }
         }
       }
-    }
+    }*/
 
 
     go.render(this.state.virtual_link_opacity);
@@ -699,33 +742,37 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     });
   }
 
-  redrawGoBonds = (highlight?: [number, number] | number, opacity?: number) => {    
+  redrawGoBonds = (highlight?: [number, number] | number, opacity?: number, h_chain?:number) => {    
+    console.log("redrawGoBonds", highlight, opacity, h_chain)
+    let realHighlightIdx = highlight; 
     if (typeof highlight === 'number') {
       // transform go index to real index
-      if(this.state.builder_mode == "go") {
-        // @ts-ignore
-        highlight = this.state.files!.go!.goIndexToRealIndex(highlight);
-      }
+      // It's an atom, transform ngl index to real index
+      const {chain, atom} = this.state.files!.go!.nglIndexToRealIndex(highlight)
+      realHighlightIdx = atom; 
+     
     }
+
+    console.log("highlight this shit", realHighlightIdx)
 
     let h1 = 0, h2 = 0;
 
-    if (Array.isArray(highlight)) {
-      [h1, h2] = highlight;
+    if (Array.isArray(realHighlightIdx)) {
+      [h1, h2] = realHighlightIdx;
     }
-    else if (typeof highlight === 'number') {
+    else if (typeof realHighlightIdx === 'number') {
       // Highlight every link from highlight go atom
-      h1 = highlight;
+      h1 = realHighlightIdx;
     }
 
     // TODO improve
-    const predicate = highlight !== undefined ? ((atom1: number, atom2: number) => {
-      if (highlight && Array.isArray(highlight)) {
-        return (atom1 === h1 && atom2 === h2) || (atom2 === h1 && atom1 === h2);
+    const predicate = realHighlightIdx !== undefined ? ((atom1: number, atom2: number, chain:number) => {
+      if (realHighlightIdx && Array.isArray(realHighlightIdx)) {
+        return ((atom1 === h1 && atom2 === h2) || (atom2 === h1 && atom1 === h2) && h_chain === chain);
       }
       // Highlight is a number
       else if (h1) {
-        return atom1 === h1 || atom2 === h1;
+        return ((atom1 === h1 || atom2 === h1) && h_chain === chain);
       }
 
       return false;
@@ -869,7 +916,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       }); 
 
       // File upload
-      socket.on('martinize download', ({ id, name, type }: { id: string, name: string, type: string }, file: ArrayBuffer, ok_cb: Function) => {
+      socket.on('martinize download', ({ id, name, type, mol_idx }: { id: string, name: string, type: string, mol_idx:number }, file: ArrayBuffer, ok_cb: Function) => {
         if (id !== RUN_ID) {
           return;
         }
@@ -904,6 +951,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
               name,
               content: new File([file], name, { type }),
               type,
+              mol_idx
             });
             break;
           }
@@ -981,7 +1029,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       // Init go sites
       files.go = await GoBondsHelper.readFromItps(this.ngl, files.itps.map(e => e.content));
     } else if (s.builder_mode === "elastic") {
-      files.go = await ElasticBondHelper.readFromItps(this.ngl, files.itps.map(e => e.content));
+      files.go = await ElasticBondHelper.readFromItps(this.ngl, files.itps.map(e => ({mol_idx: e.mol_idx, content : e.content})));
     }
 
     this.setState({ files, martinize_step: "" });

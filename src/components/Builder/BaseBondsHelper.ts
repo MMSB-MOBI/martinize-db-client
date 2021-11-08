@@ -32,6 +32,12 @@ export default abstract class BaseBondsHelper {
 
     /** Get bonds related to an go atom. */
   findBondsOf(atom_name: number, chain:number) {
+    console.log("findBondsOf", atom_name, chain)
+    console.log(this.relations[chain].getAllFrom(atom_name))
+    const test = this.relations[chain].getAllFrom(atom_name)
+    console.log(typeof test); 
+    console.log([...test])
+    
     const keys = this.relations[chain].getAllFrom(atom_name)?.keys();
     return keys ? [...keys] : [];
   }
@@ -73,7 +79,7 @@ export default abstract class BaseBondsHelper {
     }
 
   
-  abstract render(opacity?: number, hightlight_predicate?: ((atom1_index: number, atom2_index: number) => boolean) | undefined): void;
+  abstract render(opacity?: number, hightlight_predicate?: ((atom1_index: number, atom2_index: number, chain:number) => boolean) | undefined): void;
   
   abstract filter(predicate: (atom1: number, atom2: number, line: string) => boolean) : BaseBondsHelper;
   
@@ -119,6 +125,7 @@ export default abstract class BaseBondsHelper {
 
   abstract clone(): BaseBondsHelper;
 
+  abstract nglIndexToRealIndex(nglIdx:number) : {chain:number, atom:number};  
 
 
   /*toString() {
@@ -150,7 +157,7 @@ export default abstract class BaseBondsHelper {
   /** Save the current state in the history. */
   historyPush() {
     console.log("push", this.relations)
-    this.history.push(this.relations);
+    this.history.push(this.relations.map(bonds => new ReversibleKeyMap(bonds.entries())));
     this.reverse_history = [];
 
     this.customBonds.push(Array.from(this.currentBonds));

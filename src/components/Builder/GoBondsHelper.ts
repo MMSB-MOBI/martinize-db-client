@@ -42,7 +42,7 @@ export default class GoBondsHelper extends BaseBondsHelper {
   //   return keys ? [...keys] : [];
   // }
 
-  render(opacity = .2, hightlight_predicate?: (atom1_index: number, atom2_index: number) => boolean) {
+  render(opacity = .2, hightlight_predicate?: (atom1_index: number, atom2_index: number, chain:number) => boolean) {
     return this.representation.render(
       'go',
       this.bonds,
@@ -57,8 +57,8 @@ export default class GoBondsHelper extends BaseBondsHelper {
     return this.index_to_name[index];
   }
 
-  goIndexToRealIndex(index: number) {
-    return this.index_to_real[index];
+  nglIndexToRealIndex(index: number) {
+    return {chain: 0, atom :this.index_to_real[index]};
   }
 
   goNameToGoIndex(name: GoAtomName) {
@@ -66,7 +66,7 @@ export default class GoBondsHelper extends BaseBondsHelper {
   }
 
   goNameToRealIndex(name: GoAtomName) {
-    return this.goIndexToRealIndex(this.goNameToGoIndex(name));
+    return this.nglIndexToRealIndex(this.goNameToGoIndex(name)).atom;
   }
 
   realIndexToGoIndex(index: number) {
@@ -390,7 +390,7 @@ export default class GoBondsHelper extends BaseBondsHelper {
           continue;
         }
 
-        const real_index_1 = bonds.goIndexToRealIndex(go_index_1), real_index_2 = bonds.goIndexToRealIndex(go_index_2);
+        const real_index_1 = bonds.nglIndexToRealIndex(go_index_1).atom, real_index_2 = bonds.nglIndexToRealIndex(go_index_2).atom;
 
         if (real_index_1 === undefined || real_index_2 === undefined) {
           console.warn(`[GO-VIRT-SITES] [${molecule_type}] Undefined real indexes for names ${name1}(${go_index_1})-${name2}(${go_index_2}). This should not happen...`);

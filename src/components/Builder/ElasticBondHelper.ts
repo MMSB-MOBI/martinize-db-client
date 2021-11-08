@@ -6,10 +6,11 @@ import ItpFile from 'itp-parser-forked';
 import { resolve } from "dns";
 
 export default class ElasticBondsHelper extends BaseBondsHelper {
-
-protected constructor(stage: NglWrapper) {
-    super(stage);
-}
+    protected _nglIdxToItpIdx: {[nglIdx : number]:[number, number]} = {} //[mol_idx, itp_idx]
+    protected constructor(stage: NglWrapper,) {
+        super(stage);
+        
+    }
 
 filter(predicate: (atom1: number, atom2: number, line: string) => boolean): BaseBondsHelper {
     const new_map: Relations = [];
@@ -148,6 +149,16 @@ clone() {
     return clone;
 }
 
+addToIdxMapper(mol_idx:number, itp_idx:number, ngl_idx:number){
+    if(ngl_idx in this._nglIdxToItpIdx) throw new Error(`ngl idx ${ngl_idx} already mapped to mol ${mol_idx} atom ${itp_idx}. Should not happen.`)
+    this._nglIdxToItpIdx[ngl_idx] = [mol_idx, itp_idx - 1]
+   
+}
+
+nglIndexToRealIndex(ngl_idx:number){
+    return {atom : this._nglIdxToItpIdx[ngl_idx][1], chain : this._nglIdxToItpIdx[ngl_idx][0]}
+}
+
 
 
 static fromJSON(stage: NglWrapper, data: BaseBondsHelperJSON[]) {
@@ -167,10 +178,42 @@ static fromJSON(stage: NglWrapper, data: BaseBondsHelperJSON[]) {
 }
 
       
-static async readFromItps(stage: NglWrapper, itp_files: File[]) {
+static async readFromItps(stage: NglWrapper, itp_files: {mol_idx?:number, content:File}[]) {
     const bonds = new ElasticBondsHelper(stage);
 
-    const elastic_itps = itp_files.filter(e => e.name.includes("rubber_band"));
+    let nglIdx: number = 0; 
+
+    if (bonds.bonds_itps.length != 0) {
+        console.warn("Some itps for bonds are already registered on ElasticBondHelper. It will erase them")
+        bonds.bonds_itps = []; 
+    }
+
+    for (const itpObj of itp_files){
+        const mol_idx = itpObj.mol_idx ? itpObj.mol_idx : 0
+        const itp = itpObj.content
+        if(itp.name.includes("rubber_band")){
+            bonds.bonds_itps.push(itp); 
+            const molecule = await ItpFile.read(itp); 
+            const elastic_bonds = molecule.getSubfield("bonds", "Rubber band", false)
+            if (elastic_bonds.length === 0) console.warn(`${itp.name} doesn't have elastic bonds`)
+            for (const bond of elastic_bonds){
+                bonds.add(mol_idx, bond); 
+            }
+        }
+        else{
+            console.log(itp.name)
+            const itpReaded = await ItpFile.read(itp); 
+            for (const atom of itpReaded.atoms){
+                const [index, name, ] = atom.split(ItpFile.BLANK_REGEX);
+                const intIndex = parseInt(index); 
+                if (isNaN(intIndex)) throw new Error(`Atom index is not a number`)
+                bonds.addToIdxMapper(mol_idx, intIndex, nglIdx)
+                nglIdx += 1
+            }
+        }
+    }
+
+    /*const elastic_itps = itp_files.filter(e => e.name.includes("rubber_band"));
     if (elastic_itps.length === 0) {
         throw new Error("No itp with elastic bonds description");
     }
@@ -190,16 +233,18 @@ static async readFromItps(stage: NglWrapper, itp_files: File[]) {
             bonds.add(chainNb, bond); 
         }
         chainNb+=1;
-    }
-
+    }*/
 
     return bonds;
 }
+
+    //nglIdxToRelationIdx(ngl_idx:[number, number] | number){
     
+    //}
 
 
     
-    render(opacity = .2, hightlight_predicate?: (atom1_index: number, atom2_index: number) => boolean) {
+    render(opacity = .2, hightlight_predicate?: (atom1_index: number, atom2_index: number, chain:number) => boolean) {
         console.log("render bonds", this.relations)
         return this.representation.render(
           'elastic',

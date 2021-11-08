@@ -67,7 +67,7 @@ export class BondsRepresentation {
       mode: 'elastic' | 'go' = 'elastic', 
       bonds = this.bonds, 
       opacity = .2, 
-      hightlight_predicate?: (atom1_index: number, atom2_index: number) => boolean
+      hightlight_predicate?: (atom1_index: number, atom2_index: number, chain:number) => boolean
       ) {
       this.bonds = bonds;
       const coords = this.coordinates;
@@ -77,7 +77,7 @@ export class BondsRepresentation {
       const upper_mode = mode.toLocaleUpperCase();
       
       for (const [chain, bonds_array] of bonds.entries()){
-        for (const [atom1_index, atom2_index] of bonds[chain]) {
+        for (const [atom1_index, atom2_index] of bonds_array) {
           // atom index starts at 1, atom array stats to 0
           const atom1 = coords[chain][atom1_index - 1];
           const atom2 = coords[chain][atom2_index - 1];
@@ -88,7 +88,8 @@ export class BondsRepresentation {
           }
           
           const name = `[${upper_mode}] #${chain} Bond w/ atoms ${atom1_index}-${atom2_index}`;
-          if (hightlight_predicate && hightlight_predicate(atom1_index, atom2_index)) {
+          if (hightlight_predicate && hightlight_predicate(atom1_index, atom2_index, chain)) {
+            console.log(atom1_index, atom2_index, chain); 
             shape.addCylinder(atom1, atom2, BondsRepresentation.V_BONDS_HIGHLIGHT_COLOR, .1, name);
             continue;
           }

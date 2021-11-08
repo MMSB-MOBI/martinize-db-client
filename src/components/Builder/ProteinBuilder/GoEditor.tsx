@@ -28,7 +28,7 @@ interface GoEditorProps {
   onValidate(): any;
   onCancel(): any;
 
-  onRedrawGoBonds(highlight?: number | [number, number], opacity?: number): any;
+  onRedrawGoBonds(highlight?: number | [number, number], opacity?: number, chain?:number): any;
   setColorForCgRepr(schemeId?: string): any;
 
   goInstance: BaseBondsHelper;
@@ -158,6 +158,7 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
 
     if ((this.props.mode === "go" && pp.atom?.element === "CA") || (this.props.mode === "elastic" && pp.atom?.atomname === "BB")) {
       // GO atom
+      console.log("GO ATOM", pp.atom.chainIndex); 
       const chain = pp.atom.chainIndex; 
       let source_or_target = pp.atom.index;
       // Get the residue index (this is the needed thing to highlight it)
@@ -169,7 +170,7 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
           this.props.onBondCreate(chain, go_atom_1, source_or_target)
             .then(() => {
               // redraw the bonds for selected atom
-              this.highlightBond(go_atom_1 + 1);
+              this.highlightBond(go_atom_1 + 1, chain);
             });
         }
 
@@ -190,7 +191,7 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
       }
 
       // Highlight the selected one
-      this.highlightAtom(source_or_target);
+      this.highlightAtom(source_or_target, chain);
 
       this.setState({
         selected: {
@@ -225,7 +226,7 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
       else {
         const chainIdx = parseInt(chain.replace('#',''))
         if (isNaN(chainIdx)) throw new Error("Chain id is not a number")
-        this.highlightBond([source, target]);
+        this.highlightBond([source, target], chainIdx);
 
         this.setState({
           selected: {
@@ -241,15 +242,15 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
     }
   };
 
-  highlightBond(target: [number, number] | number) {
-    this.props.onRedrawGoBonds(target, 1);
+  highlightBond(target: [number, number] | number, chain:number) {
+    this.props.onRedrawGoBonds(target, 1, chain);
   } 
 
   removeBondHighlight() {
     this.props.onRedrawGoBonds(undefined, 1);
   }
 
-  highlightAtom(atom_index: number) {
+  highlightAtom(atom_index: number, chain:number) {
     const schemeId = ngl.ColormakerRegistry.addSelectionScheme([
       ["orange", `@${atom_index}`],
       // @ts-ignore
@@ -257,7 +258,7 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
     ], "test");
     
     this.props.setColorForCgRepr(schemeId);
-    this.props.onRedrawGoBonds(atom_index + 1, 1);
+    this.props.onRedrawGoBonds(atom_index + 1, 1, chain);
   }
 
   highlightGroup(atom_indexes: Set<number>, atom_indexes_2?: Set<number>) {
