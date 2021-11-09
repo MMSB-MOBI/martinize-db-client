@@ -2,7 +2,7 @@ import { BufferRepresentation } from '@mmsb/ngl';
 import { RepresentationParameters } from '@mmsb/ngl/declarations/representation/representation';
 import * as ngl from '@mmsb/ngl';
 import NglWrapper, { NglComponent, NglRepresentation } from './NglWrapper';
-import { ElasticOrGoBounds, ElasticOrGoBoundsRegistered } from '../../StashedBuildHelper';
+import { ElasticOrGoBoundsRegistered } from '../../types/entities';
 
 
 type AtomCoordinates = [number, number, number];

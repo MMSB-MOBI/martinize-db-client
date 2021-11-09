@@ -1,8 +1,7 @@
 import NglWrapper, { NglComponent, NglRepresentation } from './NglWrapper';
 import { BondsRepresentation } from './BondsRepresentation';
 import ReversibleKeyMap from 'reversible-key-map';
-import { ElasticOrGoBounds, ElasticOrGoBoundsRegistered } from '../../StashedBuildHelper';
-import { MoleculeFile } from '../../types/entities'
+import { MoleculeFile, ElasticOrGoBounds, ElasticOrGoBoundsRegistered } from '../../types/entities'
 
 //type number = string;
 export type Relations = ReversibleKeyMap<number, number, string>[]

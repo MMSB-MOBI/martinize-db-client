@@ -1,10 +1,8 @@
 import ReversibleKeyMap from "reversible-key-map";
-import { ElasticOrGoBounds } from "../../StashedBuildHelper";
 import BaseBondsHelper, { BaseBondsHelperJSON, Relations } from "./BaseBondsHelper";
 import NglWrapper from "./NglWrapper";
 import ItpFile from 'itp-parser-forked';
-import { resolve } from "dns";
-import {MoleculeFile} from '../../types/entities'
+import { MoleculeFile } from '../../types/entities'
 
 export default class ElasticBondsHelper extends BaseBondsHelper {
     protected _nglIdxToItpIdx: {[nglIdx : number]:[number, number]} = {} //[mol_idx, itp_idx]

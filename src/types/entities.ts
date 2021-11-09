@@ -144,3 +144,6 @@ export interface MoleculeFile {
 type AvailableForceFields = "martini3001" | "elnedyn22" | "elnedyn22p" | "elnedyn" | "martini22" | "martini22p"
 
 export type MartinizeMode = "classic" | "go" | "elastic"
+
+export type ElasticOrGoBounds = [number, number];
+export type ElasticOrGoBoundsRegistered =  ElasticOrGoBounds[][]

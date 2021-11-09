@@ -1,8 +1,6 @@
 import React from 'react';
 import { withStyles, Link, Typography, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, List, ListItem, ListItemText, ListItemSecondaryAction, IconButton, DialogContentText, CircularProgress } from '@material-ui/core';
 import AddMoleculeFileInput from '../../AddMolecule/AddMoleculeFileInput';
-import StashedBuild from '../StashedBuild';
-import StashedBuildHelper from '../../../StashedBuildHelper';
 import { toast } from '../../Toaster';
 import { Marger, FaIcon } from '../../../helpers';
 import ApiHelper from '../../../ApiHelper';
@@ -107,30 +105,16 @@ class MoleculeChooser extends React.Component<MCProps, MCState> {
           <Marger size="2rem" />
 
           <Typography align="center" variant="h6">
-            Load from stashed molecules
+            Load from history
           </Typography>
 
           <Typography align="center">
+            <Typography> Will be available soon...</Typography>
             <Link component={RouterLink} to="/builder">
               Want to martinize a molecule ?
             </Link>
           </Typography>
-          
-          <StashedBuild 
-            onSelect={async uuid => {
-              const helper = new StashedBuildHelper();
-              const save = await helper.get(uuid);
 
-              if (save) {
-                this.setState({
-                  pdb: new File([save.coarse_grained.content], save.coarse_grained.name),
-                  top: new File([save.top_file.content], save.top_file.name),
-                  itps: save.itp_files.map(e => new File([e.content], e.name)),
-                  ff: save.info.builder_force_field,
-                }, this.nextFromFiles);
-              }
-            }}
-          />
 
           <Marger size="1rem" />
 

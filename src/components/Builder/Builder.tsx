@@ -12,7 +12,6 @@ import { RepresentationParameters } from '@mmsb/ngl/declarations/representation/
 import JSZip, { file } from 'jszip';
 import { blue } from '@material-ui/core/colors';
 import { applyUserRadius } from '../../nglhelpers';
-import { ElasticOrGoBounds, ElasticOrGoBoundsRegistered, StashedBuildInfo } from '../../StashedBuildHelper';
 import SocketIo from 'socket.io-client';
 import { SERVER_ROOT, STEPS } from '../../constants';
 import { v4 as uuid } from 'uuid';
@@ -34,7 +33,7 @@ import { errorToText, loadMartinizeFiles } from '../../helpers';
 
 import ApiHelper from '../../ApiHelper'
 import ElasticBondsHelper from './ElasticBondHelper';
-import { MartinizeFile, MartinizeMode, JobFiles, JobDoc } from '../../types/entities'; 
+import { MartinizeFile, MartinizeMode, JobFiles, JobDoc, ElasticOrGoBounds, ElasticOrGoBoundsRegistered } from '../../types/entities'; 
 import { Alert } from '@material-ui/lab'
 
 
@@ -58,23 +57,6 @@ export interface MartinizeFiles {
 
 interface AtomRadius { 
   [atom: string]: number;
-}
-
-interface Job {
-  userId : string; 
-  id : string; 
-  date: string; 
-  type : BuilderType; 
-  molecule : {
-    all_atom?: string;
-    coarse_grained: string;
-    itp_files: string[];
-    top_file: string;
-    radius: { [atomName: string]: number };
-    elastic_bonds?: ElasticOrGoBoundsRegistered;
-    info: StashedBuildInfo;
-    go?: any
-    } 
 }
 
 type BuilderType = "martinize" | "insane"

@@ -1,6 +1,5 @@
 import ItpFile from 'itp-parser-forked';
 import ReversibleKeyMap from 'reversible-key-map';
-import { ElasticOrGoBounds } from '../../StashedBuildHelper';
 import NglWrapper, { NglComponent, NglRepresentation } from './NglWrapper';
 import BaseBondsHelper, { BaseBondsHelperJSON, Relations } from './BaseBondsHelper';
 import { MoleculeFile } from '../../types/entities'
