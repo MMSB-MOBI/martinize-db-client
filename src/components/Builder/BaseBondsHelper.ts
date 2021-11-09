@@ -2,6 +2,7 @@ import NglWrapper, { NglComponent, NglRepresentation } from './NglWrapper';
 import { BondsRepresentation } from './BondsRepresentation';
 import ReversibleKeyMap from 'reversible-key-map';
 import { ElasticOrGoBounds, ElasticOrGoBoundsRegistered } from '../../StashedBuildHelper';
+import { MoleculeFile } from '../../types/entities'
 
 //type number = string;
 export type Relations = ReversibleKeyMap<number, number, string>[]
@@ -32,28 +33,22 @@ export default abstract class BaseBondsHelper {
 
     /** Get bonds related to an go atom. */
   findBondsOf(atom_name: number, chain:number) {
-    console.log("findBondsOf", atom_name, chain)
-    console.log(this.relations[chain].getAllFrom(atom_name))
-    const test = this.relations[chain].getAllFrom(atom_name)
-    console.log(typeof test); 
-    console.log([...test])
-    
     const keys = this.relations[chain].getAllFrom(atom_name)?.keys();
     return keys ? [...keys] : [];
   }
 
 
 
-  addCustomBonds(atom1: any, atom2: any) {
-    this.currentBonds.push('added bond from '+atom1+' to '+atom2);
+  addCustomBonds(chain:number, atom1: any, atom2: any) {
+    this.currentBonds.push('added bond from '+atom1+' to '+atom2 + ' on chain ' + chain);
   }
 
-  rmCustomBonds(atom1: any, atom2?: any) {
+  rmCustomBonds(chain: number, atom1: any, atom2?: any) {
     if(atom2){
-      this.currentBonds.push('deleted bond from '+atom1+' to '+atom2);
+      this.currentBonds.push('deleted bond from '+atom1+' to '+atom2 + ' on chain ' + chain);
     }
     else {
-      this.currentBonds.push('deleted all bonds from '+atom1);
+      this.currentBonds.push('deleted all bonds from '+atom1 + ' on chain ' + chain);
     }
     
   }
@@ -117,15 +112,15 @@ export default abstract class BaseBondsHelper {
     return this;
   }
 
-  abstract createRealLine(atom1: number, atom2: number) : string;
+  abstract createRealLine(atom1: number, atom2: number, chain:number) : string;
 
-  abstract toOriginalFiles() : File[] | Promise<File[]>;
+  abstract toOriginalFiles() : Promise<MoleculeFile[]>;
 
   abstract toJSON () : BaseBondsHelperJSON[];
 
   abstract clone(): BaseBondsHelper;
 
-  abstract nglIndexToRealIndex(nglIdx:number) : {chain:number, atom:number};  
+  abstract nglIndexToRealIndex(nglIdx:number) : {chain:number, index:number};  
 
 
   /*toString() {
@@ -229,4 +224,15 @@ export default abstract class BaseBondsHelper {
 
 
 
+}
+
+export function getIdxSortedByChain(indexes:{chain:number, index:number}[]): {[chain:number]:Set<number>}{
+  const sortedByChain: {[chain:number]:Set<number>} = {}
+
+  for (const atomObj of indexes){
+    if(!(atomObj.chain in sortedByChain)) sortedByChain[atomObj.chain] = new Set()
+    sortedByChain[atomObj.chain].add(atomObj.index)
+  }
+
+  return sortedByChain
 }

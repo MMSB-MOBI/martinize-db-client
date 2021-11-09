@@ -9,10 +9,10 @@ import * as ngl from '@mmsb/ngl';
 
 import { toast } from '../Toaster';
 import { RepresentationParameters } from '@mmsb/ngl/declarations/representation/representation';
-import JSZip from 'jszip';
+import JSZip, { file } from 'jszip';
 import { blue } from '@material-ui/core/colors';
 import { applyUserRadius } from '../../nglhelpers';
-import StashedBuildHelper, { ElasticOrGoBounds, ElasticOrGoBoundsRegistered, StashedBuildInfo } from '../../StashedBuildHelper';
+import { ElasticOrGoBounds, ElasticOrGoBoundsRegistered, StashedBuildInfo } from '../../StashedBuildHelper';
 import SocketIo from 'socket.io-client';
 import { SERVER_ROOT, STEPS } from '../../constants';
 import { v4 as uuid } from 'uuid';
@@ -25,14 +25,12 @@ import GoEditor from './ProteinBuilder/GoEditor';
 import GoBondsHelper from './GoBondsHelper';
 import { BondsRepresentation } from './BondsRepresentation';
 import { BetaWarning } from '../../Shared'; 
-import { stdout } from 'process';
 import BaseBondsHelper from './BaseBondsHelper';
-import { BaseBondsHelperJSON } from './BaseBondsHelper';
-import { GoBondsHelperJSON } from './GoBondsHelper';
+import { getIdxSortedByChain } from './BaseBondsHelper';
 import ElasticBondHelper from './ElasticBondHelper';
 import Settings, { LoginStatus } from '../../Settings';
 import EmbeddedError from '../Errors/Errors';
-import { dateFormatter, errorToText } from '../../helpers'; 
+import { errorToText, loadMartinizeFiles } from '../../helpers'; 
 
 import ApiHelper from '../../ApiHelper'
 import ElasticBondsHelper from './ElasticBondHelper';
@@ -190,7 +188,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     try {
       this.jobId = jobId; 
       const job : JobDoc = await ApiHelper.request(`history/get?jobId=${jobId}`)
-      const [allAtomFile, martinizeFiles] = await Promise.all([this.loadAllAtomFile(job.files), this.loadMartinizeFiles(job)])
+      const [allAtomFile, martinizeFiles] = await Promise.all([this.loadAllAtomFile(job.files), loadMartinizeFiles(job)])
       this.reloadJob(allAtomFile, martinizeFiles, job.settings.builder_mode)
     }catch(e) {
       this.setState({load_error_message : errorToText(e as any), running: 'load_error'})
@@ -199,33 +197,13 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
   }
 
-  async loadMartinizeFiles(job: JobDoc) : Promise<MartinizeFiles> {
-    const files = job.files
-    const itps = files.itp_files.map((itp : any) => ({name : itp.name, type : itp.type, content : new File([itp.content], itp.name)}))
-    const builderMode = "elastic" in job.settings && job.settings.elastic ? "elastic" : ("use_go" in job.settings && job.settings.use_go ? "go" : undefined)
-    const bonds = (builderMode && builderMode === "go") ? await GoBondsHelper.readFromItps(this.ngl,  itps.map((e:MartinizeFile) => e.content)) : (builderMode && builderMode === "elastic" ? await ElasticBondsHelper.readFromItps(this.ngl, itps.map((e:MartinizeFile) => ({mol_idx : e.mol_idx, content : e.content}))): undefined);
-    const elastic_bonds = bonds?.representation
-
-    this.setState({builder_mode : !builderMode ? "classic" : builderMode})
-
-    return {
-      radius : job.radius,
-      elastic_bonds,
-      go: bonds,
-      pdb : {name : files.coarse_grained.name, type : files.coarse_grained.type, content : new File([files.coarse_grained.content], files.coarse_grained.name)},
-      itps, 
-      top : {name : files.top_file.name, type : files.top_file.type, content : new File([files.top_file.content], files.top_file.name)},
-
-    }
-  }
-
-
   async loadAllAtomFile(files: JobFiles) : Promise<File> {
     return new File([files.all_atom.content], files.all_atom.name, { type: files.all_atom.type })
   }
 
   async loadBonds(martinizeFiles: MartinizeFiles, mode : "go" | "elastic"){
-    const bonds = mode === "go" ? await GoBondsHelper.readFromItps(this.ngl,  martinizeFiles.itps.map((e:MartinizeFile) => e.content)) : mode === "elastic" ? await ElasticBondsHelper.readFromItps(this.ngl, martinizeFiles.itps.map((e:MartinizeFile) => ({content: e.content, mol_idx: e.mol_idx}))) : undefined
+    
+    const bonds = mode === "go" ? await GoBondsHelper.readFromItps(this.ngl,  martinizeFiles.itps.flat().map((e:MartinizeFile) => e.content)) : mode === "elastic" ? await ElasticBondsHelper.readFromItps(this.ngl, martinizeFiles.itps.map((e:MartinizeFile) => ({content: e.content, mol_idx: e.mol_idx}))) : undefined
     const elastic_bonds = bonds?.representation
     return {...martinizeFiles, elastic_bonds, go: bonds}
   }
@@ -316,65 +294,6 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     });
   }*/
 
-  async load(uuid: string) {
-    const saver = new StashedBuildHelper();
-    
-    const save = await saver.get(uuid);
-
-    if (!save) {
-      return;
-    }
-
-    this.initAllAtomPdb(save.all_atom);
-
-    const infos = { ...save.info };
-    // @ts-ignore
-    delete infos.created_at;
-    // @ts-ignore
-    delete infos.name;
-
-    // @ts-ignore
-    this.setState(infos);
-
-    const mode = save.info.builder_mode ? 'elastic' : (save.info.builder_mode ? 'go' : undefined);
-    //const mode = save.elastic_bonds ? 'elastic' : (save.go ? 'go' : undefined);
-
-    let go_details: GoBondsHelper | ElasticBondHelper | undefined;
-    if (mode === "go") {
-      // @ts-ignore
-      go_details = save.go ? GoBondsHelper.fromJSON(this.ngl, save.go) : undefined;
-    } else if(mode === "elastic") {
-      // @ts-ignore
-      go_details = save.go ? ElasticBondHelper.fromJSON(this.ngl, save.go) : undefined;
-    }
-
-    let elastic_bonds: BondsRepresentation | undefined = undefined;
-    if (save.elastic_bonds) {
-      elastic_bonds = go_details!.representation; //new BondsRepresentation(this.ngl);
-      //elastic_bonds.bonds = save.elastic_bonds;
-    }
-
-    const files = {
-      top: save.top_file,
-      itps: save.itp_files,
-      pdb: save.coarse_grained,
-      radius: save.radius,
-      go: go_details,
-      elastic_bonds,
-    };
-
-    // Init PDB scene
-    this.initCoarseGrainPdb({
-      files,
-      mode,
-    });
-
-    this.setState({ 
-      files,
-      saved: uuid,
-      edited: false,
-    });
-  }
 
   async reloadJob(allAtomFile : File, martinizeFiles : MartinizeFiles, builder_mode : MartinizeMode){
     try {
@@ -546,8 +465,45 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
           return
         }
         const chain = atom1.chain; 
-        go.add(chain, go.createRealLine(atom1.atom, atom2.atom));
+        go.add(chain, go.createRealLine(atom1.index, atom2.index, chain));
+        go.addCustomBonds(chain, atom1.index, atom2.index)
       }
+      else if (target_ensembl !== undefined && target_ensembl[1] !== undefined) {
+        // Add line between each element of set
+        for (const atom1 of target_ensembl[0]) {
+          const index1 = go.nglIndexToRealIndex(atom1)
+          
+          for (const atom2 of target_ensembl[1]) {
+            const index2 = go.nglIndexToRealIndex(atom2)
+            if(index1.chain === index2.chain){
+              go.add(index1.chain, go.createRealLine(index1.index, index2.index, index1.chain));
+              go.addCustomBonds(chain, index1.index, index2.index);
+            }
+          }
+        }
+      }
+      else if (target_ensembl !== undefined && target_ensembl[1] === undefined) {
+        // Add line between each element of set
+        // Link all atoms of the set together
+        const real_indexes = [...target_ensembl[0]].map(e => go.nglIndexToRealIndex(e))
+        const real_indexes_by_chain = getIdxSortedByChain(real_indexes)
+        
+        for (const [chain, index_set] of Object.entries(real_indexes_by_chain)){  
+          const chainIdx = parseInt(chain)
+          if(isNaN(chainIdx)) throw new Error("Chain index is NaN")
+          for (const index of index_set) {
+            for (const counterpart of index_set) {
+              if (index !== counterpart && !go.has(index, counterpart, chainIdx)) {
+                go.add(chainIdx, go.createRealLine(index, counterpart, chainIdx));
+                go.addCustomBonds(chainIdx, index, counterpart);
+              }
+            }
+          }
+        }
+
+        
+      }
+
     } 
     else { //REMOVE
       if (target !== undefined) {
@@ -557,184 +513,65 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
         go.remove(chain, name1, name2);
 
-        go.rmCustomBonds(name1, name2);
+        go.rmCustomBonds(chain, name1, name2);
       }
       else if (target_single !== undefined) {
         // INDEX are GO Index + 1
         // Remove every bond from this atom
 
-        const {chain, atom} = go.nglIndexToRealIndex(target_single)
-
-        go.remove(chain, atom);
-
-        go.rmCustomBonds(atom);
-      }
-      else if (target_ensembl !== undefined && target_ensembl[1] === undefined) {
-        console.log("OOOOO", target_ensembl[0]); 
-        // INDEXES are GO Indexes + 1
-        // Unlink all atoms of the set together
-        const atom_set = new Set([...target_ensembl[0]].map(e => go.nglIndexToRealIndex(e)))
-
-        for (const atom of atom_set) {
-          // Get the bonds linked to atoms in name set
-          const bonds = go.findBondsOf(atom.atom, atom.chain).filter((n: any) => atom_set.has(n));
-          console.log(bonds); 
-
-          // Remove every targeted bond
-          for (const bond of bonds) {
-            go.remove(atom.chain, atom.atom, bond);
-
-            go.rmCustomBonds(atom.atom, bond);
-          }
-        }
-      }
-     
-    }
-
-    
-
-
-    /*if (options.mode === 'add') {
-      // (Source&Target are GO index + 1)
-      if (target !== undefined) {
-        // Add a single bond 
-        const atom1 = go.nglIndexToRealIndex(target[0])
-        const atom2 = go.nglIndexToRealIndex(target[1])
-
-        go.add(0, go.createRealLine(atom1, atom2));
-
-        go.addCustomBonds(atom1, atom2);
-      }
-      else if (target_ensembl !== undefined && target_ensembl[1] !== undefined) {
-        // Add line between each element of set
-        for (const atom1 of target_ensembl[0]) {
-          let index1;
-          if(this.state.builder_mode == "go") {
-            // @ts-ignore
-            index1 = go.goIndexToRealIndex(atom1);
-          }
-          else {
-            index1 = atom1;
-          }
-
-          for (const atom2 of target_ensembl[1]) {
-            let index2;
-            if(this.state.builder_mode == "go") {
-              // @ts-ignore
-              index2 = go.goIndexToRealIndex(atom2);
-            } else {
-              index2 = atom2;
-            }
-            go.add(0, go.createRealLine(index1, index2));
-
-            go.addCustomBonds(index1, index2);
-          }
-        }
-      }
-      else if (target_ensembl !== undefined && target_ensembl[1] === undefined) {
-        // Add line between each element of set
-        // Link all atoms of the set together
-        let index_set;
-        if(this.state.builder_mode == "go") {
-          // @ts-ignore
-          index_set = new Set([...target_ensembl[0]].map(e => go.goIndexToRealIndex(e)));
-        } else {
-          index_set = new Set([...target_ensembl[0]].map(e => e));
-        }
-
-        for (const index of index_set) {
-          for (const counterpart of index_set) {
-            if (index !== counterpart && !go.has(index, counterpart, 0)) {
-              go.add(0, go.createRealLine(index, counterpart));
-              go.addCustomBonds(index, counterpart);
-            }
-          }
-        }
-      }
-    }
-    else {
-      if (target !== undefined) {
-        // Source&Target are REAL ATOM index 
-        // Remove a single bond
-        const [name1, name2] = target //.map(e => go.realIndexToGoName(e));
-
-        go.remove(chain, name1, name2);
-
-        go.rmCustomBonds(name1, name2);
-      }
-      else if (target_single !== undefined) {
-        // INDEX are GO Index + 1
-        // Remove every bond from this atom
-        let index;
-
-        if(this.state.builder_mode == "go") {
-          // @ts-ignore
-          index = go.goIndexToRealIndex(target_single);
-        } else {
-          index = target_single;
-        }
+        const {chain, index} = go.nglIndexToRealIndex(target_single)
 
         go.remove(chain, index);
 
-        go.rmCustomBonds(index);
+        go.rmCustomBonds(chain, index);
+      }
+      else if (target_ensembl !== undefined && target_ensembl[1] === undefined) {
+        // INDEXES are GO Indexes + 1
+        // Unlink all atoms of the set together
+
+        const index_set = [...target_ensembl[0]].map(e => go.nglIndexToRealIndex(e))
+
+        const sortedByChain = getIdxSortedByChain(index_set)
+
+        for (const [chain, index_set] of Object.entries(sortedByChain)){
+          const chainIdx = parseInt(chain)
+          if(isNaN(chainIdx)) throw new Error("Chain index is NaN")
+          for (const index of index_set) {
+            console.log("chain idx", chain, index, index_set); 
+            // Get the bonds linked to atoms in name set
+            const bonds = go.findBondsOf(index, chainIdx).filter((n: any) => index_set.has(n));
+            console.log(bonds)
+            // Remove every targeted bond
+            for (const bond of bonds) {
+              go.remove(chainIdx, index, bond);
+  
+              go.rmCustomBonds(chainIdx, index, bond);
+            }
+          }
+        }
       }
       else if (target_ensembl !== undefined && target_ensembl[1] !== undefined) {
         // INDEXES are GO Indexes + 1
         // Convert every index to go name in a set
-        let counterpart: Set<any>;
-        if(this.state.builder_mode == "go") {
-          // @ts-ignore
-          counterpart = new Set([...target_ensembl[1]].map(e => go.goIndexToRealIndex(e)));
-        } else {
-          counterpart = new Set([...target_ensembl[1]].map(e => e))
-        }
+        const counterpart = [...target_ensembl[1]].map(e => go.nglIndexToRealIndex(e))
+        
+        const counterpart_by_chain = getIdxSortedByChain(counterpart)
 
         for (const atom of target_ensembl[0]) {
-          let index;
-          if(this.state.builder_mode == "go") {
-            // @ts-ignore
-            index = go.goIndexToRealIndex(atom);
-          } else {
-            index = atom;
-          }
-
+          const {chain, index} = go.nglIndexToRealIndex(atom)
+          const counterpart_same_chain = counterpart_by_chain[chain]
           // Get the bonds linked to counterpart items
-          const bonds = go.findBondsOf(index, chain).filter((n: any) => counterpart.has(n));
+          const bonds = go.findBondsOf(index, chain).filter((n: any) => counterpart_same_chain.has(n));
 
           // Remove every targeted bond
           for (const bond of bonds) {
             go.remove(chain, index, bond);
 
-            go.rmCustomBonds(index, bond);
+            go.rmCustomBonds(chain, index, bond);
           }
         }
       }
-      else if (target_ensembl !== undefined && target_ensembl[1] === undefined) {
-        // INDEXES are GO Indexes + 1
-        // Unlink all atoms of the set together
-        let index_set: Set<any>;
-        if(this.state.builder_mode == "go") {
-          // @ts-ignore
-          index_set = new Set([...target_ensembl[0]].map(e => go.goIndexToRealIndex(e)));
-        } else {
-          index_set = new Set([...target_ensembl[0]].map(e => e));
-        }
-
-        for (const index of index_set) {
-          // Get the bonds linked to atoms in name set
-          const bonds = go.findBondsOf(index, chain).filter((n: any) => index_set.has(n));
-
-          // Remove every targeted bond
-          for (const bond of bonds) {
-            go.remove(chain, index, bond);
-
-            go.rmCustomBonds(index, bond);
-          }
-        }
-      }
-    }*/
-
-
+    }
     go.render(this.state.virtual_link_opacity);
   
     this.setState({
@@ -743,13 +580,12 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
   }
 
   redrawGoBonds = (highlight?: [number, number] | number, opacity?: number, h_chain?:number) => {    
-    console.log("redrawGoBonds", highlight, opacity, h_chain)
     let realHighlightIdx = highlight; 
     if (typeof highlight === 'number') {
       // transform go index to real index
       // It's an atom, transform ngl index to real index
-      const {chain, atom} = this.state.files!.go!.nglIndexToRealIndex(highlight)
-      realHighlightIdx = atom; 
+      const {chain, index} = this.state.files!.go!.nglIndexToRealIndex(highlight)
+      realHighlightIdx = index; 
      
     }
 
@@ -1361,7 +1197,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     }
 
     ApiHelper.request('history/update', { method: 'POST', 
-    parameters:  {jobId : this.jobId, files:this.state.files.itps.map(itp => itp.content)}, body_mode : 'multipart'}).then(() => {
+    parameters:  {jobId : this.jobId, files:this.state.files.itps.map(itp => itp.content), molIdxs: this.state.files.itps.map(itp => itp.mol_idx)}, body_mode : 'multipart'}).then(() => {
       console.log("END API REQUEST")
       toast(`Job ${this.jobId} has been updated in history`, "success")
     }).catch(e => {
@@ -1440,22 +1276,17 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     const files = this.state.files
     const itps = [...files.itps]
     if (files.go){
-      let to_replace: File[];
-      if (this.state.builder_mode === "go") {
-        // @ts-ignore
-        to_replace = files.go.toOriginalFiles();
-      }
-      else if (this.state.builder_mode === "elastic") {
-        to_replace = await files.go.toOriginalFiles();
-      }
-      
+    
+      const to_replace = await files.go.toOriginalFiles(); 
 
-      for (const file of to_replace!) {
-        const index = itps.findIndex(e => e.name === file.name);
-        const m_file = {
-          name: file.name,
-          content: file,
+      for (const mol_file of to_replace!) {
+        const index = itps.findIndex(e => e.name === mol_file.file.name);
+        const m_file: MartinizeFile = {
+          name: mol_file.file.name,
+          content: mol_file.file,
           type: 'chemical/x-include-topology',
+          mol_idx : mol_file.mol_idx
+
         };
 
         if (index !== -1) {
@@ -1669,7 +1500,6 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
               {/* Forms... */}
               {this.state.running === 'pdb' && <LoadPdb 
-                onStashedSelect={uuid => this.load(uuid)}
                 onFileSelect={this.onFileSelect}
                 error={this.state.error}
               />}

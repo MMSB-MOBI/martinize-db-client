@@ -255,7 +255,7 @@ export default function HistoryTable(props : {
             const zip = new JSZip()
             zip.file(martinizeFiles.pdb.name, martinizeFiles.pdb.content)
             zip.file(martinizeFiles.top.name, martinizeFiles.top.content)
-            for (const itp of martinizeFiles.itps){
+            for (const itp of martinizeFiles.itps.flat()){
                 zip.file(itp.name, itp.content)
             }
             const generated = await zip.generateAsync({
@@ -272,8 +272,9 @@ export default function HistoryTable(props : {
             downloadBlob(generated, zipName + '.zip');
             
         } catch(e){
-            if (errorToType(e) === "HistoryFileNotFound") toast("Result files doesn't exist on distant server. This job will be deleted from your history after refresh.", "error"); 
-            else notifyError(e); 
+            const err = e as any
+            if (errorToType(err) === "HistoryFileNotFound") toast("Result files doesn't exist on distant server. This job will be deleted from your history after refresh.", "error"); 
+            else notifyError(err); 
         }
     }
 
@@ -288,7 +289,8 @@ export default function HistoryTable(props : {
             props.onNeedUpdate(); 
             
         }catch(e){
-            notifyError(e); 
+           const err = e as any
+            notifyError(err); 
         }
 
     }

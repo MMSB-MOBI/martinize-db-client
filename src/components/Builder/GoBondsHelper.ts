@@ -3,6 +3,7 @@ import ReversibleKeyMap from 'reversible-key-map';
 import { ElasticOrGoBounds } from '../../StashedBuildHelper';
 import NglWrapper, { NglComponent, NglRepresentation } from './NglWrapper';
 import BaseBondsHelper, { BaseBondsHelperJSON, Relations } from './BaseBondsHelper';
+import { MoleculeFile } from '../../types/entities'
 
 type GoAtomName = string;
 //type GoRelations = ReversibleKeyMap<GoAtomName, GoAtomName, string>;
@@ -58,7 +59,7 @@ export default class GoBondsHelper extends BaseBondsHelper {
   }
 
   nglIndexToRealIndex(index: number) {
-    return {chain: 0, atom :this.index_to_real[index]};
+    return {chain: 0, index :this.index_to_real[index]};
   }
 
   goNameToGoIndex(name: GoAtomName) {
@@ -66,7 +67,7 @@ export default class GoBondsHelper extends BaseBondsHelper {
   }
 
   goNameToRealIndex(name: GoAtomName) {
-    return this.nglIndexToRealIndex(this.goNameToGoIndex(name)).atom;
+    return this.nglIndexToRealIndex(this.goNameToGoIndex(name)).index;
   }
 
   realIndexToGoIndex(index: number) {
@@ -174,46 +175,54 @@ export default class GoBondsHelper extends BaseBondsHelper {
    * Try to rebuild the original files with their original names.
    * Index is always the last file of the array.
    */
-  toOriginalFiles() {
+  toOriginalFiles() : Promise<MoleculeFile[]> {
     // Try to reconstruct the original files based on go atom names.
-    const files: { [molecule_name: string]: string } = Object.create(null);
+    return new Promise((res, rej) => {
+      try {
+        const files: { [molecule_name: string]: string } = Object.create(null);
 
-    for (const [keys, line] of this.relations[0]) {
-      let name1 = this.realIndexToGoName(keys[0]);
-      const mol_type_arr = /^(\w+)_\d+$/.exec(name1);
-
-      if (!mol_type_arr) {
-        continue;
-      }
-
-      // Récupère le nom de la molécule (molecule_0)
-      const type = mol_type_arr[1];
-      if (type in files) {
-        // type = molecule_0. Réécris les lignes du fichier
-        files[type] += line + '\n';
-      }
-      else {
-        files[type] = line + '\n';
-      }
-    }
+        for (const [keys, line] of this.relations[0]) {
+          let name1 = this.realIndexToGoName(keys[0]);
+          const mol_type_arr = /^(\w+)_\d+$/.exec(name1);
     
+          if (!mol_type_arr) {
+            continue;
+          }
+    
+          // Récupère le nom de la molécule (molecule_0)
+          const type = mol_type_arr[1];
+          if (type in files) {
+            // type = molecule_0. Réécris les lignes du fichier
+            files[type] += line + '\n';
+          }
+          else {
+            files[type] = line + '\n';
+          }
+        }
+        
+    
+        // Generate the index and files
+        const index_filename = 'go-table_VirtGoSites.itp';
+        const suffix = '_go-table_VirtGoSites.itp';
+        let index = '';
+    
+        const files_as_file: MoleculeFile[] = [];
+    
+        for (const type in files) {
+          files_as_file.push({file:new File([files[type]], type + suffix, { type: 'chemical/x-include-topology' }), mol_idx: 0});
+    
+          index += `#include "${type + suffix}"\n`;
+        }
+    
+        files_as_file.push({file : new File([index], index_filename, { type: 'chemical/x-include-topology' }), mol_idx : 0});
+    
+        res(files_as_file);
+      } catch(e) {
+        rej(e)
+      }
 
-    // Generate the index and files
-    const index_filename = 'go-table_VirtGoSites.itp';
-    const suffix = '_go-table_VirtGoSites.itp';
-    let index = '';
-
-    const files_as_file: File[] = [];
-
-    for (const type in files) {
-      files_as_file.push(new File([files[type]], type + suffix, { type: 'chemical/x-include-topology' }));
-
-      index += `#include "${type + suffix}"\n`;
-    }
-
-    files_as_file.push(new File([index], index_filename, { type: 'chemical/x-include-topology' }));
-
-    return files_as_file;
+    })
+   
   }
 
   /**
@@ -390,7 +399,7 @@ export default class GoBondsHelper extends BaseBondsHelper {
           continue;
         }
 
-        const real_index_1 = bonds.nglIndexToRealIndex(go_index_1).atom, real_index_2 = bonds.nglIndexToRealIndex(go_index_2).atom;
+        const real_index_1 = bonds.nglIndexToRealIndex(go_index_1).index, real_index_2 = bonds.nglIndexToRealIndex(go_index_2).index;
 
         if (real_index_1 === undefined || real_index_2 === undefined) {
           console.warn(`[GO-VIRT-SITES] [${molecule_type}] Undefined real indexes for names ${name1}(${go_index_1})-${name2}(${go_index_2}). This should not happen...`);

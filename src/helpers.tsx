@@ -287,12 +287,15 @@ export function downloadBlob(file: Blob, filename: string) {
 }
 
 
-export async function loadMartinizeFiles(job: JobDoc){
+export async function loadMartinizeFiles(job: JobDoc) : Promise<MartinizeFiles> {
   const files = job.files
-  const itps = files.itp_files.map((itp : any) => ({name : itp.name, type : itp.type, content : new File([itp.content], itp.name)}))
+  const itps = files.itp_files.map((mol_itp, mol_idx) => mol_itp.map(itp => ({name : itp.name, type : itp.type, content : new File([itp.content], itp.name), mol_idx})) ).flat()
+
   return {
+    radius : job.radius,
     pdb : {name : files.coarse_grained.name, type : files.coarse_grained.type, content : new File([files.coarse_grained.content], files.coarse_grained.name)},
     itps, 
-    top : {name : files.top_file.name, type : files.top_file.type, content : new File([files.top_file.content], files.top_file.name)}
+    top : {name : files.top_file.name, type : files.top_file.type, content : new File([files.top_file.content], files.top_file.name)},
+
   }
 }

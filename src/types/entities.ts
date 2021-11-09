@@ -94,7 +94,7 @@ export interface JobDoc extends CouchDoc {
 export interface JobFiles {
   all_atom : FileFromHttp; 
   coarse_grained : FileFromHttp; 
-  itp_files : FileFromHttp[]; 
+  itp_files : FileFromHttp[][]; 
   top_file : FileFromHttp; 
 }
 
@@ -134,6 +134,11 @@ export interface MartinizeFile {
   content: File;
   type: string;
   mol_idx?: number; 
+}
+
+export interface MoleculeFile {
+  file : File; 
+  mol_idx: number; 
 }
 
 type AvailableForceFields = "martini3001" | "elnedyn22" | "elnedyn22p" | "elnedyn" | "martini22" | "martini22p"

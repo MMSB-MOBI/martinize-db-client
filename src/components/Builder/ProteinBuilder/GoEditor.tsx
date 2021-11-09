@@ -159,7 +159,7 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
     if ((this.props.mode === "go" && pp.atom?.element === "CA") || (this.props.mode === "elastic" && pp.atom?.atomname === "BB")) {
       // GO atom
       console.log("GO ATOM", pp.atom.chainIndex); 
-      const chain = pp.atom.chainIndex; 
+      const chain = this.props.mode === "elastic" ? pp.atom.chainIndex : 0; 
       let source_or_target = pp.atom.index;
       // Get the residue index (this is the needed thing to highlight it)
 

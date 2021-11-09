@@ -4,6 +4,7 @@ import BaseBondsHelper, { BaseBondsHelperJSON, Relations } from "./BaseBondsHelp
 import NglWrapper from "./NglWrapper";
 import ItpFile from 'itp-parser-forked';
 import { resolve } from "dns";
+import {MoleculeFile} from '../../types/entities'
 
 export default class ElasticBondsHelper extends BaseBondsHelper {
     protected _nglIdxToItpIdx: {[nglIdx : number]:[number, number]} = {} //[mol_idx, itp_idx]
@@ -48,7 +49,7 @@ add(chain:number, atom1_or_line: string | number, atom2?: number, line?: string)
     return this;
 }
 
-createRealLine(atom1: number, atom2: number, chain:number = 0): string {
+createRealLine(atom1: number, atom2: number, chain:number): string {
 
     if (atom1 === undefined || atom2 === undefined) {
       console.warn("[Real line creator] Atoms", atom1, "and", atom2, "not found.");
@@ -68,7 +69,7 @@ createRealLine(atom1: number, atom2: number, chain:number = 0): string {
     return `${atom1} ${atom2} 6 ${result.toPrecision(11)} 500.0`;
 }
 
-async toOriginalFiles(): Promise<File[]> {
+async toOriginalFiles(): Promise<MoleculeFile[]> {
 
     const new_files = []
     for (const [chain,bonds] of this.relations.entries()){
@@ -82,7 +83,7 @@ async toOriginalFiles(): Promise<File[]> {
         }
 
         itp.setField("bonds", new_rubbers)
-        new_files.push(new File([itp.toString()], stored_itp.name, { type: 'chemical/x-include-topology' }))
+        new_files.push({file:new File([itp.toString()], stored_itp.name, { type: 'chemical/x-include-topology' }), mol_idx: chain})
     }
 
     return new_files
@@ -156,7 +157,7 @@ addToIdxMapper(mol_idx:number, itp_idx:number, ngl_idx:number){
 }
 
 nglIndexToRealIndex(ngl_idx:number){
-    return {atom : this._nglIdxToItpIdx[ngl_idx][1], chain : this._nglIdxToItpIdx[ngl_idx][0]}
+    return {index : this._nglIdxToItpIdx[ngl_idx][1], chain : this._nglIdxToItpIdx[ngl_idx][0]}
 }
 
 
@@ -201,7 +202,6 @@ static async readFromItps(stage: NglWrapper, itp_files: {mol_idx?:number, conten
             }
         }
         else{
-            console.log(itp.name)
             const itpReaded = await ItpFile.read(itp); 
             for (const atom of itpReaded.atoms){
                 const [index, name, ] = atom.split(ItpFile.BLANK_REGEX);
@@ -213,34 +213,9 @@ static async readFromItps(stage: NglWrapper, itp_files: {mol_idx?:number, conten
         }
     }
 
-    /*const elastic_itps = itp_files.filter(e => e.name.includes("rubber_band"));
-    if (elastic_itps.length === 0) {
-        throw new Error("No itp with elastic bonds description");
-    }
-
-    if (bonds.bonds_itps.length != 0) {
-        console.warn("Some itps for bonds are already registered on ElasticBondHelper. It will erase them")
-        bonds.bonds_itps = []; 
-    }
-
-    let chainNb = 0
-    for (const itp of elastic_itps){
-        bonds.bonds_itps.push(itp); 
-        const molecule = await ItpFile.read(itp); 
-        const elastic_bonds = molecule.getSubfield("bonds", "Rubber band", false)
-        if (elastic_bonds.length === 0) console.warn(`${itp.name} doesn't have elastic bonds`)
-        for (const bond of elastic_bonds){
-            bonds.add(chainNb, bond); 
-        }
-        chainNb+=1;
-    }*/
-
     return bonds;
 }
 
-    //nglIdxToRelationIdx(ngl_idx:[number, number] | number){
-    
-    //}
 
 
     
