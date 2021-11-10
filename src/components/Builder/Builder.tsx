@@ -346,7 +346,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     applyUserRadius(options.files.radius);
 
     try {
-      component = await this.ngl.load(options.files.pdb.content);
+      component = await this.ngl.load(options.files.pdb.content, {coarse_grained:true});
     } catch (e) {
       console.error(e);
       toast("Unable to load generated PDB. Please retry by re-loading the page.");
@@ -393,7 +393,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
   async initAllAtomPdb(file: File) {
     console.log("initAllAtomPdb")
     console.log(file); 
-    const component = await this.ngl.load(file);
+    const component = await this.ngl.load(file, {coarse_grained:false});
 
     component.add<BallAndStickRepresentation>("ball+stick");
     component.center();
@@ -1158,7 +1158,6 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
   };
 
   onGoEditorValidate = async () => {
-    console.log("I SAVE BONDS"); 
     this.restoreSettingsAfterGo(false);
 
     if (!this.state.files){
