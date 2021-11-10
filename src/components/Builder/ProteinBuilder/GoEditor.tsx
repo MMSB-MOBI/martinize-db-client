@@ -116,6 +116,7 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
     this.props.stage.onClick(this.nglClickReciever);
     this.props.stage.removePanOnClick();
     this.repr.applySelection(this.selection_suffix);
+    
   }
 
   componentWillUnmount() {
@@ -796,7 +797,10 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
         </DialogContent>
 
         <DialogActions>
-          <Button color="primary" onClick={() => this.setState({want_save_bonds:false})}>No</Button>
+          <Button color="primary" onClick={() => {
+            this.setState({want_save_bonds:false})
+            this.props.onCancel(); 
+            }}>No</Button>
           <Button color="secondary" onClick={this.props.onValidate}>Yes</Button>
         </DialogActions>
       </Dialog>

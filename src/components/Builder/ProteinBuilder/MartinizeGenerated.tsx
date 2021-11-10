@@ -93,15 +93,6 @@ export default function MartinizeGenerated(props: MartinizeGeneratedProps) {
           Restart molecule builder ?
         </DialogTitle>
 
-        <DialogContent>
-          <DialogContentText>
-            You will lose unsaved actions.
-          </DialogContentText>
-          <DialogContentText>
-            If you want to use this molecule in System Builder or get back to this page later,
-            you must save the molecule first, using the appropriate button.
-          </DialogContentText>
-        </DialogContent>
 
         <DialogActions>
           <Button color="primary" onClick={() => setWantReset(false)}>Cancel</Button>

@@ -1188,8 +1188,14 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     })
   };
 
-  onGoEditorCancel = () => {
-    this.restoreSettingsAfterGo(true);
+  onGoEditorCancel = async () => {
+    this.restoreSettingsAfterGo(false);
+    try {
+      await this.applyBondsToFiles(); 
+    } catch(e) {
+      toast("Can't apply new bonds to itp files", "error")
+      console.error(e); 
+    }
   };
 
   onGoEditorStart = () => {
