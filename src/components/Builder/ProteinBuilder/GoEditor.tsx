@@ -8,9 +8,7 @@ import * as ngl from '@mmsb/ngl';
 import { Marger, FaIcon } from '../../../helpers';
 import BallAndStickRepresentation from '@mmsb/ngl/declarations/representation/ballandstick-representation';
 import { toast } from '../../Toaster';
-import GoBondsHelper from '../GoBondsHelper';
 import BaseBondsHelper from '../BaseBondsHelper';
-import { CollectionsBookmarkSharp } from '@material-ui/icons';
 
 interface GoEditorProps {
   stage: NglWrapper;
@@ -101,7 +99,7 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
       return ".CA or .SC1 or .BB or .SC2 or .SC3 or .SC4";
     }
     if(this.props.mode === "go") {
-      return ".CA";
+      return ".CA or .BB";
     } else if (this.props.mode === "elastic") {
       return ".BB";
     }

@@ -1,19 +1,16 @@
 import React from 'react';
-import { makeStyles, Paper, TableContainer, Table, TableHead, TableRow, TableCell, TableBody, TableFooter, CircularProgress, createStyles, IconButton, TablePagination, FormControlLabel, Checkbox, Button, Icon, Link as MLink } from '@material-ui/core';
+import { makeStyles, Paper, TableContainer, Table, TableHead, TableRow, TableCell, TableBody, TableFooter, CircularProgress, createStyles, IconButton, TablePagination } from '@material-ui/core';
 import clsx from 'clsx';
 import FirstPageIcon from '@material-ui/icons/FirstPage';
 import KeyboardArrowLeft from '@material-ui/icons/KeyboardArrowLeft';
 import KeyboardArrowRight from '@material-ui/icons/KeyboardArrowRight';
 import LastPageIcon from '@material-ui/icons/LastPage';
-import { BaseMolecule, Molecule } from '../../types/entities';
+import { BaseMolecule } from '../../types/entities';
 import { Link } from 'react-router-dom';
 import { DeleteModal } from '../Molecule/MoleculeInfo';
 import ApiHelper from '../../ApiHelper';
-import { notifyError, findInCategoryTree, dateFormatter, downloadBlob } from '../../helpers';
+import { notifyError, findInCategoryTree, dateFormatter } from '../../helpers';
 import Settings from '../../Settings';
-import { SERVER_ROOT } from '../../constants';
-import { couldStartTrivia } from 'typescript';
-import JSZip from 'jszip';
 
 const useStyles = makeStyles(theme => ({
   paperRoot: {
@@ -53,7 +50,6 @@ export default function MoleculeTable(props: {
   withVersion?: boolean,
   }) {
     
-  let molToDownload : string[] = [];
   const classes = useStyles();
   const { loading, molecules, length, rowsPerPage, page, onChangePage } = props;
   const [deleteMol, setDeleteMol] = React.useState("");
@@ -84,25 +80,7 @@ export default function MoleculeTable(props: {
 
     columns = [...columns.slice(0, 2), version_column, ...columns.slice(2)];
   }
-
-  async function downloadMolecules(moleculeList: string[]) {
-    if (moleculeList.length === 0) {
-      //console.warn("Hey, files should be present in component when this method is called.");
-      return;
-    }
-    
-    ApiHelper.request("molecule/download?molecules="+moleculeList, {mode : undefined}).then((res) => {
-      console.log()
-    } ).catch(e => console.log("error", e))
   
-  }
-  
-  function addMoleculesToDownload(molecule: BaseMolecule, moleculeList: string[]) {
-    // todo : if uncheck
-    moleculeList.push("{\'id\' :\'"+ molecule.files+"\', \'filename\':\'" +molecule.alias + ".zip\'};");
-    return moleculeList;
-  }
-
   const deleteMolecule = () => {
     if (loadModal)
       return;

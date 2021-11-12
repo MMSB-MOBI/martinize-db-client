@@ -77,12 +77,11 @@ export interface Token {
 
 export type UserRole = "admin" | "curator";
 
-export interface JobDoc extends CouchDoc {
+interface JobDoc extends CouchDoc {
   id: string; 
   jobId: string; 
   userId : string;
   date : string; 
-  files : JobFiles; 
   radius : { [atomName: string]: number }; 
   settings: JobSettings 
   type : "martinize" | "insane"; 
@@ -91,12 +90,30 @@ export interface JobDoc extends CouchDoc {
   manual_bonds_edition?: boolean; 
 }
 
-export interface JobFiles {
+export interface ReadedJobDoc extends JobDoc { 
+  files : ReadedJobFiles; 
+
+}
+
+export interface RawJobDoc extends JobDoc {
+  files: RawJobFiles
+
+}
+
+export interface ReadedJobFiles {
   all_atom : FileFromHttp; 
   coarse_grained : FileFromHttp; 
   itp_files : FileFromHttp[][]; 
   top_file : FileFromHttp; 
 }
+
+export interface RawJobFiles { 
+  all_atom : FileFromHttp; 
+  coarse_grained : FileFromHttp; 
+  itp_files : FileFromHttp[][]; 
+  top_file : FileFromHttp;
+}
+
 
 export interface JobSettings {
   builder_mode : MartinizeMode; 

@@ -1,5 +1,5 @@
 import React from 'react';
-import { withStyles, Grid, Typography, Paper, Button, withTheme, Theme, CircularProgress, Divider, createMuiTheme, ThemeProvider, Link, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@material-ui/core';
+import { withStyles, Grid, Typography, Paper, Button, withTheme, Theme, CircularProgress, Divider, createTheme, ThemeProvider, Link, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@material-ui/core';
 import { Marger, FaIcon, downloadBlob, setPageTitle, notifyError } from '../../helpers';
 import { Link as RouterLink, RouteComponentProps } from 'react-router-dom';
 
@@ -9,7 +9,7 @@ import * as ngl from '@mmsb/ngl';
 
 import { toast } from '../Toaster';
 import { RepresentationParameters } from '@mmsb/ngl/declarations/representation/representation';
-import JSZip, { file } from 'jszip';
+import JSZip from 'jszip';
 import { blue } from '@material-ui/core/colors';
 import { applyUserRadius } from '../../nglhelpers';
 import SocketIo from 'socket.io-client';
@@ -33,7 +33,7 @@ import { errorToText, loadMartinizeFiles } from '../../helpers';
 
 import ApiHelper from '../../ApiHelper'
 import ElasticBondsHelper from './ElasticBondHelper';
-import { MartinizeFile, MartinizeMode, JobFiles, JobDoc, ElasticOrGoBounds, ElasticOrGoBoundsRegistered } from '../../types/entities'; 
+import { MartinizeFile, MartinizeMode, ReadedJobFiles, ElasticOrGoBounds, ReadedJobDoc } from '../../types/entities'; 
 import { Alert } from '@material-ui/lab'
 
 
@@ -169,7 +169,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
   async loadFromHistory(jobId: string){
     try {
       this.jobId = jobId; 
-      const job : JobDoc = await ApiHelper.request(`history/get?jobId=${jobId}`)
+      const job : ReadedJobDoc = await ApiHelper.request(`history/get?jobId=${jobId}`)
       const [allAtomFile, martinizeFiles] = await Promise.all([this.loadAllAtomFile(job.files), loadMartinizeFiles(job)])
       this.reloadJob(allAtomFile, martinizeFiles, job.settings.builder_mode)
     }catch(e) {
@@ -179,7 +179,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
   }
 
-  async loadAllAtomFile(files: JobFiles) : Promise<File> {
+  async loadAllAtomFile(files: ReadedJobFiles) : Promise<File> {
     return new File([files.all_atom.content], files.all_atom.name, { type: files.all_atom.type })
   }
 
@@ -318,7 +318,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
   createTheme(hint: 'light' | 'dark') {
     const bgclr = hint === 'dark' ? '#303030' : '#fafafa';
 
-    return createMuiTheme({
+    return createTheme({
       palette: {
         type: hint,
         background: {
@@ -365,6 +365,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       const coordinates: [number, number, number][][] = [];
 
       repr.atomIterator(ap => {
+        console.log("atom", ap.atomname)
         if(ap.chainIndex in coordinates) coordinates[ap.chainIndex].push([ap.x, ap.y, ap.z])
         else coordinates[ap.chainIndex] = [[ap.x, ap.y, ap.z]];
       });
@@ -566,8 +567,8 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     if (typeof highlight === 'number') {
       // transform go index to real index
       // It's an atom, transform ngl index to real index
-      const {chain, index} = this.state.files!.go!.nglIndexToRealIndex(highlight)
-      realHighlightIdx = index; 
+      const nglAtom = this.state.files!.go!.nglIndexToRealIndex(highlight)
+      realHighlightIdx = nglAtom.index; 
      
     }
 
@@ -1625,7 +1626,7 @@ export default withStyles(theme => ({
 }))(withTheme(MartinizeBuilder));
 
 // Used for martinize output in ajax post call
-function martinizeOutputParser(input: string) : { 
+/*function martinizeOutputParser(input: string) : { 
   pdb: MartinizeFile, 
   top: MartinizeFile, 
   itps: MartinizeFile[], 
@@ -1650,7 +1651,7 @@ function martinizeOutputParser(input: string) : {
       return value;
     }
   );
-}
+}*/
 
 // @ts-ignore
 window.Buffer = Buffer;

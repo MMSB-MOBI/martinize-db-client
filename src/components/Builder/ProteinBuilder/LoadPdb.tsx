@@ -1,7 +1,6 @@
 import React from 'react';
 import { Marger } from '../../../helpers';
-import { Typography, Button, Divider, Link } from '@material-ui/core';
-import { Link as RouterLink } from 'react-router-dom';
+import { Typography, Button, Divider } from '@material-ui/core';
 
 export interface LoadPdbProps {
   onFileSelect(file: File): any;

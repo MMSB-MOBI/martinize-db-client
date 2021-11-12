@@ -2,12 +2,13 @@ import React from 'react';
 import { withStyles, Link, Typography, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, List, ListItem, ListItemText, ListItemSecondaryAction, IconButton, DialogContentText, CircularProgress } from '@material-ui/core';
 import AddMoleculeFileInput from '../../AddMolecule/AddMoleculeFileInput';
 import { toast } from '../../Toaster';
-import { Marger, FaIcon } from '../../../helpers';
+import { Marger, FaIcon, loadMartinizeFiles } from '../../../helpers';
 import ApiHelper from '../../../ApiHelper';
-import { Molecule } from '../../../types/entities';
+import { Molecule, ReadedJobDoc } from '../../../types/entities';
 import { SimpleSelect } from '../../../Shared';
 import Settings from '../../../Settings';
 import { Link as RouterLink } from 'react-router-dom';
+import HistoryBuild from '../HistoryBuild'
 
 export interface MoleculeWithFiles {
   pdb: File;
@@ -42,6 +43,7 @@ class MoleculeChooser extends React.Component<MCProps, MCState> {
   nextFromFiles = () => {
     if (this.props.AddMolecule === "true"){
       const { pdb, top, itps, ff } = this.state;
+      console.log(pdb, top, itps, ff); 
 
       if (pdb && top && itps.length) {
         this.props.onMoleculeChoose({
@@ -109,11 +111,26 @@ class MoleculeChooser extends React.Component<MCProps, MCState> {
           </Typography>
 
           <Typography align="center">
-            <Typography> Will be available soon...</Typography>
             <Link component={RouterLink} to="/builder">
               Want to martinize a molecule ?
             </Link>
           </Typography>
+
+          <HistoryBuild
+            onSelect={async(uuid : string) => {
+              const job : ReadedJobDoc = await ApiHelper.request(`history/get?jobId=${uuid}`)
+              const martinizeFiles = await loadMartinizeFiles(job)
+              
+              this.setState({
+                pdb: martinizeFiles.pdb.content, 
+                top : martinizeFiles.top.content, 
+                itps: martinizeFiles.itps.map(itp => itp.content),
+                ff: job.settings.ff
+              }, this.nextFromFiles)
+            }}
+          
+          />
+
 
 
           <Marger size="1rem" />

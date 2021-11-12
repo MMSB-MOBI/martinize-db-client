@@ -4,9 +4,7 @@ import React from 'react';
 import { toast } from "./components/Toaster";
 import { Icon } from "@material-ui/core";
 import { MartinizeFiles } from './components/Builder/Builder'
-import { JobDoc } from './types/entities'
-import JSZip from 'jszip';
-
+import { ReadedJobDoc } from './types/entities'
 
 export function errorToText(error: [any, APIError] | APIError | number | undefined) {
   if (!error) {
@@ -287,7 +285,7 @@ export function downloadBlob(file: Blob, filename: string) {
 }
 
 
-export async function loadMartinizeFiles(job: JobDoc) : Promise<MartinizeFiles> {
+export async function loadMartinizeFiles(job: ReadedJobDoc) : Promise<MartinizeFiles> {
   const files = job.files
   const itps = files.itp_files.map((mol_itp, mol_idx) => mol_itp.map(itp => ({name : itp.name, type : itp.type, content : new File([itp.content], itp.name), mol_idx})) ).flat()
 

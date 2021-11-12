@@ -11,7 +11,7 @@ import MoleculeFilters, { Filters } from './ExploreFilters';
 import AddMolecule from '../AddMolecule/AddMolecule';
 import { Link, Icon, Container, Typography } from '@material-ui/core';
 import clsx from 'clsx';
-import Settings, { LoginStatus } from '../../Settings';
+import Settings from '../../Settings';
 
 // Icon <Icon className="fas fa-camera" />
 

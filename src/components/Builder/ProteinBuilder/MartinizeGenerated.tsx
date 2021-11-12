@@ -1,10 +1,9 @@
 import React from 'react';
 import { Marger, FaIcon } from '../../../helpers';
-import { Button, Typography, FormControl, FormGroup, FormControlLabel, Switch, Slider, Divider, Box, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Theme, Slide } from '@material-ui/core';
+import { Button, Typography, FormControl, FormGroup, FormControlLabel, Switch, Slider, Divider, Box, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Theme } from '@material-ui/core';
 import { ToggleButtonGroup, ToggleButton, Alert } from '@material-ui/lab';
 import { ViableRepresentation } from '../NglWrapper';
 import Tooltip from '../../../Tooltip';
-import MoleculeSaverModal from './MoleculeSaverModal';
 
 interface MartinizeGeneratedProps {
   onReset(): any;
@@ -44,13 +43,11 @@ interface MartinizeGeneratedProps {
 
 export default function MartinizeGenerated(props: MartinizeGeneratedProps) {
   const [wantReset, setWantReset] = React.useState(false);
-  const [saverModal, setSaverModal] = React.useState("");
-
   const [warning, setWarning] = React.useState(false);
 
   return (
     <React.Fragment>
-      {(props.stdout!.length != 0 ? true : false) &&
+      {(props.stdout!.length !== 0 ? true : false) &&
 
       <Alert severity="warning" action={
         <Button 
@@ -80,13 +77,6 @@ export default function MartinizeGenerated(props: MartinizeGeneratedProps) {
           </Button>
         </DialogActions>
       </Dialog>
-
-      {/*<MoleculeSaverModal
-        open={!!saverModal} 
-        onClose={() => setSaverModal("")}
-        onConfirm={name => { props.onSave(name); setSaverModal(""); }}
-        defaultName={saverModal}
-      />*/}
 
       <Dialog open={wantReset} onClose={() => setWantReset(false)}>
         <DialogTitle>
@@ -300,14 +290,6 @@ export default function MartinizeGenerated(props: MartinizeGeneratedProps) {
       <Marger size="1rem" />
 
       <Box alignContent="center" justifyContent="center" width="100%">
-        <Button 
-          style={{ width: '100%' }} 
-          color="secondary" 
-          disabled={!!props.saved && !props.edited}
-          onClick={() => setSaverModal(props.allAtomName)}
-        >
-          <FaIcon save /> <span style={{ marginLeft: '.6rem' }}>Stash for System Builder</span>
-        </Button>
 
         <Marger size="1rem" />
 

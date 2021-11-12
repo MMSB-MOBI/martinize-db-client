@@ -1,6 +1,6 @@
 import ItpFile from 'itp-parser-forked';
 import ReversibleKeyMap from 'reversible-key-map';
-import NglWrapper, { NglComponent, NglRepresentation } from './NglWrapper';
+import NglWrapper from './NglWrapper';
 import BaseBondsHelper, { BaseBondsHelperJSON, Relations } from './BaseBondsHelper';
 import { MoleculeFile } from '../../types/entities'
 
@@ -57,8 +57,12 @@ export default class GoBondsHelper extends BaseBondsHelper {
     return this.index_to_name[index];
   }
 
-  nglIndexToRealIndex(index: number) {
-    return {chain: 0, index :this.index_to_real[index]};
+  goIndexToRealIndex(index: number) {
+    return this.index_to_real[index]
+  }
+
+  nglIndexToRealIndex(index: number){
+    return {chain: 0, index: this.index_to_real[index]}
   }
 
   goNameToGoIndex(name: GoAtomName) {
@@ -66,7 +70,7 @@ export default class GoBondsHelper extends BaseBondsHelper {
   }
 
   goNameToRealIndex(name: GoAtomName) {
-    return this.nglIndexToRealIndex(this.goNameToGoIndex(name)).index;
+    return this.goIndexToRealIndex(this.goNameToGoIndex(name));
   }
 
   realIndexToGoIndex(index: number) {
@@ -398,7 +402,7 @@ export default class GoBondsHelper extends BaseBondsHelper {
           continue;
         }
 
-        const real_index_1 = bonds.nglIndexToRealIndex(go_index_1).index, real_index_2 = bonds.nglIndexToRealIndex(go_index_2).index;
+        const real_index_1 = bonds.goIndexToRealIndex(go_index_1), real_index_2 = bonds.goIndexToRealIndex(go_index_2);
 
         if (real_index_1 === undefined || real_index_2 === undefined) {
           console.warn(`[GO-VIRT-SITES] [${molecule_type}] Undefined real indexes for names ${name1}(${go_index_1})-${name2}(${go_index_2}). This should not happen...`);

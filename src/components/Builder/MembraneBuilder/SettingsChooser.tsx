@@ -3,8 +3,6 @@ import { withStyles, Typography, Button, TextField, Box, FormControlLabel, Check
 import { Marger, downloadBlob, dateFormatter } from '../../../helpers';
 import { SimpleSelect } from '../../../Shared';
 import { toast } from '../../Toaster';
-import { ControlCamera } from '@material-ui/icons';
-import { Console } from 'console';
 import { TabContext, TabPanel } from '@material-ui/lab';
 import Settings from '../../../Settings';
 
@@ -350,7 +348,7 @@ class SettingsChooser extends React.Component<SCProps, SCState> {
                   />
                 </Box>
 
-                {this.props.addLipids == "true" && <Box width="100%" display="flex" justifyContent="center">
+                {this.props.addLipids === "true" && <Box width="100%" display="flex" justifyContent="center">
                   <FormControlLabel
                     control={<Checkbox 
                       value="orient" 

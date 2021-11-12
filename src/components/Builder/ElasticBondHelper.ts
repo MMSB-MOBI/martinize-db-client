@@ -182,7 +182,7 @@ static async readFromItps(stage: NglWrapper, itp_files: {mol_idx?:number, conten
 
     let nglIdx: number = 0; 
 
-    if (bonds.bonds_itps.length != 0) {
+    if (bonds.bonds_itps.length !== 0) {
         console.warn("Some itps for bonds are already registered on ElasticBondHelper. It will erase them")
         bonds.bonds_itps = []; 
     }

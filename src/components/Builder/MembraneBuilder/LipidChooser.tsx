@@ -1,5 +1,5 @@
-import React, { ChangeEvent } from 'react';
-import { withStyles, Typography, Button, TextField, IconButton, CircularProgress, FormControlLabel, Checkbox, makeStyles, Slider } from '@material-ui/core';
+import React from 'react';
+import { withStyles, Typography, Button, TextField, IconButton, CircularProgress, FormControlLabel, Checkbox, makeStyles } from '@material-ui/core';
 import { toast } from '../../Toaster';
 import { Marger, FaIcon } from '../../../helpers';
 import { SimpleSelect } from '../../../Shared';

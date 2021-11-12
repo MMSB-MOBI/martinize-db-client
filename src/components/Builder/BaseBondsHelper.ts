@@ -1,4 +1,4 @@
-import NglWrapper, { NglComponent, NglRepresentation } from './NglWrapper';
+import NglWrapper from './NglWrapper';
 import { BondsRepresentation } from './BondsRepresentation';
 import ReversibleKeyMap from 'reversible-key-map';
 import { MoleculeFile, ElasticOrGoBounds, ElasticOrGoBoundsRegistered } from '../../types/entities'
@@ -165,7 +165,7 @@ export default abstract class BaseBondsHelper {
       this.relations = last;
 
       let cb = this.lastCustomBonds.pop();
-      if(cb != undefined) {
+      if(cb !== undefined) {
         this.customBonds.push(this.currentBonds);
         this.currentBonds = cb;
       }
@@ -186,7 +186,7 @@ export default abstract class BaseBondsHelper {
       this.relations = last;
 
       let lastcb = this.customBonds.pop();
-      if(lastcb != undefined) {
+      if(lastcb !== undefined) {
         this.lastCustomBonds.push(this.currentBonds);
         this.currentBonds = lastcb;
       }

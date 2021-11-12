@@ -1,13 +1,12 @@
 import React from 'react'; 
-import { TableContainer, Table, TableHead, TableRow, TableCell, TableBody, Link, Collapse, IconButton, Box, TableFooter, TablePagination, Checkbox, TableSortLabel } from '@material-ui/core'
+import { TableContainer, Table, TableHead, TableRow, TableCell, TableBody, Link, Collapse, IconButton, Box, TablePagination, Checkbox, TableSortLabel } from '@material-ui/core'
 import { visuallyHidden } from '@mui/utils'
 import { KeyboardArrowDown, KeyboardArrowUp, LastPage, KeyboardArrowRight, FirstPage, KeyboardArrowLeft} from '@material-ui/icons'
-import { useHistory } from 'react-router-dom';
 import ApiHelper from '../../ApiHelper';
 import { loadMartinizeFiles, downloadBlob, errorToType, notifyError } from '../../helpers'
 import JSZip from 'jszip';
 import { toast } from '../Toaster';
-import { JobDoc, JobSettings } from '../../types/entities'
+import { RawJobDoc, JobSettings, ReadedJobDoc } from '../../types/entities'
 import { useTheme } from '@material-ui/core/styles';
 
 type Order = 'asc' | 'desc';
@@ -107,7 +106,7 @@ function getComparator<Key extends SortableKeys>(
       : (a, b) => -descendingComparator(a, b, orderBy);
   }
 
-function formatData(jobs : JobDoc[]): FormattedJob[] {
+function formatData(jobs : RawJobDoc[]): FormattedJob[] {
     return jobs.map(job => ({
         id : job.jobId, 
         name : job.name, 
@@ -230,12 +229,10 @@ function TablePaginationActions(props: TablePaginationActionsProps) {
 
 
 export default function HistoryTable(props : {
-    jobs : JobDoc[]
+    jobs : RawJobDoc[]
     onNeedUpdate: () => void,
 }){
     const { jobs } = props
-
-    const history = useHistory();
 
     const formattedJobs = formatData(jobs); 
 
@@ -250,7 +247,7 @@ export default function HistoryTable(props : {
 
     const downloadJob = async (jobId: string) => {
         try {
-            const job : JobDoc = await ApiHelper.request(`history/get?jobId=${jobId}`)
+            const job : ReadedJobDoc = await ApiHelper.request(`history/get?jobId=${jobId}`)
             const martinizeFiles = await loadMartinizeFiles(job)
             const zip = new JSZip()
             zip.file(martinizeFiles.pdb.name, martinizeFiles.pdb.content)
@@ -438,7 +435,7 @@ export default function HistoryTable(props : {
                             {formattedJobs.sort(getComparator(order, orderBy))
                                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                                 .map((row, index) => {
-                                    return(<Row job={row} index={index}/>)
+                                    return(<Row job={row} index={index} key={row.id}/>)
                                 })}
                                 {emptyRows > 0 && (
                                     <TableRow

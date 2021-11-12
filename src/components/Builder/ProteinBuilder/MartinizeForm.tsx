@@ -1,10 +1,10 @@
 import React from 'react';
 import { Marger } from '../../../helpers';
 import MartinizeError, { MZError } from './MartinizeError';
-import { Typography, Grid, Box, Button, makeStyles, TextField, FormLabel, RadioGroup, FormControlLabel, Radio, Checkbox, MenuItem, Icon, IconButton, SvgIcon, Snackbar, Switch } from '@material-ui/core';
+import { Typography, Grid, Box, Button, makeStyles, TextField, FormLabel, RadioGroup, FormControlLabel, Radio, Checkbox, IconButton, SvgIcon, Snackbar, Switch } from '@material-ui/core';
 import { SimpleSelect } from '../../../Shared';
 import Settings from '../../../Settings';
-import { Alert, Autocomplete } from '@material-ui/lab';
+import { Alert } from '@material-ui/lab';
 
 const CTER = ['COOH-ter', ''] as const;
 const NTER = ['NH2-ter', ''] as const;
@@ -130,7 +130,7 @@ export default function MartinizeForm(props: MartinizeFormProps) {
           />
         </Grid>
 
-        {props.builderMode != 'advanced' && <React.Fragment>
+        {props.builderMode !== 'advanced' && <React.Fragment>
           <Grid item xs={12} sm={6} className={classes.formContainer}>
               <SimpleSelect
                 label="C-terminal"

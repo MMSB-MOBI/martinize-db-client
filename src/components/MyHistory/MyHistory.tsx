@@ -5,15 +5,15 @@ import Settings, { LoginStatus } from '../../Settings';
 import EmbeddedError from '../Errors/Errors';
 import { Container, Typography, Link, CircularProgress } from '@material-ui/core';
 import { Alert } from '@material-ui/lab';
-import ApiHelper from '../../ApiHelper';
 import HistoryTable from './HistoryTable'
-import { toast } from '../Toaster';
 import { Link as RouterLink } from 'react-router-dom';
+import { getHistory } from '../../HistoryHelper'
+import { RawJobDoc } from '../../types/entities'
 
 // Icon <Icon className="fas fa-camera" />
 
 type MyHistoryState = {
-  jobs: any[]; 
+  jobs: RawJobDoc[]; 
   updateState : number; //timestamp
   loaded : boolean; 
   status?: "error" | "not_found"
@@ -32,7 +32,11 @@ export class MyHistory extends React.Component<RouteComponentProps, MyHistorySta
       return;
     }
     setPageTitle("My history");
-    this.getHistory().then(() => {console.log("get history resolved") ; this.setState({loaded: true})});
+    getHistory()
+      .then(jobs => {
+        this.setState({jobs, loaded: true})
+      })
+      .catch(err => this.dealWithGetHistoryError(err))
     
   }
 
@@ -40,27 +44,20 @@ export class MyHistory extends React.Component<RouteComponentProps, MyHistorySta
     console.log("did update"); 
     if (this.state.updateState !== old_state.updateState){
       this.setState({loaded : false})
-      this.getHistory().then(() => this.setState({loaded: true})); 
+      getHistory()
+        .then(jobs => {
+          this.setState({jobs, loaded:true})
+        })
+        .catch(err => this.dealWithGetHistoryError(err))
+        
     }
     
-    //if (this.state != old_state) this.getHistory(); 
-    //this.getHistory(); 
   }
 
-  async getHistory(){
-    const userId = Settings.user?.id
-    return new Promise((res, rej) => {
-      ApiHelper.request(`history/list`, {parameters : {user:userId}})
-      .then(jobs => {
-        this.setState({jobs})
-        res()
-      }).catch(err => {
-        const e = errorToText(err)
-        if (e === "History not found.") this.setState({status : "not_found", jobs : []})
-        else this.setState({status: "error", jobs : []})
-        res()
-      })
-    }) as Promise<void>
+  dealWithGetHistoryError(err: any){
+    const e = errorToText(err)
+    if (e === "History not found.") this.setState({status : "not_found", jobs : [], loaded:true})
+    else this.setState({status: "error", jobs : [], loaded:true})
   }
 
   render() {

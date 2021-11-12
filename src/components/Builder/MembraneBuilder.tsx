@@ -13,7 +13,7 @@ import BallAndStickRepresentation from '@mmsb/ngl/declarations/representation/ba
 import { toast } from '../Toaster';
 import JSZip from 'jszip';
 import { Molecule } from '../../types/entities';
-import { Alert, AlertTitle, TabContext, TabPanel } from '@material-ui/lab';
+import { Alert, AlertTitle } from '@material-ui/lab';
 import { BetaWarning, SimpleSelect } from '../../Shared'; 
 import EmbeddedError from '../Errors/Errors';
 import Settings, { LoginStatus } from '../../Settings';
