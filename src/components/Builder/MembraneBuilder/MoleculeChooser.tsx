@@ -115,7 +115,7 @@ class MoleculeChooser extends React.Component<MCProps, MCState> {
               Want to martinize a molecule ?
             </Link>
           </Typography>
-
+          <Marger size="1rem" />
           <HistoryBuild
             onSelect={async(uuid : string) => {
               const job : ReadedJobDoc = await ApiHelper.request(`history/get?jobId=${uuid}`)
