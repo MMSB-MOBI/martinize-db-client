@@ -105,6 +105,7 @@ export interface ReadedJobFiles {
   coarse_grained : FileFromHttp; 
   itp_files : FileFromHttp[][]; 
   top_file : FileFromHttp; 
+  warnings: FileFromHttp; 
 }
 
 export interface RawJobFiles { 

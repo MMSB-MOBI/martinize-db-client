@@ -81,7 +81,7 @@ export class BondsRepresentation {
           // atom index starts at 1, atom array stats to 0
           const atom1 = coords[chain][atom1_index - 1];
           const atom2 = coords[chain][atom2_index - 1];
-          
+
           if (!atom1 || !atom2) {
             console.warn("Not found atom", atom1_index, atom2_index, coords);
             continue;

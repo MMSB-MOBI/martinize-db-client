@@ -53,6 +53,7 @@ export interface MartinizeFiles {
   top: MartinizeFile;
   go?: BaseBondsHelper;
   elastic_bonds?: BondsRepresentation;
+  warnings?: File; 
 }
 
 interface AtomRadius { 
@@ -66,8 +67,6 @@ export interface MBState {
   error?: any;
   martinize_error?: MZError;
   martinize_step: string;
-
-  stdout?: any;
 
   all_atom_pdb?: File;
   all_atom_ngl?: NglComponent;
@@ -170,8 +169,8 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     try {
       this.jobId = jobId; 
       const job : ReadedJobDoc = await ApiHelper.request(`history/get?jobId=${jobId}`)
-      const [allAtomFile, martinizeFiles] = await Promise.all([this.loadAllAtomFile(job.files), loadMartinizeFiles(job)])
-      this.reloadJob(allAtomFile, martinizeFiles, job.settings.builder_mode)
+      const [allAtomFile, martinizeFiles, warnFile] = await Promise.all([this.loadAllAtomFile(job.files), loadMartinizeFiles(job), this.loadWarnings(job.files)])
+      this.reloadJob(allAtomFile, martinizeFiles, job.settings.builder_mode, warnFile)
     }catch(e) {
       this.setState({load_error_message : errorToText(e as any), running: 'load_error'})
     }
@@ -181,6 +180,10 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
   async loadAllAtomFile(files: ReadedJobFiles) : Promise<File> {
     return new File([files.all_atom.content], files.all_atom.name, { type: files.all_atom.type })
+  }
+
+  async loadWarnings(files: ReadedJobFiles) : Promise<File> {
+    return new File([files.warnings.content], files.warnings.name, { type: files.warnings.type })
   }
 
   async loadBonds(martinizeFiles: MartinizeFiles, mode : "go" | "elastic"){
@@ -277,15 +280,16 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
   }*/
 
 
-  async reloadJob(allAtomFile : File, martinizeFiles : MartinizeFiles, builder_mode : MartinizeMode){
+  async reloadJob(allAtomFile : File, martinizeFiles : MartinizeFiles, builder_mode : MartinizeMode, warnFile : File){
     try {
       const completeFiles = builder_mode === "go" || builder_mode === "elastic" ? await this.loadBonds(martinizeFiles, builder_mode) : martinizeFiles
+      completeFiles.warnings = warnFile; 
       this.initAllAtomPdb(allAtomFile); 
       this.initCoarseGrainPdb({
         files : completeFiles,
         mode : builder_mode === "classic" ? undefined : builder_mode
       });
-      this.setState({files: completeFiles, stdout : [], builder_mode})
+      this.setState({files: completeFiles, builder_mode})
     }catch(e) { 
       notifyError(e as any) }
     
@@ -365,7 +369,6 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       const coordinates: [number, number, number][][] = [];
 
       repr.atomIterator(ap => {
-        console.log("atom", ap.atomname)
         if(ap.chainIndex in coordinates) coordinates[ap.chainIndex].push([ap.x, ap.y, ap.z])
         else coordinates[ap.chainIndex] = [[ap.x, ap.y, ap.z]];
       });
@@ -774,6 +777,9 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
             });
             break;
           }
+          case 'martinize-warnings' : {
+            files.warnings = new File([file], name, {type})
+          }
         }
 
         ok_cb();
@@ -797,9 +803,6 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
         setMartinizeStep("Finishing...");
       });
 
-      socket.on('martinize stderr', ( stdout : any ) => {
-        this.setState({stdout: stdout}, () => {console.log(stdout)});
-      });
 
       // When run ends
       socket.on('martinize end', (
@@ -1533,7 +1536,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
               {this.state.running === 'done' && <MartinizeGenerated 
 
-                stdout={this.state.stdout}
+                martinizeWarnings={this.state.files?.warnings}
                 onReset={() => this.reset()}
                 theme={this.state.theme}
                 allAtomName={this.state.all_atom_pdb!.name.split('.')[0]}
