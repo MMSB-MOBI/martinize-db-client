@@ -11,6 +11,7 @@ declare const HelixTypes: {
 };
 export interface PdbParserParameters extends ParserParameters {
     hex: boolean;
+    coarse_grained?: boolean;
 }
 declare class PdbParser extends StructureParser {
     /**

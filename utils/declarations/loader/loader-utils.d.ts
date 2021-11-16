@@ -12,6 +12,7 @@ export interface LoaderParameters {
     dir: string;
     path: string;
     protocol: string;
+    coarse_grained: boolean;
 }
 export declare type LoaderInput = File | Blob | string;
 export declare function getFileInfo(file: LoaderInput): {

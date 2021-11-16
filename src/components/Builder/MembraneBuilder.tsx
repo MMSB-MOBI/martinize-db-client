@@ -176,7 +176,7 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
   initNglWithResult(result: InsaneResult, mode: 'water' | 'no_water') {
     this.ngl.reset();
 
-    this.ngl.load(result[mode])
+    this.ngl.load(result[mode], {coarse_grained:true})
       .then(component => {
         const repr = component.add<BallAndStickRepresentation>('ball+stick');
         this.representation = repr;

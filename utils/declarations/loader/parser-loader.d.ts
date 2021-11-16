@@ -12,6 +12,7 @@ export interface ParserParams {
     cAlphaOnly?: boolean;
     name?: string;
     path?: string;
+    coarse_grained?: boolean;
 }
 /**
  * Parser loader class
