@@ -22,19 +22,20 @@ import MartinizeForm from './ProteinBuilder/MartinizeForm';
 import MartinizeGenerated from './ProteinBuilder/MartinizeGenerated';
 import GoEditor from './ProteinBuilder/GoEditor';
 import GoBondsHelper from './GoBondsHelper';
-import { BondsRepresentation } from './BondsRepresentation';
 import { BetaWarning } from '../../Shared'; 
-import BaseBondsHelper from './BaseBondsHelper';
 import { getIdxSortedByChain } from './BaseBondsHelper';
+import BaseBondsHelper from './BaseBondsHelper';
 import ElasticBondHelper from './ElasticBondHelper';
 import Settings, { LoginStatus } from '../../Settings';
 import EmbeddedError from '../Errors/Errors';
 import { errorToText, loadMartinizeFiles } from '../../helpers'; 
-
 import ApiHelper from '../../ApiHelper'
 import ElasticBondsHelper from './ElasticBondHelper';
-import { MartinizeFile, MartinizeMode, ReadedJobFiles, ElasticOrGoBounds, ReadedJobDoc } from '../../types/entities'; 
+import { MartinizeMode, ReadedJobFiles, ElasticOrGoBounds, ReadedJobDoc } from '../../types/entities'; 
+import { MartinizeFiles, MartinizeFile } from './types'
 import { Alert } from '@material-ui/lab'
+
+import { loadBonds, registerCoordsAndDisplayBonds } from './BuilderHelper'
 
 
 // @ts-ignore
@@ -44,16 +45,6 @@ interface MBProps extends RouteComponentProps {
   classes: Record<string, string>;
   theme: Theme;
   location : any; 
-}
-
-export interface MartinizeFiles {
-  pdb: MartinizeFile;
-  itps: MartinizeFile[]; // One array of itps for each molecule of the system
-  radius: { [name: string]: number };
-  top: MartinizeFile;
-  go?: BaseBondsHelper;
-  elastic_bonds?: BondsRepresentation;
-  warnings?: File; 
 }
 
 interface AtomRadius { 
@@ -186,13 +177,6 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     return new File([files.warnings.content], files.warnings.name, { type: files.warnings.type })
   }
 
-  async loadBonds(martinizeFiles: MartinizeFiles, mode : "go" | "elastic"){
-    
-    const bonds = mode === "go" ? await GoBondsHelper.readFromItps(this.ngl,  martinizeFiles.itps.flat().map((e:MartinizeFile) => e.content)) : mode === "elastic" ? await ElasticBondsHelper.readFromItps(this.ngl, martinizeFiles.itps.map((e:MartinizeFile) => ({content: e.content, mol_idx: e.mol_idx}))) : undefined
-    const elastic_bonds = bonds?.representation
-    return {...martinizeFiles, elastic_bonds, go: bonds}
-  }
-
   protected get original_state() : MBState {
     return {
       running: 'pdb',
@@ -282,9 +266,12 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
   async reloadJob(allAtomFile : File, martinizeFiles : MartinizeFiles, builder_mode : MartinizeMode, warnFile : File){
     try {
-      const completeFiles = builder_mode === "go" || builder_mode === "elastic" ? await this.loadBonds(martinizeFiles, builder_mode) : martinizeFiles
-      completeFiles.warnings = warnFile; 
+      const {elastic_bonds, go} = builder_mode === "go" || builder_mode === "elastic" ? await loadBonds(this.ngl, martinizeFiles.itps, builder_mode) : martinizeFiles
+      martinizeFiles.warnings = warnFile; 
       this.initAllAtomPdb(allAtomFile); 
+
+      const completeFiles = {...martinizeFiles, elastic_bonds, go}
+
       this.initCoarseGrainPdb({
         files : completeFiles,
         mode : builder_mode === "classic" ? undefined : builder_mode
@@ -365,26 +352,12 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
     this.setAllAtomRepresentation({ opacity: .3 });
 
-    if (options.mode) {
-      const coordinates: [number, number, number][][] = [];
-
-      repr.atomIterator(ap => {
-        if(ap.chainIndex in coordinates) coordinates[ap.chainIndex].push([ap.x, ap.y, ap.z])
-        else coordinates[ap.chainIndex] = [[ap.x, ap.y, ap.z]];
-      });
-
-      // Init the bond helper 
+    if(options.mode){
       if ((options.mode === 'go' || options.mode === "elastic") && options.files.go) {
-        options.files.go.representation.registerCoords(coordinates);
-        options.files.go.render();
+        registerCoordsAndDisplayBonds(repr, options.files.go)
       }
-      /*
-      else if (options.mode === 'elastic' && options.files.elastic_bonds) {
-        options.files.elastic_bonds.registerCoords(coordinates);
-        options.files.elastic_bonds.render();
-      }
-      */
-    }
+    }  
+
 
     // Register the component
     this.setState({

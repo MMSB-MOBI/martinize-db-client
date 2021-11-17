@@ -78,7 +78,7 @@ export default class HistoryBuild extends React.Component<HistoryBuildProps, His
               </ListItem>)}
             </List>
             <Pagination 
-              count={Math.trunc(this.state.available.length / this.molPerPage) + 1} 
+              count={Math.trunc(this.state.selected.length / this.molPerPage) + 1} 
               shape="rounded" 
               onChange={this.handleChangePage}
             />

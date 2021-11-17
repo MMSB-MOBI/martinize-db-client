@@ -1,3 +1,6 @@
+import { BondsRepresentation } from './BondsRepresentation';
+import BaseBondsHelper from './BaseBondsHelper';
+
 export interface JobDoc extends CouchDoc {
     jobId: string; 
     userId : string;
@@ -46,3 +49,21 @@ interface CouchDoc {
 }
 
 type AvailableForceFields = "martini3001" | "elnedyn22" | "elnedyn22p" | "elnedyn" | "martini22" | "martini22p"
+
+export interface MartinizeFiles {
+    pdb: MartinizeFile;
+    itps: MartinizeFile[]; // One array of itps for each molecule of the system
+    radius: { [name: string]: number };
+    top: MartinizeFile;
+    go?: BaseBondsHelper;
+    elastic_bonds?: BondsRepresentation;
+    warnings?: File; 
+}
+
+export interface MartinizeFile {
+    name: string;
+    content: File;
+    type: string;
+    mol_idx?: number; 
+}
+

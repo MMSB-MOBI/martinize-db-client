@@ -3,7 +3,7 @@ import { CategoryTree } from "./types/settings";
 import React from 'react';
 import { toast } from "./components/Toaster";
 import { Icon } from "@material-ui/core";
-import { MartinizeFiles } from './components/Builder/Builder'
+import { MartinizeFiles } from './components/Builder/types'
 import { ReadedJobDoc } from './types/entities'
 
 export function errorToText(error: [any, APIError] | APIError | number | undefined) {

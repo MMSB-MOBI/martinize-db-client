@@ -9,11 +9,12 @@ import { SimpleSelect } from '../../../Shared';
 import Settings from '../../../Settings';
 import { Link as RouterLink } from 'react-router-dom';
 import HistoryBuild from '../HistoryBuild'
+import { MartinizeFile } from '../types'
 
 export interface MoleculeWithFiles {
   pdb: File;
   top: File;
-  itps: File[];
+  itps: MartinizeFile[];
   force_field: string;
 }
 
@@ -27,7 +28,7 @@ interface MCProps {
 interface MCState {
   pdb?: File;
   top?: File;
-  itps: File[];
+  itps: MartinizeFile[];
   ff: string;
   modal_chooser: boolean;
 }
@@ -123,7 +124,7 @@ class MoleculeChooser extends React.Component<MCProps, MCState> {
               this.setState({
                 pdb: martinizeFiles.pdb.content, 
                 top : martinizeFiles.top.content, 
-                itps: martinizeFiles.itps.map(itp => itp.content),
+                itps: martinizeFiles.itps,
                 ff: job.settings.ff
               }, this.nextFromFiles)
             }}
@@ -158,7 +159,7 @@ class MoleculeChooser extends React.Component<MCProps, MCState> {
               this.setState({
                 pdb,
                 top,
-                itps: itp,
+                itps: itp.map(itpFile => ({content : itpFile, name: itpFile.name, type:itpFile.type})), //TO DO : MOL IDX ?
               });
             }}
           />
