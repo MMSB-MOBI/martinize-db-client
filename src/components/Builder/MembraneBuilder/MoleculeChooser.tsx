@@ -43,7 +43,6 @@ class MoleculeChooser extends React.Component<MCProps, MCState> {
   nextFromFiles = () => {
     if (this.props.AddMolecule === "true"){
       const { pdb, top, itps, ff } = this.state;
-      console.log(pdb, top, itps, ff); 
 
       if (pdb && top && itps.length) {
         this.props.onMoleculeChoose({

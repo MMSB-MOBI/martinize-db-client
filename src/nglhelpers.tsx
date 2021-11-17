@@ -21,7 +21,6 @@ export function applyUserRadius(radius: UserRadius) {
     atoms[atom] = i;
     atoms[atom.toLocaleUpperCase()] = i;
     vdwradius[i] = radius[atom];
-    console.log("Set atom", atom, "radius to", radius[atom]);
     i++;
   }
 }

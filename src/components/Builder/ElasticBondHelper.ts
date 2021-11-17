@@ -218,7 +218,6 @@ static async readFromItps(stage: NglWrapper, itp_files: {mol_idx?:number, conten
 
     
     render(opacity = .2, hightlight_predicate?: (atom1_index: number, atom2_index: number, chain:number) => boolean) {
-        console.log("render bonds", this.relations)
         return this.representation.render(
           'elastic',
           this.bonds,

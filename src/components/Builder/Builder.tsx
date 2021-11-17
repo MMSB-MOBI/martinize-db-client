@@ -395,8 +395,6 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
   }
 
   async initAllAtomPdb(file: File) {
-    console.log("initAllAtomPdb")
-    console.log(file); 
     const component = await this.ngl.load(file, {coarse_grained:false});
 
     component.add<BallAndStickRepresentation>("ball+stick");
@@ -523,10 +521,8 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
           const chainIdx = parseInt(chain)
           if(isNaN(chainIdx)) throw new Error("Chain index is NaN")
           for (const index of index_set) {
-            console.log("chain idx", chain, index, index_set); 
             // Get the bonds linked to atoms in name set
             const bonds = go.findBondsOf(index, chainIdx).filter((n: any) => index_set.has(n));
-            console.log(bonds)
             // Remove every targeted bond
             for (const bond of bonds) {
               go.remove(chainIdx, index, bond);
@@ -574,8 +570,6 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       realHighlightIdx = nglAtom.index; 
      
     }
-
-    console.log("highlight this shit", realHighlightIdx)
 
     let h1 = 0, h2 = 0;
 
@@ -1183,7 +1177,6 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
     ApiHelper.request('history/update', { method: 'POST', 
     parameters:  {jobId : this.jobId, files:this.state.files.itps.map(itp => itp.content), molIdxs: this.state.files.itps.map(itp => itp.mol_idx)}, body_mode : 'multipart'}).then(() => {
-      console.log("END API REQUEST")
       toast(`Job ${this.jobId} has been updated in history`, "success")
     }).catch(e => {
       toast(`Job ${this.jobId} can't be updated in history, an error occured`, "error")
@@ -1241,9 +1234,6 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       return;
 
     go.historyBack();
-    console.log("opacity",opacity)
-    console.log(this.state.virtual_link_opacity); 
-    console.log("go.relations", go.relations)
     go.render(opacity ?? this.state.virtual_link_opacity);
     this.setState({ edited: true });
   };
@@ -1281,7 +1271,6 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
         };
 
         if (index !== -1) {
-          console.log("Replaced file", itps[index], 'with', m_file)
           itps[index] = m_file;
         }
         else {

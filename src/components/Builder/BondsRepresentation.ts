@@ -89,7 +89,6 @@ export class BondsRepresentation {
           
           const name = `[${upper_mode}] #${chain} Bond w/ atoms ${atom1_index}-${atom2_index}`;
           if (hightlight_predicate && hightlight_predicate(atom1_index, atom2_index, chain)) {
-            console.log(atom1_index, atom2_index, chain); 
             shape.addCylinder(atom1, atom2, BondsRepresentation.V_BONDS_HIGHLIGHT_COLOR, .1, name);
             continue;
           }

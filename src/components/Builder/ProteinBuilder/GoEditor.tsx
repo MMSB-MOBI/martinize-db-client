@@ -130,8 +130,6 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
       return;
     }
 
-    console.log("ngl click", pp)
-
     if (!pp) {
       // Disable selection. De-highlight all only if not in atom selection
       if (this.state.mode === 'idle') {
@@ -157,7 +155,6 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
 
     if ((this.props.mode === "go" && pp.atom?.element === "CA") || (this.props.mode === "elastic" && pp.atom?.atomname === "BB")) {
       // GO atom
-      console.log("GO ATOM", pp.atom.chainIndex); 
       const chain = this.props.mode === "elastic" ? pp.atom.chainIndex : 0; 
       let source_or_target = pp.atom.index;
       // Get the residue index (this is the needed thing to highlight it)
@@ -309,8 +306,6 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
     if (!selected || selected.type !== 'link') {
       return;
     }
-
-    console.log("remove", selected)
 
     this.props.onBondRemove(selected.chain, selected.source, selected.target);
     this.setState({ mode: 'idle', selected: undefined });

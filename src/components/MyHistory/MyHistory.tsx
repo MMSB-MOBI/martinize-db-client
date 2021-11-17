@@ -41,7 +41,6 @@ export class MyHistory extends React.Component<RouteComponentProps, MyHistorySta
   }
 
   componentDidUpdate(_: any, old_state: MyHistoryState){
-    console.log("did update"); 
     if (this.state.updateState !== old_state.updateState){
       this.setState({loaded : false})
       getHistory()

@@ -150,7 +150,6 @@ export default abstract class BaseBondsHelper {
 
   /** Save the current state in the history. */
   historyPush() {
-    console.log("push", this.relations)
     this.history.push(this.relations.map(bonds => new ReversibleKeyMap(bonds.entries())));
     this.reverse_history = [];
 
@@ -175,8 +174,6 @@ export default abstract class BaseBondsHelper {
   /** Loose the current state and load the last saved state in the history. If the history is empty, nothing happend. */
   historyBack() {
     const last = this.history.pop();
-    console.log("historyBack current relations", this.relations)
-    console.log("historyBack last relations", last)
 
     if (last) {
       // Save this.relations in reverse history
@@ -191,7 +188,6 @@ export default abstract class BaseBondsHelper {
         this.currentBonds = lastcb;
       }
     }
-    console.log("history back end relations", this.relations); 
   }
 
   /** Clear history. */

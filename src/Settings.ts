@@ -91,7 +91,6 @@ export const Settings = new class Settings {
       try {
         const settings: SettingsJson = await ApiHelper.request('settings', { auth: false });
         this._settings = settings;
-        console.log(settings.category_tree);
       }
       catch (e) {
         console.error(e);
