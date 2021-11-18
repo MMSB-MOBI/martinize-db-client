@@ -147,13 +147,6 @@ interface CouchDoc {
   _rev : string; 
 }
 
-export interface MartinizeFile {
-  name: string;
-  content: File;
-  type: string;
-  mol_idx?: number; 
-}
-
 export interface MoleculeFile {
   file : File; 
   mol_idx: number; 
@@ -165,3 +158,10 @@ export type MartinizeMode = "classic" | "go" | "elastic"
 
 export type ElasticOrGoBounds = [number, number];
 export type ElasticOrGoBoundsRegistered =  ElasticOrGoBounds[][]
+
+export interface MartinizeFile {
+  name: string;
+  content: File;
+  type: string;
+  mol_idx?: number; 
+}

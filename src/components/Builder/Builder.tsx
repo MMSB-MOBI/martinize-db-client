@@ -647,6 +647,13 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     const form_data: any = {};
     const s = this.state;
 
+    //Check if we have merge option in commandline, it's forbidden for elastic network or go model for now
+
+    if(s.commandline.includes("-merge") && (s.builder_mode === "elastic" || s.builder_mode === "go")){
+      toast("Martinize option -merge is forbidden with elastic network and go model for now.", "error")
+      return
+    }
+
     form_data.ff = s.builder_force_field;
     form_data.position = s.builder_positions;
     form_data.cter = s.cTer;
@@ -1422,7 +1429,9 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
         form_data.use_go = "true";
         form_data.sc_fix = "true";
       }
-      socket.emit('previewMartinize', form_data);
+      
+      // WTF ?? 
+      socket.emit('previewMartinize', form_data); 
       socket.on('martinizePreviewContent', (data: any) => {
         this.setState({commandline: data}, () => {})
       })
