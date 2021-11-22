@@ -1,5 +1,5 @@
 import React from 'react'; 
-import { TableContainer, Table, TableHead, TableRow, TableCell, TableBody, Link, Collapse, IconButton, Box, TablePagination, Checkbox, TableSortLabel } from '@material-ui/core'
+import { TableContainer, Table, TableHead, TableRow, TableCell, TableBody, Link, Collapse, IconButton, Box, TablePagination, Checkbox, TableSortLabel, makeStyles } from '@material-ui/core'
 import { visuallyHidden } from '@mui/utils'
 import { KeyboardArrowDown, KeyboardArrowUp, LastPage, KeyboardArrowRight, FirstPage, KeyboardArrowLeft} from '@material-ui/icons'
 import ApiHelper from '../../ApiHelper';
@@ -50,6 +50,16 @@ interface TablePaginationActionsProps {
       newPage: number,
     ) => void;
   }
+
+const useStyles = makeStyles(theme => ({
+  personnalisedLink: {
+    "&:disabled": {
+      color:"gray",
+      textDecoration:"none",
+      cursor:"default"
+    }
+  }
+  }));
 
 const headCells: readonly HeadCell[] = [
     {
@@ -242,7 +252,7 @@ export default function HistoryTable(props : {
     const [orderBy, setOrderBy] = React.useState<SortableKeys>('date');
     const [selected, setSelected] = React.useState<string[]>([]);
     const [dense, setDense] = React.useState(false);
-
+    const classes = useStyles();
     
 
     const downloadJob = async (jobId: string) => {
@@ -348,9 +358,9 @@ export default function HistoryTable(props : {
       deleteJobs(selected); 
     }
 
-      const Row = (props: {job:FormattedJob, index:number}) => {
+      const Row = (props: {job:FormattedJob, index:number, selectedNumber:number}) => {
         const [open, setOpen] = React.useState(false);
-        const { job, index } = props; 
+        const { job, index, selectedNumber } = props; 
 
         const isItemSelected = isSelected(job.id); 
         const labelId = `enhanced-table-checkbox-${index}`;
@@ -391,9 +401,9 @@ export default function HistoryTable(props : {
                     <TableCell> {job.ff} </TableCell>
                     <TableCell> {job.mode} </TableCell>
                     <TableCell> {job.type} </TableCell>
-                    <TableCell> <Link onClick={() => visualizeJob(job.id)}> Visualize </Link> </TableCell>
-                    <TableCell> <Link onClick={() => downloadJob(job.id)}> Download </Link> </TableCell>
-                    <TableCell> <Link onClick={() => deleteJobs([job.id])}> Delete </Link> </TableCell>
+                    <TableCell> <Link component="button" disabled={selectedNumber > 0} className={classes.personnalisedLink} onClick={() => visualizeJob(job.id)}> Visualize </Link> </TableCell>
+                    <TableCell> <Link component="button" disabled={selectedNumber > 0} className={classes.personnalisedLink} onClick={() => downloadJob(job.id)}> Download </Link> </TableCell>
+                    <TableCell> <Link component="button" disabled={selectedNumber > 0} className={classes.personnalisedLink} onClick={() => deleteJobs([job.id])}> Delete </Link> </TableCell>
                 </TableRow>
                 <TableRow>
                 <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={10}>
@@ -435,7 +445,7 @@ export default function HistoryTable(props : {
                             {formattedJobs.sort(getComparator(order, orderBy))
                                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                                 .map((row, index) => {
-                                    return(<Row job={row} index={index} key={row.id}/>)
+                                    return(<Row job={row} index={index} key={row.id} selectedNumber={selected.length}/>)
                                 })}
                                 {emptyRows > 0 && (
                                     <TableRow
