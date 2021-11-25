@@ -9,11 +9,12 @@ import BallAndStickRepresentation from '@mmsb/ngl/declarations/representation/ba
 import { SelectionSchemeData } from '@mmsb/ngl/declarations/color/selection-colormaker';
 import { martiniSchemes } from '../../martiniNglSchemes'
 import { AvailableForceFields } from '../../types/entities'
+import { Bead } from './BeadsHelper'
 
 interface SchemeParameters {
   radius: boolean, 
   color:boolean, 
-  beads: string[], 
+  beads: Bead[], 
   ff : AvailableForceFields
 }
 

@@ -2,6 +2,7 @@ import { NglRepresentation } from "./components/Builder/NglWrapper";
 import * as ngl from '@mmsb/ngl';
 import AtomProxy from '@mmsb/ngl/declarations/proxy/atom-proxy';
 import { AvailableForceFields } from './types/entities'
+import { Bead } from './components/Builder/BeadsHelper'
 const martini3ColorScheme: {[beadType: string] : string} = require('./schemes/martini3_cyan_orange.json');
 const martini2ColorScheme: {[beadType: string] : string} = require('./schemes/martini2_cyan_orange.json');
 
@@ -28,16 +29,16 @@ export const martiniSchemes = new class MartiniColorSchemes {
         //this._martini3RadiusSelector = this._getMartini3RadiusSelector()
     }
 
-    getMartini3ProteinRadiusScheme(ff:AvailableForceFields, beads: string[], factor:number=1){
+    getMartini3ProteinRadiusScheme(ff:AvailableForceFields, beads: Bead[], factor:number=1){
         return beads.map(bead => {
             if (!(ff in FF_TO_SCHEMES)) return DEFAULT_RADIUS
-            const regMatch = bead.match(FF_TO_SCHEMES[ff].regex)
+            const regMatch = bead.name.match(FF_TO_SCHEMES[ff].regex)
             const beadSize = (regMatch?.groups?.size ? regMatch?.groups?.size : "R") as BeadSize
             return FF_TO_SCHEMES[ff].radius[beadSize] * factor
         })
     }
 
-    getMartini3ProteinColorScheme(ff: AvailableForceFields, beads:string[]){
+    getMartini3ProteinColorScheme(ff: AvailableForceFields, beads:Bead[]){
         console.log("color scheme", ff); 
         const schemeId = ngl.ColormakerRegistry.addScheme(function() {
             let knownFf = true; 
@@ -49,20 +50,18 @@ export const martiniSchemes = new class MartiniColorSchemes {
                 if(!knownFf) return DEFAULT_COLOR
                 const bead = beads[atom.index]
                 let beadName: string | undefined; 
-                let beadAdditional: string | undefined; 
-                if (regexExc && regexExc.includes(bead)){
-                    beadName = bead
+                if (regexExc && regexExc.includes(bead.name)){
+                    beadName = bead.name
                 }
                 else {
-                    const regMatch = bead.match(FF_TO_SCHEMES[ff].regex)
+                    const regMatch = bead.name.match(FF_TO_SCHEMES[ff].regex)
                     beadName = regMatch?.groups?.type
-                    beadAdditional = regMatch?.groups?.add
                 }
                 
                 const colorScheme =  FF_TO_SCHEMES[ff].color
                 if(beadName && beadName in colorScheme){
-                    if(beadAdditional === "n") return "0xff0000" //red
-                    if(beadAdditional === "p") return "0x0000ff" //blue
+                    if(bead.charge === -1) return "0xff0000" //red
+                    if(bead.charge === 1) return "0x0000ff" //blue
                     return colorScheme[beadName].replace('#', '0x')
                 }
                 else return DEFAULT_COLOR

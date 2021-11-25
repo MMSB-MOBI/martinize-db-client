@@ -35,7 +35,7 @@ import ApiHelper from '../../ApiHelper'
 import ElasticBondsHelper from './ElasticBondHelper';
 import { MartinizeFile, MartinizeMode, ReadedJobFiles, ElasticOrGoBounds, ReadedJobDoc, AvailableForceFields } from '../../types/entities'; 
 import { Alert } from '@material-ui/lab'
-import { itpBeads } from './BeadsHelper';
+import { itpBeads, Bead } from './BeadsHelper';
 
 // @ts-ignore
 window.NGL = ngl; window.BaseBondsHelper = BaseBondsHelper;
@@ -129,7 +129,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
   protected root = React.createRef<HTMLDivElement>();
   protected go_back_btn = React.createRef<any>();
 
-  protected beads: string[] = []; 
+  protected beads: Bead[] = []; 
 
   protected saved_viz_params?: {
     aa_enabled: boolean;
