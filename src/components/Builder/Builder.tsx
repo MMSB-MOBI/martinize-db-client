@@ -382,7 +382,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       return;
     }
 
-    const repr = component.add<BallAndStickRepresentation>("ball+stick", {}, {radius: true, color: true, beads: this.beads, ff: this.state.builder_force_field});
+    const repr = component.add<BallAndStickRepresentation>("ball+stick", {}, {radius: true, color: true, beads: this.beads, ff: this.state.builder_force_field, radiusFactor: 0.2});
 
     component.center(500);
 
@@ -1067,7 +1067,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     cmp_coarse.add(type, {
       visible: this.state.coarse_grain_visible,
       opacity: this.state.coarse_grain_opacity,
-    }, {radius: true, color: true, beads: this.beads, ff: this.state.builder_force_field});
+    }, {radius: true, color: true, beads: this.beads, ff: this.state.builder_force_field, radiusFactor : type === "surface" ? 1 : 0.2});
 
     this.setState({
       representations: [...this.state.representations, type],

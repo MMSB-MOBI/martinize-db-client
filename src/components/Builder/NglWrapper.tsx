@@ -15,7 +15,8 @@ interface SchemeParameters {
   radius: boolean, 
   color:boolean, 
   beads: Bead[], 
-  ff : AvailableForceFields
+  ff : AvailableForceFields,
+  radiusFactor?:number
 }
 
 export class NglWrapper {
@@ -108,7 +109,7 @@ export class NglComponent {
       const params: any = {}
       if(schemeParameters.radius){
         params["radiusType"] = "data"
-        params["radiusData"] = martiniSchemes.getMartini3ProteinRadiusScheme(schemeParameters.ff, schemeParameters.beads, 0.2)
+        params["radiusData"] = martiniSchemes.getMartini3ProteinRadiusScheme(schemeParameters.ff, schemeParameters.beads, schemeParameters.radiusFactor)
       }
       if(schemeParameters.color){
         params["color"] = martiniSchemes.getMartini3ProteinColorScheme(schemeParameters.ff, schemeParameters.beads)
