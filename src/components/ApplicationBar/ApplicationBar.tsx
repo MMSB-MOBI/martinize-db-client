@@ -10,7 +10,6 @@ import ListItemText from '@material-ui/core/ListItemText';
 import MenuIcon from '@material-ui/icons/Menu';
 import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
-import SchoolIcon from '@mui/icons-material/School'
 import { makeStyles, useTheme, Theme, createStyles } from '@material-ui/core/styles';
 import { RouteComponentProps, Link } from 'react-router-dom';
 import { DrawerContentRouter } from '../Router';
@@ -234,7 +233,7 @@ function DrawerElements(props: RouteComponentProps) {
           <ListItemIcon>
             {e.count ? 
               <BadgedIcon icon={e.icon} toCount={e.count}/> :
-              <Icon component={SchoolIcon} className={"fas fa-" + e.icon} style={{color: e.font ? 'black' : ''}}/>
+              <Icon className={"fas fa-" + e.icon} style={{color: e.font ? 'black' : ''}}/>
             }
           </ListItemIcon>
           <ListItemText primary={<Typography style={{ fontWeight: e.font ? e.font : 'normal' }}>{e.text}</Typography>}/>

@@ -128,12 +128,12 @@ export interface JobSettings {
   cystein_bridge : "none" | "auto"
   elastic? : boolean; 
   use_go? : boolean; 
-  ea? : number; 
-  ef? : number; 
-  el? : number; 
-  em? : number; 
-  ep? : number; 
-  eu? : number; 
+  ea? : string; 
+  ef? : string; 
+  el? : string; 
+  em? : string; 
+  ep? : string; 
+  eu? : string; 
 }
 
 interface FileFromHttp {
@@ -152,7 +152,7 @@ export interface MoleculeFile {
   mol_idx: number; 
 }
 
-type AvailableForceFields = "martini3001" | "elnedyn22" | "elnedyn22p" | "elnedyn" | "martini22" | "martini22p"
+export type AvailableForceFields = "martini3001" | "elnedyn22" | "elnedyn22p" | "elnedyn" | "martini22" | "martini22p"
 
 export type MartinizeMode = "classic" | "go" | "elastic"
 

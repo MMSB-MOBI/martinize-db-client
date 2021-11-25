@@ -6,6 +6,16 @@ import AtomProxy from '@mmsb/ngl/declarations/proxy/atom-proxy';
 import Surface from '@mmsb/ngl/declarations/surface/surface';
 import PickingProxy from '@mmsb/ngl/declarations/controls/picking-proxy';
 import BallAndStickRepresentation from '@mmsb/ngl/declarations/representation/ballandstick-representation';
+import { SelectionSchemeData } from '@mmsb/ngl/declarations/color/selection-colormaker';
+import { martiniSchemes } from '../../martiniNglSchemes'
+import { AvailableForceFields } from '../../types/entities'
+
+interface SchemeParameters {
+  radius: boolean, 
+  color:boolean, 
+  beads: string[], 
+  ff : AvailableForceFields
+}
 
 export class NglWrapper {
   static readonly BOX_X_HIGHLIGHT_COLOR = new ngl.Color(1, .1, .1);
@@ -87,10 +97,25 @@ export class NglComponent {
 
   constructor(public component: ngl.Component) {}
 
-  add<T extends Representation>(type: ViableRepresentation, parameters?: Partial<RepresentationParameters>) {
+  add<T extends Representation>(type: ViableRepresentation, parameters?: Partial<RepresentationParameters>,  schemeParameters?:SchemeParameters) {
+    
     const repr: RepresentationElement = this.component.addRepresentation(type, parameters);
 
     const wrapper = new NglRepresentation<T>(repr);
+
+    if(schemeParameters && (schemeParameters.radius || schemeParameters.color)){
+      const params: any = {}
+      if(schemeParameters.radius){
+        params["radiusType"] = "data"
+        params["radiusData"] = martiniSchemes.getMartini3ProteinRadiusScheme(schemeParameters.ff, schemeParameters.beads, 0.2)
+      }
+      if(schemeParameters.color){
+        params["color"] = martiniSchemes.getMartini3ProteinColorScheme(schemeParameters.ff, schemeParameters.beads)
+      }
+
+      repr.setParameters(params)
+    }
+
     this._repr.push(wrapper);
 
     return wrapper;

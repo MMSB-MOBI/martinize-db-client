@@ -33,9 +33,9 @@ import { errorToText, loadMartinizeFiles } from '../../helpers';
 
 import ApiHelper from '../../ApiHelper'
 import ElasticBondsHelper from './ElasticBondHelper';
-import { MartinizeFile, MartinizeMode, ReadedJobFiles, ElasticOrGoBounds, ReadedJobDoc } from '../../types/entities'; 
+import { MartinizeFile, MartinizeMode, ReadedJobFiles, ElasticOrGoBounds, ReadedJobDoc, AvailableForceFields } from '../../types/entities'; 
 import { Alert } from '@material-ui/lab'
-
+import { itpBeads } from './BeadsHelper';
 
 // @ts-ignore
 window.NGL = ngl; window.BaseBondsHelper = BaseBondsHelper;
@@ -74,7 +74,7 @@ export interface MBState {
   coarse_grain_pdb?: Blob;
   coarse_grain_ngl?: NglComponent;
 
-  builder_force_field: string;
+  builder_force_field: AvailableForceFields;
   builder_mode: MartinizeMode; 
   builder_positions: 'none' | 'all' | 'backbone';
   builder_ef: string;
@@ -113,6 +113,7 @@ export interface MBState {
 
   load_error_message?:string; 
   send_mail: boolean; 
+  open_legend : boolean; 
 
 }
 
@@ -127,6 +128,8 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
   protected root = React.createRef<HTMLDivElement>();
   protected go_back_btn = React.createRef<any>();
+
+  protected beads: string[] = []; 
 
   protected saved_viz_params?: {
     aa_enabled: boolean;
@@ -169,13 +172,32 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     try {
       this.jobId = jobId; 
       const job : ReadedJobDoc = await ApiHelper.request(`history/get?jobId=${jobId}`)
+      this.reloadJobSettingsIntoState(job)
       const [allAtomFile, martinizeFiles, warnFile] = await Promise.all([this.loadAllAtomFile(job.files), loadMartinizeFiles(job), this.loadWarnings(job.files)])
-      this.reloadJob(allAtomFile, martinizeFiles, job.settings.builder_mode, warnFile)
+      this.reloadJob(allAtomFile, martinizeFiles, warnFile)
     }catch(e) {
       this.setState({load_error_message : errorToText(e as any), running: 'load_error'})
     }
     
 
+  }
+
+  reloadJobSettingsIntoState(job: ReadedJobDoc){
+    this.setState({
+      builder_force_field: job.settings.ff,
+      builder_mode : job.settings.builder_mode,
+      builder_positions : job.settings.position, 
+      builder_ef : job.settings.ef ?? this.original_state.builder_ef,
+      builder_el: job.settings.el ??  this.original_state.builder_el,
+      builder_eu: job.settings.eu ??  this.original_state.builder_eu,
+      builder_ea: job.settings.ea ??  this.original_state.builder_ea,
+      builder_ep: job.settings.ep ??  this.original_state.builder_ep,
+      builder_em: job.settings.em ??  this.original_state.builder_em,
+      nTer: job.settings.nter,
+      cTer : job.settings.cter,
+      sc_fix : job.settings.sc_fix.toString(),
+      cystein_bridge : job.settings.cystein_bridge
+    }) 
   }
 
   async loadAllAtomFile(files: ReadedJobFiles) : Promise<File> {
@@ -227,7 +249,8 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       want_go_back: false,
       error: undefined,
       martinize_step: '',
-      send_mail: false
+      send_mail: false,
+      open_legend : false
     };
   }
 
@@ -280,8 +303,9 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
   }*/
 
 
-  async reloadJob(allAtomFile : File, martinizeFiles : MartinizeFiles, builder_mode : MartinizeMode, warnFile : File){
+  async reloadJob(allAtomFile : File, martinizeFiles : MartinizeFiles, warnFile : File){
     try {
+      const builder_mode = this.state.builder_mode
       const completeFiles = builder_mode === "go" || builder_mode === "elastic" ? await this.loadBonds(martinizeFiles, builder_mode) : martinizeFiles
       completeFiles.warnings = warnFile; 
       this.initAllAtomPdb(allAtomFile); 
@@ -289,7 +313,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
         files : completeFiles,
         mode : builder_mode === "classic" ? undefined : builder_mode
       });
-      this.setState({files: completeFiles, builder_mode})
+      this.setState({files: completeFiles})
     }catch(e) { 
       notifyError(e as any) }
     
@@ -346,6 +370,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
   async initCoarseGrainPdb(options: { files: MartinizeFiles, mode?: 'go' | 'elastic' }) {
     let component: NglComponent;
 
+    this.beads = await itpBeads(options.files.itps.map(itp => itp.content))
     // Apply the NGL radius
     applyUserRadius(options.files.radius);
 
@@ -357,9 +382,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       return;
     }
 
-
-    const repr = component.add<BallAndStickRepresentation>("ball+stick");
-    // repr.name => "ball+stick"
+    const repr = component.add<BallAndStickRepresentation>("ball+stick", {}, {radius: true, color: true, beads: this.beads, ff: this.state.builder_force_field});
 
     component.center(500);
 
@@ -1044,7 +1067,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     cmp_coarse.add(type, {
       visible: this.state.coarse_grain_visible,
       opacity: this.state.coarse_grain_opacity,
-    });
+    }, {radius: true, color: true, beads: this.beads, ff: this.state.builder_force_field});
 
     this.setState({
       representations: [...this.state.representations, type],
@@ -1115,7 +1138,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     this.go_back_btn.current.click();
   };
 
-  onForceFieldChange = (ff: string) => {
+  onForceFieldChange = (ff: AvailableForceFields) => {
     if (this.state.builder_mode === 'go' && !ff.includes('martini3')) {
       this.setState({ builder_mode: 'classic' });
     }
@@ -1499,7 +1522,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
                 martinizeError={this.state.martinize_error}
                 onBuilderModeChange={value => this.setState({ builder_mode: value as any }, () => {this.changeCommandline(value)})}
                 onBuilderPositionChange={value => this.setState({ builder_positions: value as any }, () => {this.changeCommandline(value)})}
-                onForceFieldChange={value => this.setState({ builder_force_field: value }, () => {this.changeCommandline(value)})}
+                onForceFieldChange={(value : AvailableForceFields) => this.setState({ builder_force_field: value }, () => {this.changeCommandline(value)})}
                 onMartinizeBegin={this.handleMartinizeBegin}
                 onReset={() => this.reset()}
                 onElasticChange={(type, value) => {
