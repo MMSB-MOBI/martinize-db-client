@@ -37,6 +37,7 @@ export interface BaseMolecule {
   files: string;
   /** Author (if fetched). */
   author?: string;
+  builder_mode ?: string; 
 }
 
 export interface Molecule extends BaseMolecule {

@@ -174,10 +174,9 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
     };
   }
 
-  async initNglWithResult(result: InsaneResult, mode: 'water' | 'no_water') {
+  async initNglWithResult(result: InsaneResult, mode: 'water' | 'no_water', builder_mode?: string) {
     this.ngl.reset();
-    const beads = await itpBeads(result.top, result.itps)
-    console.log("init ngl", this.state.ff)
+    const beads = await itpBeads(result.top, result.itps, builder_mode)
     this.ngl.load(result[mode], {coarse_grained:true})
       .then(component => {
         const repr = component.add<BallAndStickRepresentation>('ball+stick', {}, {radius : false, color: true, beads, ff: this.state.ff as AvailableForceFields, radiusFactor: 0.2});
@@ -332,7 +331,7 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
 
       const result = this.parseInsaneResult(res);
 
-      this.initNglWithResult(result, 'no_water');
+      this.initNglWithResult(result, 'no_water', molecule?.builder_mode);
 
       this.setState({ 
         running: 'visualization', 

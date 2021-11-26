@@ -15,6 +15,7 @@ export interface MoleculeWithFiles {
   top: File;
   itps: File[];
   force_field: string;
+  builder_mode?: string; 
 }
 
 interface MCProps {
@@ -30,6 +31,7 @@ interface MCState {
   itps: File[];
   ff: string;
   modal_chooser: boolean;
+  builder_mode : string; 
 }
 
 class MoleculeChooser extends React.Component<MCProps, MCState> {
@@ -37,16 +39,17 @@ class MoleculeChooser extends React.Component<MCProps, MCState> {
     itps: [],
     modal_chooser: false,
     ff: 'martini3001',
+    builder_mode : "classic"
   };
 
   // here
   nextFromFiles = () => {
     if (this.props.AddMolecule === "true"){
-      const { pdb, top, itps, ff } = this.state;
+      const { pdb, top, itps, ff, builder_mode } = this.state;
 
       if (pdb && top && itps.length) {
         this.props.onMoleculeChoose({
-          pdb, top, itps, force_field: ff,
+          pdb, top, itps, force_field: ff, builder_mode
         });
       }
       else {
@@ -60,6 +63,7 @@ class MoleculeChooser extends React.Component<MCProps, MCState> {
 
   nextFromMolecule = (molecule: Molecule) => {
     this.setState({ modal_chooser: false });
+    molecule.builder_mode = this.state.builder_mode
     this.props.onMoleculeChoose(molecule);
   };
 
@@ -124,7 +128,8 @@ class MoleculeChooser extends React.Component<MCProps, MCState> {
                 pdb: martinizeFiles.pdb.content, 
                 top : martinizeFiles.top.content, 
                 itps: martinizeFiles.itps.map(itp => itp.content),
-                ff: job.settings.ff
+                ff: job.settings.ff,
+                builder_mode : job.settings.builder_mode
               }, this.nextFromFiles)
             }}
           
