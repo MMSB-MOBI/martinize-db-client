@@ -6,12 +6,23 @@ export interface Bead {
     moleculeName? : string 
 }
 
-export async function itpBeads(top_file : File, itp_files:File[]) : Promise<Bead[]> {
+export async function itpBeads(top_file : File|string, itp_files:File[]|string[]) : Promise<Bead[]> {
     const beads: Bead[] = []
 
-    const system = await  TopFile.read(top_file, itp_files)
-    
+
+    let top : File
+    if(top_file instanceof File) top = top_file
+    else top = new File([top_file], "full.top")
+
+    //@ts-ignore
+    const itps : File [] = itp_files.map((itp, idx) => { 
+        if(itp instanceof File) return itp
+        else return new File([itp], `itp${idx}.itp`)
+    })
+
+    const system = await TopFile.read(top, itps)
     for (const molecule of system.molecules){
+        if(molecule.type.startsWith(";")) continue
         if(molecule.itp){
             const this_itp_beads: Bead[] = []
             for (const atom of molecule.itp.atoms){

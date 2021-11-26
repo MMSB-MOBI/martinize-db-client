@@ -7,7 +7,7 @@ import Surface from '@mmsb/ngl/declarations/surface/surface';
 import PickingProxy from '@mmsb/ngl/declarations/controls/picking-proxy';
 import BallAndStickRepresentation from '@mmsb/ngl/declarations/representation/ballandstick-representation';
 import { SelectionSchemeData } from '@mmsb/ngl/declarations/color/selection-colormaker';
-import { martiniSchemes } from '../../martiniNglSchemes'
+import MartiniSchemes from '../../martiniNglSchemes'
 import { AvailableForceFields } from '../../types/entities'
 import { Bead } from './BeadsHelper'
 
@@ -31,6 +31,7 @@ export class NglWrapper {
 
     const target_el = typeof target === 'string' ? document.getElementById(target)! : target;
     target_el.addEventListener('wheel', e => e.preventDefault(), { passive: false });
+    
   }
 
   /**
@@ -96,8 +97,10 @@ export type ViableRepresentation = 'ball+stick' | 'ribbon' | 'surface' | 'hyper
 
 export class NglComponent {
   protected _repr: NglRepresentation<any>[] = [];
+  martiniSchemes = new MartiniSchemes()
 
-  constructor(public component: ngl.Component) {}
+  constructor(public component: ngl.Component) {
+  }
 
   add<T extends Representation>(type: ViableRepresentation, parameters?: Partial<RepresentationParameters>,  schemeParameters?:SchemeParameters) {
     
@@ -109,10 +112,10 @@ export class NglComponent {
       const params: any = {}
       if(schemeParameters.radius){
         params["radiusType"] = "data"
-        params["radiusData"] = martiniSchemes.getProteinRadiusScheme(schemeParameters.ff, schemeParameters.beads, schemeParameters.radiusFactor)
+        params["radiusData"] = this.martiniSchemes.getProteinRadiusScheme(schemeParameters.ff, schemeParameters.beads, schemeParameters.radiusFactor)
       }
       if(schemeParameters.color){
-        params["color"] = martiniSchemes.getProteinColorScheme(schemeParameters.ff, schemeParameters.beads)
+        params["color"] = this.martiniSchemes.getProteinColorScheme(schemeParameters.ff, schemeParameters.beads)
       }
 
       repr.setParameters(params)

@@ -36,7 +36,6 @@ import ElasticBondsHelper from './ElasticBondHelper';
 import { MartinizeFile, MartinizeMode, ReadedJobFiles, ElasticOrGoBounds, ReadedJobDoc, AvailableForceFields } from '../../types/entities'; 
 import { Alert } from '@material-ui/lab'
 import { itpBeads, Bead } from './BeadsHelper';
-import { martiniSchemes } from '../../martiniNglSchemes';
 
 // @ts-ignore
 window.NGL = ngl; window.BaseBondsHelper = BaseBondsHelper;
@@ -625,7 +624,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
   };
 
   setSchemeIdColorForCg = (atomColors? : {[atomIdx: number]: string}) => {
-    const schemeId = atomColors ? martiniSchemes.highlightAtomColorScheme(this.state.builder_force_field, atomColors) : martiniSchemes.getRegisteredColorSchemeId(this.state.builder_force_field)
+    const schemeId = atomColors ? this.state.coarse_grain_ngl!.martiniSchemes.highlightAtomColorScheme(this.state.builder_force_field, atomColors) : this.state.coarse_grain_ngl!.martiniSchemes.getRegisteredColorSchemeId(this.state.builder_force_field)
     for (const repr of this.state.coarse_grain_ngl!.representations) {
       repr.set({
         colorScheme: 'element',

@@ -29,13 +29,10 @@ const FF_TO_SCHEMES : {[ff:string] : {color:{[beadType: string] : string}, radiu
     'martini22' : {color : martini2ColorScheme, radius: MARTINI2_BEADS_RADIUS, regex: MARTINI2_BEADS_REGEX, regexExceptions: MARTINI2_REGEX_EXCEPTIONS}
 }
 
-export const martiniSchemes = new class MartiniColorSchemes {
+export default class MartiniSchemes {
     
     protected _originalColorMap : {[ff:string]: string[]} = {}; //{force field : color[]} list of colors, colors in position 0 is color of bead 0 and so on
     protected _originalColorSchemeId : {[ff: string]: string} = {} //{force field : schemeId}
-    constructor(){
-        //this._martini3RadiusSelector = this._getMartini3RadiusSelector()
-    }
 
     protected _getColor(bead: Bead, colorAndRegex : {color:{[beadType: string] : string}, regex: RegExp, regexExceptions?:string[]}) {
         if(bead.name === "other"){

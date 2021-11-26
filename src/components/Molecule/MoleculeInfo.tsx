@@ -1,5 +1,5 @@
 import React, { Fragment } from 'react';
-import { Molecule, StashedMolecule } from '../../types/entities';
+import { AvailableForceFields, Molecule, StashedMolecule } from '../../types/entities';
 import { Typography, makeStyles, Icon, Link, Divider, Dialog, DialogTitle, DialogContent, DialogActions, Button, DialogContentText } from '@material-ui/core';
 import Settings, { LoginStatus } from '../../Settings';
 import { findInCategoryTree, Marger, dateFormatter, notifyError } from '../../helpers';
@@ -206,7 +206,7 @@ export default function MoleculeInfo<T extends StashedMolecule | Molecule>(props
         </div>
 
         <div>
-          <MoleculeViewer id={molecule.files} />
+          <MoleculeViewer id={molecule.files} ff={molecule.force_field as AvailableForceFields} />
         </div>
       </div>
 
