@@ -109,10 +109,10 @@ export class NglComponent {
       const params: any = {}
       if(schemeParameters.radius){
         params["radiusType"] = "data"
-        params["radiusData"] = martiniSchemes.getMartini3ProteinRadiusScheme(schemeParameters.ff, schemeParameters.beads, schemeParameters.radiusFactor)
+        params["radiusData"] = martiniSchemes.getProteinRadiusScheme(schemeParameters.ff, schemeParameters.beads, schemeParameters.radiusFactor)
       }
       if(schemeParameters.color){
-        params["color"] = martiniSchemes.getMartini3ProteinColorScheme(schemeParameters.ff, schemeParameters.beads)
+        params["color"] = martiniSchemes.getProteinColorScheme(schemeParameters.ff, schemeParameters.beads)
       }
 
       repr.setParameters(params)

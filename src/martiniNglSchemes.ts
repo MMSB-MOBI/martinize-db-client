@@ -25,11 +25,69 @@ const FF_TO_SCHEMES : {[ff:string] : {color:{[beadType: string] : string}, radiu
 
 export const martiniSchemes = new class MartiniColorSchemes {
     
+    protected _originalColorMap : {[ff:string]: string[]} = {}; //{force field : color[]} list of colors, colors in position 0 is color of bead 0 and so on
+    protected _originalColorSchemeId : {[ff: string]: string} = {} //{force field : schemeId}
     constructor(){
         //this._martini3RadiusSelector = this._getMartini3RadiusSelector()
     }
 
-    getMartini3ProteinRadiusScheme(ff:AvailableForceFields, beads: Bead[], factor:number=1){
+    protected _createColorMap(ff:string, beads: Bead[]):string[]{
+        const colorMap: string[] = new Array(beads.length)
+        const colorScheme = (ff in FF_TO_SCHEMES) ? FF_TO_SCHEMES[ff].color : undefined
+        if (!colorScheme) colorMap.fill(DEFAULT_COLOR, 0, beads.length)
+        else {
+            const regexExc = FF_TO_SCHEMES[ff].regexExceptions
+            const beadRegex = FF_TO_SCHEMES[ff].regex
+            for (const [idx,bead] of beads.entries()){
+                const beadName = (regexExc && regexExc.includes(bead.name)) ? bead.name : bead.name.match(beadRegex)?.groups?.type
+                const color = (beadName && beadName in colorScheme) ? (bead.charge === -1) ? "red" : (bead.charge === 1) ? "blue" : colorScheme[beadName] : DEFAULT_COLOR
+                colorMap[idx] = color
+            }
+        }
+
+        return colorMap
+    }
+
+    protected _createSchemeId(colorMap: string[]): string{
+        const colorObj : {[color:string] : number[]} = {} //{color : atom_index[]}
+        for(const [idx, color] of colorMap.entries()){
+            if(!(color in colorObj)) colorObj[color] = []
+            colorObj[color].push(idx)
+        }
+
+        const colorSelection = Object.keys(colorObj).map(color => [color, "@" + colorObj[color].join(",")]) 
+
+        //@ts-ignore
+        return ngl.ColormakerRegistry.addSelectionScheme(colorSelection)
+    }
+
+    protected _createSchemeIdForFewAtoms(atoms : {[atomIdx: string]: string}){
+        const colorObj : {[color:string] : string[]} = {}
+        for (const [atomIdx, color] of Object.entries(atoms)){
+            if(!(color in colorObj)) colorObj[color] = []
+            colorObj[color].push(atomIdx)
+        }
+        const colorSelection = Object.keys(colorObj).map(color => [color, "@" + colorObj[color].join(",")]) 
+        //@ts-ignore
+        return ngl.ColormakerRegistry.addSelectionScheme(colorSelection)
+    }
+
+    protected _cloneAndModifyColorScheme(colorMap: string[], toModify: {[atomIdx:number]: string}){
+        const newColorMap = [...colorMap];
+        for(const [atomIdx, color] of Object.entries(toModify)){
+            newColorMap[parseInt(atomIdx)] = color
+        }
+        
+        return this._createSchemeId(newColorMap)
+    }
+
+    getProteinColorScheme(ff: AvailableForceFields, beads:Bead[]): string{
+        if(!(ff in this._originalColorMap)) this._originalColorMap[ff] = this._createColorMap(ff, beads)
+        if(!(ff in this._originalColorSchemeId)) this._originalColorSchemeId[ff] = this._createSchemeId(this._originalColorMap[ff])
+        return this._originalColorSchemeId[ff]
+    }
+
+    getProteinRadiusScheme(ff:AvailableForceFields, beads: Bead[], factor:number=1){
         return beads.map(bead => {
             if (!(ff in FF_TO_SCHEMES)) return DEFAULT_RADIUS
             const regMatch = bead.name.match(FF_TO_SCHEMES[ff].regex)
@@ -38,37 +96,14 @@ export const martiniSchemes = new class MartiniColorSchemes {
         })
     }
 
-    getMartini3ProteinColorScheme(ff: AvailableForceFields, beads:Bead[]){
-        console.log("color scheme", ff); 
-        const schemeId = ngl.ColormakerRegistry.addScheme(function() {
-            let knownFf = true; 
-            let regexExc: string[] | undefined
-            if(!(ff in FF_TO_SCHEMES)) knownFf = false
-            else regexExc = FF_TO_SCHEMES[ff].regexExceptions
-            //@ts-ignore
-            this.atomColor = function (atom: AtomProxy){
-                if(!knownFf) return DEFAULT_COLOR
-                const bead = beads[atom.index]
-                let beadName: string | undefined; 
-                if (regexExc && regexExc.includes(bead.name)){
-                    beadName = bead.name
-                }
-                else {
-                    const regMatch = bead.name.match(FF_TO_SCHEMES[ff].regex)
-                    beadName = regMatch?.groups?.type
-                }
-                
-                const colorScheme =  FF_TO_SCHEMES[ff].color
-                if(beadName && beadName in colorScheme){
-                    if(bead.charge === -1) return "0xff0000" //red
-                    if(bead.charge === 1) return "0x0000ff" //blue
-                    return colorScheme[beadName].replace('#', '0x')
-                }
-                else return DEFAULT_COLOR
-            }
-        })
-
-        return schemeId
+    highlightAtomColorScheme(ff: AvailableForceFields, toHighlight: {[atomIdx:number]: string}): string{ 
+        if(ff in this._originalColorMap) return this._cloneAndModifyColorScheme(this._originalColorMap[ff], toHighlight)
+        return this._createSchemeIdForFewAtoms(toHighlight)
     }
+
+    getRegisteredColorSchemeId(ff: AvailableForceFields): string | undefined{
+        if(ff in this._originalColorSchemeId) return this._originalColorSchemeId[ff]
+    }
+
 }
  

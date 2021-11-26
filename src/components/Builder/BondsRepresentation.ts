@@ -10,7 +10,7 @@ type ChainCoordinates = AtomCoordinates[][]
 
 export class BondsRepresentation {
     static readonly V_BONDS_DEFAULT_COLOR = new ngl.Color(0, 255, 0);
-    static readonly V_BONDS_HIGHLIGHT_COLOR = new ngl.Color(1, 0.7, .1);
+    static readonly V_BONDS_HIGHLIGHT_COLOR = new ngl.Color(255,0,255);
   
     protected virtual_links_cmpt?: NglComponent;
     protected virtual_links_repr?: NglRepresentation<BufferRepresentation>;

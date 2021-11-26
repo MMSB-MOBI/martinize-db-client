@@ -27,7 +27,7 @@ interface GoEditorProps {
   onCancel(): any;
 
   onRedrawGoBonds(highlight?: number | [number, number], opacity?: number, chain?:number): any;
-  setColorForCgRepr(schemeId?: string): any;
+  setColorForCgRepr(atomColors?: {[atom:string]: string}): any;
 
   goInstance: BaseBondsHelper;
   mode: "go" | "elastic" | "classic";
@@ -247,35 +247,29 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
   }
 
   highlightAtom(atom_index: number, chain:number) {
-    const schemeId = ngl.ColormakerRegistry.addSelectionScheme([
-      ["orange", `@${atom_index}`],
-      // @ts-ignore
-      ["element", "*"],
-    ], "test");
-    
-    this.props.setColorForCgRepr(schemeId);
+    const atomColors : any = {}
+    atomColors[atom_index] = "#ff00ff"
+    this.props.setColorForCgRepr(atomColors);
     this.props.onRedrawGoBonds(atom_index + 1, 1, chain);
   }
 
   highlightGroup(atom_indexes: Set<number>, atom_indexes_2?: Set<number>) {
     // Remember that recieved groups of atom indexes are 1-indexes, not 0-indexes like NGL !
 
-    const items = [
-      ["red", `@${[...atom_indexes].map(e => String(e - 1)).join(',')}`]
-    ];
+    const colorAtoms: {[atomIdx: number]: string} = {}
 
-    if (atom_indexes_2) {
-      items.push(
-        ["blue", `@${[...atom_indexes_2].map(e => String(e - 1)).join(',')}`]
-      );
+    for(const atomIdx of [...atom_indexes]){
+      colorAtoms[atomIdx - 1] = "#9900ff"
     }
 
-    items.push(["element", "*"]);
+    if (atom_indexes_2) {
+      for (const atomIdx of [...atom_indexes_2]){
+        colorAtoms[atomIdx - 1] = "#ffff00"
+      }
+    }
 
-    // @ts-ignore
-    const schemeId = ngl.ColormakerRegistry.addSelectionScheme(items, "test");
-    
-    this.props.setColorForCgRepr(schemeId);
+
+    this.props.setColorForCgRepr(colorAtoms);
     this.props.onRedrawGoBonds(undefined, 1);
   }
 
