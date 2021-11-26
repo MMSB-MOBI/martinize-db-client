@@ -12,11 +12,12 @@ import NglWrapper, { NglRepresentation, NglComponent } from './NglWrapper';
 import BallAndStickRepresentation from '@mmsb/ngl/declarations/representation/ballandstick-representation';
 import { toast } from '../Toaster';
 import JSZip from 'jszip';
-import { Molecule } from '../../types/entities';
+import { AvailableForceFields, Molecule } from '../../types/entities';
 import { Alert, AlertTitle } from '@material-ui/lab';
 import { BetaWarning, SimpleSelect } from '../../Shared'; 
 import EmbeddedError from '../Errors/Errors';
 import Settings, { LoginStatus } from '../../Settings';
+import {itpBeads} from './BeadsHelper'
 
 
 
@@ -173,12 +174,13 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
     };
   }
 
-  initNglWithResult(result: InsaneResult, mode: 'water' | 'no_water') {
+  async initNglWithResult(result: InsaneResult, mode: 'water' | 'no_water') {
     this.ngl.reset();
-
+    const beads = await itpBeads(result.top, result.itps)
+    console.log("init ngl", this.state.ff)
     this.ngl.load(result[mode], {coarse_grained:true})
       .then(component => {
-        const repr = component.add<BallAndStickRepresentation>('ball+stick');
+        const repr = component.add<BallAndStickRepresentation>('ball+stick', {}, {radius : false, color: true, beads, ff: this.state.ff as AvailableForceFields, radiusFactor: 0.2});
         this.representation = repr;
         component.center();
 

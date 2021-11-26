@@ -371,7 +371,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
   async initCoarseGrainPdb(options: { files: MartinizeFiles, mode?: 'go' | 'elastic' }) {
     let component: NglComponent;
 
-    this.beads = await itpBeads(options.files.itps.map(itp => itp.content))
+    this.beads = await itpBeads(options.files.top.content, options.files.itps.map(itp => itp.content))
     // Apply the NGL radius
     applyUserRadius(options.files.radius);
 

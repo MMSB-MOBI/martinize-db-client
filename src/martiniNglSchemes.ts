@@ -8,8 +8,14 @@ const martini2ColorScheme: {[beadType: string] : string} = require('./schemes/ma
 
 type BeadSize = 'R' | 'S' | 'T'
  
-const DEFAULT_COLOR = "0xbfbfbf" //gray, 0x instead of # because ngl
+const DEFAULT_COLOR = "#4d4d4d"
 const DEFAULT_RADIUS = 0.5
+
+const MOLECULE_EXCEPTIONS_COLOR : {[molecule : string]: string} = {
+    "W" : "#a6a6a6", 
+    "NA+" : "blue", 
+    "CL-" : "red"
+} //it's molecule types in .top files that are not described in itp file, like solvents 
 
 const MARTINI3_BEADS_REGEX = new RegExp("^(?<type>(?<size>[S|T]{0,1})[N|P|C|X|Q]{1}[1-9]{1})(?<add>[a-z]{0,2})$")
 const MARTINI3_BEADS_RADIUS = {"S" : 2.30, "T" : 1.91, "R" : 2.64}
@@ -31,6 +37,25 @@ export const martiniSchemes = new class MartiniColorSchemes {
         //this._martini3RadiusSelector = this._getMartini3RadiusSelector()
     }
 
+    protected _getColor(bead: Bead, colorAndRegex : {color:{[beadType: string] : string}, regex: RegExp, regexExceptions?:string[]}) {
+        if(bead.name === "other"){
+            if(bead.moleculeName && (bead.moleculeName in MOLECULE_EXCEPTIONS_COLOR)) return MOLECULE_EXCEPTIONS_COLOR[bead.moleculeName]
+            return DEFAULT_COLOR
+        }
+        else {
+            const regexExc = colorAndRegex.regexExceptions
+            const beadRegex = colorAndRegex.regex
+            const colorScheme = colorAndRegex.color
+            const beadName = (regexExc && regexExc.includes(bead.name)) ? bead.name : bead.name.match(beadRegex)?.groups?.type
+            if (beadName && beadName in colorScheme){
+                if(Math.sign(bead.charge) === -1) return "red"
+                if(Math.sign(bead.charge) === 1) return "blue"
+                return colorScheme[beadName]
+            }
+            return DEFAULT_COLOR
+        }
+    }
+
     protected _createColorMap(ff:string, beads: Bead[]):string[]{
         const colorMap: string[] = new Array(beads.length)
         const colorScheme = (ff in FF_TO_SCHEMES) ? FF_TO_SCHEMES[ff].color : undefined
@@ -39,8 +64,8 @@ export const martiniSchemes = new class MartiniColorSchemes {
             const regexExc = FF_TO_SCHEMES[ff].regexExceptions
             const beadRegex = FF_TO_SCHEMES[ff].regex
             for (const [idx,bead] of beads.entries()){
-                const beadName = (regexExc && regexExc.includes(bead.name)) ? bead.name : bead.name.match(beadRegex)?.groups?.type
-                const color = (beadName && beadName in colorScheme) ? (bead.charge === -1) ? "red" : (bead.charge === 1) ? "blue" : colorScheme[beadName] : DEFAULT_COLOR
+                const color = this._getColor(bead, {color: colorScheme, regex: beadRegex, regexExceptions : regexExc})
+
                 colorMap[idx] = color
             }
         }
@@ -90,6 +115,7 @@ export const martiniSchemes = new class MartiniColorSchemes {
     getProteinRadiusScheme(ff:AvailableForceFields, beads: Bead[], factor:number=1){
         return beads.map(bead => {
             if (!(ff in FF_TO_SCHEMES)) return DEFAULT_RADIUS
+            if(bead.name === "other") return DEFAULT_RADIUS
             const regMatch = bead.name.match(FF_TO_SCHEMES[ff].regex)
             const beadSize = (regMatch?.groups?.size ? regMatch?.groups?.size : "R") as BeadSize
             return FF_TO_SCHEMES[ff].radius[beadSize] * factor
