@@ -369,8 +369,8 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
   async initCoarseGrainPdb(options: { files: MartinizeFiles, mode?: 'go' | 'elastic' }) {
     let component: NglComponent;
-
-    this.beads = await itpBeads(options.files.top.content, options.files.itps.map(itp => itp.content), options.mode)
+    const polarizableFF = Settings.martinize_variables.force_fields_info[this.state.builder_force_field].polarizable
+    this.beads = await itpBeads(options.files.top.content, options.files.itps.map(itp => itp.content), polarizableFF, options.mode)
     // Apply the NGL radius
     applyUserRadius(options.files.radius);
 

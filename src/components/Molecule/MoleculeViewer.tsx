@@ -9,6 +9,7 @@ import { itpBeads } from '../Builder/BeadsHelper';
 import NglWrapper, { NglRepresentation, NglComponent } from '../Builder/NglWrapper';
 import BallAndStickRepresentation from '@mmsb/ngl/declarations/representation/ballandstick-representation';
 import { AvailableForceFields } from '../../types/entities';
+import { Settings } from '../../Settings'
 
 
 // Component types
@@ -83,8 +84,8 @@ class MoleculeViewer extends React.Component<MVProps, MVState> {
         // Apply the radius to NGL
         applyUserRadius(radius);
 
-        const beads = await itpBeads(top, itps); 
-        console.log(beads.length)
+        const polarizableFF = Settings.martinize_variables.force_fields_info[this.props.ff].polarizable
+        const beads = await itpBeads(top, itps, polarizableFF); 
 
         // Load the PDB into NGL
 

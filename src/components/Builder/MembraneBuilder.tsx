@@ -176,7 +176,8 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
 
   async initNglWithResult(result: InsaneResult, mode: 'water' | 'no_water', builder_mode?: string) {
     this.ngl.reset();
-    const beads = await itpBeads(result.top, result.itps, builder_mode)
+    const polarizableFF = Settings.martinize_variables.force_fields_info[this.state.ff].polarizable
+    const beads = await itpBeads(result.top, result.itps, polarizableFF, builder_mode)
     this.ngl.load(result[mode], {coarse_grained:true})
       .then(component => {
         const repr = component.add<BallAndStickRepresentation>('ball+stick', {}, {radius : false, color: true, beads, ff: this.state.ff as AvailableForceFields, radiusFactor: 0.2});
