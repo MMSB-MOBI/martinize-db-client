@@ -28,7 +28,10 @@ const MARTINI2_REGEX_EXCEPTIONS = ["AC1", "AC2"]
 const FF_TO_SCHEMES: { [ff: string]: { color: { [beadType: string]: string }, radius: { [key in BeadSize]: number }, regex: RegExp, regexExceptions?: string[] } } = {
     'martini3001': { color: martini3ColorScheme, radius: MARTINI3_BEADS_RADIUS, regex: MARTINI3_BEADS_REGEX },
     'martini22': { color: martini2ColorScheme, radius: MARTINI2_BEADS_RADIUS, regex: MARTINI2_BEADS_REGEX, regexExceptions: MARTINI2_REGEX_EXCEPTIONS },
-    "martini22p": { color: martini2ColorScheme, radius: MARTINI2_BEADS_RADIUS, regex: MARTINI2_BEADS_REGEX, regexExceptions: MARTINI2_REGEX_EXCEPTIONS }
+    "martini22p": { color: martini2ColorScheme, radius: MARTINI2_BEADS_RADIUS, regex: MARTINI2_BEADS_REGEX, regexExceptions: MARTINI2_REGEX_EXCEPTIONS }, 
+    "elnedyn22" : { color: martini2ColorScheme, radius: MARTINI2_BEADS_RADIUS, regex: MARTINI2_BEADS_REGEX, regexExceptions: MARTINI2_REGEX_EXCEPTIONS }, 
+    "elnedyn22p" : { color: martini2ColorScheme, radius: MARTINI2_BEADS_RADIUS, regex: MARTINI2_BEADS_REGEX, regexExceptions: MARTINI2_REGEX_EXCEPTIONS }, 
+    "elnedyn" : { color: martini2ColorScheme, radius: MARTINI2_BEADS_RADIUS, regex: MARTINI2_BEADS_REGEX, regexExceptions: MARTINI2_REGEX_EXCEPTIONS } 
 }
 
 export default class MartiniSchemes {
