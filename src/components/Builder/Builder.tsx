@@ -36,6 +36,7 @@ import ElasticBondsHelper from './ElasticBondHelper';
 import { MartinizeFile, MartinizeMode, ReadedJobFiles, ElasticOrGoBounds, ReadedJobDoc, AvailableForceFields } from '../../types/entities'; 
 import { Alert } from '@material-ui/lab'
 import { itpBeads, Bead } from './BeadsHelper';
+import BeadsLegend from './BeadsLegend'
 
 // @ts-ignore
 window.NGL = ngl; window.BaseBondsHelper = BaseBondsHelper;
@@ -113,7 +114,6 @@ export interface MBState {
 
   load_error_message?:string; 
   send_mail: boolean; 
-  open_legend : boolean; 
 
   bead_radius_factor : number; 
 
@@ -336,9 +336,9 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
   setCoarseGrainRepresentation(parameters: Partial<RepresentationParameters>, representationType? : ViableRepresentation[]) {
     for (const repr of this.state.coarse_grain_ngl!.representations) {
       if (!representationType || representationType.includes(repr.name as ViableRepresentation)) {
-      repr.set(parameters);
+        repr.set(parameters);
+      }
     }
-  }
   }
 
   setAllAtomRepresentation(parameters: Partial<RepresentationParameters>) {
@@ -994,7 +994,6 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     if (Array.isArray(value)) {
       value = value[0];
     }
-
     this.setState({
       virtual_link_opacity: value / 100
     });
@@ -1605,6 +1604,8 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
                 onBeadRadiusChange={this.onBeadRadiusChange}
               />}
 
+              
+
               {this.state.running === 'go_editor' && <GoEditor 
                 stage={this.ngl}
                 cgCmp={this.state.coarse_grain_ngl!}
@@ -1624,15 +1625,19 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
                 onHistoryDownload={this.onHistoryDownload}
               />}
             </div>
+            
           </Grid>
+
           
           <Grid item sm={4} md={8}>
             {this.state.running === 'load_error' && 
               <Alert severity="error">{this.state.load_error_message}</Alert>
             }
             <div id="ngl-stage" style={{ height: 'calc(100% - 5px)' }}/> 
+            {this.state.running === "done" && <BeadsLegend/>}
                       
           </Grid>
+
           
         </Grid>
       </ThemeProvider>
