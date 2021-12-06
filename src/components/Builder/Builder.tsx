@@ -115,6 +115,8 @@ export interface MBState {
   send_mail: boolean; 
   open_legend : boolean; 
 
+  bead_radius_factor : number; 
+
 }
 
 /**
@@ -250,7 +252,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       error: undefined,
       martinize_step: '',
       send_mail: false,
-      open_legend : false
+      bead_radius_factor : 0.2
     };
   }
 
@@ -331,10 +333,12 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
   /* SET SETTINGS FOR REPRESENTATIONS */
 
-  setCoarseGrainRepresentation(parameters: Partial<RepresentationParameters>) {
+  setCoarseGrainRepresentation(parameters: Partial<RepresentationParameters>, representationType? : ViableRepresentation[]) {
     for (const repr of this.state.coarse_grain_ngl!.representations) {
+      if (!representationType || representationType.includes(repr.name as ViableRepresentation)) {
       repr.set(parameters);
     }
+  }
   }
 
   setAllAtomRepresentation(parameters: Partial<RepresentationParameters>) {
@@ -382,7 +386,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       return;
     }
 
-    const repr = component.add<BallAndStickRepresentation>("ball+stick", {}, {radius: true, color: true, beads: this.beads, ff: this.state.builder_force_field, radiusFactor: 0.2});
+    const repr = component.add<BallAndStickRepresentation>("ball+stick", {}, {radius: true, color: true, beads: this.beads, ff: this.state.builder_force_field, radiusFactor: this.state.bead_radius_factor});
 
     component.center(500);
 
@@ -1023,6 +1027,19 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     this.setState({ virtual_link_visible: checked });
   };
 
+  onBeadRadiusChange = (_: any, value: number | number[]) => {
+    if(Array.isArray(value)){
+      value = value[0]
+    }
+
+    this.setState({bead_radius_factor : value})
+
+    this.setCoarseGrainRepresentation({ radiusType : "data", 
+      radiusData : this.state.coarse_grain_ngl!.martiniSchemes.applyRadiusFactor(this.state.builder_force_field, value)
+    }, ["ball+stick"]);
+
+  }
+
   onHistoryDownload = async () => {
     if (!this.state.files!.go) {
       return false;
@@ -1068,7 +1085,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     cmp_coarse.add(type, {
       visible: this.state.coarse_grain_visible,
       opacity: this.state.coarse_grain_opacity,
-    }, {radius: true, color: true, beads: this.beads, ff: this.state.builder_force_field, radiusFactor : type === "surface" ? 1 : 0.2});
+    }, {radius: true, color: true, beads: this.beads, ff: this.state.builder_force_field, radiusFactor : type === "surface" ? 1 : this.state.bead_radius_factor});
 
     this.setState({
       representations: [...this.state.representations, type],
@@ -1584,6 +1601,8 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
                 edited={this.state.edited}
                 generatingFiles={this.state.generating_files}
                 onGoEditorStart={this.onGoEditorStart}
+                beadRadiusFactor={this.state.bead_radius_factor}
+                onBeadRadiusChange={this.onBeadRadiusChange}
               />}
 
               {this.state.running === 'go_editor' && <GoEditor 

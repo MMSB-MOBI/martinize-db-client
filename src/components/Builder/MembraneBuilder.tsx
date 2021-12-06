@@ -81,6 +81,7 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
   
   ngl!: NglWrapper;
   representation?: NglRepresentation<BallAndStickRepresentation>;
+  beadsComponent?:NglComponent
   box?: [NglComponent, NglRepresentation<ngl.BufferRepresentation>];
   go_back_btn = React.createRef<any>();
 
@@ -180,7 +181,9 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
     const beads = await itpBeads(result.top, result.itps, polarizableFF, builder_mode)
     this.ngl.load(result[mode], {coarse_grained:true})
       .then(component => {
+        this.beadsComponent = component
         const repr = component.add<BallAndStickRepresentation>('ball+stick', {}, {radius : false, color: true, beads, ff: this.state.ff as AvailableForceFields, radiusFactor: 0.2});
+        this.beadsComponent.martiniSchemes.getProteinRadiusScheme(this.state.ff as AvailableForceFields, beads) //init radius scheme for toggling later
         this.representation = repr;
         component.center();
 
@@ -196,6 +199,7 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
           const representation = component.add<ngl.BufferRepresentation>('buffer', { opacity: .3 });
 
           this.box = [component, representation];
+          
         }
       });
   }
@@ -210,6 +214,17 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
   setVisible(hint: boolean) {
     if (this.box)
       this.box[1].visible = hint;
+  }
+
+  toggleMartiniRadius(apply:boolean) {
+     if(apply){
+       const params = {radiusType : "data", radiusData : this.beadsComponent?.martiniSchemes.applyRadiusFactor(this.state.ff as AvailableForceFields, 0.2)}
+       this.representation?.set(params)
+     }
+     else { //ngl default radius params
+        const params = {radiusType : "size"}
+        this.representation?.set(params)
+     }
   }
 
   async downloadLipids(force_field: string) {
@@ -706,6 +721,14 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
         />
 
         <Marger size="1rem" />
+
+        <FormControlLabel
+            control={<Switch 
+              onChange={e => {
+                this.toggleMartiniRadius(e.target.checked)}} 
+            />}
+            label="Apply Martini beads radius (0.2 factor)"
+        />
 
         <Divider style={{ width: '100%' }} />
 

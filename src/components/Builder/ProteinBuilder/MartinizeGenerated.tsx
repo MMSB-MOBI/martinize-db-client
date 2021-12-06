@@ -40,12 +40,15 @@ interface MartinizeGeneratedProps {
   onGoEditorStart(): any;
 
   martinizeWarnings?: any;
+
+  beadRadiusFactor : number; 
+  onBeadRadiusChange(_: any, value : number|number[]): any
 }
 
 interface MartinizeGeneratedStates {
   wantReset: boolean, 
   openWarning: boolean, 
-  warnings: string
+  warnings: string, 
 }
 
 export default class MartinizeGenerated extends React.Component<MartinizeGeneratedProps, MartinizeGeneratedStates>{
@@ -185,6 +188,23 @@ export default class MartinizeGenerated extends React.Component<MartinizeGenerat
           onChange={this.props.onCoarseGrainedOpacityChange}
           color="secondary"
         />
+
+        <Marger size="1rem" />
+
+        {this.props.representations.includes("ball+stick") && <React.Fragment><Typography gutterBottom>
+          Beads radius factor
+        </Typography>
+
+        <Slider
+          value={this.props.beadRadiusFactor}
+          valueLabelDisplay="auto"
+          step={0.1}
+          marks
+          min={0}
+          max={1}
+          onChange={this.props.onBeadRadiusChange}
+          color="secondary"
+        /> </React.Fragment>}
   
         <FormControl component="fieldset">
           <FormGroup>

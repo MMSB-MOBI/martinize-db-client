@@ -195,12 +195,12 @@ function DrawerElements(props: RouteComponentProps) {
         icon: "envelope",
         text: "Contact"
       },
-      {
+      /*{
         path : '/tutorial', 
         link: true, 
         icon : "graduation-cap", 
         text : "Tutorial"
-      }
+      }*/
       
     ], 
   ];
