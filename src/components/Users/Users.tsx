@@ -1,5 +1,5 @@
 import React from 'react';
-import { Container, Typography, withStyles, List, ListItem, ListItemAvatar, Avatar, ListItemText, Button, Paper, CircularProgress, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Card, CardContent } from '@material-ui/core';
+import { Container, Typography, withStyles, List, ListItem, ListItemAvatar, Avatar, ListItemText, Button, Paper, CircularProgress, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@material-ui/core';
 import { Marger, notifyError, setPageTitle } from '../../helpers';
 import { User } from '../../types/entities';
 import ApiHelper from '../../ApiHelper';

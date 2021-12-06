@@ -97,7 +97,7 @@ function BadgedIcon(props: {
 
     return(
     <Badge badgeContent={count} color="secondary" >
-      <Icon className={"fas fa-" + props.icon} />
+      <Icon className={"fas fa-" + props.icon}/>
     </Badge>)
 }
 
@@ -145,6 +145,13 @@ function DrawerElements(props: RouteComponentProps) {
         condition: !!Settings.logged,
       },
       {
+        path: '/history', 
+        link: true, 
+        icon : "history", 
+        text: "My builder history", 
+        condition: !!Settings.logged
+      }, 
+      {
         path: '/settings',
         link: true,
         icon: "cog",
@@ -167,7 +174,6 @@ function DrawerElements(props: RouteComponentProps) {
         condition: Settings.logged === LoginStatus.Admin,
         count: "users"
       },
-
     ],
     [
       {
@@ -188,8 +194,15 @@ function DrawerElements(props: RouteComponentProps) {
         link: true,
         icon: "envelope",
         text: "Contact"
-      }
-    ]
+      },
+      /*{
+        path : '/tutorial', 
+        link: true, 
+        icon : "graduation-cap", 
+        text : "Tutorial"
+      }*/
+      
+    ], 
   ];
 
   let compiled: JSX.Element[] = [];
@@ -254,7 +267,6 @@ export default function ApplicationDrawer(props: RouteComponentProps) {
   const drawer = (
     <div>
       <div className={classes.toolbar} />
-
       {Settings.user && <ListItem className={classes.ppHeader}>
         <ListItemAvatar>
           <Avatar>

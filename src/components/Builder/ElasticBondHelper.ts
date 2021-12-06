@@ -1,18 +1,18 @@
 import ReversibleKeyMap from "reversible-key-map";
-import { ElasticOrGoBounds } from "../../StashedBuildHelper";
 import BaseBondsHelper, { BaseBondsHelperJSON, Relations } from "./BaseBondsHelper";
 import NglWrapper from "./NglWrapper";
-import ItpFile from 'itp-parser';
-import { resolve } from "dns";
+import ItpFile from 'itp-parser-forked';
+import { MoleculeFile } from '../../types/entities'
 
 export default class ElasticBondsHelper extends BaseBondsHelper {
-
-protected constructor(stage: NglWrapper) {
-    super(stage);
-}
+    protected _nglIdxToItpIdx: {[nglIdx : number]:[number, number]} = {} //[mol_idx, itp_idx]
+    protected constructor(stage: NglWrapper,) {
+        super(stage);
+        
+    }
 
 filter(predicate: (atom1: number, atom2: number, line: string) => boolean): BaseBondsHelper {
-    const new_map: Relations = new ReversibleKeyMap();
+    const new_map: Relations = [];
 
     const new_one = new ElasticBondsHelper(this.representation.stage);
 
@@ -25,27 +25,29 @@ filter(predicate: (atom1: number, atom2: number, line: string) => boolean): Base
 }
 
 
-add(line: string): this;
-add(atom1: number, atom2: number, line: string): this;
-add(atom1_or_line: string | number, atom2?: number, line?: string) {
+add(chain:number, line: string): this;
+add(chain:number, atom1: number, atom2: number, line: string): this;
+add(chain:number, atom1_or_line: string | number, atom2?: number, line?: string) {
     if (atom2 === undefined || line === undefined) {
     // atom1 is a full line
     if(typeof atom1_or_line === 'string') {
         const [name1, name2, ] = atom1_or_line.split(ItpFile.BLANK_REGEX).filter(e => e);
         if (name1 !== name2){
-        this.relations.set(Number(name1), Number(name2), atom1_or_line);
+            if (!(chain in this.relations)) this.relations[chain] = new ReversibleKeyMap(); 
+            this.relations[chain].set(Number(name1), Number(name2), atom1_or_line);
         }
     }
     }
     else if(typeof atom1_or_line === 'number') {
         if (atom1_or_line !== atom2)
-            this.relations.set(atom1_or_line, atom2, line);
+            if (!(chain in this.relations)) this.relations[chain] = new ReversibleKeyMap(); 
+            this.relations[chain].set(atom1_or_line, atom2, line);
     }
 
     return this;
 }
 
-createRealLine(atom1: number, atom2: number): string {
+createRealLine(atom1: number, atom2: number, chain:number): string {
 
     if (atom1 === undefined || atom2 === undefined) {
       console.warn("[Real line creator] Atoms", atom1, "and", atom2, "not found.");
@@ -58,22 +60,39 @@ createRealLine(atom1: number, atom2: number): string {
     // Distance is in Angstrom, we expect it in nm (so we divide by 10)
 
     // Real index in object starts at 1, distance between take 0-starting indexes
-    const rm = Math.abs(this.representation.distanceBetween(atom1 - 1, atom2 - 1)) / 10;
+    const rm = Math.abs(this.representation.distanceBetween(atom1 - 1, atom2 - 1, chain)) / 10;
     const result = rm * (2 ** (-(1/6)));
 
 
     return `${atom1} ${atom2} 6 ${result.toPrecision(11)} 500.0`;
 }
 
-async toOriginalFiles(itp: File): Promise<File[]> {
+async toOriginalFiles(): Promise<MoleculeFile[]> {
 
-    const files: { [molecule_name: string]: string } = Object.create(null);
+    const new_files = []
+    for (const [chain,bonds] of this.relations.entries()){
+
+        const stored_itp = this.bonds_itps[chain]
+        const itp = await ItpFile.read(stored_itp)
+
+        const new_rubbers = ["; Rubber band"]; //Add method setSubfield in itp-parser
+        for (const [keys, line] of bonds){
+            new_rubbers.push(line)
+        }
+
+        itp.setField("bonds", new_rubbers)
+        new_files.push({file:new File([itp.toString()], stored_itp.name, { type: 'chemical/x-include-topology' }), mol_idx: chain})
+    }
+
+    return new_files
+
+    /*const files: { [molecule_name: string]: string } = Object.create(null);
 
     const files_as_file: File[] = [];
 
     const type = "molecule_0";
 
-    let molecule = await ItpFile.read(itp);
+    let molecule = await ItpFile.read(itps[0]);
 
     let new_bonds = [];
 
@@ -110,13 +129,15 @@ async toOriginalFiles(itp: File): Promise<File[]> {
     const suffix = '.itp';
     files_as_file.push(new File([files[type]], type + suffix, { type: 'chemical/x-include-topology' }));
     
-    return new Promise((resolve, reject) => {resolve(files_as_file)});
+    return new Promise((resolve, reject) => {resolve(files_as_file)});*/
 }
 
-toJSON() : BaseBondsHelperJSON {
-    return {
-        relations:  [...this.relations.entries()],
-    };
+toJSON() : BaseBondsHelperJSON[] {
+    const ret = []; 
+    for (const [chain, bonds] of this.relations.entries()){
+        ret.push({chain, relations: [...bonds.entries()]})
+    }
+    return ret
 }
 
 clone() {
@@ -127,57 +148,76 @@ clone() {
     return clone;
 }
 
+addToIdxMapper(mol_idx:number, itp_idx:number, ngl_idx:number){
+    if(ngl_idx in this._nglIdxToItpIdx) throw new Error(`ngl idx ${ngl_idx} already mapped to mol ${mol_idx} atom ${itp_idx}. Should not happen.`)
+    this._nglIdxToItpIdx[ngl_idx] = [mol_idx, itp_idx - 1]
+   
+}
+
+nglIndexToRealIndex(ngl_idx:number){
+    return {index : this._nglIdxToItpIdx[ngl_idx][1], chain : this._nglIdxToItpIdx[ngl_idx][0]}
+}
 
 
-static fromJSON(stage: NglWrapper, data: BaseBondsHelperJSON) {
+
+static fromJSON(stage: NglWrapper, data: BaseBondsHelperJSON[]) {
     const obj = new ElasticBondsHelper(
         stage,
     );
-    obj.relations = new ReversibleKeyMap(data.relations);
+    
+    const parsedRelations : Relations = []
 
-    return obj;
+    for (const chainData of data){
+        parsedRelations[chainData.chain] = new ReversibleKeyMap(chainData.relations)
+    }
+
+    obj.relations = parsedRelations
+
+    return obj
 }
 
       
-static async readFromItps(stage: NglWrapper, itp_files: File[]) {
+static async readFromItps(stage: NglWrapper, itp_files: {mol_idx?:number, content:File}[]) {
     const bonds = new ElasticBondsHelper(stage);
 
-    const molecule_file = itp_files.find(e => e.name === "molecule_0.itp");
-    if (!molecule_file) {
-        throw new Error("Need the molecule_0.itp file.");
+    let nglIdx: number = 0; 
+
+    if (bonds.bonds_itps.length !== 0) {
+        console.warn("Some itps for bonds are already registered on ElasticBondHelper. It will erase them")
+        bonds.bonds_itps = []; 
     }
-    const molecule = await ItpFile.read(molecule_file);
 
-    let seen_bond_comment = false;
-
-    for (const bond_line of molecule.bonds) {
-        if (bond_line.startsWith('; Rubber band')) {
-            seen_bond_comment = true;
-            continue;
+    for (const itpObj of itp_files){
+        const mol_idx = itpObj.mol_idx ? itpObj.mol_idx : 0
+        const itp = itpObj.content
+        if(itp.name.includes("rubber_band")){
+            bonds.bonds_itps.push(itp); 
+            const molecule = await ItpFile.read(itp); 
+            const elastic_bonds = molecule.getSubfield("bonds", "Rubber band", false)
+            if (elastic_bonds.length === 0) console.warn(`${itp.name} doesn't have elastic bonds`)
+            for (const bond of elastic_bonds){
+                bonds.add(mol_idx, bond); 
+            }
         }
-
-        if (!seen_bond_comment) {
-            continue;
+        else{
+            const itpReaded = await ItpFile.read(itp); 
+            for (const atom of itpReaded.atoms){
+                const [index, name, ] = atom.split(ItpFile.BLANK_REGEX);
+                const intIndex = parseInt(index); 
+                if (isNaN(intIndex)) throw new Error(`Atom index is not a number`)
+                bonds.addToIdxMapper(mol_idx, intIndex, nglIdx)
+                nglIdx += 1
+            }
         }
-
-        if (bond_line.startsWith('; Side chain bonds')) {
-            break;
-        }
-
-        const line = bond_line;
-        //const [index1, index2, ] = bond_line.split(ItpFile.BLANK_REGEX);
-        bonds.add(line);
-
-        }
+    }
 
     return bonds;
 }
 
-    
 
 
     
-    render(opacity = .2, hightlight_predicate?: (atom1_index: number, atom2_index: number) => boolean) {
+    render(opacity = .2, hightlight_predicate?: (atom1_index: number, atom2_index: number, chain:number) => boolean) {
         return this.representation.render(
           'elastic',
           this.bonds,

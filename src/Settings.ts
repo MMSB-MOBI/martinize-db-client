@@ -74,6 +74,7 @@ export const Settings = new class Settings {
   get martinize_variables() : SettingsJson {
     return this._settings ?? {
       force_fields: [],
+      force_fields_info: {}, 
       create_way: {},
       category_tree: {}
     };
@@ -90,7 +91,6 @@ export const Settings = new class Settings {
       try {
         const settings: SettingsJson = await ApiHelper.request('settings', { auth: false });
         this._settings = settings;
-        console.log(settings.category_tree);
       }
       catch (e) {
         console.error(e);

@@ -251,6 +251,8 @@ export class Explore extends React.Component<RouteComponentProps, ExploreState> 
             this.setState({ add_open: false });
           }}
         />
+
+        <Marger size={30} />
       </Container>
     );
   }

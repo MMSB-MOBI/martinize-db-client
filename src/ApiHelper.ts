@@ -300,6 +300,7 @@ export const ApiHelper = new class APIHelper {
 export interface APIError {
   message: string;
   code: number;
+  type? : string; 
   detail?: any;
 }
 

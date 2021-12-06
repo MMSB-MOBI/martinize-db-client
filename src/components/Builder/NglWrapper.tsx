@@ -6,6 +6,18 @@ import AtomProxy from '@mmsb/ngl/declarations/proxy/atom-proxy';
 import Surface from '@mmsb/ngl/declarations/surface/surface';
 import PickingProxy from '@mmsb/ngl/declarations/controls/picking-proxy';
 import BallAndStickRepresentation from '@mmsb/ngl/declarations/representation/ballandstick-representation';
+import { SelectionSchemeData } from '@mmsb/ngl/declarations/color/selection-colormaker';
+import MartiniSchemes from '../../martiniNglSchemes'
+import { AvailableForceFields } from '../../types/entities'
+import { Bead } from './BeadsHelper'
+
+interface SchemeParameters {
+  radius: boolean, 
+  color:boolean, 
+  beads: Bead[], 
+  ff : AvailableForceFields,
+  radiusFactor?:number
+}
 
 export class NglWrapper {
   static readonly BOX_X_HIGHLIGHT_COLOR = new ngl.Color(1, .1, .1);
@@ -19,6 +31,7 @@ export class NglWrapper {
 
     const target_el = typeof target === 'string' ? document.getElementById(target)! : target;
     target_el.addEventListener('wheel', e => e.preventDefault(), { passive: false });
+    
   }
 
   /**
@@ -84,13 +97,30 @@ export type ViableRepresentation = 'ball+stick' | 'ribbon' | 'surface' | 'hyper
 
 export class NglComponent {
   protected _repr: NglRepresentation<any>[] = [];
+  martiniSchemes = new MartiniSchemes()
 
-  constructor(public component: ngl.Component) {}
+  constructor(public component: ngl.Component) {
+  }
 
-  add<T extends Representation>(type: ViableRepresentation, parameters?: Partial<RepresentationParameters>) {
+  add<T extends Representation>(type: ViableRepresentation, parameters?: Partial<RepresentationParameters>,  schemeParameters?:SchemeParameters) {
+    
     const repr: RepresentationElement = this.component.addRepresentation(type, parameters);
 
     const wrapper = new NglRepresentation<T>(repr);
+
+    if(schemeParameters && (schemeParameters.radius || schemeParameters.color)){
+      const params: any = {}
+      if(schemeParameters.radius){
+        params["radiusType"] = "data"
+        params["radiusData"] = this.martiniSchemes.getProteinRadiusScheme(schemeParameters.ff, schemeParameters.beads, schemeParameters.radiusFactor)
+      }
+      if(schemeParameters.color){
+        params["color"] = this.martiniSchemes.getProteinColorScheme(schemeParameters.ff, schemeParameters.beads)
+      }
+
+      repr.setParameters(params)
+    }
+
     this._repr.push(wrapper);
 
     return wrapper;

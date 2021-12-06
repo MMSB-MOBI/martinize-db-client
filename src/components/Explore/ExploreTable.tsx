@@ -7,7 +7,6 @@ import KeyboardArrowRight from '@material-ui/icons/KeyboardArrowRight';
 import LastPageIcon from '@material-ui/icons/LastPage';
 import { BaseMolecule } from '../../types/entities';
 import { Link } from 'react-router-dom';
-import DeleteIcon from '@material-ui/icons/Delete';
 import { DeleteModal } from '../Molecule/MoleculeInfo';
 import ApiHelper from '../../ApiHelper';
 import { notifyError, findInCategoryTree, dateFormatter } from '../../helpers';
@@ -18,7 +17,7 @@ const useStyles = makeStyles(theme => ({
     width: '100%',
   },
   container: {
-    maxHeight: '80vh',
+    //maxHeight: '80vh',
   },
   moleculeLink: {
     color: theme.palette.primary.main,
@@ -29,7 +28,6 @@ const useStyles = makeStyles(theme => ({
   },
 }));
 
-
 interface Column {
   id: 'name' | 'alias' | 'category' | 'created_at' | 'version';
   label: string;
@@ -37,6 +35,8 @@ interface Column {
   align?: 'right';
   format?: (value: any) => string;
 }
+
+
 
 export default function MoleculeTable(props: {
   loading?: boolean,
@@ -49,6 +49,7 @@ export default function MoleculeTable(props: {
   moderation?: boolean,
   withVersion?: boolean,
   }) {
+    
   const classes = useStyles();
   const { loading, molecules, length, rowsPerPage, page, onChangePage } = props;
   const [deleteMol, setDeleteMol] = React.useState("");
@@ -79,8 +80,7 @@ export default function MoleculeTable(props: {
 
     columns = [...columns.slice(0, 2), version_column, ...columns.slice(2)];
   }
-
-
+  
   const deleteMolecule = () => {
     if (loadModal)
       return;
@@ -126,11 +126,22 @@ export default function MoleculeTable(props: {
               {molecules.map(row => {
                 return (
                   <TableRow hover role="checkbox" tabIndex={-1} key={row.id}>
-                    {props.moderation && <TableCell align="left">
+                    {/*props.moderation && <TableCell align="left">
                       <IconButton onClick={() => setDeleteMol(row.id)}>
                         <DeleteIcon />
                       </IconButton>
-                    </TableCell>}
+                    </TableCell>*/}
+
+                    {/*<TableCell align="left" size="small">
+                      <FormControlLabel
+                        control={<Checkbox size="small" //icon={<CheckBoxOutlineBlank />} checkedIcon={<Checkbox />} 
+                        name="checkedH" onClick={() => {
+                          addMoleculesToDownload(row, molToDownload)
+                          console.log(molToDownload)
+                      }}/>}
+                        label=''
+                      />
+                    </TableCell>*/}
 
                     {columns.map(column => {
                       const value = row[column.id];
@@ -168,14 +179,14 @@ export default function MoleculeTable(props: {
                     <em>Loading...</em>
                   </span>
                 </TableCell>}
-                
+
                 <TablePagination
                   count={length}
                   rowsPerPage={rowsPerPage}
                   rowsPerPageOptions={[rowsPerPage]}
                   page={length ? page : 0}
                   className={clsx("can-load", loading && "in")}
-                  onChangePage={(_, page) => {
+                  onPageChange={(_, page) => {
                     onChangePage(page);
                   }}
                   ActionsComponent={TablePaginationActions}
@@ -191,6 +202,14 @@ export default function MoleculeTable(props: {
         onClose={() => setDeleteMol("")}
         loading={loadModal}
       />}
+
+
+      {/*<MLink 
+        onClick={() => downloadMolecules(molToDownload)}
+        style={{ fontSize: '1.3rem', fontWeight: 'bold' }} 
+        >
+            Download files
+      </MLink>*/}
     </div>
   );
 }
@@ -200,7 +219,7 @@ interface TablePaginationActionsProps {
   count: number;
   page: number;
   rowsPerPage: number;
-  onChangePage: (event: React.MouseEvent<HTMLButtonElement>, newPage: number) => void;
+  onPageChange: (event: React.MouseEvent<HTMLButtonElement>, newPage: number) => void;
 }
 
 const useStylesTablePagination = makeStyles(theme =>
@@ -214,22 +233,22 @@ const useStylesTablePagination = makeStyles(theme =>
 
 function TablePaginationActions(props: TablePaginationActionsProps) {
   const classes = useStylesTablePagination();
-  const { count, page, rowsPerPage, onChangePage } = props;
+  const { count, page, rowsPerPage, onPageChange } = props;
 
   const handleFirstPageButtonClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    onChangePage(event, 0);
+    onPageChange(event, 0);
   };
 
   const handleBackButtonClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    onChangePage(event, page - 1);
+    onPageChange(event, page - 1);
   };
 
   const handleNextButtonClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    onChangePage(event, page + 1);
+    onPageChange(event, page + 1);
   };
 
   const handleLastPageButtonClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    onChangePage(event, Math.max(0, Math.ceil(count / rowsPerPage) - 1));
+    onPageChange(event, Math.max(0, Math.ceil(count / rowsPerPage) - 1));
   };
 
   return (

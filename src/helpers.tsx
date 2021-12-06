@@ -3,6 +3,8 @@ import { CategoryTree } from "./types/settings";
 import React from 'react';
 import { toast } from "./components/Toaster";
 import { Icon } from "@material-ui/core";
+import { MartinizeFiles } from './components/Builder/Builder'
+import { ReadedJobDoc } from './types/entities'
 
 export function errorToText(error: [any, APIError] | APIError | number | undefined) {
   if (!error) {
@@ -107,6 +109,13 @@ export function loginErrorToText(code: number) {
     default: 
       return "Unknown error";
   }
+}
+
+export function errorToType(error :  [any, APIError]){
+  if (Array.isArray(error)) {
+    return error[1].type
+  }
+  return undefined
 }
 
 export function setPageTitle(title?: string, absolute = false, set_app_bar_name = false) {
@@ -273,4 +282,18 @@ export function downloadBlob(file: Blob, filename: string) {
     document.body.removeChild(link);
   }, 1500);
 
+}
+
+
+export async function loadMartinizeFiles(job: ReadedJobDoc) : Promise<MartinizeFiles> {
+  const files = job.files
+  const itps = files.itp_files.map((mol_itp, mol_idx) => mol_itp.map(itp => ({name : itp.name, type : itp.type, content : new File([itp.content], itp.name), mol_idx})) ).flat()
+
+  return {
+    radius : job.radius,
+    pdb : {name : files.coarse_grained.name, type : files.coarse_grained.type, content : new File([files.coarse_grained.content], files.coarse_grained.name)},
+    itps, 
+    top : {name : files.top_file.name, type : files.top_file.type, content : new File([files.top_file.content], files.top_file.name)},
+
+  }
 }

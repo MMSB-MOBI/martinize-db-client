@@ -429,6 +429,7 @@ class AddMolecule extends React.Component<AddMoleculeProps, AddMoleculeState> {
                   value={this.state.citation}
                   onChange={v => this.setState({ citation: v.target.value })}
                   variant="outlined"
+                  required
                 />
   
                 <div className={classes.martinizeVersionForceFieldBlock}>

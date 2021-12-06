@@ -1,5 +1,5 @@
-import React, { ChangeEvent } from 'react';
-import { withStyles, Typography, Button, TextField, IconButton, CircularProgress, FormControlLabel, Checkbox, makeStyles, Slider } from '@material-ui/core';
+import React from 'react';
+import { withStyles, Typography, Button, TextField, IconButton, CircularProgress, FormControlLabel, Checkbox, makeStyles } from '@material-ui/core';
 import { toast } from '../../Toaster';
 import { Marger, FaIcon } from '../../../helpers';
 import { SimpleSelect } from '../../../Shared';
@@ -16,8 +16,9 @@ interface LipidWithId {
 }
 
 interface LCProps {
+  AddLipids: string;
   classes: Record<string, string>;
-  onLipidChoose(lipids: { lower: ChoosenLipid[], upper?: ChoosenLipid[] }): any;
+  onLipidChoose(lipids: { lower?: ChoosenLipid[], upper?: ChoosenLipid[] }): any;
   onPrevious(): any;
   lipids: string[];
   noLipid: boolean;
@@ -79,23 +80,32 @@ class LipidChooser extends React.Component<LCProps, LCState> {
   }
 
   next = () => {
-    const { lower, upper_separated } = this.state;
-    const upper = upper_separated ? this.state.upper : [];
+    if(this.props.AddLipids === "true"){
+      const { lower, upper_separated } = this.state;
+      const upper = upper_separated ? this.state.upper : [];
 
-    // Check if a lipid has invalid ratio or if one lipid is repeated
-    if (!this.checkLipidIntegrity(lower, upper_separated ? 'Lower' : '') || !this.checkLipidIntegrity(upper, 'Upper')) {
-      return;
-    }
+      // Check if a lipid has invalid ratio or if one lipid is repeated
+      if (!this.checkLipidIntegrity(lower, upper_separated ? 'Lower' : '') || !this.checkLipidIntegrity(upper, 'Upper')) {
+        return;
+      }
 
-    if (lower.length) {
-      this.props.onLipidChoose({
-        lower: lower.map(e => ({ name: e.value, ratio: Number(e.count) })), 
-        upper: upper.length ? upper.map(e => ({ name: e.value, ratio: Number(e.count) })) : undefined,
-      });
+      if (lower.length) {
+        this.props.onLipidChoose({
+          lower: lower.map(e => ({ name: e.value, ratio: Number(e.count) })), 
+          upper: upper.length ? upper.map(e => ({ name: e.value, ratio: Number(e.count) })) : undefined,
+        });
+      }
+      else {
+        toast("At least one lipid is required.", "error");
+      }
     }
     else {
-      toast("At least one lipid is required.", "error");
+      this.props.onLipidChoose({
+        lower: undefined, 
+        upper: undefined,
+      });
     }
+    
   };
 
   onLipidAdd = () => {
@@ -217,89 +227,92 @@ class LipidChooser extends React.Component<LCProps, LCState> {
 
     return (
       <React.Fragment>
-        <Marger size="1rem" />
+        {this.props.AddLipids === "true" && <React.Fragment>
+          <Marger size="1rem" />
 
-        {this.state.upper_separated && <React.Fragment>
+          {this.state.upper_separated && <React.Fragment>
+            <Typography align="center" variant="h6">
+              Upper membrane leaflet
+            </Typography>
+            
+            <LipidSelectGroup 
+              lipids={this.props.lipids}
+              items={this.state.upper}
+              onItemAdd={this.onUpperLipidAdd}
+              onItemChange={this.onUpperLipidChange}
+              onItemDelete={this.onUpperLipidDelete}
+            />
+            {/*<Typography gutterBottom>
+              pH
+            </Typography>
+            <Slider
+              value={this.props.ph_upp}
+              valueLabelDisplay="auto"
+              step={0.1}
+              marks
+              min={0.1}
+              max={13.9}
+              onChange={this.props.phUppChange}
+              color="secondary"
+            />*/}
+
+            <Marger size="1rem" />
+          </React.Fragment>}
+
           <Typography align="center" variant="h6">
-            Upper membrane leaflet
+            {!this.state.upper_separated ? "Lipids" : "Lower membrane leaflet"}
           </Typography>
-          
+
           <LipidSelectGroup 
             lipids={this.props.lipids}
-            items={this.state.upper}
-            onItemAdd={this.onUpperLipidAdd}
-            onItemChange={this.onUpperLipidChange}
-            onItemDelete={this.onUpperLipidDelete}
+            items={this.state.lower}
+            onItemAdd={this.onLipidAdd}
+            onItemChange={this.onLipidChange}
+            onItemDelete={this.onLipidDelete}
           />
-          <Typography gutterBottom>
+
+          {/*<Typography gutterBottom>
             pH
           </Typography>
           <Slider
-            value={this.props.ph_upp}
+            value={this.props.ph_low}
             valueLabelDisplay="auto"
             step={0.1}
             marks
             min={0.1}
             max={13.9}
-            onChange={this.props.phUppChange}
+            onChange={!this.state.upper_separated ? this.props.phLipidsChange : this.props.phLowChange}
             color="secondary"
-          />
+          />*/}
 
           <Marger size="1rem" />
-        </React.Fragment>}
 
-        <Typography align="center" variant="h6">
-          {!this.state.upper_separated ? "Lipids" : "Lower membrane leaflet"}
-        </Typography>
+          <div>
+            <FormControlLabel
+              control={
+                <Checkbox 
+                  checked={this.state.upper_separated} 
+                  onChange={evt => this.onSeparateChange(evt.target.checked)} 
+                  color="secondary"
+                />
+              }
+              label="Separate lower and upper leaflet"
+            />
+          </div>
 
-        <LipidSelectGroup 
-          lipids={this.props.lipids}
-          items={this.state.lower}
-          onItemAdd={this.onLipidAdd}
-          onItemChange={this.onLipidChange}
-          onItemDelete={this.onLipidDelete}
-        />
+          </React.Fragment>}
+          <Marger size="1rem" />
 
-        <Typography gutterBottom>
-          pH
-        </Typography>
-        <Slider
-          value={this.props.ph_low}
-          valueLabelDisplay="auto"
-          step={0.1}
-          marks
-          min={0.1}
-          max={13.9}
-          onChange={!this.state.upper_separated ? this.props.phLipidsChange : this.props.phLowChange}
-          color="secondary"
-        />
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <Button variant="outlined" color="secondary" onClick={this.props.onPrevious}>
+              Back
+            </Button>
 
-        <Marger size="1rem" />
-
-        <div>
-          <FormControlLabel
-            control={
-              <Checkbox 
-                checked={this.state.upper_separated} 
-                onChange={evt => this.onSeparateChange(evt.target.checked)} 
-                color="secondary"
-              />
-            }
-            label="Separate lower and upper leaflet"
-          />
-        </div>
-
-        <Marger size="1rem" />
-
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <Button variant="outlined" color="secondary" onClick={this.props.onPrevious}>
-            Back
-          </Button>
-
-          <Button variant="outlined" color="primary" disabled={!this.can_continue} onClick={this.next}>
-            Next
-          </Button>
-        </div>
+            <Button variant="outlined" color="primary" //disabled={!this.can_continue} 
+            onClick={this.next}>
+              Next
+            </Button>
+          </div>
       </React.Fragment>
     );
   }

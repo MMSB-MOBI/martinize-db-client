@@ -1,26 +1,28 @@
 import React from 'react';
 import { withStyles, Link, Typography, Button, Dialog, DialogTitle, DialogContent, DialogActions, TextField, List, ListItem, ListItemText, ListItemSecondaryAction, IconButton, DialogContentText, CircularProgress } from '@material-ui/core';
 import AddMoleculeFileInput from '../../AddMolecule/AddMoleculeFileInput';
-import StashedBuild from '../StashedBuild';
-import StashedBuildHelper from '../../../StashedBuildHelper';
 import { toast } from '../../Toaster';
-import { Marger, FaIcon } from '../../../helpers';
+import { Marger, FaIcon, loadMartinizeFiles } from '../../../helpers';
 import ApiHelper from '../../../ApiHelper';
-import { Molecule } from '../../../types/entities';
+import { Molecule, ReadedJobDoc } from '../../../types/entities';
 import { SimpleSelect } from '../../../Shared';
 import Settings from '../../../Settings';
 import { Link as RouterLink } from 'react-router-dom';
+import HistoryBuild from '../HistoryBuild'
 
 export interface MoleculeWithFiles {
   pdb: File;
   top: File;
   itps: File[];
   force_field: string;
+  builder_mode?: string; 
 }
 
 interface MCProps {
+  Force_field : boolean;
+  AddMolecule: string;
   classes: Record<string, string>;
-  onMoleculeChoose(molecule: MoleculeWithFiles | Molecule): any;
+  onMoleculeChoose(molecule: MoleculeWithFiles | Molecule | undefined): any;
 }
 
 interface MCState {
@@ -29,6 +31,7 @@ interface MCState {
   itps: File[];
   ff: string;
   modal_chooser: boolean;
+  builder_mode : string; 
 }
 
 class MoleculeChooser extends React.Component<MCProps, MCState> {
@@ -36,30 +39,44 @@ class MoleculeChooser extends React.Component<MCProps, MCState> {
     itps: [],
     modal_chooser: false,
     ff: 'martini3001',
+    builder_mode : "classic"
   };
 
+  // here
   nextFromFiles = () => {
-    const { pdb, top, itps, ff } = this.state;
+    if (this.props.AddMolecule === "true"){
+      const { pdb, top, itps, ff, builder_mode } = this.state;
 
-    if (pdb && top && itps.length) {
-      this.props.onMoleculeChoose({
-        pdb, top, itps, force_field: ff,
-      });
+      if (pdb && top && itps.length) {
+        this.props.onMoleculeChoose({
+          pdb, top, itps, force_field: ff, builder_mode
+        });
+      }
+      else {
+        toast("Some required files are missing.", "error");
+      }
+    } else {
+      this.props.onMoleculeChoose(undefined);
     }
-    else {
-      toast("Some required files are missing.", "error");
-    }
+    
   };
 
   nextFromMolecule = (molecule: Molecule) => {
     this.setState({ modal_chooser: false });
+    molecule.builder_mode = this.state.builder_mode
     this.props.onMoleculeChoose(molecule);
   };
 
+  // here
   get can_continue() {
-    const { pdb, top, itps } = this.state;
+    if(this.props.AddMolecule === "false") {
+      return this.props.Force_field;
+    }
+    else {
+      const { pdb, top, itps } = this.state;
 
-    return !!(pdb && top && itps.length);
+      return !!(pdb && top && itps.length);
+    }
   }
 
   get force_fields() {
@@ -69,92 +86,98 @@ class MoleculeChooser extends React.Component<MCProps, MCState> {
   render() {
     return (
       <React.Fragment>
-        <ModalMoleculeSelector
-          open={this.state.modal_chooser}
-          onChoose={this.nextFromMolecule}
-          onCancel={() => this.setState({ modal_chooser: false })}
-        />
+        {this.props.AddMolecule === "true" && <React.Fragment>
+          <ModalMoleculeSelector
+            open={this.state.modal_chooser}
+            onChoose={this.nextFromMolecule}
+            onCancel={() => this.setState({ modal_chooser: false })}
+          />
 
-        <Marger size="1rem" />
+          <Marger size="1rem" />
 
-        <Typography align="center" variant="h6">
-          Load from database
-        </Typography>
+          <Typography align="center" variant="h6">
+            Load from database
+          </Typography>
 
-        <Marger size="1rem" />
+          <Marger size="1rem" />
 
-        <div style={{ textAlign: 'center' }}>
-          <Button variant="outlined" color="primary" onClick={() => this.setState({ modal_chooser: true })}>
-            Search a molecule
-          </Button>
-        </div>
+          <div style={{ textAlign: 'center' }}>
+            <Button variant="outlined" color="primary" onClick={() => this.setState({ modal_chooser: true })}>
+              Search a molecule
+            </Button>
+          </div>
 
-        <Marger size="2rem" />
+          <Marger size="2rem" />
 
-        <Typography align="center" variant="h6">
-          Load from stashed molecules
-        </Typography>
+          <Typography align="center" variant="h6">
+            Load from history
+          </Typography>
 
-        <Typography align="center">
-          <Link component={RouterLink} to="/builder">
-            Want to martinize a molecule ?
-          </Link>
-        </Typography>
-        
-        <StashedBuild 
-          onSelect={async uuid => {
-            const helper = new StashedBuildHelper();
-            const save = await helper.get(uuid);
-
-            if (save) {
+          <Typography align="center">
+            <Link component={RouterLink} to="/builder">
+              Want to martinize a molecule ?
+            </Link>
+          </Typography>
+          <Marger size="1rem" />
+          <HistoryBuild
+            onSelect={async(uuid : string) => {
+              const job : ReadedJobDoc = await ApiHelper.request(`history/get?jobId=${uuid}`)
+              const martinizeFiles = await loadMartinizeFiles(job)
+              
               this.setState({
-                pdb: new File([save.coarse_grained.content], save.coarse_grained.name),
-                top: new File([save.top_file.content], save.top_file.name),
-                itps: save.itp_files.map(e => new File([e.content], e.name)),
-                ff: save.info.builder_force_field,
-              }, this.nextFromFiles);
-            }
-          }}
-        />
+                pdb: martinizeFiles.pdb.content, 
+                top : martinizeFiles.top.content, 
+                itps: martinizeFiles.itps.map(itp => itp.content),
+                ff: job.settings.ff,
+                builder_mode : job.settings.builder_mode
+              }, this.nextFromFiles)
+            }}
+          
+          />
 
-        <Marger size="1rem" />
 
-        <Typography align="center" variant="h6">
-          Upload a molecule
-        </Typography>
-        
-        <Marger size="1rem" />
-        
-        <SimpleSelect
-          label="Used force field"
-          variant="standard"
-          id="ff_select"
-          values={this.force_fields.map(e => ({ id: e, name: e }))}
-          value={this.state.ff}
-          onChange={val => this.setState({ ff: val })}
-          noMinWidth
-          formControlClass={this.props.classes.ff_select}
-        />
 
-        <Marger size="1rem" />
+          <Marger size="1rem" />
 
-        <AddMoleculeFileInput 
-          onChange={({ itp, top, pdb }) => {
-            this.setState({
-              pdb,
-              top,
-              itps: itp,
-            });
-          }}
-        />
+          <Typography align="center" variant="h6">
+            Upload a molecule
+          </Typography>
+          
+          <Marger size="1rem" />
+          
+          <SimpleSelect
+            label="Used force field"
+            variant="standard"
+            id="ff_select"
+            values={this.force_fields.map(e => ({ id: e, name: e }))}
+            value={this.state.ff}
+            onChange={val => this.setState({ ff: val })}
+            noMinWidth
+            formControlClass={this.props.classes.ff_select}
+          />
 
-        <Marger size="1rem" />
+          <Marger size="1rem" />
 
-        <div style={{ textAlign: 'right' }}>
-          <Button variant="outlined" color="primary" disabled={!this.can_continue} onClick={this.nextFromFiles}>
-            Next
-          </Button>
-        </div>
+          <AddMoleculeFileInput 
+            onChange={({ itp, top, pdb }) => {
+              this.setState({
+                pdb,
+                top,
+                itps: itp,
+              });
+            }}
+          />
+
+          </React.Fragment>}
+
+          <Marger size="1rem" />
+
+          <div style={{ textAlign: 'right' }}>
+            <Button variant="outlined" color="primary" disabled={!this.can_continue} 
+            onClick={this.nextFromFiles}>
+              Next
+            </Button>
+          </div>
       </React.Fragment>
     );
   }

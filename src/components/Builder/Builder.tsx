@@ -1,7 +1,7 @@
 import React from 'react';
-import { withStyles, Grid, Typography, Paper, Button, withTheme, Theme, CircularProgress, Divider, createMuiTheme, ThemeProvider, Link, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@material-ui/core';
-import { Marger, FaIcon, downloadBlob, setPageTitle } from '../../helpers';
-import { Link as RouterLink } from 'react-router-dom';
+import { withStyles, Grid, Typography, Paper, Button, withTheme, Theme, CircularProgress, Divider, createTheme, ThemeProvider, Link, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@material-ui/core';
+import { Marger, FaIcon, downloadBlob, setPageTitle, notifyError } from '../../helpers';
+import { Link as RouterLink, RouteComponentProps } from 'react-router-dom';
 
 import { Stage } from '@mmsb/ngl';
 import BallAndStickRepresentation from '@mmsb/ngl/declarations/representation/ballandstick-representation';
@@ -12,7 +12,6 @@ import { RepresentationParameters } from '@mmsb/ngl/declarations/representation/
 import JSZip from 'jszip';
 import { blue } from '@material-ui/core/colors';
 import { applyUserRadius } from '../../nglhelpers';
-import StashedBuildHelper, { MartinizeFile, ElasticOrGoBounds } from '../../StashedBuildHelper';
 import SocketIo from 'socket.io-client';
 import { SERVER_ROOT, STEPS } from '../../constants';
 import { v4 as uuid } from 'uuid';
@@ -25,41 +24,50 @@ import GoEditor from './ProteinBuilder/GoEditor';
 import GoBondsHelper from './GoBondsHelper';
 import { BondsRepresentation } from './BondsRepresentation';
 import { BetaWarning } from '../../Shared'; 
-import { stdout } from 'process';
 import BaseBondsHelper from './BaseBondsHelper';
+import { getIdxSortedByChain } from './BaseBondsHelper';
 import ElasticBondHelper from './ElasticBondHelper';
 import Settings, { LoginStatus } from '../../Settings';
 import EmbeddedError from '../Errors/Errors';
+import { errorToText, loadMartinizeFiles } from '../../helpers'; 
 
+import ApiHelper from '../../ApiHelper'
+import ElasticBondsHelper from './ElasticBondHelper';
+import { MartinizeFile, MartinizeMode, ReadedJobFiles, ElasticOrGoBounds, ReadedJobDoc, AvailableForceFields } from '../../types/entities'; 
+import { Alert } from '@material-ui/lab'
+import { itpBeads, Bead } from './BeadsHelper';
+import BeadsLegend from './BeadsLegend'
 
 // @ts-ignore
 window.NGL = ngl; window.BaseBondsHelper = BaseBondsHelper;
 
-interface MBProps {
+interface MBProps extends RouteComponentProps {
   classes: Record<string, string>;
   theme: Theme;
+  location : any; 
 }
 
-interface MartinizeFiles {
+export interface MartinizeFiles {
   pdb: MartinizeFile;
-  itps: MartinizeFile[];
+  itps: MartinizeFile[]; // One array of itps for each molecule of the system
   radius: { [name: string]: number };
   top: MartinizeFile;
   go?: BaseBondsHelper;
   elastic_bonds?: BondsRepresentation;
+  warnings?: File; 
 }
 
 interface AtomRadius { 
   [atom: string]: number;
 }
 
+type BuilderType = "martinize" | "insane"
+
 export interface MBState {
-  running: 'pdb' | 'pdb_read' | 'martinize_params' | 'martinize_generate' | 'martinize_error' | 'done' | 'go_editor';
+  running: 'pdb' | 'pdb_read' | 'martinize_params' | 'martinize_generate' | 'martinize_error' | 'done' | 'go_editor' | 'load_error';
   error?: any;
   martinize_error?: MZError;
   martinize_step: string;
-
-  stdout?: any;
 
   all_atom_pdb?: File;
   all_atom_ngl?: NglComponent;
@@ -67,8 +75,8 @@ export interface MBState {
   coarse_grain_pdb?: Blob;
   coarse_grain_ngl?: NglComponent;
 
-  builder_force_field: string;
-  builder_mode: 'go' | 'classic' | 'elastic';
+  builder_force_field: AvailableForceFields;
+  builder_mode: MartinizeMode; 
   builder_positions: 'none' | 'all' | 'backbone';
   builder_ef: string;
   builder_el: string;
@@ -103,6 +111,12 @@ export interface MBState {
   theme: Theme;
 
   version?: string;
+
+  load_error_message?:string; 
+  send_mail: boolean; 
+
+  bead_radius_factor : number; 
+
 }
 
 /**
@@ -117,6 +131,8 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
   protected root = React.createRef<HTMLDivElement>();
   protected go_back_btn = React.createRef<any>();
 
+  protected beads: Bead[] = []; 
+
   protected saved_viz_params?: {
     aa_enabled: boolean;
     cg_op: number;
@@ -127,16 +143,15 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     go: BaseBondsHelper;
   };
 
+  protected jobId: string = ""; 
+
   componentDidMount() {
     setPageTitle('Protein Builder');
-    console.log("Builder mount")
-    console.log(Settings.logged); 
-    console.log(LoginStatus.None);
 
     if (Settings.logged === LoginStatus.None) {
-      console.log("OOOOO")
       return;
     }
+
 
     // @ts-ignore
     window.MoleculeBuilder = this;
@@ -144,6 +159,62 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     this.ngl = new NglWrapper("ngl-stage", { backgroundColor: this.props.theme.palette.background.default });
     this.changeCommandline('');
     this.getMartinizeVersion();
+
+    if ('id' in this.props.match.params){
+      //Reload an history job
+      const params = this.props.match.params as any
+      const jobId = params.id
+      this.loadFromHistory(jobId)
+
+    }
+   
+  }
+
+  async loadFromHistory(jobId: string){
+    try {
+      this.jobId = jobId; 
+      const job : ReadedJobDoc = await ApiHelper.request(`history/get?jobId=${jobId}`)
+      this.reloadJobSettingsIntoState(job)
+      const [allAtomFile, martinizeFiles, warnFile] = await Promise.all([this.loadAllAtomFile(job.files), loadMartinizeFiles(job), this.loadWarnings(job.files)])
+      this.reloadJob(allAtomFile, martinizeFiles, warnFile)
+    }catch(e) {
+      this.setState({load_error_message : errorToText(e as any), running: 'load_error'})
+    }
+    
+
+  }
+
+  reloadJobSettingsIntoState(job: ReadedJobDoc){
+    this.setState({
+      builder_force_field: job.settings.ff,
+      builder_mode : job.settings.builder_mode,
+      builder_positions : job.settings.position, 
+      builder_ef : job.settings.ef ?? this.original_state.builder_ef,
+      builder_el: job.settings.el ??  this.original_state.builder_el,
+      builder_eu: job.settings.eu ??  this.original_state.builder_eu,
+      builder_ea: job.settings.ea ??  this.original_state.builder_ea,
+      builder_ep: job.settings.ep ??  this.original_state.builder_ep,
+      builder_em: job.settings.em ??  this.original_state.builder_em,
+      nTer: job.settings.nter,
+      cTer : job.settings.cter,
+      sc_fix : job.settings.sc_fix.toString(),
+      cystein_bridge : job.settings.cystein_bridge
+    }) 
+  }
+
+  async loadAllAtomFile(files: ReadedJobFiles) : Promise<File> {
+    return new File([files.all_atom.content], files.all_atom.name, { type: files.all_atom.type })
+  }
+
+  async loadWarnings(files: ReadedJobFiles) : Promise<File> {
+    return new File([files.warnings.content], files.warnings.name, { type: files.warnings.type })
+  }
+
+  async loadBonds(martinizeFiles: MartinizeFiles, mode : "go" | "elastic"){
+    
+    const bonds = mode === "go" ? await GoBondsHelper.readFromItps(this.ngl,  martinizeFiles.itps.flat().map((e:MartinizeFile) => e.content)) : mode === "elastic" ? await ElasticBondsHelper.readFromItps(this.ngl, martinizeFiles.itps.map((e:MartinizeFile) => ({content: e.content, mol_idx: e.mol_idx}))) : undefined
+    const elastic_bonds = bonds?.representation
+    return {...martinizeFiles, elastic_bonds, go: bonds}
   }
 
   protected get original_state() : MBState {
@@ -180,13 +251,15 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       want_go_back: false,
       error: undefined,
       martinize_step: '',
+      send_mail: false,
+      bead_radius_factor : 0.2
     };
   }
 
 
 
   /* LOAD, RESET AND SAVE STAGES */
-  async save(name: string, overwrite_uuid?: string) {
+  /*async save(name: string, overwrite_uuid?: string) {
     const saver = new StashedBuildHelper();
 
     if (!this.state.files) {
@@ -229,65 +302,24 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       saved: uuid,
       edited: false,
     });
-  }
+  }*/
 
-  /* pas le load quand nouveau martinize, mais quand load molecule enregistrée */
-  async load(uuid: string) {
-    const saver = new StashedBuildHelper();
+
+  async reloadJob(allAtomFile : File, martinizeFiles : MartinizeFiles, warnFile : File){
+    try {
+      const builder_mode = this.state.builder_mode
+      const completeFiles = builder_mode === "go" || builder_mode === "elastic" ? await this.loadBonds(martinizeFiles, builder_mode) : martinizeFiles
+      completeFiles.warnings = warnFile; 
+      this.initAllAtomPdb(allAtomFile); 
+      this.initCoarseGrainPdb({
+        files : completeFiles,
+        mode : builder_mode === "classic" ? undefined : builder_mode
+      });
+      this.setState({files: completeFiles})
+    }catch(e) { 
+      notifyError(e as any) }
     
-    const save = await saver.get(uuid);
 
-    if (!save) {
-      return;
-    }
-
-    this.initAllAtomPdb(save.all_atom);
-
-    const infos = { ...save.info };
-    delete infos.created_at;
-    delete infos.name;
-
-    // @ts-ignore
-    this.setState(infos);
-
-    const mode = save.info.builder_mode ? 'elastic' : (save.info.builder_mode ? 'go' : undefined);
-    //const mode = save.elastic_bonds ? 'elastic' : (save.go ? 'go' : undefined);
-
-    let go_details: GoBondsHelper | ElasticBondHelper | undefined;
-    if (mode === "go") {
-      // @ts-ignore
-      go_details = save.go ? GoBondsHelper.fromJSON(this.ngl, save.go) : undefined;
-    } else if(mode === "elastic") {
-      // @ts-ignore
-      go_details = save.go ? ElasticBondHelper.fromJSON(this.ngl, save.go) : undefined;
-    }
-
-    let elastic_bonds: BondsRepresentation | undefined = undefined;
-    if (save.elastic_bonds) {
-      elastic_bonds = go_details!.representation; //new BondsRepresentation(this.ngl);
-      //elastic_bonds.bonds = save.elastic_bonds;
-    }
-
-    const files = {
-      top: save.top_file,
-      itps: save.itp_files,
-      pdb: save.coarse_grained,
-      radius: save.radius,
-      go: go_details,
-      elastic_bonds,
-    };
-
-    // Init PDB scene
-    this.initCoarseGrainPdb({
-      files,
-      mode,
-    });
-
-    this.setState({ 
-      files,
-      saved: uuid,
-      edited: false,
-    });
   }
 
   reset() {
@@ -297,13 +329,15 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     this.changeCommandline('');
     this.changeTheme('light');
   }
-
+  
 
   /* SET SETTINGS FOR REPRESENTATIONS */
 
-  setCoarseGrainRepresentation(parameters: Partial<RepresentationParameters>) {
+  setCoarseGrainRepresentation(parameters: Partial<RepresentationParameters>, representationType? : ViableRepresentation[]) {
     for (const repr of this.state.coarse_grain_ngl!.representations) {
-      repr.set(parameters);
+      if (!representationType || representationType.includes(repr.name as ViableRepresentation)) {
+        repr.set(parameters);
+      }
     }
   }
 
@@ -316,7 +350,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
   createTheme(hint: 'light' | 'dark') {
     const bgclr = hint === 'dark' ? '#303030' : '#fafafa';
 
-    return createMuiTheme({
+    return createTheme({
       palette: {
         type: hint,
         background: {
@@ -339,31 +373,31 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
   async initCoarseGrainPdb(options: { files: MartinizeFiles, mode?: 'go' | 'elastic' }) {
     let component: NglComponent;
-
+    const polarizableFF = Settings.martinize_variables.force_fields_info[this.state.builder_force_field].polarizable
+    this.beads = await itpBeads(options.files.top.content, options.files.itps.map(itp => itp.content), polarizableFF, options.mode)
     // Apply the NGL radius
     applyUserRadius(options.files.radius);
 
     try {
-      component = await this.ngl.load(options.files.pdb.content);
+      component = await this.ngl.load(options.files.pdb.content, {coarse_grained:true});
     } catch (e) {
       console.error(e);
       toast("Unable to load generated PDB. Please retry by re-loading the page.");
       return;
     }
 
-
-    const repr = component.add<BallAndStickRepresentation>("ball+stick");
-    // repr.name => "ball+stick"
+    const repr = component.add<BallAndStickRepresentation>("ball+stick", {}, {radius: true, color: true, beads: this.beads, ff: this.state.builder_force_field, radiusFactor: this.state.bead_radius_factor});
 
     component.center(500);
 
     this.setAllAtomRepresentation({ opacity: .3 });
 
     if (options.mode) {
-      const coordinates: [number, number, number][] = [];
+      const coordinates: [number, number, number][][] = [];
 
       repr.atomIterator(ap => {
-        coordinates.push([ap.x, ap.y, ap.z]);
+        if(ap.chainIndex in coordinates) coordinates[ap.chainIndex].push([ap.x, ap.y, ap.z])
+        else coordinates[ap.chainIndex] = [[ap.x, ap.y, ap.z]];
       });
 
       // Init the bond helper 
@@ -388,7 +422,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
   }
 
   async initAllAtomPdb(file: File) {
-    const component = await this.ngl.load(file);
+    const component = await this.ngl.load(file, {coarse_grained:false});
 
     component.add<BallAndStickRepresentation>("ball+stick");
     component.center();
@@ -411,11 +445,14 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     target_ensembl?: [Set<number>, Set<number> | undefined],
     /** Enable history push. */
     enable_history?: boolean,
+    chain: number,
     }) {
+
+    
     if (!this.state.files || !this.state.files.go)
       return;
 
-    const { target, target_single, target_ensembl } = options;
+    const { target, target_single, target_ensembl, chain } = options;
 
     if (target === undefined && target_single === undefined && target_ensembl === undefined) {
       throw new Error("No target");
@@ -426,157 +463,124 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     let go = files.go!;
 
     if (options.enable_history !== false) {
-      
       go.historyPush();
     }
 
-    if (options.mode === 'add') {
-      // (Source&Target are GO index + 1)
-      if (target !== undefined) {
-        // Add a single bond 
-        let atom1; let atom2;
-        if(this.state.builder_mode == "go") {
-          // @ts-ignore
-          atom1 = go.goIndexToRealIndex(target[0]);
-          // @ts-ignore
-          atom2 = go.goIndexToRealIndex(target[1]);
-        } else {
-          atom1 = target[0];
-          atom2 = target[1];
+    if (options.mode === "add") {
+      if(target !== undefined){
+        //Add a single bond
+        const atom1 = go.nglIndexToRealIndex(target[0])
+        const atom2 = go.nglIndexToRealIndex(target[1])
+        if (atom1.chain !== atom2.chain){
+          toast("You can't add bonds between 2 different chains", "error")
+          return
         }
-
-        go.add(go.createRealLine(atom1, atom2));
-
-        go.addCustomBonds(atom1, atom2);
+        const chain = atom1.chain; 
+        go.add(chain, go.createRealLine(atom1.index, atom2.index, chain));
+        go.addCustomBonds(chain, atom1.index, atom2.index)
       }
       else if (target_ensembl !== undefined && target_ensembl[1] !== undefined) {
         // Add line between each element of set
         for (const atom1 of target_ensembl[0]) {
-          let index1;
-          if(this.state.builder_mode == "go") {
-            // @ts-ignore
-            index1 = go.goIndexToRealIndex(atom1);
-          }
-          else {
-            index1 = atom1;
-          }
-
+          const index1 = go.nglIndexToRealIndex(atom1)
+          
           for (const atom2 of target_ensembl[1]) {
-            let index2;
-            if(this.state.builder_mode == "go") {
-              // @ts-ignore
-              index2 = go.goIndexToRealIndex(atom2);
-            } else {
-              index2 = atom2;
+            const index2 = go.nglIndexToRealIndex(atom2)
+            if(index1.chain === index2.chain){
+              go.add(index1.chain, go.createRealLine(index1.index, index2.index, index1.chain));
+              go.addCustomBonds(chain, index1.index, index2.index);
             }
-            go.add(go.createRealLine(index1, index2));
-
-            go.addCustomBonds(index1, index2);
           }
         }
       }
       else if (target_ensembl !== undefined && target_ensembl[1] === undefined) {
         // Add line between each element of set
         // Link all atoms of the set together
-        let index_set;
-        if(this.state.builder_mode == "go") {
-          // @ts-ignore
-          index_set = new Set([...target_ensembl[0]].map(e => go.goIndexToRealIndex(e)));
-        } else {
-          index_set = new Set([...target_ensembl[0]].map(e => e));
-        }
-
-        for (const index of index_set) {
-          for (const counterpart of index_set) {
-            if (index !== counterpart && !go.has(index, counterpart)) {
-              go.add(go.createRealLine(index, counterpart));
-              go.addCustomBonds(index, counterpart);
+        const real_indexes = [...target_ensembl[0]].map(e => go.nglIndexToRealIndex(e))
+        const real_indexes_by_chain = getIdxSortedByChain(real_indexes)
+        
+        for (const [chain, index_set] of Object.entries(real_indexes_by_chain)){  
+          const chainIdx = parseInt(chain)
+          if(isNaN(chainIdx)) throw new Error("Chain index is NaN")
+          for (const index of index_set) {
+            for (const counterpart of index_set) {
+              if (index !== counterpart && !go.has(index, counterpart, chainIdx)) {
+                go.add(chainIdx, go.createRealLine(index, counterpart, chainIdx));
+                go.addCustomBonds(chainIdx, index, counterpart);
+              }
             }
           }
         }
+
+        
       }
-    }
-    else {
+
+    } 
+    else { //REMOVE
       if (target !== undefined) {
         // Source&Target are REAL ATOM index 
         // Remove a single bond
         const [name1, name2] = target //.map(e => go.realIndexToGoName(e));
 
-        go.remove(name1, name2);
+        go.remove(chain, name1, name2);
 
-        go.rmCustomBonds(name1, name2);
+        go.rmCustomBonds(chain, name1, name2);
       }
       else if (target_single !== undefined) {
         // INDEX are GO Index + 1
         // Remove every bond from this atom
-        let index;
-        if(this.state.builder_mode == "go") {
-          // @ts-ignore
-          index = go.goIndexToRealIndex(target_single);
-        } else {
-          index = target_single;
-        }
 
-        go.remove(index);
+        const {chain, index} = go.nglIndexToRealIndex(target_single)
 
-        go.rmCustomBonds(index);
-      }
-      else if (target_ensembl !== undefined && target_ensembl[1] !== undefined) {
-        // INDEXES are GO Indexes + 1
-        // Convert every index to go name in a set
-        let counterpart: Set<any>;
-        if(this.state.builder_mode == "go") {
-          // @ts-ignore
-          counterpart = new Set([...target_ensembl[1]].map(e => go.goIndexToRealIndex(e)));
-        } else {
-          counterpart = new Set([...target_ensembl[1]].map(e => e))
-        }
+        go.remove(chain, index);
 
-        for (const atom of target_ensembl[0]) {
-          let index;
-          if(this.state.builder_mode == "go") {
-            // @ts-ignore
-            index = go.goIndexToRealIndex(atom);
-          } else {
-            index = atom;
-          }
-
-          // Get the bonds linked to counterpart items
-          const bonds = go.findBondsOf(index).filter((n: any) => counterpart.has(n));
-
-          // Remove every targeted bond
-          for (const bond of bonds) {
-            go.remove(index, bond);
-
-            go.rmCustomBonds(index, bond);
-          }
-        }
+        go.rmCustomBonds(chain, index);
       }
       else if (target_ensembl !== undefined && target_ensembl[1] === undefined) {
         // INDEXES are GO Indexes + 1
         // Unlink all atoms of the set together
-        let index_set: Set<any>;
-        if(this.state.builder_mode == "go") {
-          // @ts-ignore
-          index_set = new Set([...target_ensembl[0]].map(e => go.goIndexToRealIndex(e)));
-        } else {
-          index_set = new Set([...target_ensembl[0]].map(e => e));
-        }
 
-        for (const index of index_set) {
-          // Get the bonds linked to atoms in name set
-          const bonds = go.findBondsOf(index).filter((n: any) => index_set.has(n));
+        const index_set = [...target_ensembl[0]].map(e => go.nglIndexToRealIndex(e))
+
+        const sortedByChain = getIdxSortedByChain(index_set)
+
+        for (const [chain, index_set] of Object.entries(sortedByChain)){
+          const chainIdx = parseInt(chain)
+          if(isNaN(chainIdx)) throw new Error("Chain index is NaN")
+          for (const index of index_set) {
+            // Get the bonds linked to atoms in name set
+            const bonds = go.findBondsOf(index, chainIdx).filter((n: any) => index_set.has(n));
+            // Remove every targeted bond
+            for (const bond of bonds) {
+              go.remove(chainIdx, index, bond);
+              
+              go.rmCustomBonds(chainIdx, index, bond);
+            }
+          }
+        }
+      }
+      else if (target_ensembl !== undefined && target_ensembl[1] !== undefined) {
+        // INDEXES are GO Indexes + 1
+        // Convert every index to go name in a set
+        const counterpart = [...target_ensembl[1]].map(e => go.nglIndexToRealIndex(e))
+        
+        const counterpart_by_chain = getIdxSortedByChain(counterpart)
+
+        for (const atom of target_ensembl[0]) {
+          const {chain, index} = go.nglIndexToRealIndex(atom)
+          const counterpart_same_chain = counterpart_by_chain[chain]
+          // Get the bonds linked to counterpart items
+          const bonds = go.findBondsOf(index, chain).filter((n: any) => counterpart_same_chain.has(n));
 
           // Remove every targeted bond
           for (const bond of bonds) {
-            go.remove(index, bond);
+            go.remove(chain, index, bond);
 
-            go.rmCustomBonds(index, bond);
+            go.rmCustomBonds(chain, index, bond);
           }
         }
       }
     }
-
     go.render(this.state.virtual_link_opacity);
   
     this.setState({
@@ -584,33 +588,34 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     });
   }
 
-  redrawGoBonds = (highlight?: [number, number] | number, opacity?: number) => {    
+  redrawGoBonds = (highlight?: [number, number] | number, opacity?: number, h_chain?:number) => {    
+    let realHighlightIdx = highlight; 
     if (typeof highlight === 'number') {
       // transform go index to real index
-      if(this.state.builder_mode == "go") {
-        // @ts-ignore
-        highlight = this.state.files!.go!.goIndexToRealIndex(highlight);
-      }
+      // It's an atom, transform ngl index to real index
+      const nglAtom = this.state.files!.go!.nglIndexToRealIndex(highlight)
+      realHighlightIdx = nglAtom.index; 
+     
     }
 
     let h1 = 0, h2 = 0;
 
-    if (Array.isArray(highlight)) {
-      [h1, h2] = highlight;
+    if (Array.isArray(realHighlightIdx)) {
+      [h1, h2] = realHighlightIdx;
     }
-    else if (typeof highlight === 'number') {
+    else if (typeof realHighlightIdx === 'number') {
       // Highlight every link from highlight go atom
-      h1 = highlight;
+      h1 = realHighlightIdx;
     }
 
     // TODO improve
-    const predicate = highlight !== undefined ? ((atom1: number, atom2: number) => {
-      if (highlight && Array.isArray(highlight)) {
-        return (atom1 === h1 && atom2 === h2) || (atom2 === h1 && atom1 === h2);
+    const predicate = realHighlightIdx !== undefined ? ((atom1: number, atom2: number, chain:number) => {
+      if (realHighlightIdx && Array.isArray(realHighlightIdx)) {
+        return ((atom1 === h1 && atom2 === h2) || (atom2 === h1 && atom1 === h2) && h_chain === chain);
       }
       // Highlight is a number
       else if (h1) {
-        return atom1 === h1 || atom2 === h1;
+        return ((atom1 === h1 || atom2 === h1) && h_chain === chain);
       }
 
       return false;
@@ -622,11 +627,12 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     );
   };
 
-  setSchemeIdColorForCg = (id?: string) => {
+  setSchemeIdColorForCg = (atomColors? : {[atomIdx: number]: string}) => {
+    const schemeId = atomColors ? this.state.coarse_grain_ngl!.martiniSchemes.highlightAtomColorScheme(this.state.builder_force_field, atomColors) : this.state.coarse_grain_ngl!.martiniSchemes.getRegisteredColorSchemeId(this.state.builder_force_field)
     for (const repr of this.state.coarse_grain_ngl!.representations) {
       repr.set({
         colorScheme: 'element',
-        color: id,
+        color: schemeId,
       });
     }
   };
@@ -669,6 +675,13 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     const form_data: any = {};
     const s = this.state;
 
+    //Check if we have merge option in commandline, it's forbidden for elastic network or go model for now
+
+    if(s.commandline.includes("-merge") && (s.builder_mode === "elastic" || s.builder_mode === "go")){
+      toast("Martinize option -merge is forbidden with elastic network and go model for now.", "error")
+      return
+    }
+
     form_data.ff = s.builder_force_field;
     form_data.position = s.builder_positions;
     form_data.cter = s.cTer;
@@ -691,6 +704,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     }
     form_data.advanced = s.advanced;
     form_data.commandline = s.commandline;
+    form_data.builder_mode = s.builder_mode
 
     // form_data.pdb = s.all_atom_pdb;
 
@@ -702,6 +716,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
     // Run via socket.io
     const socket = SocketIo.connect(SERVER_ROOT);
+
     const pdb_content = await new Promise((resolve, reject) => {
       const fr = new FileReader();
 
@@ -723,7 +738,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       const files: Partial<MartinizeFiles> = {};
 
       // Begin the run
-      socket.emit('martinize', Buffer.from(pdb_content), RUN_ID, form_data);
+      socket.emit('martinize', Buffer.from(pdb_content), RUN_ID, form_data, Settings.user?.id, this.state.send_mail, s.all_atom_pdb?.name);
       this.setState({ martinize_step: 'Sending your files to server' });
 
       // Martinize step
@@ -752,7 +767,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       }); 
 
       // File upload
-      socket.on('martinize download', ({ id, name, type }: { id: string, name: string, type: string }, file: ArrayBuffer, ok_cb: Function) => {
+      socket.on('martinize download', ({ id, name, type, mol_idx }: { id: string, name: string, type: string, mol_idx:number }, file: ArrayBuffer, ok_cb: Function) => {
         if (id !== RUN_ID) {
           return;
         }
@@ -787,8 +802,12 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
               name,
               content: new File([file], name, { type }),
               type,
+              mol_idx
             });
             break;
+          }
+          case 'martinize-warnings' : {
+            files.warnings = new File([file], name, {type})
           }
         }
 
@@ -813,21 +832,21 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
         setMartinizeStep("Finishing...");
       });
 
-      socket.on('martinize stderr', ( stdout : any ) => {
-        this.setState({stdout: stdout}, () => {console.log(stdout)});
-      });
 
       // When run ends
       socket.on('martinize end', (
-        { id, elastic_bonds, radius }: { 
+        { id, elastic_bonds, radius, savedToHistory, jobId }: { 
           id: string, 
           elastic_bonds?: ElasticOrGoBounds[], 
           radius: { [name: string]: number; }, 
+          savedToHistory : boolean,
+          jobId: string,
         }) => {
           if (id !== RUN_ID) {
             return;
           }
-
+          
+          this.jobId = jobId; 
           files.radius = radius;
 
           /*
@@ -836,7 +855,8 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
             files.elastic_bonds.bonds = elastic_bonds;
           }
           */
-
+          if(savedToHistory) toast("Your job has been saved to history", "success")
+          else toast("Your job can't be saved to history. An error occured with the server.", "warning")
           resolve(files as MartinizeFiles);
       });
     }).catch(error => {
@@ -860,7 +880,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       // Init go sites
       files.go = await GoBondsHelper.readFromItps(this.ngl, files.itps.map(e => e.content));
     } else if (s.builder_mode === "elastic") {
-      files.go = await ElasticBondHelper.readFromItps(this.ngl, files.itps.map(e => e.content));
+      files.go = await ElasticBondHelper.readFromItps(this.ngl, files.itps.map(e => ({mol_idx: e.mol_idx, content : e.content})));
     }
 
     this.setState({ files, martinize_step: "" });
@@ -974,7 +994,6 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     if (Array.isArray(value)) {
       value = value[0];
     }
-
     this.setState({
       virtual_link_opacity: value / 100
     });
@@ -1007,6 +1026,19 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     this.setState({ virtual_link_visible: checked });
   };
 
+  onBeadRadiusChange = (_: any, value: number | number[]) => {
+    if(Array.isArray(value)){
+      value = value[0]
+    }
+
+    this.setState({bead_radius_factor : value})
+
+    this.setCoarseGrainRepresentation({ radiusType : "data", 
+      radiusData : this.state.coarse_grain_ngl!.martiniSchemes.applyRadiusFactor(this.state.builder_force_field, value)
+    }, ["ball+stick"]);
+
+  }
+
   onHistoryDownload = async () => {
     if (!this.state.files!.go) {
       return false;
@@ -1014,7 +1046,9 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
     try {
       const name = this.state.all_atom_pdb!.name.slice(0, this.state.all_atom_pdb!.name.indexOf('.pdb')) + '_modification_history.txt';
-      let history_file = new File(this.state.files!.go.customBondsGet(), name);
+      let content = [];
+      content.push(this.state.files!.go.customBondsGet().join('\n'));
+      let history_file = new File(content, name);
       downloadBlob(history_file, name);
     } catch (error) {
       console.warn("Failed to download history", error);
@@ -1030,61 +1064,8 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     this.setState({ generating_files: true });
 
     try {
-      const zip = new JSZip();
-      const files = this.state.files;
-
-      zip.file(files.pdb.name, files.pdb.content);
-      zip.file(files.top.name, files.top.content);
-
-      const itps = [...files.itps];
-
-      // Take the right itps
-      if (files.go) {
-        let to_replace: File[];
-        if (this.state.builder_mode === "go") {
-          // @ts-ignore
-          to_replace = files.go.toOriginalFiles();
-        }
-        else if (this.state.builder_mode === "elastic") {
-          to_replace = await files.go.toOriginalFiles(itps[0].content);
-        }
-        
-
-        for (const file of to_replace!) {
-          const index = itps.findIndex(e => e.name === file.name);
-          const m_file = {
-            name: file.name,
-            content: file,
-            type: 'chemical/x-include-topology',
-          };
-
-          if (index !== -1) {
-            console.log("Replaced file", itps[index], 'with', m_file)
-            itps[index] = m_file;
-          }
-          else {
-            itps.push(m_file);
-          }
-        }
-      }
-
-      for (const itp of itps) {
-        zip.file(itp.name, itp.content);
-      }
-  
-      const generated = await zip.generateAsync({
-        type: 'blob',
-        compression: 'DEFLATE',
-        compressionOptions: {
-          level: 7
-        }
-      });
-
-      const original_name = this.state.all_atom_pdb!.name;
-      const without_extension = original_name.slice(0, original_name.indexOf('.pdb')) + '-CG';
-
-      downloadBlob(generated, without_extension + '.zip');
-    } catch (e) {
+      await this.downloadMolecule(); 
+    }catch(e){
       console.warn("Failed to build zip.", e);
     } finally {
       this.setState({ generating_files: false });
@@ -1103,7 +1084,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     cmp_coarse.add(type, {
       visible: this.state.coarse_grain_visible,
       opacity: this.state.coarse_grain_opacity,
-    });
+    }, {radius: true, color: true, beads: this.beads, ff: this.state.builder_force_field, radiusFactor : type === "surface" ? 1 : this.state.bead_radius_factor});
 
     this.setState({
       representations: [...this.state.representations, type],
@@ -1174,54 +1155,90 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     this.go_back_btn.current.click();
   };
 
-  onForceFieldChange = (ff: string) => {
+  onForceFieldChange = (ff: AvailableForceFields) => {
     if (this.state.builder_mode === 'go' && !ff.includes('martini3')) {
       this.setState({ builder_mode: 'classic' });
     }
     this.setState({ builder_force_field: ff });
   };
 
-  onBondCreate = (go_atom_1: number, go_atom_2: number) => {
+  onBondCreate = (chain: number, go_atom_1: number, go_atom_2: number) => {
     return this.addOrRemoveGoBond({
       mode: 'add',
       target: [go_atom_1 + 1, go_atom_2 + 1],
+      chain
     });
   };
 
-  onBondRemove = (real_atom_1: number, real_atom_2: number) => {
+  onBondRemove = (chain: number, real_atom_1: number, real_atom_2: number) => {
     return this.addOrRemoveGoBond({
       mode: 'remove',
       target: [real_atom_1, real_atom_2],
+      chain 
     });
   };
 
-  onAllBondRemove = (from_go_atom: number) => {
+  onAllBondRemove = (chain: number, from_go_atom: number) => {
     return this.addOrRemoveGoBond({
       mode: 'remove',
       target_single: from_go_atom + 1,
+      chain
     });
   };
 
-  onBondCreateFromSet = (set1: Set<number>, set2?: Set<number>) => {
+  onBondCreateFromSet = (chain: number, set1: Set<number>, set2?: Set<number>) => {
     this.addOrRemoveGoBond({
       mode: 'add',
       target_ensembl: [set1, set2],
+      chain
     });
   };
 
-  onBondRemoveFromSet = (set1: Set<number>, set2?: Set<number>) => {
+  onBondRemoveFromSet = (chain: number, set1: Set<number>, set2?: Set<number>) => {
     this.addOrRemoveGoBond({
       mode: 'remove',
       target_ensembl: [set1, set2],
+      chain
     });
   };
 
-  onGoEditorValidate = () => {
+  onGoEditorValidate = async () => {
     this.restoreSettingsAfterGo(false);
+
+    if (!this.state.files){
+      console.error("files are not registered in state, should not happen")
+      return; 
+    }
+
+    if (!this.jobId){
+      console.error("job id is not registered, should not happen")
+      return; 
+    }
+
+    try {
+      await this.applyBondsToFiles(); 
+    } catch(e) {
+      toast("Can't apply new bonds to itp files", "error")
+      console.error(e); 
+    }
+
+    ApiHelper.request('history/update', { method: 'POST', 
+    parameters:  {jobId : this.jobId, files:this.state.files.itps.map(itp => itp.content), molIdxs: this.state.files.itps.map(itp => itp.mol_idx)}, body_mode : 'multipart'}).then(() => {
+      toast(`Job ${this.jobId} has been updated in history`, "success")
+    }).catch(e => {
+      toast(`Job ${this.jobId} can't be updated in history, an error occured`, "error")
+      console.error(e); 
+    })
   };
 
-  onGoEditorCancel = () => {
-    this.restoreSettingsAfterGo(true);
+  onGoEditorCancel = async () => {
+    this.restoreSettingsAfterGo(false);
+    try {
+      await this.applyBondsToFiles(); 
+    } catch(e) {
+      toast("Can't apply new bonds to itp files", "error")
+      console.error(e); 
+    }
   };
 
   onGoEditorStart = () => {
@@ -1279,6 +1296,76 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     this.setState({ edited: true });
   };
 
+  applyBondsToFiles = async () => {
+    if (!this.state.files){
+      console.warn("Files should be loaded into component to apply bonds")
+      return
+    }
+    const files = this.state.files
+    const itps = [...files.itps]
+    if (files.go){
+    
+      const to_replace = await files.go.toOriginalFiles(); 
+
+      for (const mol_file of to_replace!) {
+        const index = itps.findIndex(e => e.name === mol_file.file.name);
+        const m_file: MartinizeFile = {
+          name: mol_file.file.name,
+          content: mol_file.file,
+          type: 'chemical/x-include-topology',
+          mol_idx : mol_file.mol_idx
+
+        };
+
+        if (index !== -1) {
+          itps[index] = m_file;
+        }
+        else {
+          itps.push(m_file);
+        }
+
+        this.setState({files: {
+          top : this.state.files.top,
+          pdb : this.state.files.pdb,
+          radius : this.state.files.radius, 
+          elastic_bonds : this.state.files.elastic_bonds,
+          itps, 
+          go : this.state.files.go
+          }
+        })
+
+      }
+
+    }
+  }
+
+  downloadMolecule = async () => {
+    if (!this.state.files){
+      console.warn("files should be loaded into component to download them.")
+      return; 
+    }
+
+    const zip = new JSZip(); 
+    const files = this.state.files
+    zip.file(files.pdb.name, files.pdb.content);
+    zip.file(files.top.name, files.top.content);
+    for (const itp of files.itps) {
+      zip.file(itp.name, itp.content);
+    }
+
+    const generated = await zip.generateAsync({
+      type: 'blob',
+      compression: 'DEFLATE',
+      compressionOptions: {
+        level: 7
+      }
+    });
+
+    const original_name = this.state.all_atom_pdb!.name
+    const name = original_name.slice(0, original_name.indexOf('.pdb')) + '-CG'
+
+    downloadBlob(generated, name + '.zip');
+  }
 
   /* RENDERING */
 
@@ -1382,7 +1469,9 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
         form_data.use_go = "true";
         form_data.sc_fix = "true";
       }
-      socket.emit('previewMartinize', form_data);
+      
+      // WTF ?? 
+      socket.emit('previewMartinize', form_data); 
       socket.on('martinizePreviewContent', (data: any) => {
         this.setState({commandline: data}, () => {})
       })
@@ -1401,6 +1490,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       <ThemeProvider theme={this.state.theme}>
         {this.renderModalBackToDatabase()}
         <BetaWarning/>
+        
         <Grid 
           container 
           component="main" 
@@ -1408,6 +1498,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
           ref={this.root} 
           style={{ backgroundColor: this.state.theme.palette.background.default }}
         >
+           
           <Grid item sm={8} md={4} component={Paper} elevation={6} className={classes.side} style={{ backgroundColor: is_dark ? '#232323' : '' }} square>
             <div className={classes.paper}>
               <div className={classes.header}>
@@ -1438,7 +1529,6 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
               {/* Forms... */}
               {this.state.running === 'pdb' && <LoadPdb 
-                onStashedSelect={uuid => this.load(uuid)}
                 onFileSelect={this.onFileSelect}
                 error={this.state.error}
               />}
@@ -1449,7 +1539,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
                 martinizeError={this.state.martinize_error}
                 onBuilderModeChange={value => this.setState({ builder_mode: value as any }, () => {this.changeCommandline(value)})}
                 onBuilderPositionChange={value => this.setState({ builder_positions: value as any }, () => {this.changeCommandline(value)})}
-                onForceFieldChange={value => this.setState({ builder_force_field: value }, () => {this.changeCommandline(value)})}
+                onForceFieldChange={(value : AvailableForceFields) => this.setState({ builder_force_field: value }, () => {this.changeCommandline(value)})}
                 onMartinizeBegin={this.handleMartinizeBegin}
                 onReset={() => this.reset()}
                 onElasticChange={(type, value) => {
@@ -1477,14 +1567,14 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
                 } else {
                   this.setState({advanced: 'true'})
                 }}}
+                doSendMail={(bool) => this.setState({send_mail:bool})}
               />}
 
               {this.state.running === 'martinize_generate' && this.martinizeGenerating()}
 
               {this.state.running === 'done' && <MartinizeGenerated 
 
-                stdout={this.state.stdout}
-
+                martinizeWarnings={this.state.files?.warnings}
                 onReset={() => this.reset()}
                 theme={this.state.theme}
                 allAtomName={this.state.all_atom_pdb!.name.split('.')[0]}
@@ -1495,7 +1585,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
                 onAllAtomOpacityChange={this.onAllAtomOpacityChange}
                 onAllAtomVisibilityChange={this.onAllAtomVisibilityChange}
                 onMoleculeDownload={this.onMoleculeDownload}
-                onSave={name => this.save(name)}
+                //onSave={name => this.save(name)}
                 onRepresentationChange={this.onRepresentationChange}
                 representations={this.state.representations}
                 coarseGrainedOpacity={this.state.coarse_grain_opacity}
@@ -1510,7 +1600,11 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
                 edited={this.state.edited}
                 generatingFiles={this.state.generating_files}
                 onGoEditorStart={this.onGoEditorStart}
+                beadRadiusFactor={this.state.bead_radius_factor}
+                onBeadRadiusChange={this.onBeadRadiusChange}
               />}
+
+              
 
               {this.state.running === 'go_editor' && <GoEditor 
                 stage={this.ngl}
@@ -1531,11 +1625,20 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
                 onHistoryDownload={this.onHistoryDownload}
               />}
             </div>
+            
           </Grid>
 
+          
           <Grid item sm={4} md={8}>
-            <div id="ngl-stage" style={{ height: 'calc(100% - 5px)' }} />
+            {this.state.running === 'load_error' && 
+              <Alert severity="error">{this.state.load_error_message}</Alert>
+            }
+            <div id="ngl-stage" style={{ height: 'calc(100% - 5px)' }}/> 
+            {/*this.state.running === "done" && <BeadsLegend/>*/}
+                      
           </Grid>
+
+          
         </Grid>
       </ThemeProvider>
     );
@@ -1572,7 +1675,7 @@ export default withStyles(theme => ({
 }))(withTheme(MartinizeBuilder));
 
 // Used for martinize output in ajax post call
-function martinizeOutputParser(input: string) : { 
+/*function martinizeOutputParser(input: string) : { 
   pdb: MartinizeFile, 
   top: MartinizeFile, 
   itps: MartinizeFile[], 
@@ -1597,7 +1700,7 @@ function martinizeOutputParser(input: string) : {
       return value;
     }
   );
-}
+}*/
 
 // @ts-ignore
 window.Buffer = Buffer;

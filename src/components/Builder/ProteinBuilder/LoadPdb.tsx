@@ -1,11 +1,8 @@
 import React from 'react';
 import { Marger } from '../../../helpers';
-import { Typography, Button, Divider, Link } from '@material-ui/core';
-import { Link as RouterLink } from 'react-router-dom';
-import StashedBuild from '../StashedBuild';
+import { Typography, Button, Divider } from '@material-ui/core';
 
 export interface LoadPdbProps {
-  onStashedSelect(uuid: string): any;
   onFileSelect(file: File): any;
   error?: any;
 }
@@ -52,22 +49,6 @@ export default function LoadPdb(props: LoadPdbProps) {
 
       <Divider />
 
-      <Marger size="1rem" />
-
-      <Typography variant="h6">
-        Stashed molecules
-      </Typography>
-
-      <Typography>
-        You can use these molecules in the <Link 
-          component={RouterLink} 
-          to="/membrane_builder"
-        >
-          membrane builder
-        </Link>.
-      </Typography>
-
-      <StashedBuild onSelect={props.onStashedSelect} />
     </div>
   );
 }

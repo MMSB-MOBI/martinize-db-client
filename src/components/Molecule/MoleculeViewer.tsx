@@ -2,22 +2,28 @@ import React from 'react';
 import uuid from 'uuid/v4';
 import { toast } from '../Toaster';
 // @ts-ignore
-import { Stage, Component as NGLComponent } from '@mmsb/ngl';
 import { Theme, withTheme, CircularProgress } from '@material-ui/core';
 import ApiHelper from '../../ApiHelper';
 import { applyUserRadius, UserRadius } from '../../nglhelpers';
+import { itpBeads } from '../Builder/BeadsHelper';
+import NglWrapper, { NglRepresentation, NglComponent } from '../Builder/NglWrapper';
+import BallAndStickRepresentation from '@mmsb/ngl/declarations/representation/ballandstick-representation';
+import { AvailableForceFields } from '../../types/entities';
+import { Settings } from '../../Settings'
+
 
 // Component types
-type MVProps = { id: string, theme: Theme, };
-type MVState = { 
-  component?: NGLComponent, 
-  loading: boolean, 
+type MVProps = { id: string, theme: Theme, ff: AvailableForceFields};
+type MVState = {
+  component?: NglComponent,
+  loading: boolean,
   file?: Blob,
 };
 
 class MoleculeViewer extends React.Component<MVProps, MVState> {
   protected component_uuid = uuid();
-  protected ngl_stage?: Stage;
+  //protected ngl_stage?: Stage;
+  protected ngl! : NglWrapper; 
 
   state: MVState = {
     loading: false,
@@ -26,7 +32,8 @@ class MoleculeViewer extends React.Component<MVProps, MVState> {
   };
 
   componentDidMount() {
-    this.ngl_stage = new Stage(this.viewport_id, { backgroundColor: this.props.theme.palette.background.default });
+    //this.ngl_stage = new Stage(this.viewport_id, { backgroundColor: this.props.theme.palette.background.default });
+    this.ngl = new NglWrapper(this.viewport_id, { backgroundColor: this.props.theme.palette.background.default })
     this.initStage();
     window.addEventListener('resize', this.refreshStage);
 
@@ -35,7 +42,7 @@ class MoleculeViewer extends React.Component<MVProps, MVState> {
   }
 
   componentDidUpdate(old_props: MVProps) {
-    if (old_props.id !== this.props.id && this.ngl_stage) {
+    if (old_props.id !== this.props.id && this.ngl) {
       // refresh the NGL viewer
       this.initStage();
     }
@@ -46,8 +53,8 @@ class MoleculeViewer extends React.Component<MVProps, MVState> {
   }
 
   refreshStage = () => {
-    if (this.ngl_stage) {
-      this.ngl_stage.handleResize();
+    if (this.ngl) {
+      this.ngl.stage.handleResize();
     }
   };
 
@@ -61,10 +68,10 @@ class MoleculeViewer extends React.Component<MVProps, MVState> {
 
   protected async initStage() {
     this.setState({ loading: true });
-    this.ngl_stage!.removeAllComponents();
+    this.ngl.stage.removeAllComponents();
 
     // Download a new file
-    const request: Promise<{ radius: UserRadius, pdb: string }> = ApiHelper.request(this.getUrlFromId(), {
+    const request: Promise<{ radius: UserRadius, pdb: string, top: string, itps: string[] }> = ApiHelper.request(this.getUrlFromId(), {
       mode: 'json'
     });
 
@@ -73,22 +80,21 @@ class MoleculeViewer extends React.Component<MVProps, MVState> {
     });
 
     request
-      .then(({ radius, pdb }) => {
+      .then(async ({ radius, pdb, top, itps }) => {
         // Apply the radius to NGL
         applyUserRadius(radius);
 
+        const polarizableFF = Settings.martinize_variables.force_fields_info[this.props.ff].polarizable
+        const beads = await itpBeads(top, itps, polarizableFF); 
+
         // Load the PDB into NGL
-        return this.ngl_stage!.loadFile(new Blob([pdb]), { ext: 'pdb', name: this.props.id + ".pdb" })
-          .then((component: NGLComponent | void) => {
-            if (component) {
-              component.addRepresentation("ball+stick", undefined);
-              component.addRepresentation("cartoon", undefined);
-              component.autoView();
-      
-              // Register the component
-              this.setState({ component });
-            }
-          });
+
+        return this.ngl.load(new Blob([pdb]), { ext: 'pdb', name: this.props.id + ".pdb" })
+          .then((component) => {
+            component.add<BallAndStickRepresentation>('ball+stick', undefined, {radius: true, color: true, beads, ff:this.props.ff, radiusFactor : 0.2})
+            component.center()
+            this.setState({ component });
+          }) 
       })
       .catch((e: any) => {
         toast("Unable to initialize molecule viewer", "error");
@@ -101,9 +107,9 @@ class MoleculeViewer extends React.Component<MVProps, MVState> {
 
   render() {
     return (
-      <div 
-        id={this.viewport_id} 
-        style={{ width: '100%', height: '100%', minHeight: '300px', borderRadius: '8px', border: '1px #82828278 dashed', position: 'relative' }} 
+      <div
+        id={this.viewport_id}
+        style={{ width: '100%', height: '100%', minHeight: '300px', borderRadius: '8px', border: '1px #82828278 dashed', position: 'relative' }}
       >
         {this.state.loading && <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 999 }}>
           <CircularProgress variant="determinate" value={50} />

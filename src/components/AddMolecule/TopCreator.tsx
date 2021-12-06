@@ -1,5 +1,5 @@
 import React from 'react';
-import ItpFile, { TopFile } from 'itp-parser';
+import ItpFile, { TopFile } from 'itp-parser-forked';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, CircularProgress, DialogContentText, TextField } from '@material-ui/core';
 import { Marger } from '../../helpers';
 

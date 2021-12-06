@@ -37,6 +37,7 @@ export interface BaseMolecule {
   files: string;
   /** Author (if fetched). */
   author?: string;
+  builder_mode ?: string; 
 }
 
 export interface Molecule extends BaseMolecule {
@@ -76,3 +77,92 @@ export interface Token {
 }
 
 export type UserRole = "admin" | "curator";
+
+interface JobDoc extends CouchDoc {
+  id: string; 
+  jobId: string; 
+  userId : string;
+  date : string; 
+  radius : { [atomName: string]: number }; 
+  settings: JobSettings 
+  type : "martinize" | "insane"; 
+  name: string;
+  update_date? : string; 
+  manual_bonds_edition?: boolean; 
+}
+
+export interface ReadedJobDoc extends JobDoc { 
+  files : ReadedJobFiles; 
+
+}
+
+export interface RawJobDoc extends JobDoc {
+  files: RawJobFiles
+
+}
+
+export interface ReadedJobFiles {
+  all_atom : FileFromHttp; 
+  coarse_grained : FileFromHttp; 
+  itp_files : FileFromHttp[][]; 
+  top_file : FileFromHttp; 
+  warnings: FileFromHttp; 
+}
+
+export interface RawJobFiles { 
+  all_atom : FileFromHttp; 
+  coarse_grained : FileFromHttp; 
+  itp_files : FileFromHttp[][]; 
+  top_file : FileFromHttp;
+}
+
+
+export interface JobSettings {
+  builder_mode : MartinizeMode; 
+  ff : AvailableForceFields; 
+  advanced : boolean; 
+  commandline : string; 
+  cter : "COOH-ter"; 
+  nter : "NH2-ter";
+  sc_fix : boolean; 
+  position : "backbone" | "all" | "none"
+  cystein_bridge : "none" | "auto"
+  elastic? : boolean; 
+  use_go? : boolean; 
+  ea? : string; 
+  ef? : string; 
+  el? : string; 
+  em? : string; 
+  ep? : string; 
+  eu? : string; 
+}
+
+interface FileFromHttp {
+  name: string; 
+  type: string; 
+  content: string; 
+}
+
+interface CouchDoc {
+  _id : string; 
+  _rev : string; 
+}
+
+export interface MoleculeFile {
+  file : File; 
+  mol_idx: number; 
+}
+
+export type AvailableForceFields = "martini3001" | "elnedyn22" | "elnedyn22p" | "elnedyn" | "martini22" | "martini22p"
+
+export type MartinizeMode = "classic" | "go" | "elastic"
+
+export type ElasticOrGoBounds = [number, number];
+export type ElasticOrGoBoundsRegistered =  ElasticOrGoBounds[][]
+
+export interface MartinizeFile {
+  name: string;
+  content: File;
+  type: string;
+  mol_idx?: number; 
+}

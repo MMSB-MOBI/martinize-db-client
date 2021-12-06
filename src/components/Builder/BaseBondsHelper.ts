@@ -1,13 +1,14 @@
-import NglWrapper, { NglComponent, NglRepresentation } from './NglWrapper';
+import NglWrapper from './NglWrapper';
 import { BondsRepresentation } from './BondsRepresentation';
 import ReversibleKeyMap from 'reversible-key-map';
-import { ElasticOrGoBounds } from '../../StashedBuildHelper';
+import { MoleculeFile, ElasticOrGoBounds, ElasticOrGoBoundsRegistered } from '../../types/entities'
 
 //type number = string;
-export type Relations = ReversibleKeyMap<number, number, string>;
+export type Relations = ReversibleKeyMap<number, number, string>[]
 
 export interface BaseBondsHelperJSON {
   relations: [[number, number], string][];
+  chain : number; 
 }
 
 export default abstract class BaseBondsHelper {
@@ -15,7 +16,7 @@ export default abstract class BaseBondsHelper {
     /**
      * VAtom 1 <> VAtom 2: ITP line
      */
-    protected relations: Relations = new ReversibleKeyMap();
+    public relations: Relations = [];
     public readonly representation: BondsRepresentation;
 
     protected history: Relations[] = [];
@@ -26,47 +27,53 @@ export default abstract class BaseBondsHelper {
     protected currentBonds: Array<string> = [''];
     protected customBonds: Array<Array<string>> = [];
     protected lastCustomBonds: Array<Array<string>> = [];
+    protected bonds_itps: File[] = []; 
 
 
     /** Get bonds related to an go atom. */
-  findBondsOf(atom_name: number) {
-    const keys = this.relations.getAllFrom(atom_name)?.keys();
+  findBondsOf(atom_name: number, chain:number) {
+    const keys = this.relations[chain].getAllFrom(atom_name)?.keys();
     return keys ? [...keys] : [];
   }
 
 
 
-  addCustomBonds(atom1: any, atom2: any) {
-    this.currentBonds.push('added bond from '+atom1+' to '+atom2);
+  addCustomBonds(chain:number, atom1: any, atom2: any) {
+    this.currentBonds.push('added bond from '+atom1+' to '+atom2 + ' on chain ' + chain);
   }
 
-  rmCustomBonds(atom1: any, atom2?: any) {
+  rmCustomBonds(chain: number, atom1: any, atom2?: any) {
     if(atom2){
-      this.currentBonds.push('deleted bond from '+atom1+' to '+atom2);
+      this.currentBonds.push('deleted bond from '+atom1+' to '+atom2 + ' on chain ' + chain);
     }
     else {
-      this.currentBonds.push('deleted all bonds from '+atom1);
+      this.currentBonds.push('deleted all bonds from '+atom1 + ' on chain ' + chain);
     }
     
   }
 
 
     /** Access the computed bonds. */
-    get bonds() : ElasticOrGoBounds[] {
-      const bonds: ElasticOrGoBounds[] = [];
+    get bonds() : ElasticOrGoBoundsRegistered {
+      const allBonds: ElasticOrGoBoundsRegistered = [];
+      
+      for (const [chain, bonds] of this.relations.entries()){
+        const bonds_transformed: ElasticOrGoBounds[] = []
+        for (const [real1, real2] of bonds.keysCouples()) {
   
-      for (const [real1, real2] of this.relations.keysCouples()) {
-  
-        if (real1 !== undefined && real2 !== undefined) {
-          bonds.push([real1, real2]);
+          if (real1 !== undefined && real2 !== undefined) {
+            bonds_transformed.push([real1, real2]);
+          }
         }
+        allBonds[chain] = bonds_transformed; 
       }
+      
   
-      return bonds;
+      return allBonds;
     }
 
   
-  abstract render(opacity?: number, hightlight_predicate?: ((atom1_index: number, atom2_index: number) => boolean) | undefined): void;
+  abstract render(opacity?: number, hightlight_predicate?: ((atom1_index: number, atom2_index: number, chain:number) => boolean) | undefined): void;
   
   abstract filter(predicate: (atom1: number, atom2: number, line: string) => boolean) : BaseBondsHelper;
   
@@ -81,41 +88,41 @@ export default abstract class BaseBondsHelper {
     return this;
   }
 
-  abstract add(line: string): this;
-  abstract add(atom1: number, atom2: number, line: string): this;
-  abstract add(atom1_or_line: number | string, atom2?: number, line?: string) : this;
+  abstract add(chain: number, line: string): this;
+  abstract add(chain: number, atom1: number, atom2: number, line: string): this;
+  abstract add(chain: number, atom1_or_line: number | string, atom2?: number, line?: string) : this;
 
   /**
    * Test if bond {atom1}<>{atom2} exists.
    */
-   has(atom1: number, atom2: number) {
-    return this.relations.hasCouple(atom1, atom2);
+   has(atom1: number, atom2: number, chain:number) {
+    return this.relations[chain].hasCouple(atom1, atom2);
   }
 
-  remove(from_atom: number): this;
-  remove(atom1: number, atom2: number): this;
-  remove(atom1: number, atom2?: number) {
+  remove(chain:number, from_atom: number): this;
+  remove(chain:number, atom1: number, atom2: number): this;
+  remove(chain:number, atom1: number, atom2?: number) {
     if (atom2 === undefined) {
-      this.relations.deleteAllFrom(atom1);
+      this.relations[chain].deleteAllFrom(atom1);
     }
     else {
-      this.relations.delete(atom1, atom2);
+      this.relations[chain].delete(atom1, atom2);
     }
-
     return this;
   }
 
-  abstract createRealLine(atom1: number, atom2: number) : string;
+  abstract createRealLine(atom1: number, atom2: number, chain:number) : string;
 
-  abstract toOriginalFiles(itp : File | undefined) : File[] | Promise<File[]>;
+  abstract toOriginalFiles() : Promise<MoleculeFile[]>;
 
-  abstract toJSON () : BaseBondsHelperJSON;
+  abstract toJSON () : BaseBondsHelperJSON[];
 
   abstract clone(): BaseBondsHelper;
 
+  abstract nglIndexToRealIndex(nglIdx:number) : {chain:number, index:number};  
 
 
-  toString() {
+  /*toString() {
     let res_str = "";
 
     for (const line of this.relations.values()) {
@@ -123,24 +130,27 @@ export default abstract class BaseBondsHelper {
     }
 
     return res_str;
-  }
+  }*/
 
 
 
 
   /* ITERATION OF BONDS */
 
-  *[Symbol.iterator]() {
-    for (const [keys, line] of this.relations) {
-      yield [keys[0], keys[1], line] as const;
+  /*[Symbol.iterator]() {
+    for (const chain in this.relations){
+      for (const [keys, line] of this.relations[chain]) {
+        yield [keys[0], keys[1], line] as const;
+      }
     }
-  }
+    
+  }*/
   
       /* HISTORY */
 
   /** Save the current state in the history. */
   historyPush() {
-    this.history.push(new ReversibleKeyMap(this.relations.entries()));
+    this.history.push(this.relations.map(bonds => new ReversibleKeyMap(bonds.entries())));
     this.reverse_history = [];
 
     this.customBonds.push(Array.from(this.currentBonds));
@@ -148,13 +158,13 @@ export default abstract class BaseBondsHelper {
 
   historyRevert() {
     const last = this.reverse_history.pop();
-
+    
     if (last) {
       this.history.push(this.relations);
       this.relations = last;
 
       let cb = this.lastCustomBonds.pop();
-      if(cb != undefined) {
+      if(cb !== undefined) {
         this.customBonds.push(this.currentBonds);
         this.currentBonds = cb;
       }
@@ -173,7 +183,7 @@ export default abstract class BaseBondsHelper {
       this.relations = last;
 
       let lastcb = this.customBonds.pop();
-      if(lastcb != undefined) {
+      if(lastcb !== undefined) {
         this.lastCustomBonds.push(this.currentBonds);
         this.currentBonds = lastcb;
       }
@@ -209,4 +219,15 @@ export default abstract class BaseBondsHelper {
 
 
 
+}
+
+export function getIdxSortedByChain(indexes:{chain:number, index:number}[]): {[chain:number]:Set<number>}{
+  const sortedByChain: {[chain:number]:Set<number>} = {}
+
+  for (const atomObj of indexes){
+    if(!(atomObj.chain in sortedByChain)) sortedByChain[atomObj.chain] = new Set()
+    sortedByChain[atomObj.chain].add(atomObj.index)
+  }
+
+  return sortedByChain
 }

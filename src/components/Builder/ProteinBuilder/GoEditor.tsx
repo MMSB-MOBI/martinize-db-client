@@ -3,24 +3,22 @@ import NglWrapper, { NglComponent, NglRepresentation } from '../NglWrapper';
 import PickingProxy from '@mmsb/ngl/declarations/controls/picking-proxy';
 import { Vector3 } from 'three';
 import { Shape } from '@mmsb/ngl';
-import { Typography, Divider, Button, Box, Link, TextField, FormControlLabel, Checkbox } from '@material-ui/core';
+import { Typography, Divider, Button, Box, Link, TextField, FormControlLabel, Checkbox, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@material-ui/core';
 import * as ngl from '@mmsb/ngl';
 import { Marger, FaIcon } from '../../../helpers';
 import BallAndStickRepresentation from '@mmsb/ngl/declarations/representation/ballandstick-representation';
 import { toast } from '../../Toaster';
-import GoBondsHelper from '../GoBondsHelper';
 import BaseBondsHelper from '../BaseBondsHelper';
-import { CollectionsBookmarkSharp } from '@material-ui/icons';
 
 interface GoEditorProps {
   stage: NglWrapper;
   cgCmp: NglComponent;
-  onBondCreate(go_atom_1: number, go_atom_2: number): Promise<any>;
-  onBondRemove(real_atom_1: number, real_atom_2: number): any;
-  onAllBondRemove(from_go_atom: number): any;
+  onBondCreate(chain: number, go_atom_1: number, go_atom_2: number): Promise<any>;
+  onBondRemove(chain: number, real_atom_1: number, real_atom_2: number): any;
+  onAllBondRemove(chain: number, from_go_atom: number): any;
 
-  onBondCreateFromSet(atoms: Set<number>, target?: Set<number>): any;
-  onBondRemoveFromSet(atoms: Set<number>, target?: Set<number>): any;
+  onBondCreateFromSet(chain: number, atoms: Set<number>, target?: Set<number>): any;
+  onBondRemoveFromSet(chain: number, atoms: Set<number>, target?: Set<number>): any;
   onGoHistoryBack(opacity?: number): any;
   onGoHistoryRevert(opacity?: number): any;
   onHistoryDownload(): any;
@@ -28,8 +26,8 @@ interface GoEditorProps {
   onValidate(): any;
   onCancel(): any;
 
-  onRedrawGoBonds(highlight?: number | [number, number], opacity?: number): any;
-  setColorForCgRepr(schemeId?: string): any;
+  onRedrawGoBonds(highlight?: number | [number, number], opacity?: number, chain?:number): any;
+  setColorForCgRepr(atomColors?: {[atom:string]: string}): any;
 
   goInstance: BaseBondsHelper;
   mode: "go" | "elastic" | "classic";
@@ -40,19 +38,23 @@ interface GoEditorState {
   selected?: {
     type: 'atom',
     source: number,
+    chain: number,
   } | { 
     type: 'link',
     source: number,
     target: number,
+    chain: number, 
   } | {
     type: 'selection',
     s1: Set<number>,
     s2?: Set<number>,
+    chain: number, 
   };
   select_1: string;
   select_2: string;
   show_side_chains: boolean;
   enable_history: boolean;
+  want_save_bonds: boolean; 
 }
 
 interface PickedGoBond {
@@ -77,6 +79,7 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
     select_2: '',
     show_side_chains: false,
     enable_history: true,
+    want_save_bonds: false
   };
 
   protected get repr() {
@@ -96,7 +99,7 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
       return ".CA or .SC1 or .BB or .SC2 or .SC3 or .SC4";
     }
     if(this.props.mode === "go") {
-      return ".CA";
+      return ".CA or .BB";
     } else if (this.props.mode === "elastic") {
       return ".BB";
     }
@@ -111,6 +114,7 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
     this.props.stage.onClick(this.nglClickReciever);
     this.props.stage.removePanOnClick();
     this.repr.applySelection(this.selection_suffix);
+    
   }
 
   componentWillUnmount() {
@@ -146,8 +150,12 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
 
     // Detect type
     // If go atom, pp.atom.element === "CA"
+
+    
+
     if ((this.props.mode === "go" && pp.atom?.element === "CA") || (this.props.mode === "elastic" && pp.atom?.atomname === "BB")) {
       // GO atom
+      const chain = this.props.mode === "elastic" ? pp.atom.chainIndex : 0; 
       let source_or_target = pp.atom.index;
       // Get the residue index (this is the needed thing to highlight it)
 
@@ -155,10 +163,10 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
         const go_atom_1 = this.state.selected.source;
         // Create the bond if possible
         if (this.state.selected.source !== source_or_target) {
-          this.props.onBondCreate(go_atom_1, source_or_target)
+          this.props.onBondCreate(chain, go_atom_1, source_or_target)
             .then(() => {
               // redraw the bonds for selected atom
-              this.highlightBond(go_atom_1 + 1);
+              this.highlightBond(go_atom_1 + 1, chain);
             });
         }
 
@@ -179,12 +187,13 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
       }
 
       // Highlight the selected one
-      this.highlightAtom(source_or_target);
+      this.highlightAtom(source_or_target, chain);
 
       this.setState({
         selected: {
           type: 'atom',
           source: source_or_target,
+          chain : chain
         }
       });
     }
@@ -208,58 +217,59 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
       
       // Get atoms
       const [source, target] = obj.name.split('atoms ')[1].split('-').map(Number);
+      const chain = obj.name.split(' ')[1]
+      if(! (chain.startsWith('#'))) throw new Error("Something wrong with chain label on bonds ngl cylinder representation")
+      else {
+        const chainIdx = parseInt(chain.replace('#',''))
+        if (isNaN(chainIdx)) throw new Error("Chain id is not a number")
+        this.highlightBond([source, target], chainIdx);
 
+        this.setState({
+          selected: {
+            type: 'link',
+            source,
+            target,
+            chain : chainIdx
+          }
+        });
+      }
       // Highlight the bond
-      this.highlightBond([source, target]);
-
-      this.setState({
-        selected: {
-          type: 'link',
-          source,
-          target,
-        }
-      });
+      
     }
   };
 
-  highlightBond(target: [number, number] | number) {
-    this.props.onRedrawGoBonds(target, 1);
+  highlightBond(target: [number, number] | number, chain:number) {
+    this.props.onRedrawGoBonds(target, 1, chain);
   } 
 
   removeBondHighlight() {
     this.props.onRedrawGoBonds(undefined, 1);
   }
 
-  highlightAtom(atom_index: number) {
-    const schemeId = ngl.ColormakerRegistry.addSelectionScheme([
-      ["orange", `@${atom_index}`],
-      // @ts-ignore
-      ["element", "*"],
-    ], "test");
-    
-    this.props.setColorForCgRepr(schemeId);
-    this.props.onRedrawGoBonds(atom_index + 1, 1);
+  highlightAtom(atom_index: number, chain:number) {
+    const atomColors : any = {}
+    atomColors[atom_index] = "#ff00ff"
+    this.props.setColorForCgRepr(atomColors);
+    this.props.onRedrawGoBonds(atom_index + 1, 1, chain);
   }
 
   highlightGroup(atom_indexes: Set<number>, atom_indexes_2?: Set<number>) {
     // Remember that recieved groups of atom indexes are 1-indexes, not 0-indexes like NGL !
 
-    const items = [
-      ["red", `@${[...atom_indexes].map(e => String(e - 1)).join(',')}`]
-    ];
+    const colorAtoms: {[atomIdx: number]: string} = {}
 
-    if (atom_indexes_2) {
-      items.push(
-        ["blue", `@${[...atom_indexes_2].map(e => String(e - 1)).join(',')}`]
-      );
+    for(const atomIdx of [...atom_indexes]){
+      colorAtoms[atomIdx - 1] = "#9900ff"
     }
 
-    items.push(["element", "*"]);
+    if (atom_indexes_2) {
+      for (const atomIdx of [...atom_indexes_2]){
+        colorAtoms[atomIdx - 1] = "#ffff00"
+      }
+    }
 
-    // @ts-ignore
-    const schemeId = ngl.ColormakerRegistry.addSelectionScheme(items, "test");
-    
-    this.props.setColorForCgRepr(schemeId);
+
+    this.props.setColorForCgRepr(colorAtoms);
     this.props.onRedrawGoBonds(undefined, 1);
   }
 
@@ -282,7 +292,7 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
       return;
     }
 
-    this.props.onAllBondRemove(selected.source);
+    this.props.onAllBondRemove(selected.chain, selected.source);
   };
 
   onRemoveBond = () => {
@@ -291,7 +301,7 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
       return;
     }
 
-    this.props.onBondRemove(selected.source, selected.target);
+    this.props.onBondRemove(selected.chain, selected.source, selected.target);
     this.setState({ mode: 'idle', selected: undefined });
   };
 
@@ -301,7 +311,7 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
       return;
     }
 
-    this.props.onBondCreateFromSet(selected.s1, selected.s2);
+    this.props.onBondCreateFromSet(selected.chain, selected.s1, selected.s2);
   };
 
   onRemoveBondWithSet = () => {
@@ -310,7 +320,7 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
       return;
     }
 
-    this.props.onBondRemoveFromSet(selected.s1, selected.s2);
+    this.props.onBondRemoveFromSet(selected.chain, selected.s1, selected.s2);
   };
 
   onSelectionStop = () => {
@@ -414,6 +424,7 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
         type: 'selection',
         s1: g1_indexes,
         s2: g2_indexes,
+        chain : 0
       }
     });
   };
@@ -442,6 +453,7 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
   onGoHistoryRevert = () => {
     this.props.onGoHistoryRevert(1);
   };
+
 
   renderAtomSelected() {
     if (this.state.selected?.type !== 'atom') {
@@ -758,10 +770,35 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
     );
   }
 
+  renderModalSaveBonds() {
+    return(
+    <Dialog open={!!this.state.want_save_bonds}>
+        <DialogTitle>
+          Save bonds ?
+        </DialogTitle>
+
+        <DialogContent>
+          <DialogContentText>
+            Do you want to save your new bonds to history ? It will erase the previous save for this molecule.
+          </DialogContentText>
+        </DialogContent>
+
+        <DialogActions>
+          <Button color="primary" onClick={() => {
+            this.setState({want_save_bonds:false})
+            this.props.onCancel(); 
+            }}>No</Button>
+          <Button color="secondary" onClick={this.props.onValidate}>Yes</Button>
+        </DialogActions>
+      </Dialog>
+    )
+  }
+
   render() {
     let hist = this.props.goInstance.customBondsGet()
     return (
       <React.Fragment>
+        {this.renderModalSaveBonds()}
         <Marger size="1rem" />
 
         {/* Theme */}
@@ -792,7 +829,7 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
             <Button 
               style={{ width: '100%' }} 
               color="primary" 
-              onClick={this.props.onValidate}
+              onClick={() => this.setState({want_save_bonds : true})}
             >
               <FaIcon check /> <span style={{ marginLeft: '.6rem' }}>Validate all modifications</span>
             </Button>
