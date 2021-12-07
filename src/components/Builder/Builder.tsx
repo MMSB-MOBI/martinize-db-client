@@ -146,7 +146,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
   protected jobId: string = ""; 
 
   componentDidMount() {
-    setPageTitle('Protein Builder');
+    setPageTitle('Molecule Builder');
 
     if (Settings.logged === LoginStatus.None) {
       return;
@@ -1503,7 +1503,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
             <div className={classes.paper}>
               <div className={classes.header}>
                 <Typography component="h1" variant="h3" align="center" style={{ fontWeight: 700, fontSize: '2.5rem', marginBottom: '0rem' }}>
-                  Martinize a molecule
+                  Build a molecule with martinize
                 </Typography>
                 <Typography variant="subtitle1" align="center" style={{fontSize: '0.7rem', fontStyle: 'italic', marginBottom: '1rem'}}>
                   {this.state.version}
