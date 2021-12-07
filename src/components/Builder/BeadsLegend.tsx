@@ -1,9 +1,7 @@
 import React from 'react'; 
-import { Container, Button, Popover, Typography } from '@mui/material'
+import {Button, Popper } from '@mui/material'
 import * as d3 from 'd3'
-import { relative } from 'path';
-import { getBeadsLegend, getBeadsAAByType } from '../../martiniNglSchemes';
-import { ThreeSixty } from '@material-ui/icons';
+import { getBeadsLegend, getBeadGeneralTypeAndAA } from '../../martiniNglSchemes';
 
 const width = 400
 const padding = 10
@@ -11,7 +9,7 @@ const padding = 10
 const componentStyle = {
     position: "relative" as any, 
     top:"-95%",
-    left:"75%",
+    left:"90%",
     border: "solid",
     borderWidth: "1px", 
     width: width,
@@ -19,19 +17,34 @@ const componentStyle = {
     textAlign : "center" as any
   };
 
+const svgStyle = {
+    border: "solid", 
+    borderWidth: "1px",
+    padding: padding, 
+}
+
+const ButtonStyle = {
+    position : 'relative' as any,
+    top:"-95%",
+    left:"85%",
+}
+
 interface BeadsLegendProps {
 }
 
 interface BeadsLegendState { 
     open:boolean; 
     buttonText : string; 
+    drawed : boolean; 
+    anchorElmt: any; 
 }
-
 
 export default class BeadsLegend extends React.Component<BeadsLegendProps, BeadsLegendState> { 
     state : BeadsLegendState = {
         open : false,
-        buttonText : "Open color legend"
+        buttonText : "Open color legend",
+        drawed : false, 
+        anchorElmt : null
     }
     protected svg : any; 
     protected rect_height = 25
@@ -39,20 +52,21 @@ export default class BeadsLegend extends React.Component<BeadsLegendProps, Beads
     protected rect_number = 3
     protected y_gap = 10
 
-    componentDidUpdate() {
-        console.log("did update")
-        if(this.state.open){
-            this.createJustBeads()
-            //this.createHydrophobicityColorScale(); 
-            this.createChargeBeadsLegend()
-        }
-       
+    protected legendValues = getBeadsLegend("martini3001")
+
+
+    componentDidUpdate(){
+        if(this.state.open && !this.state.drawed) this.drawLegend(); 
     }
 
     drawLegend() {
         console.log("draw legend")
         this.createJustBeads()
         this.createChargeBeadsLegend()
+        this.setState({drawed : true})
+        //this.createBeadsThreeColumns()
+        //this.createAATable()
+        //
     }
 
     createHydrophobicityColorScale() { 
@@ -132,17 +146,16 @@ export default class BeadsLegend extends React.Component<BeadsLegendProps, Beads
 
     }
 
-    createJustBeads(){
+    createJustBeads(addAA : boolean = true){
+        const beadsAA = getBeadGeneralTypeAndAA("martini3001")
         this.svg.append("text")
             .text("Hydrophobicity scale")
             .attr("y", 15)
             .attr("font-weight", "bold")
-
-        const legendValues = getBeadsLegend("martini3001")
         //const beadsAA = getBeadsAAByType("martini3001")
         //console.log(beadsAA); 
-        if(legendValues){
-            const beadsToPlot = Object.keys(legendValues).filter(beadName => beadName.startsWith("C") || beadName.startsWith("N") || beadName.startsWith("P"))
+        if(this.legendValues){
+            const beadsToPlot = Object.keys(this.legendValues).filter(beadName => beadName.startsWith("C") || beadName.startsWith("N") || beadName.startsWith("P"))
 
             this.svg.selectAll("dot")
                     .data(beadsToPlot)
@@ -150,25 +163,26 @@ export default class BeadsLegend extends React.Component<BeadsLegendProps, Beads
                     .attr("r", 10)
                     .attr("cy", (d: string, i : number) => 35 + i * 30)
                     .attr("cx", 15)
-                    .attr("fill", (d: string) => legendValues[d].color)
+                    //@ts-ignore
+                    .attr("fill", (d: string) => this.legendValues[d].color)
                     .attr("stroke", "black")
 
             this.svg.selectAll("legend-text")
                     .data(beadsToPlot)
                     .enter().append("text")
                     .text((d: string) => {
-                        /*let toPrint = ""
-                        if(beadsAA && d in beadsAA){
-                            for(const [size, atomObj] of Object.entries(beadsAA[d])){
-                                toPrint += size + ": "
-                                for(const [atomName, aaArray] of Object.entries(atomObj)){
-                                    toPrint += aaArray.join("|") + "(" + atomName + ")" 
+                        let toPrint = d
+                        if(addAA){
+                            if(beadsAA && d in beadsAA){
+                                const aaList = new Set()
+                                for(const aa of beadsAA[d]){
+                                    if (aa.atomName.startsWith("SC")) aaList.add(aa.aminoAcid)
                                 }
+                                if(aaList.size > 0) toPrint += " ... " + [...aaList].join(" ")
                             }
-                            return `${d}...${toPrint}`
+                            if (d === "P6") toPrint += " ... terminal beads"
                         }
-                        if (d === "P6") return `${d}... terminal beads`*/
-                        return d
+                        return toPrint
                     })
                     .attr("y", (d:string, i : number) => 35 + i * 30)
                     .attr("x", 30)
@@ -182,6 +196,56 @@ export default class BeadsLegend extends React.Component<BeadsLegendProps, Beads
         
 
     }
+
+    createBeadsThreeColumns(){
+        this.createJustBeads(); 
+        if(this.legendValues){
+            const smallBeads = Object.keys(this.legendValues).filter(beadName => beadName.startsWith("SC") || beadName.startsWith("SN") || beadName.startsWith("SP"))
+            this.svg.selectAll("small-dot")
+                .data(smallBeads)
+                .enter().append("circle")
+                .attr("r", 10)
+                .attr("cx", 75)
+                .attr("cy", (_: string, i: number) => 35 + i * 30)
+                //@ts-ignore
+                .attr("fill", (bead : string) => this.legendValues[bead].color)
+                .attr("stroke", "black")
+            this.svg.selectAll("legend-text-small")
+                .data(smallBeads)
+                .enter().append("text")
+                .text((d: string) => {
+                    return d
+                })
+                .attr("y", (d:string, i : number) => 35 + i * 30)
+                .attr("x", 90)
+                //.attr("transform", (d: string) => `rotate(65 ${linearScale(legendValues[d].hydrophobicity)} 65)`)
+                .style("dominant-baseline", "middle")  
+
+                const tinyBeads = Object.keys(this.legendValues).filter(beadName => beadName.startsWith("TC") || beadName.startsWith("TN") || beadName.startsWith("TP"))
+                this.svg.selectAll("tiny-dot")
+                    .data(tinyBeads)
+                    .enter().append("circle")
+                    .attr("r", 10)
+                    .attr("cx", 135)
+                    .attr("cy", (_: string, i: number) => 35 + i * 30)
+                    //@ts-ignore
+                    .attr("fill", (bead : string) => this.legendValues[bead].color)
+                    .attr("stroke", "black")
+                this.svg.selectAll("legend-text-tiny")
+                    .data(tinyBeads)
+                    .enter().append("text")
+                    .text((d: string) => {
+                        return d
+                    })
+                    .attr("y", (d:string, i : number) => 35 + i * 30)
+                    .attr("x", 150)
+                    //.attr("transform", (d: string) => `rotate(65 ${linearScale(legendValues[d].hydrophobicity)} 65)`)
+                    .style("dominant-baseline", "middle")  
+    
+            }
+
+        }
+
 
     createChargeBeadsLegend() { 
         const width = 25
@@ -224,6 +288,23 @@ export default class BeadsLegend extends React.Component<BeadsLegendProps, Beads
 
     }
 
+    /*createAATable() {
+        const aaBeads = getBeadGeneralTypeAndAA("martini3001")
+        let previous_y = 10
+        this.svg.selectAll("text-aa")
+            .data(Object.keys(aaBeads))
+            .enter()
+            .append("text")
+                .text((aa : string) => {
+                    const sideChains = Object.keys(aaBeads[aa]).filter(atomName => atomName.startsWith("SC"))
+                    const toPrint = sideChains.map(sc => `${sc} : ${aaBeads[aa][sc].bead}`).join("; ")
+                    return `${aa} : ${toPrint}`})
+                .attr("x", 200)
+                .attr("y", () => {previous_y = previous_y + 20; return previous_y})
+            
+
+    }*/
+
     createRect(color:string, position: number, legend: string) {
         const y = position === 0 ? 0 : position * this.rect_height + position * this.y_gap
         this.svg.append("circle")
@@ -239,28 +320,44 @@ export default class BeadsLegend extends React.Component<BeadsLegendProps, Beads
             .style("dominant-baseline", "middle")        
     }
 
-    triggerOpenLegend = () => {
+    triggerOpenLegend = (event: React.MouseEvent<HTMLButtonElement>) => {
         if(this.state.open){
-            this.setState({open : false, buttonText : "Open color legend"})
+            this.setState({open : false, buttonText : "Open color legend", anchorElmt : null})
         }
         else {
-            this.setState({open: true, buttonText : "Close color legend"})
+            this.setState({open: true, buttonText : "Close color legend", anchorElmt : event.currentTarget})
         }
+    }
+
+    handleClose = () => {
+        this.setState({open : false, buttonText : "Open color legend", drawed : false, anchorElmt : null})
     }
 
     render(){
         return(
 
-            <div style={componentStyle}>
-                <Button onClick={this.triggerOpenLegend}> {this.state.buttonText} </Button>
-                {this.state.open && 
-                    <svg
+            <React.Fragment>
+                <Button style={ButtonStyle} onClick={this.triggerOpenLegend}> {this.state.buttonText} </Button>
+                <Popper
+                    id="test"
+                    open={this.state.open}
+                    anchorEl={this.state.anchorElmt}
+                    keepMounted={true}>
+                    <div> 
+                    <svg style={svgStyle}
                         width={width - padding*2}
                         height={600}
-                        ref={handle => (this.svg = d3.select(handle))}>
+                        ref={handle => {
+                            (this.svg = d3.select(handle))
+                            }}>
                     </svg>
-                   }
-            </div>)
+                    </div>
+                    
+                </Popper>
+
+                   
+                   
+            </React.Fragment>)
             
     }
 }

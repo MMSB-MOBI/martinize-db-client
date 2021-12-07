@@ -6,7 +6,7 @@ import { Bead } from './components/Builder/BeadsHelper'
 import { cpuUsage } from "process";
 const martini3ColorScheme: { [beadType: string]: { color : string, hydrophobicity : number }} = require('./schemes/martini3_cyan_orange.json');
 const martini2ColorScheme: { [beadType: string]: { color : string, hydrophobicity : number } } = require('./schemes/martini2_cyan_orange.json');
-const martini3BeadsAA : { [beadType : string] : {aminoAcid : string, atomName : string}[]} = require('./schemes/martini3_beads_aa.json')
+const martini3BeadsAA : { [bead : string] : {aminoAcid : string, atomName: string}[]} = require('./schemes/martini3_beads_aa.json')
 
 type BeadSize = 'R' | 'S' | 'T'
 
@@ -19,7 +19,7 @@ const MOLECULE_EXCEPTIONS_COLOR: { [molecule: string]: string } = {
     "CL-": "red"
 } //it's molecule types in .top files that are not described in itp file, like solvents 
 
-const MARTINI3_BEADS_REGEX = new RegExp("^(?<type>(?<size>[S|T]{0,1})[A-Z]{1}[1-9]{1})(?<add>[a-z]{0,2})$")
+const MARTINI3_BEADS_REGEX = new RegExp("^(?<type>(?<size>[S|T]{0,1})(?<general_type>[A-Z]{1}[1-9]{1}))(?<add>[a-z]{0,2})$")
 const MARTINI3_BEADS_RADIUS = { "S": 2.30, "T": 1.91, "R": 2.64 }
 
 const MARTINI2_BEADS_RADIUS = { "R": 2.64, "S": 2.41, "T": 1.80 }
@@ -27,7 +27,7 @@ const BEADS_RADIUS_EXCEPTIONS : {[bead : string]: number} = { "D": 1 }
 export const MARTINI2_BEADS_REGEX = new RegExp("^(?<size>[S|T]{0,1})(?<type>[A-Z]{1}(?<add>[a-z0-9]*))$")
 const MARTINI2_REGEX_EXCEPTIONS = ["AC1", "AC2"]
 
-const FF_TO_SCHEMES: { [ff: string]: { color: { [beadType: string]: { color : string, hydrophobicity : number }}, radius: { [key in BeadSize]: number }, regex: RegExp, beadsAA? : { [beadType : string] : {aminoAcid : string, atomName : string}[]}, regexExceptions?: string[] } } = {
+const FF_TO_SCHEMES: { [ff: string]: { color: { [beadType: string]: { color : string, hydrophobicity : number }}, radius: { [key in BeadSize]: number }, regex: RegExp, beadsAA? : { [bead : string] : {aminoAcid : string, atomName: string}[]}, regexExceptions?: string[] } } = {
     'martini3001': { color: martini3ColorScheme, radius: MARTINI3_BEADS_RADIUS, regex: MARTINI3_BEADS_REGEX, beadsAA : martini3BeadsAA },
     'martini22': { color: martini2ColorScheme, radius: MARTINI2_BEADS_RADIUS, regex: MARTINI2_BEADS_REGEX, regexExceptions: MARTINI2_REGEX_EXCEPTIONS },
     "martini22p": { color: martini2ColorScheme, radius: MARTINI2_BEADS_RADIUS, regex: MARTINI2_BEADS_REGEX, regexExceptions: MARTINI2_REGEX_EXCEPTIONS }, 
@@ -41,14 +41,14 @@ export function getBeadsLegend(ff: AvailableForceFields){
 }
 
 //return beads aa correspondance sorted by type (without size)
-export function getBeadsAAByType(ff: AvailableForceFields) : {[beadType : string] : {[beadSize : string] : {[atomName : string]: string[]}}} | undefined {
+/*export function getBeadsAAByType(ff: AvailableForceFields) : {[beadType : string] : {[beadSize : string] : {[atomName : string]: string[]}}} | undefined {
     if(ff in FF_TO_SCHEMES) {
         const beadsAa = FF_TO_SCHEMES[ff].beadsAA
         if(beadsAa){
             const beadRegex = FF_TO_SCHEMES[ff].regex
             const res: {[beadType : string] : {[beadSize : string] : {[atomName : string]: string[]}}} = {}
             for( const beadName of Object.keys(beadsAa)){
-                const beadType = beadName.match(beadRegex)?.groups?.type
+                const beadType = beadName.match(beadRegex)?.groups?.general_type
                 const beadSize = beadName.match(beadRegex)?.groups?.size ?? "R"
                 console.log(beadType, beadSize)
 
@@ -64,6 +64,29 @@ export function getBeadsAAByType(ff: AvailableForceFields) : {[beadType : string
             }
             return res
         }
+    }
+}*/
+
+
+export function getBeadGeneralTypeAndAA(ff: AvailableForceFields) : {[beadType : string] : {aminoAcid: string, atomName : string}[]} | undefined {
+    const returnObj : {[beadType : string] : {aminoAcid: string, atomName : string}[]}= {} //{bead : AA[]}
+    if(ff in FF_TO_SCHEMES){
+        const beadsAA = FF_TO_SCHEMES[ff].beadsAA
+        const regex = FF_TO_SCHEMES[ff].regex
+        if(beadsAA){
+            for(const [bead, aaArray] of Object.entries(beadsAA)){
+                const beadGeneralType = bead.match(regex)?.groups?.general_type
+                if(beadGeneralType){
+                    if(!(beadGeneralType in returnObj)) returnObj[beadGeneralType] = []
+                    for (const aa of aaArray){
+                        returnObj[beadGeneralType].push(aa)
+                    }
+                    
+                }
+            }
+            
+        }
+        return returnObj
     }
 }
 
