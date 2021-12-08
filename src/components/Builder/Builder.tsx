@@ -30,8 +30,7 @@ import ElasticBondHelper from './ElasticBondHelper';
 import Settings, { LoginStatus } from '../../Settings';
 import EmbeddedError from '../Errors/Errors';
 import { errorToText, loadMartinizeFiles } from '../../helpers'; 
-
-import ApiHelper from '../../ApiHelper'
+import ApiHelper from "../../ApiHelper";
 import ElasticBondsHelper from './ElasticBondHelper';
 import { MartinizeFile, MartinizeMode, ReadedJobFiles, ElasticOrGoBounds, ReadedJobDoc, AvailableForceFields } from '../../types/entities'; 
 import { Alert } from '@material-ui/lab'
@@ -1434,10 +1433,9 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
   }
 
   getMartinizeVersion() {
-    const socket = SocketIo.connect(SERVER_ROOT);
-    socket.on('martinizeVersion', (data: any) => {
-      this.setState({version: data}, ()=>{});
-    })  
+    ApiHelper.request('molecule/martinize/version').then(request_res => {
+      this.setState({version: request_res.version})
+    }).catch(err => {console.error(err)})
   }
 
   changeCommandline(value: string) {
@@ -1506,7 +1504,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
                   Build a molecule with martinize
                 </Typography>
                 <Typography variant="subtitle1" align="center" style={{fontSize: '0.7rem', fontStyle: 'italic', marginBottom: '1rem'}}>
-                  {this.state.version}
+                  martinize version : {this.state.version}
                 </Typography>
 
                 <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
