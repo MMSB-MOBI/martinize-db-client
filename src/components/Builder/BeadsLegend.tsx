@@ -3,7 +3,8 @@ import {Button, Popper } from '@mui/material'
 import * as d3 from 'd3'
 import { getBeadsLegend, getBeadGeneralTypeAndAA } from '../../martiniNglSchemes';
 
-const width = 400
+const width = 300
+const height = 650
 const padding = 10
 
 const componentStyle = {
@@ -178,9 +179,9 @@ export default class BeadsLegend extends React.Component<BeadsLegendProps, Beads
                                 for(const aa of beadsAA[d]){
                                     if (aa.atomName.startsWith("SC")) aaList.add(aa.aminoAcid)
                                 }
-                                if(aaList.size > 0) toPrint += " ... " + [...aaList].join(" ")
+                                if(aaList.size > 0) toPrint += " : " + [...aaList].join(" ")
                             }
-                            if (d === "P6") toPrint += " ... terminal beads"
+                            if (d === "P6") toPrint += " : terminal beads"
                         }
                         return toPrint
                     })
@@ -250,8 +251,8 @@ export default class BeadsLegend extends React.Component<BeadsLegendProps, Beads
     createChargeBeadsLegend() { 
         const width = 25
         const height = 20
-        const y_start = 15
-        const x_start = 150
+        const y_start = 580
+        const x_start = 0
 
         this.svg.append("text")
             .text("Charged beads")
@@ -346,7 +347,7 @@ export default class BeadsLegend extends React.Component<BeadsLegendProps, Beads
                     <div> 
                     <svg style={svgStyle}
                         width={width - padding*2}
-                        height={600}
+                        height={height}
                         ref={handle => {
                             (this.svg = d3.select(handle))
                             }}>
