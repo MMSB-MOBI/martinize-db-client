@@ -3,7 +3,7 @@ import NglWrapper, { NglComponent, NglRepresentation } from '../NglWrapper';
 import PickingProxy from '@mmsb/ngl/declarations/controls/picking-proxy';
 import { Vector3 } from 'three';
 import { Shape } from '@mmsb/ngl';
-import { Typography, Divider, Button, Box, Link, TextField, FormControlLabel, Checkbox, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from '@material-ui/core';
+import { Typography, Divider, Button, Box, Link, TextField, FormControlLabel, Checkbox, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Slider } from '@material-ui/core';
 import * as ngl from '@mmsb/ngl';
 import { Marger, FaIcon } from '../../../helpers';
 import BallAndStickRepresentation from '@mmsb/ngl/declarations/representation/ballandstick-representation';
@@ -31,6 +31,9 @@ interface GoEditorProps {
 
   goInstance: BaseBondsHelper;
   mode: "go" | "elastic" | "classic";
+
+  beadRadiusFactor : number; 
+  onBeadRadiusChange(_: any, value : number|number[]): any
 }
 
 interface GoEditorState {
@@ -689,6 +692,22 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
             label="Enable history"
           />
         </Box>
+
+        <Marger size="1.5rem" />
+
+        <Typography gutterBottom>
+          Beads radius factor
+        </Typography>
+        <Slider
+          value={this.props.beadRadiusFactor}
+          valueLabelDisplay="auto"
+          step={0.1}
+          marks
+          min={0}
+          max={1}
+          onChange={this.props.onBeadRadiusChange}
+          color="secondary"
+        />
 
         <Marger size="1.5rem" />
 

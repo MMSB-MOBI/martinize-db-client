@@ -1623,6 +1623,8 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
                 goInstance={this.state.files!.go!}
                 mode={this.state.builder_mode}
                 onHistoryDownload={this.onHistoryDownload}
+                beadRadiusFactor={this.state.bead_radius_factor}
+                onBeadRadiusChange={this.onBeadRadiusChange}
               />}
             </div>
             
@@ -1634,7 +1636,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
               <Alert severity="error">{this.state.load_error_message}</Alert>
             }
             <div id="ngl-stage" style={{ height: 'calc(100% - 5px)' }}/> 
-            {this.state.running === "done" && <BeadsLegend/>}
+            {/*this.state.running === "done" && <BeadsLegend/>*/}
                       
           </Grid>
 
