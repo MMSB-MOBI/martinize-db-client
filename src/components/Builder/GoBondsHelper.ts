@@ -380,7 +380,7 @@ export default class GoBondsHelper extends BaseBondsHelper {
       // Read the go table ITP
       const table = await ItpFile.read(table_file);
 
-      console.log(`[GO-VIRT-SITES] [${molecule_type}] Atom bonds described: ${table.headlines.length - 2}.`);
+      //console.log(`[GO-VIRT-SITES] [${molecule_type}] Atom bonds described: ${table.headlines.length - 2}.`);
 
       // Step 3+4: Read bonds between go atoms and associate them
 
