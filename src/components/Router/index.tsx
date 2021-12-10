@@ -51,7 +51,6 @@ const RouterCmpt = () => {
         <Route path="/contact" component={LoadDrawer} />
         <Route path="/force_fields" component={LoadDrawer} />
         <Route path="/builder/:id" exact component={LoadMartinizeBuilder} />
-        <Route path="/tutorial" exact component={LoadTutorial} />
 
         {/* Not found */}
         <Route component={NotFound} />
@@ -117,12 +116,6 @@ function LoadUsersDrawer(props: RouteComponentProps) {
 function LoadModerationDrawer(props: RouteComponentProps) {
   return (
     <WaitForAdminLogged {...props} component={Moderation} wait={[Settings.login_promise]} />
-  );
-}
-
-function LoadTutorial(props: RouteComponentProps) {
-  return (
-    <WaitForAdminLogged {...props} component={Tutorial} wait={[Settings.login_promise]} />
   );
 }
 

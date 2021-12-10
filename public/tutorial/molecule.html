@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <!-- Compiled and minified CSS -->
+<link rel="stylesheet" href="/assets/materialize.min.css">
+<link rel="stylesheet" href="index.css">
+
+<!-- Compiled and minified JavaScript -->
+<script src="/assets/materialize.min.js" type="text/javascript"></script>
+</head>
+
+<div class="navbar-fixed">
+<nav>
+   <div class="nav-wrapper">
+     <a href="#" class="brand-logo center">MAD Tutorial</a>
+     <ul id="nav-mobile" class="left hide-on-med-and-down">
+       <li><a href="database.html">Database</a></li>
+       <li class="active"><a href="molecule.html">Molecule Builder</a></li>
+       <li><a href="system.html">System Builder</a></li>
+     </ul>
+   </div>
+ </nav>
+</div>
+
+<div class="container">
+  <h1>Molecule Builder</h1>
+
+
+<div id="summary">
+  <h4>Summary</h4>
+  <h6> <a href="#classic"> 1. Classic mode with a single chain molecule </a> </h6>
+  <h6> <a href="#elastic"> 2. Protein with elastic network </a> </h6>
+  <h6> <a href="#go">3. Protein with GO model </a> </h6>
+  <h6><a href="#history">4. Browse my builds through history </a></h6>
+</div>
+
+<div id="classic">
+
+  <h4>1. Classic mode with a single chain protein</h4>
+
+  <div class="row">
+  <div class="col s12">
+    The first protein is Neisserial surface protein A (NspA) from the bacterium Neisseria meningitidis, forming a transmembrane beta barrel. It is a single chain membrane protein.
+      The atomistic structure of NspA can be downloaded at https://files.rcsb.org/download/1P4T.pdb. This PDB file is the only input required in order to generate a Martini Model of NspA.
+      Upon authentication to the MAD website, the Molecule Builder option should toggle to black, marking it as accessible. Click on it to display its panel where you will load the above mentioned PDB file (a). 
+      Once loaded, the all atom structure is displayed and the MAD interface provides several options to generate the coarse-grained structure (b). Here, we are using the 3.0.0.1 version of the Martini force field.
+
+      Position restraints are generally useful during the equilibration simulation of the molecule, in order to maintain the structure of the backbone.
+
+      For this protein, we will use the classic mode, the other options will be explored later on.
+      We will use the default setting of the remaining option: neutral termini, no side-chain fix, and no cysteine bridge.
+
+      In case of long running computations,  MAD will send you an email upon completion. The email will enclose a link to access and visualize your data . 
+      Your data are private and are stored on the server for a period of ... days.
+  </div>
+  </div>
+  <div class="row">
+    <div class="col s6 img">
+        <img src="images/martinize_load.png" width="100%"/>      
+    </div>
+
+    <div class="col s6 img">
+      <img src="images/martinize_all_atoms.png" width="100%"/>
+    </div>
+
+  </div>
+   
+  <div class="row">
+
+    <div class="col s12">
+      Now the protein can be submitted. MAD should take a few seconds to generate a Martini model of NspA (c)
+    Bead radius scaled according to Martini 3 definitions. 
+
+    Martini 3 force field has 3 bead sizes which are mainly defined by the number of non-hydrogen atoms represented by the bead: regular (R) size for 4 atoms mapped by 1 bead (or 4-1), small (S) size for 3-1 and tiny size for 2-1. The unscaled radius of the R, S and T beads in Martini 3 corresponds to  0.264, 0.230 and 0.191 nm, respectively.
+
+    Color scale goes from cyan to white to orange to show hydrophobicity of beads. Cyan beads have low hydrophobicity value and orange beads have high hydrophobicity value. 
+
+    Martini 3 model present 3 main chemical classes of neutral beads, C for apolar/ hydrophobic, N for intermediate and  P for polar/hydrophilic. Each class has 6 beads which have number as suffixes, representing the degree of hydrophobicity, ranging from 1 (more hydrophobic) to 6 (less hydrophobic. Overall, C beads will be represented by orange, N by white and P for cyan.
+
+    Blue beads are charged beads positively charged, and red beads are charged beads negatively charged. 
+
+    There are 2 classes of charged beads in Martini 3: Q beads for monovalent +1/-1 charged molecules and D beads for divalent charged molecules. Q beads also have a kind of degree of hydrophobicity, ranging from 1 to 5. Only the sign of the charges are differentiate by different colors in MAD.
+
+
+    
+
+    </div>
+
+    
+
+    
+
+    
+    
+    </div>
+
+  <div class="row">
+      <div class="col s12 img center">
+        <img src="images/martinize_cg.png" width="50%"/>
+      </div>
+    </div> 
+
+  <div class="row">
+    <div class="col s12">
+      Feel free to explore the several representation options provided to visualize the newly coarse-grained protein. You can change the martini beads radius with a factor (d) or select other representations as surface for example (e)
+    </div>
+  </div>
+  <div class="row">
+    <div class="col s6">
+      <img src="images/martinize_cg_radius1.png" width="100%"/>
+    </div>
+    <div class="col s6">
+      <img src="images/martinize_surface.png" width="100%">
+    </div>
+  </div>
+</div>
+
+<div id="elastic">
+
+  <h4>2. Protein with elastic network </h4>
+
+  <div class="row">
+    <div class="col s12">
+      In order to study this second case, we will use the T4 Lysozyme protein from the bacteriophage T4. The atomistic structure of T4 lysozyme can be downloaded at https://files.rcsb.org/download/181L.pdb
+
+      Now, you can upload the atomistic structure on MAD Molecule Builder. 
+      This time, we will use the elastic mode. For T4 Lysozyme in Martini 3, we recommend a force constant of 700 kJ/(mol.nm2) and lower and upper cutoff of 0.5 and 0.9 nm respectively. 
+
+      The elastic network approach consist of a set of harmonic potentials added on top of the Martini model to conserve the tertiary structure of proteins. The network is fully dependent of the pdb structure used as reference, with the number of bonds defined by the upper and lower distance cutoff. The rigidity of the protein model is defined by the number of elastic bonds and by the force constant used. Optimal parameters for the elastic network depend of the protein system in study. It is recommended to use experimental or atomistic simulations data to calibrate the parameters of your elastic network.
+
+      Additional improvements of the protein stability and reliability of its structures and dynamics are achieved by applying the side chain corrections option, which add dihedral angles between SC1-BB-BB-SC1 beads, which improve the overall side chain orientation. 
+
+      For the remaining options, use neutral termini, side-chain fix, and auto assignment of cysteine bridges. Now the protein can be submitted. Once done, you view the coarse grained protein with its elastic network represented by green links between beads.
+    </div>
+  </div>
+  <div class="row">
+    <div class="col s6">
+      <img src="images/martinize_elastic.png" width=100%/>
+    </div>
+    <div class="col s6">
+      <img src="images/martinize_elastic2.png" width=100%/>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col s12">
+      With MAD server, you can modify manually the elastic network. There are 2 ways to modify it. Manually, by clicking on a single bead (a),  you can remove all of its elastic bonds, or add a new bond by clicking on another bead. You can also directly click on a bond to delete it (b)
+
+      The group selection can also be used. Either by selected a single group and linking all the selected beads together; or by selecting two groups, linking every bead of one group to every bead of the second group.
+
+      For example, if you select “05-10:A” as group 1 and “145-158:A” as group 2, you will be able to create or delete all the beads between these two groups. (c)
+    </div>
+
+    <div class="row">
+
+      <div class="col s4">
+        <img src="images/martinize_elastic_select1.png" width=100%/>
+      </div>
+      <div class="col s4">
+        <img src="images/martinize_elastic_bond.png" width=100%/>
+      </div>
+      <div class="col s4">
+        <img src="images/martinize_elastic_groups.png" width=100%>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col s12">
+        Here you can select 21 as group 1 and 141 as group 2 to delete the bond between these 2 groups (d) 
+
+      </div>
+      <div class="col s6">
+        <img src="images/martinize_elastic_before_delete.png" width=100% />
+      </div>
+      <div class="col s6">
+        <img src="images/martinize_elastic_after_delete.png" width=100% />
+      </div>
+    </div>
+  
+  <div class="row">
+    <div class="col s12">
+      Once your modifications are done, MAD will ask you if you want to keep them in your history. If you accept, it will erase the original model (but you can relaunch a Molecule Builder if you want to have it separately) 
+    </div>
+  </div>
+
+</div>
+</div>
+
+<div id="go">
+  <h4>3. Protein with GO model</h4>
+
+  <div class="col s12">
+    The same way as for Elastic network, you can generate martinize protein with GO bonds. 
+
+The Go model approaches implemented in Martini protein models have two main differences in relation to elastic network approaches: the type of potential function used and how the contact map is defined. For the potential function, instead of the harmonic potentials used in elastic approaches , the approach is based on a dissociative Lennard-Jones potential, which is place on virtual sites built based on the position of the backbone bead s(see the GROMAC manual for more details about virtual sites: https://manual.gromacs.org/documentation/). In addition, the contact map in Go models are usually not only defined by distances cutoff between backbone beads. More sophisticate contact maps are usually employed. The main implementation of Go models combined with Martini is based on a contact map formed by the combination of the atomic overlap criterion (OV) and a variant of the contact of structure units (CSU). In MAD, the current contact map implementation is based on geometrical occlusion method. Independent of the contact map approach used, calibration of dissociation energies and cutoff based on experimental and/or atomistic simulation data are recommended.  
+
+Here we use the same T4 lysosyme protein. We select Virtual Go sites option, and other options remains as default.
+
+  </div>
+
+  <div class="col s12">
+    <img src="images/martinize_go.png" width=50%>
+  </div>
+  <div class="col s12">
+    The representation of GO bonds is then similar as elastic bonds. You can interact with this bonds the same way by clicking one bead, clicking one bond, or select groups. For example, we can select group 21-22 and group 141-142 to remove all bonds between these groups.
+    
+  </div>
+
+<div class="row">
+  <div class="col s6">
+    <img src="images/martinize_go_2.png" width=100%>
+  </div>
+
+  <div class="col s6">
+    <img src="images/martinize_go_3.png" width=100%>
+  </div>
+</div>
+  
+
+</div>
+
+<div id="history">
+  <h4>4. Browse my builds through history</h4>
+
+  <div class="row">
+    <div class="col s12">
+      When you click on "My builder history" on the right of MAD server, you have access to all your previous build made by Molecule Builder. 
+      This way, you can visualize the model (it will reload it into Molecule Builder and you can change representations, and/or edit bonds if it's a model with elastic network or GO model), download the result files, or delete the build from your history if you don't want it anymore. 
+      For each build, you have a more detailed description of it if you click on the left arrow  
+    </div>
+
+  </div>
+
+  <div class="row">
+    <div class="col s6">
+      <img src="images/history_all.png" width=100%>
+    </div>
+    <div class="col s6">
+      <img src="images/history_detail.png" width=100%>
+    </div>
+  </div>
+
+</div>
+
+</div>
+
+</html>
