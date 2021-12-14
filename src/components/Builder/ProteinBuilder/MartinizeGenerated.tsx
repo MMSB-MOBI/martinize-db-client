@@ -39,7 +39,7 @@ interface MartinizeGeneratedProps {
 
   onGoEditorStart(): any;
 
-  martinizeWarnings?: any;
+  martinizeWarnings: any;
 
   beadRadiusFactor : number; 
   onBeadRadiusChange(_: any, value : number|number[]): any
