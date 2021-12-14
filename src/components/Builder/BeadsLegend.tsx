@@ -6,7 +6,7 @@ import { AvailableForceFields } from '../../types/entities';
 
 
 const width = 300
-const height = 650
+const height = 670
 const padding = 10
 
 const componentStyle = {
@@ -66,8 +66,12 @@ export default class BeadsLegend extends React.Component<BeadsLegendProps, Beads
 
     drawLegend() {
         const add_aa = this.props.ff === "martini3001" ? true : false
-        const end_position = this.createJustBeads(add_aa)
-        this.createChargeBeadsLegend(end_position)
+        const beads_end_position = this.createJustBeads(add_aa)
+        const charged_end_position = this.createChargeBeadsLegend(beads_end_position)
+        this.svg.append("text")
+            .text(`Martini force field : ${this.props.ff}`)
+            .attr("y", charged_end_position + 40)
+            .attr("font-style", "italic")
         this.setState({drawed : true})
     }
 
@@ -255,7 +259,7 @@ export default class BeadsLegend extends React.Component<BeadsLegendProps, Beads
         }
 
 
-    createChargeBeadsLegend(start_position: number) { 
+    createChargeBeadsLegend(start_position: number): number { 
         const width = 25
         const height = 20
         const y_start = start_position + 35
@@ -290,6 +294,8 @@ export default class BeadsLegend extends React.Component<BeadsLegendProps, Beads
             .attr("y", y_start + 10 + (height / 2))
             .attr('x', x_start + width + 75 + width)
             .style("dominant-baseline", "middle")
+
+        return y_start + 10 + (height / 2)
         
         
         

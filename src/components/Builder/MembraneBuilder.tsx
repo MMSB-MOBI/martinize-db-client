@@ -730,6 +730,8 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
             label="Apply Martini beads radius (0.2 factor)"
         />
 
+        <Marger size="1rem" />
+
         <Divider style={{ width: '100%' }} />
 
         <Marger size="1rem" />
