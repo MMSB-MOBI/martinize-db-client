@@ -116,6 +116,8 @@ export interface MBState {
 
   bead_radius_factor : number; 
 
+  polymer_number : number; 
+
 }
 
 /**
@@ -251,7 +253,8 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       error: undefined,
       martinize_step: '',
       send_mail: false,
-      bead_radius_factor : 0.2
+      bead_radius_factor : 0.2,
+      polymer_number : 0 
     };
   }
 
@@ -423,13 +426,15 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
   async initAllAtomPdb(file: File) {
     const component = await this.ngl.load(file, {coarse_grained:false});
 
-    component.add<BallAndStickRepresentation>("ball+stick");
+    const repr = component.add<BallAndStickRepresentation>("ball+stick");
     component.center();
+
 
     // Register the component
     this.setState({
       all_atom_ngl: component,
       all_atom_pdb: file,
+      polymer_number : repr.polymerNumber
     });
   }
 
@@ -1567,6 +1572,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
                   this.setState({advanced: 'true'})
                 }}}
                 doSendMail={(bool) => this.setState({send_mail:bool})}
+                polymerNumber={this.state.polymer_number}
               />}
 
               {this.state.running === 'martinize_generate' && this.martinizeGenerating()}

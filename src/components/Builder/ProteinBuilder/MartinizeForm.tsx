@@ -52,7 +52,8 @@ export interface MartinizeFormProps {
   onElasticChange(type: ElasticParam, value: string): any
   onAdvancedChange(value: string) :any
   advancedActivate(): any, 
-  doSendMail(bool: boolean): any
+  doSendMail(bool: boolean): any; 
+  polymerNumber : number; 
 }
 
 export default function MartinizeForm(props: MartinizeFormProps) {
@@ -61,9 +62,16 @@ export default function MartinizeForm(props: MartinizeFormProps) {
 
   function getAvailableModes() {
     if (props.builderForceField.includes('martini3')) {
-      return [
-        { id: 'classic', name: 'Classic' }, { id: 'elastic', name: 'Elastic' }, { id: 'go', name: 'Virtual Go Sites' }
-      ];
+      if (props.polymerNumber === 1){
+        return [
+          { id: 'classic', name: 'Classic' }, { id: 'elastic', name: 'Elastic' }, { id: 'go', name: 'Virtual Go Sites' }
+        ];
+      }
+      else {
+        return [
+          { id: 'classic', name: 'Classic' }, { id: 'elastic', name: 'Elastic' }
+        ];
+      }
     }
 
     return [
@@ -129,6 +137,11 @@ export default function MartinizeForm(props: MartinizeFormProps) {
             onChange={props.onBuilderModeChange}
           />
         </Grid>
+        {(props.polymerNumber !== 1 || ! props.builderForceField.includes('martini3')) && <Grid item sm={12}>
+          <Typography align="center" variant="caption" color="error">
+            {! props.builderForceField.includes('martini3') ? `Virtual Go Sites mode is only available for martini3 force field` : `Virtual Go Sites mode is only available for molecules with 1 polymer. Yours have ${props.polymerNumber}.`}
+          </Typography>
+        </Grid>}
 
         {props.builderMode !== 'advanced' && <React.Fragment>
           <Grid item xs={12} sm={6} className={classes.formContainer}>

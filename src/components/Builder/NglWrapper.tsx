@@ -181,7 +181,15 @@ export class NglRepresentation<T extends Representation> {
    */
   atomIterator(callback: (ap: AtomProxy) => void) {
     (this.representation.structure as ngl.Structure).eachAtom(callback);
+  }
 
+  get polymerNumber() {
+      if (this.representation.structure){
+        let nb = 0
+        this.representation.structure.eachPolymer(() => nb+= 1)
+        return nb
+      }
+      return 0
   }
 
   iterateOverSelection(selection: string, callback: (ap: AtomProxy) => void, on_end_selection = "*") {
