@@ -1329,7 +1329,8 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
           radius : this.state.files.radius, 
           elastic_bonds : this.state.files.elastic_bonds,
           itps, 
-          go : this.state.files.go
+          go : this.state.files.go,
+          warnings: this.state.files.warnings
           }
         })
 
