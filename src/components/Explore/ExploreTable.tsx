@@ -106,9 +106,9 @@ export default function MoleculeTable(props: {
           <Table stickyHeader aria-label="sticky table" size="small">
             <TableHead className={clsx("can-load", loading && "in")}>
               <TableRow>
-                {props.moderation && <TableCell align="left" size="medium">
+                {/*props.moderation && <TableCell align="left" size="medium">
                   Actions
-                </TableCell>}
+  </TableCell>*/}
 
                 {columns.map(column => (
                   <TableCell

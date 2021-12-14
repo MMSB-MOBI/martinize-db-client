@@ -1634,7 +1634,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
               <Alert severity="error">{this.state.load_error_message}</Alert>
             }
             <div id="ngl-stage" style={{ height: 'calc(100% - 5px)' }}/> 
-            {/*this.state.running === "done" && <BeadsLegend/>*/}
+            {this.state.running === "done" && <BeadsLegend ff={this.state.builder_force_field}/>}
                       
           </Grid>
 

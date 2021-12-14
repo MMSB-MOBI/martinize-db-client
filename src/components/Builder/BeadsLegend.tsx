@@ -2,6 +2,8 @@ import React from 'react';
 import {Button, Popper } from '@mui/material'
 import * as d3 from 'd3'
 import { getBeadsLegend, getBeadGeneralTypeAndAA } from '../../martiniNglSchemes';
+import { AvailableForceFields } from '../../types/entities';
+
 
 const width = 300
 const height = 650
@@ -31,6 +33,7 @@ const ButtonStyle = {
 }
 
 interface BeadsLegendProps {
+    ff : AvailableForceFields; 
 }
 
 interface BeadsLegendState { 
@@ -53,7 +56,8 @@ export default class BeadsLegend extends React.Component<BeadsLegendProps, Beads
     protected rect_number = 3
     protected y_gap = 10
 
-    protected legendValues = getBeadsLegend("martini3001")
+    protected legendValues = getBeadsLegend(this.props.ff)
+    protected beadsAA = getBeadGeneralTypeAndAA(this.props.ff)
 
 
     componentDidUpdate(){
@@ -61,13 +65,10 @@ export default class BeadsLegend extends React.Component<BeadsLegendProps, Beads
     }
 
     drawLegend() {
-        console.log("draw legend")
-        this.createJustBeads()
-        this.createChargeBeadsLegend()
+        const add_aa = this.props.ff === "martini3001" ? true : false
+        const end_position = this.createJustBeads(add_aa)
+        this.createChargeBeadsLegend(end_position)
         this.setState({drawed : true})
-        //this.createBeadsThreeColumns()
-        //this.createAATable()
-        //
     }
 
     createHydrophobicityColorScale() { 
@@ -147,8 +148,17 @@ export default class BeadsLegend extends React.Component<BeadsLegendProps, Beads
 
     }
 
-    createJustBeads(addAA : boolean = true){
-        const beadsAA = getBeadGeneralTypeAndAA("martini3001")
+    //return end y position
+    createJustBeads(addAA : boolean = true) : number {
+        
+        const bead_x = 15
+        const text_x = 30
+        const start_y = 35
+        const gap = 30
+        const radius = 10
+
+        let end_y = start_y
+
         this.svg.append("text")
             .text("Hydrophobicity scale")
             .attr("y", 15)
@@ -161,9 +171,9 @@ export default class BeadsLegend extends React.Component<BeadsLegendProps, Beads
             this.svg.selectAll("dot")
                     .data(beadsToPlot)
                     .enter().append("circle")
-                    .attr("r", 10)
-                    .attr("cy", (d: string, i : number) => 35 + i * 30)
-                    .attr("cx", 15)
+                    .attr("r", radius)
+                    .attr("cy", (d: string, i : number) => {end_y = start_y + i * gap; return end_y})
+                    .attr("cx", bead_x)
                     //@ts-ignore
                     .attr("fill", (d: string) => this.legendValues[d].color)
                     .attr("stroke", "black")
@@ -174,9 +184,9 @@ export default class BeadsLegend extends React.Component<BeadsLegendProps, Beads
                     .text((d: string) => {
                         let toPrint = d
                         if(addAA){
-                            if(beadsAA && d in beadsAA){
+                            if(this.beadsAA && d in this.beadsAA){
                                 const aaList = new Set()
-                                for(const aa of beadsAA[d]){
+                                for(const aa of this.beadsAA[d]){
                                     if (aa.atomName.startsWith("SC")) aaList.add(aa.aminoAcid)
                                 }
                                 if(aaList.size > 0) toPrint += " : " + [...aaList].join(" ")
@@ -185,17 +195,14 @@ export default class BeadsLegend extends React.Component<BeadsLegendProps, Beads
                         }
                         return toPrint
                     })
-                    .attr("y", (d:string, i : number) => 35 + i * 30)
-                    .attr("x", 30)
+                    .attr("y", (d:string, i : number) => start_y + i * gap)
+                    .attr("x", text_x)
                     //.attr("transform", (d: string) => `rotate(65 ${linearScale(legendValues[d].hydrophobicity)} 65)`)
                     .style("dominant-baseline", "middle")  
 
             }
 
-           
-       
-        
-
+        return end_y
     }
 
     createBeadsThreeColumns(){
@@ -248,10 +255,10 @@ export default class BeadsLegend extends React.Component<BeadsLegendProps, Beads
         }
 
 
-    createChargeBeadsLegend() { 
+    createChargeBeadsLegend(start_position: number) { 
         const width = 25
         const height = 20
-        const y_start = 580
+        const y_start = start_position + 35
         const x_start = 0
 
         this.svg.append("text")
