@@ -2,6 +2,66 @@ nav {
     background-color: #90a4ae; 
 }
 
+.inline-icon {
+    vertical-align: bottom;
+   // font-size: 18px !important;
+ }
+
+ul.show li:before{
+    content: 'arrow_forward';
+    font-family: 'Material Icons';
+}
+ul.show li {
+    margin-bottom: 15px;
+}
+.flex-container {
+    display: flex;
+    align-items: align-items;
+    /*
+    justify-content: center;*/
+    justify-content:space-between;
+    flex-direction: row;
+  }
+  div.comment{
+    display: flex;
+    flex-direction: column;
+    justify-content:space-around;
+  } 
+  div.comment  div:nth-child(2) {
+    padding-left: 10%;
+    padding-right: 10%;
+  }
+  div.comment  div:nth-child(3) {
+      margin-top: 10px;
+  }
+  div.comment  div:nth-child(4) {
+    color: darkgreen;
+    font-weight: bold;
+}
+span.li_supt {
+    font-weight: bold;
+}
+
+#summary {
+    margin-bottom: 40px;
+}
+
+#molecule_setup, #bilayer_setup {
+    border: solid 1px darkgrey;
+    padding: 5px 5px 5px 15px;
+    border-radius: 15px 15px 15px 15px;
+    margin-bottom: 80px;
+}
+div.todo {
+    background-color: greenyellow;
+    border: forestgreen solid 2px;
+    border-radius: 10px;
+    padding: 5px;
+}
+
+div.container > div {
+    
+}
 /*.row {
     display:flex; 
 }*/
