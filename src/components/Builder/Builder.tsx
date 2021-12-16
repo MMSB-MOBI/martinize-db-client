@@ -112,7 +112,7 @@ export interface MBState {
   version?: string;
 
   load_error_message?:string; 
-  send_mail: boolean; 
+  send_mail: string; 
 
   bead_radius_factor : number; 
 
@@ -252,7 +252,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       want_go_back: false,
       error: undefined,
       martinize_step: '',
-      send_mail: false,
+      send_mail: "false",
       bead_radius_factor : 0.2,
       polymer_number : 0 
     };
@@ -681,11 +681,6 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
     //Check if we have merge option in commandline, it's forbidden for elastic network or go model for now
 
-    if(s.commandline.includes("-merge") && (s.builder_mode === "elastic" || s.builder_mode === "go")){
-      toast("Martinize option -merge is forbidden with elastic network and go model for now.", "error")
-      return
-    }
-
     form_data.ff = s.builder_force_field;
     form_data.position = s.builder_positions;
     form_data.cter = s.cTer;
@@ -706,9 +701,11 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       form_data.use_go = "true";
       form_data.sc_fix = "true";
     }
-    form_data.advanced = s.advanced;
-    form_data.commandline = s.commandline;
     form_data.builder_mode = s.builder_mode
+    form_data.send_mail = s.send_mail
+    form_data.user_id = Settings.user?.id
+    form_data.pdb_name = s.all_atom_pdb?.name
+
 
     // form_data.pdb = s.all_atom_pdb;
 
@@ -742,7 +739,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       const files: Partial<MartinizeFiles> = {};
 
       // Begin the run
-      socket.emit('martinize', Buffer.from(pdb_content), RUN_ID, form_data, Settings.user?.id, this.state.send_mail, s.all_atom_pdb?.name);
+      socket.emit('martinize', Buffer.from(pdb_content), RUN_ID, form_data);
       this.setState({ martinize_step: 'Sending your files to server' });
 
       // Martinize step
@@ -1458,7 +1455,6 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       form_data.nter = s.nTer;
       form_data.sc_fix = s.sc_fix;
       form_data.cystein_bridge = s.cystein_bridge;
-      form_data.advanced = s.advanced;
 
       if (s.builder_mode === "elastic") {
         form_data.elastic = "true";
@@ -1474,11 +1470,6 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
         form_data.sc_fix = "true";
       }
       
-      // WTF ?? 
-      socket.emit('previewMartinize', form_data); 
-      socket.on('martinizePreviewContent', (data: any) => {
-        this.setState({commandline: data}, () => {})
-      })
     }
   }
 
@@ -1571,7 +1562,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
                 } else {
                   this.setState({advanced: 'true'})
                 }}}
-                doSendMail={(bool) => this.setState({send_mail:bool})}
+                doSendMail={(bool) => this.setState({send_mail:bool.toString()})}
                 polymerNumber={this.state.polymer_number}
               />}
 

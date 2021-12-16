@@ -28,7 +28,7 @@ export interface SettingsInsane {
 }
 
 interface SCProps {
-  addLipids: string;
+  addLipids: boolean;
   addMolecule: string;
   classes: Record<string, string>;
   hasUpperLayer: boolean;
@@ -293,7 +293,7 @@ class SettingsChooser extends React.Component<SCProps, SCState> {
 
               <Marger size="1.5rem" />
 
-              {this.props.addLipids === "true" && <React.Fragment>
+              {this.props.addLipids && <React.Fragment>
                 <Typography align="center" variant="h6">
                   Lipid options
                 </Typography>
@@ -344,11 +344,11 @@ class SettingsChooser extends React.Component<SCProps, SCState> {
                       checked={this.state.center_protein} 
                       onChange={this.refreshCheckbox('center_protein')} 
                     />}
-                    label={this.props.addLipids === "true" ? "Center protein in membrane" : "Center protein in box"}
+                    label={this.props.addLipids ? "Center protein in membrane" : "Center protein in box"}
                   />
                 </Box>
 
-                {this.props.addLipids === "true" && <Box width="100%" display="flex" justifyContent="center">
+                {this.props.addLipids && <Box width="100%" display="flex" justifyContent="center">
                   <FormControlLabel
                     control={<Checkbox 
                       value="orient" 
@@ -437,7 +437,7 @@ class SettingsChooser extends React.Component<SCProps, SCState> {
 
             </TabPanel>
             <TabPanel value="no">
-              {this.props.addLipids === "true" && <React.Fragment>
+              {this.props.addLipids && <React.Fragment>
                 <Typography align="center" variant="h6">
                   Lipid options
                 </Typography>

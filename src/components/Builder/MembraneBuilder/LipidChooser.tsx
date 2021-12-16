@@ -16,7 +16,7 @@ interface LipidWithId {
 }
 
 interface LCProps {
-  AddLipids: string;
+  AddLipids: boolean;
   classes: Record<string, string>;
   onLipidChoose(lipids: { lower?: ChoosenLipid[], upper?: ChoosenLipid[] }): any;
   onPrevious(): any;
@@ -80,7 +80,7 @@ class LipidChooser extends React.Component<LCProps, LCState> {
   }
 
   next = () => {
-    if(this.props.AddLipids === "true"){
+    if(this.props.AddLipids){
       const { lower, upper_separated } = this.state;
       const upper = upper_separated ? this.state.upper : [];
 
@@ -227,7 +227,7 @@ class LipidChooser extends React.Component<LCProps, LCState> {
 
     return (
       <React.Fragment>
-        {this.props.AddLipids === "true" && <React.Fragment>
+        {this.props.AddLipids && <React.Fragment>
           <Marger size="1rem" />
 
           {this.state.upper_separated && <React.Fragment>

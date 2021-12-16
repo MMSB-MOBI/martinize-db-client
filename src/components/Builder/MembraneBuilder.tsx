@@ -68,7 +68,7 @@ interface MBuilderState {
   ph_low: number;
 
   addMolecule: string;
-  addLipids: string;
+  addLipids: boolean;
   ff: string;
 }
 
@@ -132,7 +132,7 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
       ph_upp: 7,
       ph_low: 7,
       addMolecule: "true",
-      addLipids: "true",
+      addLipids: true,
       ff: Settings.martinize_variables.force_fields[Settings.martinize_variables.force_fields.length -1],
     };
   }
@@ -265,14 +265,14 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
     const { settings, lipids, molecule, ph_upp, ph_low } = this.state;
     const parameters: any = {};
 
-    if ((!molecule && this.state.addMolecule === "true") || !settings || (!lipids && this.state.addLipids === "true")) {
+    if ((!molecule && this.state.addMolecule === "true") || !settings || (!lipids && this.state.addLipids)) {
       return;
     }
 
     parameters.lipids_added = this.state.addLipids;
     parameters.molecule_added = this.state.addMolecule;
 
-    if (this.state.addLipids === "true"){
+    if (this.state.addLipids){
       //@ts-ignore
       if (lipids.upper) {
         //@ts-ignore
@@ -286,7 +286,7 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
       if (isMolecule(molecule)) {
         parameters.from_id = molecule.id;
       }
-      else {
+      else { //it's multer params, I think
         //@ts-ignore
         parameters.pdb = molecule.pdb;
         //@ts-ignore
@@ -303,10 +303,6 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
 
     parameters.box = settings.box_size.join(',');
     parameters.pbc = settings.box_type;
-
-    // pH params
-    parameters.ph_upp = ph_upp;
-    parameters.ph_low = ph_low;
 
     // Area params
     parameters.area_per_lipid = settings.area_per_lipid;
@@ -327,7 +323,7 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
       parameters.rotate_angle = settings.rotate_angle;
 
     // Boolean params
-    if(this.state.addMolecule === "true" && this.state.addLipids === "true") {
+    if(this.state.addMolecule === "true" && this.state.addLipids) {
       if (settings.center_protein)
         parameters.center = "true";
       if (settings.orient_protein)
@@ -339,7 +335,6 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
     parameters.charge = settings.charge;
     parameters.solvent_type = settings.solvent_type;
 
-    
     try {
       const res = await ApiHelper.request('molecule/membrane_builder', {
         parameters, body_mode: 'multipart', method: 'POST',
@@ -354,6 +349,7 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
         result, 
       });
     } catch (e) {
+      console.log("error", e); 
       if (Array.isArray(e) && e[0].status === 400) {
         const error = e[1] as { error: string, trace?: string, zip: number[] };
 
@@ -508,9 +504,9 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
       <React.Fragment>
         <Marger size="1rem"/>
         <FormLabel className={this.props.classes.formLabel} component="legend">Do you want to add a molecule ?</FormLabel>
-        <RadioGroup className={this.props.classes.radioGroup} row name="scfix" value={this.state.addLipids === "true" ? this.state.addMolecule : "false"} onChange={e => this.setState({addMolecule: e.target.value})}>
-          <FormControlLabel value="false" control={<Radio />} disabled={this.state.addLipids === "false"} label="no" />
-          <FormControlLabel value="true" control={<Radio />} disabled={this.state.addLipids === "false"} label="yes" />
+        <RadioGroup className={this.props.classes.radioGroup} row name="scfix" value={this.state.addLipids ? this.state.addMolecule : "false"} onChange={e => this.setState({addMolecule: e.target.value})}>
+          <FormControlLabel value="false" control={<Radio />} disabled={!this.state.addLipids} label="no" />
+          <FormControlLabel value="true" control={<Radio />} disabled={!this.state.addLipids} label="yes" />
         </RadioGroup>
         {this.state.addMolecule === "false" && <SimpleSelect 
             label="Used force field"
@@ -550,7 +546,7 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
         <Marger size="1rem"/>
         
         {this.state.addMolecule === "true" && <div><FormLabel className={this.props.classes.formLabel} component="legend">Do you want to add lipids ?</FormLabel>
-        <RadioGroup className={this.props.classes.radioGroup} row name="scfix" value={this.state.addMolecule === "true" ? this.state.addLipids : "true"} onChange={e => {this.setState({addLipids: e.target.value})}}>
+        <RadioGroup className={this.props.classes.radioGroup} row name="scfix" value={this.state.addMolecule === "true" ? this.state.addLipids.toString() : "true"} onChange={e => {this.setState({addLipids: e.target.value === "true" ? true : false})}}>
           <FormControlLabel value="false" control={<Radio />} label="no" />
           <FormControlLabel value="true" control={<Radio />} label="yes" />
         </RadioGroup></div>
@@ -565,7 +561,7 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
           onPrevious={() => {
             this.setState({ 
               running: 'choose_molecule', 
-              addLipids : "true", 
+              addLipids : true, 
               addMolecule : "true",
             });
           }}
