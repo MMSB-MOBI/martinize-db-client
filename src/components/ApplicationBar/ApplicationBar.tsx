@@ -20,7 +20,7 @@ import PersonIcon from '@material-ui/icons/Person';
 import ApiHelper from '../../ApiHelper';
 import { toast } from '../Toaster';
 import { errorToText } from '../../helpers';
-import { BetaWarning } from '../../Shared'; 
+import { TutorialShow } from '../../Shared'; 
 
 
 //import { WarnBeta } from '../WarnBeta';
@@ -195,13 +195,6 @@ function DrawerElements(props: RouteComponentProps) {
         icon: "envelope",
         text: "Contact"
       },
-      /*{
-        path : '/tutorial', 
-        link: true, 
-        icon : "graduation-cap", 
-        text : "Tutorial"
-      }*/
-      
     ], 
   ];
 
@@ -330,7 +323,7 @@ export default function ApplicationDrawer(props: RouteComponentProps) {
       {/* Main content */}
       <main className={classes.content}>
         <div className={classes.toolbar} />
-        <BetaWarning/>
+        <TutorialShow/>
         <DrawerContentRouter {...props} />
       </main>
     </div>

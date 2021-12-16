@@ -767,13 +767,13 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
     };
 
     if (Settings.logged === LoginStatus.None) {
-      return <EmbeddedError title="Forbidden" text="You can't access the System Builder page without account. New accounts for using beta versions of Molecule Builder will be available starting September 1st 2021." />
+      return <EmbeddedError title="Forbidden" text="You can't access the System Builder page without account." />
     }
 
     return (
       <ThemeProvider theme={this.state.theme}>
         {this.renderModalBackToDatabase()}
-        <BetaWarning/>
+        {/*<BetaWarning/>*/}
         <Grid
           container 
           component="main" 

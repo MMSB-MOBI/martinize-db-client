@@ -1484,7 +1484,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     return (
       <ThemeProvider theme={this.state.theme}>
         {this.renderModalBackToDatabase()}
-        <BetaWarning/>
+        {/*<BetaWarning/>*/}
         
         <Grid 
           container 

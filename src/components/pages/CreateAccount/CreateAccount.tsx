@@ -100,8 +100,6 @@ export default function CreateAccount() {
 
       <Marger size="1rem" />
 
-      <Alert severity="warning"> This service is still under development and test phase. If you're not a tester, your account request will only be accepted around September 2021. </Alert>
-
       <Marger size="1rem" />
 
       {error && <Typography variant="body1" color="error">

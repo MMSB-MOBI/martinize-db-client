@@ -116,8 +116,6 @@ export default function Login() {
 
           <Marger size="1rem" />
 
-          <Alert severity="warning" style={{textAlign:'center', alignItems:'center'}}> New accounts for using beta versions of Molecule Builder and System Builder will be available starting September 1st 2021. </Alert> 
-
           {error && <Typography variant="body1" color="error">
             {loginErrorToText(error.code)}.
           </Typography>}
