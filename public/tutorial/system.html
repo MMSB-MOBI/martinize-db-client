@@ -4,25 +4,210 @@
     <!-- Compiled and minified CSS -->
 <link rel="stylesheet" href="/assets/materialize.min.css">
 <link rel="stylesheet" href="index.css">
-
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 <!-- Compiled and minified JavaScript -->
 <script src="/assets/materialize.min.js" type="text/javascript"></script>
 </head>
 
 
 <nav>
-  <div class="nav-wrapper">
-    <a href="#" class="brand-logo center">MAD Tutorial</a>
-    <ul id="nav-mobile" class="left hide-on-med-and-down">
-      <li ><a href="database.html">Database</a></li>
-      <li><a href="molecule.html">Molecule Builder</a></li>
-      <li class="active"><a href="system.html">System Builder</a></li>
+   <div class="nav-wrapper">
+     <a href="/tutorial" class="brand-logo center">MAD Tutorial</a>
+     <ul id="nav-mobile" class="left hide-on-med-and-down">
+       <li class="active"><a href="database.html">Database</a></li>
+       <li><a href="molecule.html">Molecule Builder</a></li>
+       <li><a href="system.html">System Builder</a></li>
+     </ul>
+   </div>
+ </nav>
+
+<div class="container">
+  
+  <h1>System Builder</h1>
+
+  <div id="header">
+    The system builder tool offered by MAD is a web service that bridges the gap 
+    between the <a href="https://github.com/Tsjerk/Insane">INSANE sofware</a>[<a href="#references">1</a>]
+     and different collection of molecules. 
+    The INSANE software generates initial coordinates for a large system of atoms.
+    <span style="font-weight:bold">INSANE is a powerful tool for the generation of phospholipid bilayers</span> with optional embedded protein. 
+    The user will be able to choose the size and composition of the bilayer and other general properties of the system. 
+    The <span class="MAD_logo">MAD:System Builder</span> provides default setup parameters, but these can largely be overridden if a user needs to. 
+    The computation of the system will be performed on our cluster and an email can be sent to the user upon completion.
+  </div>
+  <div id="summary">
+    <p>
+      The following topics will be covered in order to guide you through your first use of the <span class="MAD_logo">MAD:System Builder</span>.
+    </p>
+    <h6> <a href="#molecule_setup"> 1. Adding molecules to the bilayer </a> </h6>
+    <h6> <a href="#bilayer_setup"> 2. Setting up the bilayer </a> </h6>
+    <h6> <a href="#insane_setup">3. INSANE program settings </a> </h6>
+    <h6><a href="#data_usage">4. Visualizing and using the system </a></h6>
+  </div>
+
+  <div class="disclaimer" style="width: 75%;margin-bottom: 2em">
+    <div><i class="medium material-icons inline-icon">person_add</i></div>
+    <div>
+    Because the service makes use of our computational resources, it is required for you to <a href="/login">sign in</a> order to have access to the <span class="MAD_logo">MAD:System Builder</span>
+    </div>
+  </div>
+
+  <div id="molecule_setup">
+    <h4>Adding molecules</h4>
+      
+    <div class="flex-container">
+      <div class="comment">
+    
+        <div>
+          By default, no molecule is selected at the startup. You can choose the molecule to be inserted in the membrane from three kinds of sources:
+        </div>
+  
+        <div class="main_comment">
+          <ul class="show">
+            <li>
+              <span class="li_supt">Database of molecules:</span> these are all the public molecules currently stored on the MAD server.
+            </li>
+            <li>
+              <span class="li_supt">History:</span> these are your private molecules that you previously processed in the <a href="/tutorial/molecule.html">molecule builder</a>.
+            </li>
+            <li>
+              <span class="li_supt">Upload:</span> the advanced user can upload the required set coordinates, topology and itp files for a molecule from their hard drive.
+            </li>
+          </ul>
+        </div>
+    
+        <div class="info">
+          <i class="material-icons inline-icon">info_outline</i>
+          If the user does not add a molecule, a simple bilayer will be generated. In that case, the user will be prompted to choose a force field version. Otherwise, the force field version is automatically inferred from the chosen/uploaded molecule.
+        </div>
+    
+        <div class="todo">
+          <div>
+          <i class="small material-icons inline-icon">launch</i>
+          </div>
+          <div>
+          Please select the <span style="font-weight: bold;">1pt4</span> from your history and proceed to <span style="font-weight: bold;">NEXT</span> section.
+          </div>
+        </div>
+          
+      </div>
+      <div>
+        <img src="images/system_builder_lipid_panel.png" style="width: 450px;"/>  
+      </div>
+    </div>
+  </div>
+
+  
+  <div id="bilayer_setup">
+    <h4>Setting the bilayer compostion</h4>
+      
+    <div class="flex-container">  
+      <div class="comment">
+
+        <div>
+          By default, you must select at least one type of lipids and the lower and upper leaflets have identical composition. 
+          You can modify the lipid bilayer composition or even remove it entirely with the following options:
+        </div>
+
+        <div class="main_comment">
+          <ul class="show">
+            <li>
+              <span class="li_supt">Toggle the addition of lipids:</span> If set to <i>no</i> the system will be a box of water without lipid bilayer.
+            </li>
+            <li>
+              <span class="li_supt">Add Lipid:</span> Select among different phosphatidylcholine derivative to be added to the bilayer composition. Individual type and ratios can be defined
+            </li>
+            <li>
+              <span class="li_supt">Separate lower and upper leaflet:</span> set up common or separated lipid composition for the two leaflets.
+            </li>
+          </ul>
+        </div>
+
+        <div class="todo">
+          <div>
+          <i class="small material-icons inline-icon">launch</i>
+        </div>
+        <div>
+          Please select a separate lipid composition of 1 DIPC and 1 DLPC for the upper and lower leaflets respectively.
+          Then proceed to <span style="font-weight: bold;">NEXT</span> section.
+        </div>
+        </div>
+          
+      </div>
+      <div>
+        <img src="images/system_builder_molecule_panel.png" style="width: 450px;" />  
+      </div>
+    </div>
+  </div>
+
+
+  <div id="insane_setup">
+    <h4>INSANE program settings</h4>
+      
+    <div class="flex-container">  
+      <div class="comment">
+
+        <div class="preamb">
+          Here you can modify the execution parameters of the INSANE software. Default parameters are preselected for you to ensure a safe generation of the system coordinates. 
+          Still, many options are available should you require additional setup conditions.
+        </div>
+        <div class="warning">
+          <i class="material-icons inline-icon">warning</i>
+          Extreme values for some parameters may cause the INSANE software to early exit out of errors.
+          <span style="font-weight: initial;">In such cases, MAD will warn you and you will be able to retry with other parameter values.</span>
+
+        </div>
+        <div class="main_comment">
+          <ul class="show">
+            <li>
+              <span class="li_supt">Periodic boundary conditions:</span> Set the geometry and dimensions of the simulation box.
+            </li>
+            <li>
+              <span class="li_supt">Lipid options:</span> Define the membrane lipid spacing to distribute molecules across the bilayer.
+            </li>
+            <li>
+              <span class="li_supt">Protein options:</span> Place the protein at the bilayer center, eventually orienting it.
+            </li>
+            <li>
+              <span class="li_supt">Water, salt and solvent options:</span> Define system total charge, salt concentration and solvent type.
+            </li>
+          </ul>
+        </div>
+
+        <div class="info">
+          <i class="material-icons inline-icon">lock_open</i>
+          For experienced INSANE users, specific options are available through the <span>ADVANCE SETTINGS</span> panel. 
+          These options won't be covered in this tutorial as they required advanced knowledge of the INSANE program.
+        </div>
+        <div class="todo">
+          <div>
+          <i class="small material-icons inline-icon">launch</i>
+          </div>
+          <div>
+            You can leave all values to default and proceed to <span class="command">CREATE SYSTEM</span>
+          </div>
+        </div>
+      </div>
+      <div>
+        <img src="images/system_builder_insane_panel.png" style="width: 450px;"/>  
+      </div>
+
+    </div>
+  </div>
+
+  <div id="data_usage">
+    <h4>Visualizing and using the system</h4>
+  </div>
+
+  <div id="references">
+    <h4>References</h4>
+    <ol>
+      <li>
+        Wassenaar T.A., Ingólfsson H.I., Böckmann R.A. et al.Computational Lipidomics with insane: A Versatile Tool for Generating Custom Membranes for Molecular Simulations. J. Chem Theory Comput (2015) 11, 2144-2155. doi : 10.1021/acs.jctc.5b00209
+      </li>
     </ul>
   </div>
-</nav>
 
- <div class="container">
-     <h1> System Builder</h1>
- </div>
+</div>
 
 </html>
