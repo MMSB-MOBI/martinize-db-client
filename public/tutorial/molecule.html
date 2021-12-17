@@ -150,7 +150,7 @@
       Color scale goes from cyan to white to orange to show hydrophobicity of beads. Cyan beads have low hydrophobicity value and orange beads have high hydrophobicity value. 
     </div>
     <div style="grid-column: 1 / 3";>
-      <img src="images/martinize_cg_radius1.png" style="width:100%"/>
+      <img src="images/molecule/martinize_cg_color.png" style="width:100%"/>
     </div>
 
   <div class="info" style="grid-column: 1 / 3";>
@@ -341,84 +341,60 @@
       <img src="images/martinize_go.png" width=550px>
     </div>
     <div style="grid-column: 1/5;">
-      The representation of GO bonds is then similar as elastic bonds. 
-      You can interact with this bonds the same way by clicking one bead, clicking one bond, or select groups. 
-      For example, we can select group 21-22 and group 141-142 to remove all bonds between these groups.
+      <h6>The representation of GO bonds is then similar as elastic bonds. 
+      You can interact with this bonds the same way by clicking one bead, clicking one bond, or select groups.
+      </h6> 
     </div>
-  
-    <div style="grid-column: 1/3;">
-      <img src="images/martinize_go_2.png" width=100%>
+    <div style="grid-column: 1/5;justify-self:center">
+      <div class="todo" style="margin-top: 2em;margin-bottom: 0.5em;">
+        <div><i class="small material-icons inline-icon">launch</i></div>
+        <div>
+          We can select <b>group 21-22</b> and <b>group 141-142</b> to remove all bonds between them.
+        </div>
+      </div>
     </div>
-  
-    <div style="grid-column: 3/5;">
-      <img src="images/martinize_go_3.png" width=100%>
+
+    <div style="grid-column: 1/5;" class="go_delete_container">
+      <div style="grid-column: 1/3;">
+        <img src="images/martinize_go_2.png" width=100%>
+      </div>
+      <div style="font-size: 2em; padding: 4px;align-self:center">
+        <span class="fa-stack fa-2x">
+          <i class="fa fa-circle fa-stack-2x icon-background"></i>
+          <i class="fa fa-arrow-right fa-stack-1x icon-foreground"></i>
+        </span>
+      </div>
+      <div style="grid-column: 4/6;">
+        <img src="images/martinize_go_3.png" width=100%>
+      </div>
     </div>
   </div>
 </div>
-  
-
-
-  <!--
-  
-</div>
-</div>
-
-<div id="go">
-  <h4>3. Protein with GO model</h4>
-
-  <div class="col s12">
-    The same way as for Elastic network, you can generate martinize protein with GO bonds. 
-
-The Go model approaches implemented in Martini protein models have two main differences in relation to elastic network approaches: the type of potential function used and how the contact map is defined. For the potential function, instead of the harmonic potentials used in elastic approaches , the approach is based on a dissociative Lennard-Jones potential, which is place on virtual sites built based on the position of the backbone bead s(see the GROMAC manual for more details about virtual sites: https://manual.gromacs.org/documentation/). In addition, the contact map in Go models are usually not only defined by distances cutoff between backbone beads. More sophisticate contact maps are usually employed. The main implementation of Go models combined with Martini is based on a contact map formed by the combination of the atomic overlap criterion (OV) and a variant of the contact of structure units (CSU). In MAD, the current contact map implementation is based on geometrical occlusion method. Independent of the contact map approach used, calibration of dissociation energies and cutoff based on experimental and/or atomistic simulation data are recommended.  
-
-Here we use the same T4 lysosyme protein. We select Virtual Go sites option, and other options remains as default.
-
-  </div>
-
-  <div class="col s12">
-    <img src="images/martinize_go.png" width=50%>
-  </div>
-  <div class="col s12">
-    The representation of GO bonds is then similar as elastic bonds. You can interact with this bonds the same way by clicking one bead, clicking one bond, or select groups. For example, we can select group 21-22 and group 141-142 to remove all bonds between these groups.
-    
-  </div>
-
-<div class="row">
-  <div class="col s6">
-    <img src="images/martinize_go_2.png" width=100%>
-  </div>
-
-  <div class="col s6">
-    <img src="images/martinize_go_3.png" width=100%>
-  </div>
-</div>
-  
 
 </div>
+
 
 <div id="history">
-  <h4>4. Browse my builds through history</h4>
-
-  <div class="row">
-    <div class="col s12">
-      When you click on "My builder history" on the right of MAD server, you have access to all your previous build made by Molecule Builder. 
-      This way, you can visualize the model (it will reload it into Molecule Builder and you can change representations, and/or edit bonds if it's a model with elastic network or GO model), download the result files, or delete the build from your history if you don't want it anymore. 
-      For each build, you have a more detailed description of it if you click on the left arrow  
+    
+  <h4>Browsing my molecular builds through history</h4>
+  <div class="history-container">
+    <div>
+      Click on <i class="fa fa-history"></i> <b>My builder history</b> in the left-end menu, to access to all your previous build made by <span class="MAD_logo">MAD:Molecule Builder</span>. 
+      Accessing individual model to reload them into Molecule Builder for further editing or to download the result files.
+      A detailed description of each build is displayed by clicking on the down arrow.
     </div>
-
+    <div style="grid-column: 1/5;">
+      <img src="images/molecule/history.png" width=100%>
+    </div>
+    <div class="info" style="grid-column: 1/5; display: flex; gap:1.5em">
+      <div>
+        <i class="material-icons inline-icon">info_outline</i>
+        </div>
+      <div>
+        As part any element of your history, the molecule will also be available into <span class="MAD_logo">MAD:Molecule Builder</span> for its integration into larger system.
+      </div>
+    </div>
   </div>
-
-  <div class="row">
-    <div class="col s6">
-      <img src="images/history_all.png" width=100%>
-    </div>
-    <div class="col s6">
-      <img src="images/history_detail.png" width=100%>
-    </div>
-  </div>
-
 </div>
-
-</div>
--->
+ 
 </html>
