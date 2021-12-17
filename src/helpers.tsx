@@ -297,3 +297,16 @@ export async function loadMartinizeFiles(job: ReadedJobDoc) : Promise<MartinizeF
 
   }
 }
+
+export function getErrorMsgFromValidationError(errors : any[]) : string{
+  const errorMsgMap = errors.map(e => { 
+    if(e.property && e.property === "originalname" && e.constraints) { //it's multer error about file name
+      return `Your file name is invalid : ${Object.values(e.constraints)[0]}`
+    } 
+    if(e.constraints) return Object.values(e.constraints[0])
+    else return ''
+  })
+
+  return errorMsgMap.join("\n")
+
+}
