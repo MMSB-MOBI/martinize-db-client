@@ -76,7 +76,7 @@ export const BetaWarning = () => {
 export const TutorialShow = () => {
   return <Alert severity="info" style = {{justifyContent:'center', alignItems: 'center'}}>
     <div>
-     <div>First time visitor ? You can check our <a href="tutorial">tutorial</a> </div>
+     <div>Try our <a href="tutorial">tutorial</a> </div>
     </div>
   </Alert>
 }
