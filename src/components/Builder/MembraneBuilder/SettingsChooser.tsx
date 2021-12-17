@@ -35,7 +35,7 @@ interface SCProps {
   forceField: string; 
   onSettingsChoose(settings: SettingsInsane): any;
   onPrevious(): any;
-  error?: true | { error: string, trace?: string, zip: number[] };
+  error?: true | { error: string, trace?: string, zip: number[], msg?: string};
 }
 
 interface SCState {
@@ -202,6 +202,19 @@ class SettingsChooser extends React.Component<SCProps, SCState> {
           Run failed with an unknown error.
         </Typography>
       );
+    }
+
+    if(error.error === "PARAMS_VALIDATION_ERROR"){
+      return (
+        <div>
+          <Typography color="error">
+            Error with parameters
+          </Typography> 
+          <Typography color="error" variant="caption">
+            {error.msg}
+          </Typography>
+        </div>
+        ) 
     }
 
     const download_fn = () => {
