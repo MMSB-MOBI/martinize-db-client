@@ -5,7 +5,7 @@ import { TransitionProps } from '@material-ui/core/transitions/transition';
 import { LoadFader, SimpleSelect } from '../../Shared';
 import CloseIcon from '@material-ui/icons/Close';
 import Settings from '../../Settings';
-import { flattenCategoryTree, Marger, notifyError } from '../../helpers';
+import { flattenCategoryTree, getErrorMsgFromValidationError, Marger, notifyError } from '../../helpers';
 import { toast } from '../Toaster';
 import AddMoleculeFileInput, { MoleculeFilesInput } from './AddMoleculeFileInput';
 import ApiHelper from '../../ApiHelper';
@@ -256,7 +256,13 @@ class AddMolecule extends React.Component<AddMoleculeProps, AddMoleculeState> {
         .then((mol: BaseMolecule) => {
           this.setState({ complete: mol });
         })
-        .catch(notifyError)
+        .catch((e) => {
+          if(Array.isArray(e) && e.length > 1 && e[1].errorCode && e[1].errorCode === "PARAMS_VALIDATION_ERROR"){
+            const msg = getErrorMsgFromValidationError(e[1].e)
+            toast(msg, "error") 
+          }
+          else notifyError(e)
+          })
         .finally(() => {
           this.setState({ loading: false });
         });
@@ -270,7 +276,13 @@ class AddMolecule extends React.Component<AddMoleculeProps, AddMoleculeState> {
         .then((mol: BaseMolecule) => {
           this.setState({ complete: mol });
         })
-        .catch(notifyError)
+        .catch((e) => {
+          if(Array.isArray(e) && e.length > 1 && e[1].errorCode && e[1].errorCode === "PARAMS_VALIDATION_ERROR"){
+            const msg = getErrorMsgFromValidationError(e[1].e)
+            toast(msg, "error") 
+          }
+          else notifyError(e)
+          })
         .finally(() => {
           this.setState({ loading: false });
         });

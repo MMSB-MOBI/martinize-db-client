@@ -2,7 +2,7 @@ import React from 'react';
 import * as ngl from '@mmsb/ngl';
 import { withStyles, ThemeProvider, Theme, withTheme, Grid, Link, Typography, Paper, Divider, createMuiTheme, Dialog, DialogTitle, DialogContent, DialogContentText, Button, DialogActions, Box, CircularProgress, FormControl, FormGroup, FormControlLabel, Switch, Slider, Checkbox, FormLabel, Radio, RadioGroup } from '@material-ui/core';
 import { Link as RouterLink } from 'react-router-dom';
-import { FaIcon, setPageTitle, Marger, downloadBlob } from '../../helpers';
+import { FaIcon, setPageTitle, Marger, downloadBlob, getErrorMsgFromValidationError } from '../../helpers';
 import { blue } from '@material-ui/core/colors';
 import MoleculeChooser, { MoleculeWithFiles } from './MembraneBuilder/MoleculeChooser';
 import LipidChooser, { ChoosenLipid } from './MembraneBuilder/LipidChooser';
@@ -349,13 +349,18 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
         result, 
       });
     } catch (e) {
-      console.log("error", e); 
       if (Array.isArray(e) && e[0].status === 400) {
-        const error = e[1] as { error: string, trace?: string, zip: number[] };
-
+        const error = e[1] as { error: string, trace?: string, zip: number[], errorCode?: string, e?:any, msg?:string };
+        
+        let msg = ""
+        if(e.length > 1 && error.errorCode && error.errorCode === "PARAMS_VALIDATION_ERROR"){
+          msg = getErrorMsgFromValidationError(e[1].e)
+          error.error = error.errorCode
+        }
+        
         toast('Run failed.', 'error');
 
-        this.setState({ insane_error: { error: error.error, zip: error.zip, trace: error.trace }, running: 'choose_settings' });
+        this.setState({ insane_error: { error: error.error, zip: error.zip, trace: error.trace, msg : msg }, running: 'choose_settings' });
       }
       else {
         this.setState({ insane_error: true, running: 'choose_settings' });
