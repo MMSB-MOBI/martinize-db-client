@@ -18,6 +18,17 @@ ul.show li:before{
 ul.show li {
     margin-bottom: 15px;
 }
+
+ul.show.show_tab li {
+    margin-left: 15px;
+}
+
+.grid-container {
+    display: grid;
+    grid-auto-flow: column;
+    column-gap: 2.5em;
+}
+
 .flex-container {
     display: flex;
     align-items: align-items;
@@ -137,3 +148,23 @@ span.command {
     border-width: 1px;
     margin: 1%; 
 }*/
+
+
+.classic-container {
+    display: grid;
+    grid-template-columns: auto auto;
+    grid-gap: 1em;
+    padding: 2%;
+  }
+
+  .classic-container > div {
+    margin-top:  1.5em;
+  }
+
+
+  .elastic-container {
+    display: grid;
+    grid-template-columns: auto auto auto auto;
+    grid-gap: 1em;
+    padding: 2%;
+  }
