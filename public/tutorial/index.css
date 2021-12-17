@@ -27,6 +27,9 @@ ul.show_discrete li:before{
 ul.show.show_tab li {
     margin-left: 15px;
 }
+ul.show.show_sp li {
+    margin-bottom: 1.25em;
+}
 
 .grid-container {
     display: grid;
@@ -207,3 +210,33 @@ ul.surrounded li {
     padding: 2%;
   }
 
+  .go_delete_container {
+    display: grid;
+    grid-template-columns: auto auto auto auto auto;
+  }
+
+  .icon-background {
+      /*background-color: #d4edda;*/
+      color:#d4edda;
+  }
+  .icon-foreground{
+    color:darkgreen;
+  }
+  .system_view_container {
+    display: grid;
+    grid-template-columns: auto auto auto auto;
+    grid-row-gap: 2em
+  }
+
+  .mol_card_container {
+      margin-top: 1.5em;
+    display: grid;
+    grid-template-columns: auto auto auto auto auto;
+    grid-row-gap: 1.25em
+  }
+
+  .history-container {
+    display: grid;
+    grid-template-columns: auto auto auto auto;
+    grid-row-gap: 2em
+  }

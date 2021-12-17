@@ -62,7 +62,7 @@
               <i class="small material-icons inline-icon">launch</i>
             </div>  
             <div>
-              Just click on the <i class="far fa-compass"></i> <span style="color:grey; font-weight: bolder;"></span>Explore link</span>   
+              Just click on the <span style="font-weight: bolder;"><i class="far fa-compass"></i> Explore</span> link
             </div>
           </div>
         </div>
@@ -129,17 +129,55 @@
           <i class="small material-icons inline-icon">launch</i>
         </div>  
         <div>
-          Click on the molecule named "kiki"
+          Click on the molecule named "<b>DGP3</b>"
         </div>
       </div>
     </div>  
     <div id="molecular_card">
+
       <h4>The content of the molecule card</h4>
+      <h6> By default the <b>HEAD</b> version of a molecule is displayed.
+      Most of the time, this corresponds to the latest deposited coarse grained representation of the molecule.
+      The visualization screen of the molecular entry is divided in two parts.
+      </br> </br> 
+      <i class="material-icons inline-icon tiny">keyboard_arrow_right</i>  
+      
+      The top level part displays the name and alias of the molecules along with the comment section of the molecule <i>itp</i> file.
+      An interactive viewer featuring the same color code as the <span class="MAD_logo">MAD:Molecule Builder</span> allows for visual inspection of the composition and configuration of the molecule.
+      <div class="mol_card_container">   
+        <div style="grid-column: 1/6;justify-self: center"><img src="images/database/mol_card_1.png" /></div>
+        
+        <div style="grid-column: 1/6;justify-self: center">
+          <h6><i class="material-icons inline-icon tiny">keyboard_arrow_right</i>  
+            The lower part of the screen mentions publication details, 
+            the version tree and access to the download section.</h6>  
+        </div>  
+      <div style="grid-column: 1/6;"><img src="images/database/mol_card_2.png"/></div>
+      <div style="grid-column: 1/6; margin-bottom: 2em;">
+        <div class="info" style="display:flex;gap:1em">
+          <div>
+          <i class="material-icons inline-icon small">info_outline</i>       
+          </div>
+          <div>
+            You can navigate in the version tree and access to all its elements molecular card. 
+            Each element is version of the same molecule that differ by its set of parameters of force-field version. 
+            You can visit all our in store version until you find the one matching you needs.
+          </div>
+        </div>  
+      </div>
     </div>
     <div id="how_to_contribute">
       <h4>Contributing to the database</h4>
-    </div>    
-
+      <div class="info" style="display:flex;gap:1em">
+        <div>
+        <i class="material-icons inline-icon small">file_upload</i>       
+        </div>
+        <div>
+          You don't find your favorite molecule? Add it to the database! Contributions are welcome, we just ask you to register and you will be able to curate and upload a molecule of your choice. 
+          Your submission will be validated by our moderators prior to its addition to the database.
+        </div>
+      </div>    
+    </div>
     <div id="references">
       <h4>References</h4>
       <ol>
