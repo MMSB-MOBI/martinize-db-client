@@ -99,6 +99,20 @@ div.todo {
     align-items: center;
 }
 
+div.cartouche {
+    color: #383d41;
+    background-color: #e2e3e5;
+    border-color: #d6d8db;
+    border-radius: 5px;
+    padding: 1em;
+    gap:1em; 
+    align-items: center;
+    margin-left: 1em;
+    cursor: pointer;
+    /*align-self: flex-start;*/
+    width: 50%;
+}
+
 div.warning {
     color: #721c24;
     background-color: #f8d7da;
@@ -240,3 +254,8 @@ ul.surrounded li {
     grid-template-columns: auto auto auto auto;
     grid-row-gap: 2em
   }
+
+.welcome {
+    width:80%;
+    padding : 2em;
+}
