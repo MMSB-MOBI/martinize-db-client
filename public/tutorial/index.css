@@ -15,8 +15,13 @@ ul.show li:before{
     content: 'arrow_forward';
     font-family: 'Material Icons';
 }
-ul.show li {
+ul.show,.show_discrete li {
     margin-bottom: 15px;
+}
+
+ul.show_discrete li:before{
+    content: 'chevron_right';
+    font-family: 'Material Icons';
 }
 
 ul.show.show_tab li {
@@ -168,3 +173,37 @@ span.command {
     grid-gap: 1em;
     padding: 2%;
   }
+
+  .fa-rotate-45 {
+    -webkit-transform: rotate(45deg);
+    -moz-transform: rotate(45deg);
+    -ms-transform: rotate(45deg);
+    -o-transform: rotate(45deg);
+    transform: rotate(45deg);
+}
+
+ul.surrounded :nth-child(1) {
+    text-align: right;
+}
+
+ul.surrounded :nth-child(2) {
+    text-align: center;
+}
+
+ul.surrounded :nth-child(3) {
+    text-align: left;
+}
+
+ul.surrounded li {
+    vertical-align: super;
+    color:#155724;
+    margin: 2em 0;
+}
+
+.go-container {
+    display: grid;
+    grid-template-columns: auto auto auto auto;
+    grid-gap: 1em;
+    padding: 2%;
+  }
+

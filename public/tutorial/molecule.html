@@ -196,16 +196,18 @@
        To illustrate the interests of the elastic network tool in <span class="MAD_logo">MAD:Molecule Builder</span> 
       we will use the T4 Lysozyme protein from the bacteriophage T4. 
       <div class="todo" style="margin-bottom: 2em;margin-top: 2em">
-        <div><i class="medium material-icons inline-icon">launch</i></div>
+        <div><i class="small material-icons inline-icon">launch</i></div>
         <div>
-          Download the corresponding <a href="https://files.rcsb.org/download/181L.pdb">PDB structure</a>
-          Go back to the <span class="MAD_logo">MAD:Molecule Builder</span> welcome screen and submit this file.
+          Download the corresponding <a href="https://files.rcsb.org/download/181L.pdb">PDB structure</a>.
+          Then, go back to the <span class="MAD_logo">MAD:Molecule Builder</span> welcome screen and load this file.
         </div>
       </div>
     </div>
     
      <div>
-       For T4 Lysozyme in Martini3, after setting Force field to martini3001 and Mode to <b>Elastic</b>, we recommend the following parameters:
+       <p style="margin-bottom: 2em;">
+       For T4 Lysozyme in Martini3, after setting <i>Force field</i> to "martini3001" and <i>Mode</i> to "Elastic", we recommend the following parameters:
+      </p>
        <ul class="show show_tab">
         <li>
         A force constant of 700 kJ/(mol.nm2)
@@ -220,6 +222,7 @@
          Activate the side chain fix
         </li>
        </ul>
+       
     </div>
 
     <div style="grid-column:  2/5;">
@@ -229,56 +232,134 @@
       <i class="material-icons inline-icon">info_outline</i>
       Additional improvements of the protein stability and reliability of its structures and dynamics are achieved by applying the side chain fix option, which adds dihedral angles between SC1-BB-BB-SC1 beads, leading to an improvement of the overall side chain orientations.
     </div>
-  </div>
- 
-  <!--
-     Now the protein can be submitted. Once done, you view the coarse grained protein with its elastic network represented by green links between beads.
-    <div class="col s6">
+    <div class="todo" style="grid-column: 1/5;margin-top: 2em">
+      <div><i class="small material-icons inline-icon">launch</i></div>
+      <div>
+        The protein is ready to be coarse grained. Click on the <b>SUBMIT</b> and wait for the processing to finish. 
+      </div>
+    </div>
+    <div style="grid-column:  1/5;margin-top: 2em;">
+      <h6>You should have access to a viewer of the coarse grained protein 
+      with its elastic network represented by green links between beads.
+    </h6>
+    </div>
+    <div>
+      <p style="margin-bottom: 2em;">
+        The <span class="MAD_logo">MAD:Molecule Builder</span> provides two edition modes of the elastic network.      
+     </p>
+      <ul class="show show_tab">
+        <li>
+          <b>Manual edition:</b> click on a single bead to remove all its elastic bonds, or add a new bond by clicking on another bead. A direct click on a bond allows to delete it.       
+        </li>
+        <li>
+          <b> Group selection:</b> select a group of beads and linking them all together, or select two groups to add elastic bonds between each others beads.
+        </li>
+      </ul>
+      All modifications done to the elastic network in your current session are logged in a <i class="fas fa-history"></i> <b>History</b> section.
+      
+   </div>
+   
+    <div style="grid-column: 2/5">
       <img src="images/martinize_elastic2.png" width=100%/>
     </div>
+    <div class="info" style="grid-column: 1 / 5";>
+      <i class="material-icons inline-icon">info_outline</i>
+        The group selection tool implements a simple query language. For example, selecting “05-10:A” as group 1 and “145-158:A” as group 2, will toggle links between the two groups.
+    </div>
+
+  <div style="grid-column: 1/3">
+    <div class="todo" style="margin-top: 1em;margin-bottom: 2em;">
+      <div><i class="small material-icons inline-icon">launch</i></div>
+      <div>
+        Click on the <i class="fas fa-pen"></i> <b>EDIT</b> button to experiment with the edition modes as depicted in the pictures around
+      </div>
+    </div>
+    <ul class="fa-ul surrounded">
+      <li>
+        <i class="fas fa-arrow-circle-right" style="font-size:2em"></i> <b>Single atom click</b> 
+      </li>
+      <li>
+        <i class="fas fa-arrow-circle-right fa-rotate-45" style="font-size:2em"></i> 
+        <b>Direct bond click</b>
+      </li>
+      <li>
+        <i class="fas fa-arrow-circle-down" style="font-size:2em"></i> 
+        <b>Group links edition</b>
+      </li>
+    </ul>
   </div>
 
-  <div class="row">
-    <div class="col s12">
-      With MAD server, you can modify manually the elastic network. There are 2 ways to modify it. Manually, by clicking on a single bead (a),  you can remove all of its elastic bonds, or add a new bond by clicking on another bead. You can also directly click on a bond to delete it (b)
-
-      The group selection can also be used. Either by selected a single group and linking all the selected beads together; or by selecting two groups, linking every bead of one group to every bead of the second group.
-
-      For example, if you select “05-10:A” as group 1 and “145-158:A” as group 2, you will be able to create or delete all the beads between these two groups. (c)
+    <div style="grid-column: 3/5; justify-self: center;">
+      <img src="images/martinize_elastic_select1.png" width=500px/>
     </div>
-
-    <div class="row">
-
-      <div class="col s4">
-        <img src="images/martinize_elastic_select1.png" width=100%/>
-      </div>
-      <div class="col s4">
-        <img src="images/martinize_elastic_bond.png" width=100%/>
-      </div>
-      <div class="col s4">
-        <img src="images/martinize_elastic_groups.png" width=100%>
+    <div style="grid-column: 1/3;justify-self: center;">
+      <img src="images/martinize_elastic_bond.png" width=500px/>
+    </div>
+    <div style="grid-column: 3/5;justify-self: center;">
+      <img src="images/martinize_elastic_groups.png" width=500px>
+    </div>
+    <div style="grid-column: 1/5;">
+      <div class="info" style="grid-column: 1 / 5";>
+        <i class="material-icons inline-icon">info_outline</i>
+      Once your modifications are done, the <span class="MAD_logo">MAD:Molecule Builder</span> will ask for a confirmation before writing them to your history. If you accept, The previous elastic model will be erased. 
+      Nothing prevents you from relaunching a Molecule Builder with the same file if you want to have different network states for the same molecule.
       </div>
     </div>
+  </div>
+</div>
 
-    <div class="row">
-      <div class="col s12">
-        Here you can select 21 as group 1 and 141 as group 2 to delete the bond between these 2 groups (d) 
+<div id="elastic">
 
+  <h4>Protein with GO model</h4>
+  <div class="go-container">
+    <div style="grid-column: 1/5;">
+      The same way as for Elastic network, you can generate martinize protein with GO bonds. 
+      The Go model approaches implemented in Martini protein models have two main differences 
+      in relation to elastic network approaches: the type of potential function used and 
+      how the contact map is defined. 
+      For the potential function, instead of the harmonic potentials used in elastic approaches, 
+      the approach is based on a dissociative Lennard-Jones potential, which is place on virtual 
+      sites built based on the position of the backbone bead s(see the GROMAC manual for more details 
+      about virtual sites: https://manual.gromacs.org/documentation/). 
+      The contact map in Go models are usually not only defined by distances cutoff between backbone
+      beads. More sophisticate contact maps are usually employed. The main implementation of Go models 
+      combined with Martini is based on a contact map formed by the combination of the atomic overlap 
+      criterion (OV) and a variant of the contact of structure units (CSU). 
+      In MAD, the current contact map implementation is based on geometrical occlusion method. 
+      Independent of the contact map approach used, calibration of dissociation energies and cutoff based on experimental and/or atomistic simulation data are recommended.  
+    </div>
+    <div style="grid-column: 1/3;justify-self:center">
+      <div class="todo" style="margin-top: 1em;margin-bottom: 2em;">
+        <div><i class="small material-icons inline-icon">launch</i></div>
+        <div>
+          Go back to the MAD:Molecule Builder welcome screen and load T4 Lysozyme protein file again.
+          Select <b>Virtual Go sites</b> option, other options remaining as default.
+        </div>
       </div>
-      <div class="col s6">
-        <img src="images/martinize_elastic_before_delete.png" width=100% />
-      </div>
-      <div class="col s6">
-        <img src="images/martinize_elastic_after_delete.png" width=100% />
-      </div>
+    </div>
+    <div style="grid-column: 3/5; justify-self:center">
+      <img src="images/martinize_go.png" width=550px>
+    </div>
+    <div style="grid-column: 1/5;">
+      The representation of GO bonds is then similar as elastic bonds. 
+      You can interact with this bonds the same way by clicking one bead, clicking one bond, or select groups. 
+      For example, we can select group 21-22 and group 141-142 to remove all bonds between these groups.
     </div>
   
-  <div class="row">
-    <div class="col s12">
-      Once your modifications are done, MAD will ask you if you want to keep them in your history. If you accept, it will erase the original model (but you can relaunch a Molecule Builder if you want to have it separately) 
+    <div style="grid-column: 1/3;">
+      <img src="images/martinize_go_2.png" width=100%>
+    </div>
+  
+    <div style="grid-column: 3/5;">
+      <img src="images/martinize_go_3.png" width=100%>
     </div>
   </div>
+</div>
+  
 
+
+  <!--
+  
 </div>
 </div>
 
