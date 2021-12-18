@@ -14,13 +14,15 @@
     <div class="nav-wrapper">
       <a href="#" class="brand-logo center">MAD Tutorial</a>
       <ul id="nav-mobile" class="left hide-on-med-and-down">
-        <li> <a style="display:flex; gap:1em" href="https://mad.ibcp.fr"> <i class="small material-icons inline-icon"> arrow_back </i> <span> Go back to MAD server </span> </a></li>
+        <li> <a style="display:flex; gap:1em" href="/"> <i class="small material-icons inline-icon"> arrow_back </i> <span> Go back to MAD server </span> </a></li>
         <li><a href="database.html">Database</a></li>
         <li><a href="molecule.html">Molecule Builder</a></li>
         <li><a href="system.html">System Builder</a></li>
       </ul>
     </div>
   </nav>
+
+<body style="padding:5px; margin-bottom: 5em;">
 <div style="text-align: center;">
 <h1> Welcome to the MAD Tutorial </h1>
 </div>
@@ -28,45 +30,72 @@
 
 <div class="welcome">
   <h4> What is MAD ?</h2>
-The Martini Database (MAD) is a web server dedicated to (a) sharing structures and topologies of molecules parameterized with the Martini coarse-grained (CG) force field [1-3]; (b) converting atomistic structures into CG structures; (c) preparing complex systems (including proteins, nucleic acids, lipids etc.) for molecular dynamics (MD) simulations at the CG level. Specifically, the MAD server currently includes tools to: (a) submit or retrieve CG representations of a wide range of molecules (lipids, sugars, nanoparticles, etc.); (b) transform all-atom protein structures into CG structures and topologies, with fine control on the process; (c) assemble biomolecules into large systems and deliver all files necessary to start molecular dynamics simulations. 
-</div>
-<div style="padding-left: 1em;">
-<h5>
-  We will guide you through your first tour on the MAD server. This guide is composed of three sections:
-</h5>
-</br>
-<div style="display:flex; flex-direction: column; gap:2em">
-<div class="cartouche"
-  onclick="location.href='/tutorial/database.html';"
->
-  <b>MAD:Database</b> where you access/retrieve or submit to our database of compound
-</div>  
-<div class="cartouche"
-onclick="location.href='/tutorial/molecule.html';"
->
-  <b>MAD:Molecule Builder</b> where you coarse grain all atom PDB structure into their Martini versions.
-</div>  
-<div class="cartouche"
-onclick="location.href='/tutorial/system.html';">
-  <b>MAD:System Builder</b>  combine your coarse grained structure like proteins with lipid component from our database to create large system.
-</div> 
-
-<div class="disclaimer" style="display:flex;width:50%; margin-left: 1em;">
-  <div> 
-    <i class="fa fa-exclamation-triangle"></i>
-  </div>
-  <div>
-  A registration is required in order to use the <b>MAD:System Builder</b> and <b>MAD:Molecule Builder</b>
-  </div> 
+The Martini Database (MAD) is a web server dedicated to (a) sharing structures and topologies of 
+molecules parameterized with the Martini coarse-grained (CG) force field [<a href="#references">1-3</a>]; (b) converting atomistic 
+structures into CG structures; (c) preparing complex systems (including proteins, nucleic acids, lipids etc.) 
+for molecular dynamics (MD) simulations at the CG level. 
+Specifically, the MAD server currently includes tools to: (a) submit or retrieve CG representations of a 
+wide range of molecules (lipids, sugars, nanoparticles, etc.); (b) transform all-atom protein structures into 
+CG structures and topologies, with fine control on the process; (c) assemble biomolecules into large systems and 
+deliver all files necessary to start molecular dynamics simulations. 
 </div>
 
-<div class="todo" style="display:flex ;width:50%; margin-left: 1em;">
-  <div> 
-    <i class="fa fa-user-plus"></i>
-  </div>
-  <div>
-    Account access and registration is available <a href="/login">here</a>
+  <h6>
+    We will guide you during your first tour on the MAD server through the three following sections:
+  </h6>
+  </br>
+  
+  <div style="display:flex; flex-direction: column; gap:2em">
+    <div class="cartouche"
+      onclick="location.href='/tutorial/database.html';"
+    >
+      <b>MAD:Database</b> where you access/retrieve or submit to our database of compounds
+    </div>  
+ 
+  <div class="cartouche"
+  onclick="location.href='/tutorial/molecule.html';"
+  >
+    <b>MAD:Molecule Builder</b> where you coarse grain all atom PDB structure into their Martini versions
+  </div>  
+  
+  <div class="cartouche"
+    onclick="location.href='/tutorial/system.html';">
+    <b>MAD:System Builder</b> which combines your coarse grained protein structure with lipid component from MAD database to create large system
   </div> 
+  
+  <div class="disclaimer" style="display:flex;width:50%; margin-left: 1em;">
+    <div> 
+      <i class="fa fa-exclamation-triangle"></i>
+    </div>
+    <div>
+      A registration is required in order to use the <b>MAD:Molecule Builder</b> and the <b>MAD:System Builder</b>
+    </div> 
+  </div>
+
+  <div class="todo" style="display:flex ;width:50%; margin-left: 1em;">
+    <div> 
+      <i class="fa fa-user-plus"></i>
+    </div>
+    <div>
+      Account access and registration are available <a href="/login">here</a>
+    </div>
+  </div>
+
+  <div style="font-size: 1.em;" id="references">
+    <h4>References</h4>
+      <ol>
+        <li>
+          SJ Marrink, HJ Risselada, S Yefimov, DP Tieleman, AH De Vries. The MARTINI force field: coarse grained model for biomolecular simulations. J Phys Chem B (2007) 111, 7812-7824. Doi: 10.1021/jp071097f 
+        </li>
+        <li>
+            L Monticelli, SK Kandasamy, X Periole, RG Larson, DP Tieleman, SJ Marrink. The MARTINI coarse-grained force field: extension to proteins. J Chem Theory Comput (2008) 4, 819-834. Doi: 10.1021/ct700324x
+        </li>
+        <li>
+            Souza, P.C.T., Alessandri, R., Barnoud, J. et al. Martini 3: a general-purpose force field for coarse-grained molecular dynamics. Nat Methods (2021) 18, 382–388. Doi : 10.1038/s41592-021-01098-3
+        </li>
+      </ol>
+  </div>
 </div>
+</body>
  </html>
  

@@ -19,6 +19,10 @@ ul.show,.show_discrete li {
     margin-bottom: 15px;
 }
 
+ul.show.show_new, li {
+    margin-bottom: 1em;
+}
+
 ul.show_discrete li:before{
     content: 'chevron_right';
     font-family: 'Material Icons';
@@ -198,25 +202,32 @@ span.command {
     -o-transform: rotate(45deg);
     transform: rotate(45deg);
 }
-
-ul.surrounded :nth-child(1) {
-    text-align: right;
+.surround-container {
+    display: grid;
+    grid-template-columns: auto auto auto;
+    column-gap : 0.5em;
 }
-
-ul.surrounded :nth-child(2) {
-    text-align: center;
-}
-
-ul.surrounded :nth-child(3) {
-    text-align: left;
-}
-
-ul.surrounded li {
-    vertical-align: super;
+.surround-container div{
+  
     color:#155724;
     margin: 2em 0;
 }
-
+.surround-container i {
+    vertical-align: middle;
+}
+.surround-container .todo {
+    grid-area: 1 / 1 / span 2 / span 2;
+    padding: 0.5em
+}
+.surround-item1 {
+    grid-area: 1 / 3 / span 1 / span 1;
+}
+.surround-item2 {
+    grid-area: 3 / 3 / span 1 / span 1;
+}
+.surround-item3 {
+    grid-area: 3 / 1 / span 1 / span 1;
+}
 .go-container {
     display: grid;
     grid-template-columns: auto auto auto auto;

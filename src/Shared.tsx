@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState} from 'react';
 import { Grid, CircularProgress, FormControl, InputLabel, Select, MenuItem } from "@material-ui/core";
 import { Alert } from '@material-ui/lab';
 import clsx from 'clsx';
@@ -73,10 +73,11 @@ export const BetaWarning = () => {
   </Alert>
 } 
 
+
+
 export const TutorialShow = () => {
-  return <Alert severity="info" style = {{justifyContent:'center', alignItems: 'center'}}>
-    <div>
-     <div>Try our <a href="tutorial">tutorial</a> </div>
-    </div>
+  return <Alert severity="info" 
+    style = {{justifyContent:'center', alignItems: 'center'}}>
+    New to MAD? Try our <a href="tutorial">tutorial!</a>
   </Alert>
 }

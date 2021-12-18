@@ -27,7 +27,7 @@
   <h1>System Builder</h1>
 
   <div id="header">
-    The system builder tool offered by MAD is a web service that bridges the gap 
+    The system builder tool offered by MAD is a tool that bridges the gap 
     between the <a href="https://github.com/Tsjerk/Insane">INSANE sofware</a>[<a href="#references">1</a>]
      and different collection of molecules. 
     The INSANE software generates initial coordinates for a large system of atoms.
@@ -111,15 +111,18 @@
         </div>
 
         <div class="main_comment">
-          <ul class="show">
+          <ul class="show show_new">
             <li>
-              <span class="li_supt">Toggle the addition of lipids:</span> If set to <i>no</i> the system will be a box of water without lipid bilayer.
+              <span class="li_supt">Toggle the addition of lipids:</span> If set to <i>no</i> the system 
+              will be a box of water with no lipid bilayer.
             </li>
             <li>
-              <span class="li_supt">Add Lipid:</span> Select among different phosphatidylcholine derivative to be added to the bilayer composition. Individual type and ratios can be defined
+              <span class="li_supt">Add Lipid:</span> Select the different phospholipds to be added to the bilayer composition. 
+              Individual type and ratio can be set.
             </li>
             <li>
-              <span class="li_supt">Separate lower and upper leaflet:</span> set up common or separated lipid composition for the two leaflets.
+              <span class="li_supt">Separate lower and upper leaflet:</span> set up common 
+              or separated lipid compositions for the two leaflets.
             </li>
           </ul>
         </div>
@@ -149,13 +152,15 @@
       <div class="comment">
 
         <div class="preamb">
-          Here you can modify the execution parameters of the INSANE software. Default parameters are preselected for you to ensure a safe generation of the system coordinates. 
+          Here you can modify the execution parameters of the INSANE software. Default parameters are preselected 
+          to ensure a safe generation of the system coordinates. 
           Still, many options are available should you require additional setup conditions.
         </div>
         <div class="warning">
           <i class="material-icons inline-icon">warning</i>
           Extreme values for some parameters may cause the INSANE software to early exit out of errors.
-          <span style="font-weight: initial;">In such cases, MAD will warn you and you will be able to retry with other parameter values.</span>
+          <span style="font-weight: initial;">In such cases, MAD will warn you and you will be able to 
+            retry with other parameter values.</span>
 
         </div>
         <div class="main_comment">
@@ -164,7 +169,7 @@
               <span class="li_supt">Periodic boundary conditions:</span> Set the geometry and dimensions of the simulation box.
             </li>
             <li>
-              <span class="li_supt">Lipid options:</span> Define the membrane lipid spacing to distribute molecules across the bilayer.
+              <span class="li_supt">Lipid options:</span> Define the membrane lipid spacing for the molecules distribution across the bilayer.
             </li>
             <li>
               <span class="li_supt">Protein options:</span> Place the protein at the bilayer center, eventually orienting it.
@@ -200,10 +205,13 @@
     <h4>Visualizing and using the system</h4>
     <div class="system_view_container">
       <div style="grid-column: 1/5;">
-        The viewer section of the <span class="MAD_logo">MAD:System Builder</span> allows for a final visual inspection of the system.
-        The molecular structures of the molecules are displayed in the leaflets and the surrounding water. Water molecules can be shown, 
-        with proper coloring for the charged ions (bottom left). Membrane lipids and the embeded protein are displayed in ball and sitck representation (Lower right).
-        A reduction of the actual Martini3 beads is applied to avoid cluttering of representation.
+        The viewer section of the <span class="MAD_logo">MAD:System Builder</span> allows for a final visual 
+        inspection of the system.
+        The molecular structures of the molecules are displayed in the leaflets and the surrounding water. 
+        Water molecules can be shown, 
+        with proper coloring for the charged ions (bottom left). 
+        Membrane lipids and the embeded protein are displayed in ball and sitck representation (lower right).
+        A size reduction is applied to the actual Martini3 beads to avoid the cluttering of representation.
     </div>
     <div style="grid-column: 1/3;">
       <img src="images/system/system_view2.png" style="width: 550px;"/>  
@@ -217,8 +225,8 @@
       <i class="small material-icons inline-icon">launch</i>
       </div>
       <div>
-        Retrieve you molecular dynamic input files in <i>itp, pdb</i> and <i>gro</i> with the 
-        <i class="far fa-download"></i> <b>DOWNLOAD</b> link
+        Retrieve you molecular dynamic input files in <i>itp, pdb</i> and <i>gro</i> formats 
+        with the <i class="far fa-download"></i> <b>DOWNLOAD</b> link
       </div>
     </div>
   </div>
