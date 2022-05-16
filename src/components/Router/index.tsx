@@ -21,6 +21,7 @@ import MembraneBuilder from '../Builder/MembraneBuilder';
 import ForceField from '../ForceField/ForceField';
 import MyHistory from '../MyHistory/MyHistory'; 
 import Tutorial from '../Tutorial/Tutorial'
+import GeneratorManager from '../Polymer/GeneratorManager';
 
 function LoadAppDrawer(props: RouteComponentProps) {
   return <ApplicationDrawer {...props} />;
@@ -38,6 +39,7 @@ const RouterCmpt = () => {
         <Route path="/change_password" exact component={LoadChangePasswordDrawer} />
         <Route path="/builder" exact component={LoadMartinizeBuilder} />
         <Route path="/membrane_builder" exact component={LoadMembraneBuilder} />
+        <Route path="/polymer" exact component={LoadPolymerGenerator} />
 
         <Route path="/molecule/:alias" component={LoadDrawer} />
         <Route path="/group/:alias" component={LoadDrawer} />
@@ -51,6 +53,7 @@ const RouterCmpt = () => {
         <Route path="/contact" component={LoadDrawer} />
         <Route path="/force_fields" component={LoadDrawer} />
         <Route path="/builder/:id" exact component={LoadMartinizeBuilder} />
+        
 
         {/* Not found */}
         <Route component={NotFound} />
@@ -58,6 +61,12 @@ const RouterCmpt = () => {
     </BrowserRouter>
   )
 };
+
+function LoadPolymerGenerator(props: RouteComponentProps) {
+  return (
+    <WaitForLoginFinish {...props} component={GeneratorManager} wait={[Settings.login_promise, Settings.martinize_variables_promise]} />
+  );
+}
 
 function LoadDrawer(props: RouteComponentProps) {
   return (

@@ -134,6 +134,14 @@ function DrawerElements(props: RouteComponentProps) {
         icon: "download",
         text: "Force fields",
         font: "bold"
+      },
+      {
+        path: '/polymer',
+        link: true,
+        icon: 'beer',
+        text: 'Polymer Generator',
+        //condition: !!Settings.logged,
+        font : "bold"
       }
     ],
     [
