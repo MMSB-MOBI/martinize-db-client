@@ -9,6 +9,7 @@ import './GeneratorViewer.css';
 import Warning from "./Dialog/warning";
 
 interface propsviewer {
+   
   forcefield: string,
   newNodes: SimulationNode[];
   newLinks: SimulationLink[];
@@ -37,12 +38,13 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
     Warningmessage: ''
   };
 
+
   // Ajouter un point d'exclamation veut dire qu'on est sur que la valeur n'est pas nul
   ref!: SVGSVGElement;
   frame!: HTMLDivElement;
   frameCount = 0
-   
-  taille =  800;
+
+  taille = 800;
   nodeRadius = 10;
   currentnodeRadius = 10;
   mouseX = 0;
@@ -63,6 +65,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
   simulation = initSimulation(this.taille, this.currentnodeRadius);
 
   componentDidMount() {
+ 
     //Draw svg frame
     initSVG(this.ref, this.taille);
     console.log(document.getElementsByClassName("svg"))

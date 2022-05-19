@@ -8,7 +8,7 @@ import Typography from "@mui/material/Typography";
 import Warning from "./Dialog/warning";
 import AutoFixHigh from "@mui/material/Icon/Icon";
 import { FaIcon, Marger } from "../../helpers";
-import { CircularProgress, Grid, } from '@material-ui/core';
+import { CircularProgress, Grid, Input, } from '@material-ui/core';
 import { SimpleSelect } from "../../Shared";
 import Link from "@mui/material/Link";
 
@@ -142,14 +142,10 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
           Design your own polymer :
         </Typography>
 
-        <Marger size="2rem" />
+        <Marger size="1rem" />
 
 
-        <Link
-          href="#!"
-        // When state is initial state (main loader), don't show the confirm modal
-
-        >
+        <Link href="http://localhost:3001" >
           <FaIcon home style={{ fontSize: '1rem' }} />
           <span style={{ marginLeft: '.7rem', fontSize: '1.1rem' }}>
             MAD Home
@@ -160,15 +156,15 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
         <Marger size="2rem" />
 
 
-        <Grid container component="main" style={{ textAlign: 'center', alignItems: 'center', justifyContent: 'center', }} >
+        <Grid container component="main" style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }}>
 
-          <Grid item xs={6}   >
-            <Typography variant="body1" align="center">
+          <Grid item xs={5}>
+          <Typography variant="h6" >
               First choose your forcefield :
             </Typography>
 
           </Grid>
-          <Grid item xs={6}  >
+          <Grid item xs={5}>
             {Object.keys(this.props.dataForceFieldMolecule).length === 0 ? (
               <CircularProgress />
             ) :
@@ -183,56 +179,60 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
                   value={this.state.forcefield}
                   onChange={v => {
                     this.props.setForcefield(v);
-                    this.setState({ forcefield: v })
+                    this.setState({ forcefield: v });
                   }} />
-              )
-            }
+              )}
           </Grid>
 
 
           <Marger size="2rem" />
 
+
           {(forcefield !== '') &&
-            <div   >
-              <div style={{ textAlign: 'left', display: 'flex', }}  >
-                <Grid item xs={6} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }}  >
+            <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center' }}>
 
-                  <Typography component={'div'}>
-                    Upload a file :
-                  </Typography>
-                  <Typography component={'div'}>
-                    <ul>
-                      <li>your previous polymer (.json)</li>
-                      <li>a fasta protein sequence (.fasta)</li>
-                      <li>a residue description for the forcefield (.itp/.ff)</li>
-                    </ul>   </Typography>
+              <Typography variant="h6" >
+                Upload a file :
+              </Typography>
+            </Grid>
+          }
+          {(forcefield !== '') &&
+            <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center' }}>
+              <Input
 
+                color="primary"
+                onChange={(e: any) => this.handleUpload(e.target.files)}
+                type="file"
+              />
+            </Grid>
+          }
+          {(forcefield !== '') &&
+            <Grid item xs={10} style={{ textAlign: 'left', alignItems: 'center' }}>
 
-                </Grid>
+              <Typography component={'div'}>
+                <ul>
+                  <li>Your previous polymer (.json)</li>
+                  <li>Fasta protein sequence (.fasta)</li>
+                  <li>Topology of a polymer (.itp)</li>
+                </ul>   </Typography>
 
-                <Grid item xs={6} style={{ textAlign: 'left', display: 'flex', alignItems: 'center', justifyContent: 'center', }}  >
+            </Grid>
 
+          }
 
-                  <div style={{ textAlign: 'center', display: 'flex', }}>
-                    <Button variant="outlined" color="primary"  >
-                      Upload File
-                    </Button>
+          <Marger size="1rem" />
 
-                    <input
-                      onChange={(e: any) => this.handleUpload(e.target.files)}
-                      type="file"
-                      hidden
-                    />
-
-                  </div>
-
-                </Grid>
-              </div>
-
-
-
-              <Marger size="1rem" />
-              <Typography style={{ textAlign: 'left', alignItems: 'center', }}> Add your molecule (in chain) : </Typography>
+          {
+            (forcefield !== '') &&
+            <Grid item xs={10} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }}>
+              <Typography variant="h6" align="left">
+                Add your molecule (in chain):
+              </Typography>
+            </Grid>
+          }
+          {
+            (forcefield !== '') &&
+            <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
 
               <SimpleSelect
                 //formControlClass={this.props.classes.ff_select}
@@ -242,10 +242,12 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
                 values={this.GetMolFField(this.props.dataForceFieldMolecule, forcefield).map(e => ({ id: e, name: e }))}
                 id="ff"
                 value={this.state.moleculeToAdd}
-                onChange={v => this.setState({ moleculeToAdd: v })}
-
-              />
-
+                onChange={v => this.setState({ moleculeToAdd: v })} />
+            </Grid>
+          }
+          {
+            (forcefield !== '') &&
+            <Grid item xs={2} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
 
               <TextField
                 label="numberToAdd"
@@ -253,10 +255,12 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
                 InputProps={{ inputProps: { min: 1, max: 100 } }}
                 value={this.state.numberToAdd}
                 onChange={v => this.setState({ numberToAdd: Number(v.target.value) })}
-                variant="standard"
-
-              />
-
+                variant="standard" />
+            </Grid>
+          }
+          {
+            (forcefield !== '') &&
+            <Grid item xs={3} style={{ textAlign: 'right', alignItems: 'center', justifyContent: 'center', }} >
               <Button
                 endIcon={<Grain />}
                 id="addmol"
@@ -264,52 +268,73 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
                 onClick={() => this.CheckNewMolecule()}>
                 add
               </Button>
-
-              <Marger size="1rem" />
-              <Typography>Add a new link : </Typography>
-
+            </Grid>
+          }
 
 
+          <Marger size="1rem" />
+
+          {
+            (forcefield !== '') &&
+
+            <Grid item xs={10} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
+              <Typography variant="h6" >Add a new link: </Typography>
+            </Grid>
+          }
+          {
+            (forcefield !== '') &&
+            <Grid item xs={3} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
               <TextField
                 label="id1"
                 type="number"
                 InputProps={{ inputProps: { min: 0, max: 100 } }}
                 value={this.state.id1}
                 onChange={v => this.setState({ id1: v.target.value })}
-                variant="standard"
-              />
-
+                variant="standard" />
+            </Grid>
+          }
+          {
+            (forcefield !== '') &&
+            <Grid item xs={3} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
               <TextField
                 label="id2"
                 type="number"
                 InputProps={{ inputProps: { min: 0, max: 100 } }}
                 value={this.state.id2}
                 onChange={v => this.setState({ id2: v.target.value })}
-                variant="standard"
-              />
+                variant="standard" />
+            </Grid>
+          }
 
+          {
+            (forcefield !== '') &&
+            <Grid item xs={3} style={{ textAlign: 'right', alignItems: 'center', justifyContent: 'center', }} >
               <Button
                 endIcon={<Insights />}
                 id="addlink"
                 variant="contained"
                 onClick={() => this.CheckNewLink(this.state.id1, this.state.id2)}>
                 Add link
+
               </Button>
 
-              <Marger size="2rem" />
+            </Grid>
+          }
+          <Marger size="2rem" />
+          {
+            (forcefield !== '') &&
+
+            <Grid item xs={6} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }}>
 
               <Button id="send" variant="contained" color="success" endIcon={<AutoFixHigh />} onClick={() => this.props.send()}>
                 Polyply That !!
               </Button>
-
-            </div>
+            </Grid>
           }
           <Marger size="1rem" />
-
-        </Grid>
-        <Warning message={this.state.Warningmessage} close={() => { this.setState({ Warningmessage: "" }) }}></Warning>
-
-      </div>
+          <Warning message={this.state.Warningmessage} close={() => { this.setState({ Warningmessage: "" }); }}></Warning>
+        </Grid >
+      </div >
     )
   };
 }

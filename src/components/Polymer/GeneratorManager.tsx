@@ -16,6 +16,7 @@ import Typography from "@material-ui/core/Typography";
 import { blue } from "@material-ui/core/colors";
 import MembraneBuilder from "../Builder/MembraneBuilder";
 import { Marger } from "../../helpers";
+import GeneratorViewer from "./GeneratorViewer";
 
 // Pour plus tard
 //https://github.com/korydondzila/React-TypeScript-D3/tree/master/src/components
@@ -62,6 +63,8 @@ export default class GeneratorManager extends React.Component {
     };
   }
 
+
+  //myViewerRef = React.createRef();
 
   state: StateSimulation = {
     Simulation: undefined,
@@ -572,9 +575,8 @@ export default class GeneratorManager extends React.Component {
         </AppBar>
 
 
-        <Grid item sm={8} md={5} component={Paper} elevation={6} square>
+        <Grid item md={4} component={Paper} elevation={6} square>
 
-        
           <GeneratorMenu
             addFromITP={this.addFromITP}
             addprotsequence={this.addprotsequence}
@@ -584,7 +586,6 @@ export default class GeneratorManager extends React.Component {
             addlink={this.addlink}
             send={this.ClickToSend}
             dataForceFieldMolecule={this.state.dataForForm}
-
           />
 
           {this.state.loading ? (
@@ -603,7 +604,8 @@ export default class GeneratorManager extends React.Component {
             forcefield={this.currentForceField}
             getSimulation={(SimulationFromViewer: d3.Simulation<SimulationNode, SimulationLink>) => { this.setState({ Simulation: SimulationFromViewer }) }}
             newNodes={this.state.nodesToAdd}
-            newLinks={this.state.linksToAdd} />
+            newLinks={this.state.linksToAdd}
+          />
         </Grid>
 
 
