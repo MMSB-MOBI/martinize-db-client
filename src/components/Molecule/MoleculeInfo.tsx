@@ -286,13 +286,6 @@ export default function MoleculeInfo<T extends StashedMolecule | Molecule>(props
           </span>
         </Link>}
 
-        {/* Add button. Available when !{stashed}. */}
-        {!stashed && is_logged && <Link className={classes.link} style={{ color: "orange" }} onClick={() => setNewVersion(true)}>
-          <Icon className={clsx("fas", "fa-plus", classes.linkIcon)} />
-          <span>
-            Add a version
-          </span>
-        </Link>}
       </div>
 
       <Marger size="1.5rem" />

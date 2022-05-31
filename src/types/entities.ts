@@ -40,6 +40,15 @@ export interface BaseMolecule {
   builder_mode ?: string; 
 }
 
+export interface ModelMolecule {
+  name: string; 
+  alias: string; 
+  smiles: string; 
+  category: string[]; 
+  tree_id: string; 
+  force_field?: string; 
+}
+
 export interface Molecule extends BaseMolecule {
   /** <User.id> that have approved this molecule */
   approved_by: string;

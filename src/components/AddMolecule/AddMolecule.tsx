@@ -1,5 +1,5 @@
 import React from 'react';
-import { BaseMolecule, Molecule, StashedMolecule } from '../../types/entities';
+import { BaseMolecule, Molecule, StashedMolecule, ModelMolecule } from '../../types/entities';
 import { Dialog, Slide, Button, Container, AppBar, Toolbar, IconButton, Typography, TextField, Link, withStyles, DialogTitle, DialogContent, DialogContentText, CircularProgress, DialogActions } from '@material-ui/core';
 import { TransitionProps } from '@material-ui/core/transitions/transition';
 import { LoadFader, SimpleSelect } from '../../Shared';
@@ -25,6 +25,8 @@ interface AddMoleculeProps {
    * This will determine which field is editable.
    */
   parent?: Molecule,
+  model?: ModelMolecule // TYPE BETTER
+  versions?: Molecule[]
   open: boolean,
   /** When user cancel the molecule modification. */
   onClose: () => void,
@@ -56,6 +58,9 @@ interface AddMoleculeState {
   top_creator: boolean;
 
   complete: BaseMolecule | false;
+  current_ff_versions : Molecule[]
+  parent_version: string; 
+  parent: string; 
 }
 
 class AddMolecule extends React.Component<AddMoleculeProps, AddMoleculeState> {
@@ -69,19 +74,22 @@ class AddMolecule extends React.Component<AddMoleculeProps, AddMoleculeState> {
     this.state = {
       loading: false,
       files: props.from?.files ?? "",
-      name: props.from?.name ?? (props.parent?.name ?? ""),
-      alias: props.from?.alias ?? (props.parent?.alias ?? ""),
-      smiles: props.from?.smiles ?? (props.parent?.smiles ?? ""),
-      category: props.from?.category ?? (props.parent?.category ?? [""]),
+      name: props.from?.name ?? (props.parent?.name ?? (props.model?.name ?? "")),
+      alias: props.from?.alias ?? (props.parent?.alias ?? (props.model?.alias ?? "")),
+      smiles: props.from?.smiles ?? (props.parent?.smiles ?? (props.model?.smiles ?? "")),
+      category: props.from?.category ?? (props.parent?.category ?? (props.model?.category ?? [""])),
       command_line: props.from?.command_line ?? "",
-      version: props.from?.version ?? "",
+      version: props.from?.version ?? (props.parent ? this.automaticGuessOfNextVersion(props.parent.version, props.parent.force_field) : "1.0"),
       comments: props.from?.comments ?? "",
       validation: props.from?.validation ?? "",
       citation: props.from?.citation ?? "",
       create_way: props.from?.create_way ?? "",
-      force_field: props.from?.force_field ?? "",
+      force_field: props.from?.force_field ?? (props.parent?.force_field ?? ""),
       top_creator: false,
       complete: false,
+      current_ff_versions: props.parent ? this.chargeVersions(props.parent.force_field) : [],
+      parent_version: "",
+      parent : props.parent?.id ?? ""
     };
   }
 
@@ -114,6 +122,17 @@ class AddMolecule extends React.Component<AddMoleculeProps, AddMoleculeState> {
           alias: props.parent.alias,
           smiles: props.parent.smiles,
           category: props.parent.category,
+          parent: props.parent.id,
+          force_field: props.parent.force_field,
+          version: this.automaticGuessOfNextVersion(props.parent.version, props.parent.force_field)
+        });
+      }
+      else if (props.model) {
+        this.setState({
+          name: props.model.name,
+          alias: props.model.alias,
+          smiles: props.model.smiles, 
+          category: props.model.category
         });
       }
       else {
@@ -128,7 +147,7 @@ class AddMolecule extends React.Component<AddMoleculeProps, AddMoleculeState> {
       this.setState({
         files: "",
         command_line: "",
-        version: "",
+        version: "1.0",
         comments: "",
         create_way: "",
         force_field: "",
@@ -139,7 +158,7 @@ class AddMolecule extends React.Component<AddMoleculeProps, AddMoleculeState> {
   }
 
   get is_disabled() {
-    if (this.props.parent) {
+    if (this.props.parent || this.props.model) {
       return true;
     }
     return false;
@@ -199,14 +218,14 @@ class AddMolecule extends React.Component<AddMoleculeProps, AddMoleculeState> {
       this.setState({ top_creator: true });
       return;
     }
-
+    
     this.sendMolecule();
   };
 
   sendMolecule() {
-    const { files, name, alias, category, create_way, version, force_field, command_line, comments, validation, citation, smiles } = this.state;
+    const { files, name, alias, category, create_way, version, force_field, command_line, comments, validation, citation, smiles, parent } = this.state;
 
-    let partial_molecule: Partial<Molecule> & { itp?: File[], pdb?: File, top?: File, map?: File[] } = {
+    let partial_molecule: Partial<Molecule> & { itp?: File[], pdb?: File, top?: File, map?: File[], fromVersion?:boolean } = {
       name,
       alias,
       smiles,
@@ -218,7 +237,13 @@ class AddMolecule extends React.Component<AddMoleculeProps, AddMoleculeState> {
       force_field,
       validation,
       citation,
+      parent
     };
+
+    if(this.props.model){
+      partial_molecule.tree_id = this.props.model.tree_id
+      partial_molecule.fromVersion = true; 
+    }
 
     if (this.props.from) {
       partial_molecule = { ...this.props.from, ...partial_molecule };
@@ -239,6 +264,7 @@ class AddMolecule extends React.Component<AddMoleculeProps, AddMoleculeState> {
       // This is a file ID reference, only for edit mode.
       partial_molecule.files = files;
     }
+
 
     this.setState({ loading: true })
 
@@ -317,10 +343,82 @@ class AddMolecule extends React.Component<AddMoleculeProps, AddMoleculeState> {
     return <React.Fragment />;
   }
 
+  renderAttachedFiles(files: string | MoleculeFilesInput) {
+    return (
+      <div>
+      <Typography variant="h6">
+        Attached files
+      </Typography>
+        
+      {(!files || typeof files !== 'string') && <div>
+        <Marger size="1rem" />
+
+        <AddMoleculeFileInput
+          showMap 
+          useGrid
+          optionalTop
+          onChange={files => this.setState({ files })}
+        />
+      </div>}
+
+      {(files && typeof files === 'string') && <div>
+        <Typography>
+          A ZIP file is attached to this molecule. {" "}
+          <Link href={SERVER_ROOT + "api/molecule/download?id=" + files + "&filename=files.zip"} style={{ fontSize: '1.2rem' }}>
+            <span>
+              Download
+            </span>
+          </Link>
+        </Typography>
+
+        <Marger size="1rem" />
+
+        <Button variant="outlined" onClick={() => this.setState({ files: "" })} color="secondary">
+          Delete related files
+        </Button>
+      </div>}
+      </div>
+    )
+  }
+
+  chargeVersions(ff: string): Molecule[] {
+    return this.props.versions?.filter(mol => mol.force_field === ff) ?? []
+  }
+
+  automaticGuessOfNextVersion(parent: string, ff: string): string{
+    let splittedVersion = parent.split(".")
+    const currentFfVersions = !this.state ? this.chargeVersions(ff) : this.state.current_ff_versions
+    const allVersions = currentFfVersions.map(mol => mol.version).filter(v => v !== parent).map(v => v.split("."))
+    if(parent === "0.0") {
+      const firsts = allVersions.map(v => parseInt(v[0]))
+      firsts.sort()
+      const firstNumber = firsts.length > 0 ? firsts[0] : 0
+      return (firstNumber + 1).toString() + ".0" 
+    }
+    else {
+      const last = splittedVersion.slice(-1)[0]
+      
+      if(last === "0") splittedVersion = splittedVersion.slice(0, splittedVersion.length - 1)
+
+      const childs = _getChilds(allVersions, splittedVersion)
+
+      const childsLast = childs.map(v => parseInt(v.slice(-1)[0]))
+      childsLast.sort()
+  
+      const lastNumber = childsLast.length > 0 ? childsLast.slice(-1)[0] + 1 : 1
+  
+      splittedVersion.push(lastNumber.toString())
+
+      return splittedVersion.join(".")
+      
+    }
+   
+  }
+
   render() {
     const classes = this.props.classes;
     const props = this.props;
-    const { loading, files, force_field, name, alias, category, smiles, complete } = this.state;
+    const { loading, files, force_field, name, alias, category, smiles, complete, current_ff_versions, parent_version, version } = this.state;
 
     return (
       <Dialog fullScreen open={props.open} TransitionComponent={Transition} disableEscapeKeyDown>
@@ -426,127 +524,203 @@ class AddMolecule extends React.Component<AddMoleculeProps, AddMoleculeState> {
               </div>
   
               <Marger size="2rem" />
-  
               <Typography variant="h6">
-                About this version
-              </Typography>
-  
-              <Marger size="1rem" />
-  
-              {/* Variable elements between each version */}
-              <div className={classes.commandLineAndVersionBlock}>
-                <TextField
-                  label="Citations" 
-                  placeholder="PubMed IDs, authors..."
-                  value={this.state.citation}
-                  onChange={v => this.setState({ citation: v.target.value })}
-                  variant="outlined"
-                  required
-                />
-  
-                <div className={classes.martinizeVersionForceFieldBlock}>
+                  About this version
+                </Typography>
+                <Marger size="1rem" />
+              {!props.model && <div>
+                
+                {/* Variable elements between each version */}
+                <div className={classes.commandLineAndVersionBlock}>
                   <TextField
-                    label="Command line" 
-                    placeholder="If a software has been used"
-                    value={this.state.command_line}
-                    onChange={v => this.setState({ command_line: v.target.value })}
-                    variant="outlined"
-                  />
-  
-                  <TextField
-                    label="Molecule Version" 
-                    placeholder="Unique number to identify molecule"
-                    value={this.state.version}
-                    onChange={v => this.setState({ version: v.target.value })}
+                    label="Citations" 
+                    placeholder="PubMed IDs, authors..."
+                    value={this.state.citation}
+                    onChange={v => this.setState({ citation: v.target.value })}
                     variant="outlined"
                     required
                   />
+    
+                  <div className={classes.martinizeVersionForceFieldBlock}>
+                    <TextField
+                      label="Command line" 
+                      placeholder="If a software has been used"
+                      value={this.state.command_line}
+                      onChange={v => this.setState({ command_line: v.target.value })}
+                      variant="outlined"
+                    />
+    
+                    <TextField
+                      label="Molecule Version" 
+                      placeholder="Unique number to identify molecule"
+                      value={this.state.version}
+                      onChange={v => {
+                        this.setState({ version: v.target.value })}
+                      }
+                      variant="outlined"
+                      required
+                      disabled
+                    />
+                  </div>
                 </div>
-              </div>
-  
-              <Marger size="1rem" />
-  
-              <div className={classes.martinizeVersionForceFieldBlock}>
-                <SimpleSelect 
-                  id="s-martinize-creation-new"
-                  label="Creation way"
-                  onChange={v => this.setState({ create_way: v })}
-                  values={Object.entries(this.settings.create_way).map(([id, name]) => ({ id, name }))}
-                  value={this.state.create_way}
-                  required
-                />
-  
+    
+                <Marger size="1rem" />
+    
+                <div className={classes.martinizeVersionForceFieldBlock}>
+                  <SimpleSelect 
+                    id="s-martinize-creation-new"
+                    label="Creation way"
+                    onChange={v => this.setState({ create_way: v })}
+                    values={Object.entries(this.settings.create_way).map(([id, name]) => ({ id, name }))}
+                    value={this.state.create_way}
+                    required
+                  />
+    
+                  <SimpleSelect
+                    id="s-ff-v-new"
+                    label="Used force field"
+                    onChange={v => this.setState({ force_field: v })}
+                    values={this.settings.force_fields.map(m => ({ id: m, name: m }))}
+                    value={force_field}
+                    required
+                    disabled={props.parent ? true : false}
+                  />
+                </div>
+    
+                <Marger size="1rem" />
+    
+                <div>
+                  <TextField
+                    label="Validation information" 
+                    value={this.state.validation}
+                    onChange={v => this.setState({ validation: v.target.value })}
+                    variant="outlined"
+                    fullWidth
+                  />
+                </div>
+    
+                <Marger size="1rem" />
+    
+                <div className={classes.commentsBlock}>
+                  <TextField
+                    label="Comments" 
+                    value={this.state.comments}
+                    onChange={v => this.setState({ comments: v.target.value })}
+                    variant="outlined"
+                    multiline
+                    rows="4"
+                    className={classes.commentInput}
+                  />
+                </div>
+    
+                <Marger size="1.5rem" />
+    
+                {/* Attached files */}
+                {this.renderAttachedFiles(files)}
+              </div> }
+
+              {props.model && <div>
                 <SimpleSelect
-                  id="s-ff-v-new"
-                  label="Used force field"
-                  onChange={v => this.setState({ force_field: v })}
-                  values={this.settings.force_fields.map(m => ({ id: m, name: m }))}
-                  value={force_field}
-                  required
-                />
-              </div>
-  
-              <Marger size="1rem" />
-  
-              <div>
-                <TextField
-                  label="Validation information" 
-                  value={this.state.validation}
-                  onChange={v => this.setState({ validation: v.target.value })}
-                  variant="outlined"
-                  fullWidth
-                />
-              </div>
-  
-              <Marger size="1rem" />
-  
-              <div className={classes.commentsBlock}>
-                <TextField
-                  label="Comments" 
-                  value={this.state.comments}
-                  onChange={v => this.setState({ comments: v.target.value })}
-                  variant="outlined"
-                  multiline
-                  rows="4"
-                  className={classes.commentInput}
-                />
-              </div>
-  
-              <Marger size="1.5rem" />
-  
-              {/* Attached files */}
-              <Typography variant="h6">
-                Attached files
-              </Typography>
-                
-              {(!files || typeof files !== 'string') && <div>
-                <Marger size="1rem" />
-  
-                <AddMoleculeFileInput
-                  showMap 
-                  useGrid
-                  optionalTop
-                  onChange={files => this.setState({ files })}
-                />
+                    id="s-ff-v-new"
+                    label="Used force field"
+                    onChange={v => {
+                      this.setState({
+                        current_ff_versions: this.chargeVersions(v)
+                      })
+                      this.setState({ force_field: v })
+                      this.setState({ parent_version : ""})}
+                    }
+                    values={this.settings.force_fields.map(m => ({ id: m, name: m }))}
+                    value={force_field}
+                    required
+                  />
+                {(force_field && current_ff_versions.length === 0) && <span> No version of this molecule is registered for this force field. You will create a new one </span>} 
+                {(force_field && current_ff_versions.length !== 0) && <span> {current_ff_versions.length} versions of this molecule are registered for this force field. Choose your parent or create a new version </span>} 
+                {force_field && <SimpleSelect
+                    id="s-parent-version"
+                    label="Select parent molecule"
+                    onChange={v => {
+                      this.setState({parent : current_ff_versions.find(m => m.version === v)?.id ?? ""})
+                      this.setState({version : this.automaticGuessOfNextVersion(v, force_field)})
+                      this.setState({parent_version : v})}
+
+                    }
+                    values={current_ff_versions.map(m => ({ id: m.version, name: m.version })).concat([{id: "0.0", name: "new version"}])}
+                    value={parent_version}
+                    required
+                  />}
+
+                  {parent_version && <div>
+                      <div>
+                        <TextField
+                          label="Molecule Version" 
+                          placeholder="Unique number to identify molecule"
+                          value={version}
+                          onChange={v => this.setState({ version: v.target.value })}
+                          variant="outlined"
+                          required
+                          disabled
+                        />
+
+                        <SimpleSelect 
+                          id="s-martinize-creation-new"
+                          label="Creation way"
+                          onChange={v => this.setState({ create_way: v })}
+                          values={Object.entries(this.settings.create_way).map(([id, name]) => ({ id, name }))}
+                          value={this.state.create_way}
+                          required
+                        />
+
+                        <TextField
+                          label="Citations" 
+                          placeholder="PubMed IDs, authors..."
+                          value={this.state.citation}
+                          onChange={v => this.setState({ citation: v.target.value })}
+                          variant="outlined"
+                          required
+                        />
+                      </div>
+                        
+
+                      <div>
+                        <TextField
+                          label="Command line" 
+                          placeholder="If a software has been used"
+                          value={this.state.command_line}
+                          onChange={v => this.setState({ command_line: v.target.value })}
+                          variant="outlined"
+                        />
+
+                        <TextField
+                          label="Validation information" 
+                          value={this.state.validation}
+                          onChange={v => this.setState({ validation: v.target.value })}
+                          variant="outlined"
+                        />
+                      </div>
+
+                      <div>
+                      <TextField
+                        label="Comments" 
+                        value={this.state.comments}
+                        onChange={v => this.setState({ comments: v.target.value })}
+                        variant="outlined"
+                        multiline
+                        rows="4"
+                        className={classes.commentInput}
+                      />
+                      </div>
+
+                      {this.renderAttachedFiles(files)}
+
+                  </div>}
+
+                  
+
+
               </div>}
-  
-              {(files && typeof files === 'string') && <div>
-                <Typography>
-                  A ZIP file is attached to this molecule. {" "}
-                  <Link href={SERVER_ROOT + "api/molecule/download?id=" + files + "&filename=files.zip"} style={{ fontSize: '1.2rem' }}>
-                    <span>
-                      Download
-                    </span>
-                  </Link>
-                </Typography>
-  
-                <Marger size="1rem" />
-  
-                <Button variant="outlined" onClick={() => this.setState({ files: "" })} color="secondary">
-                  Delete related files
-                </Button>
-              </div>}
-  
+
+              
               <Marger size="2.5rem" />
             </form>
           </Container>
@@ -636,4 +810,18 @@ function CompleteModal(props: { open: boolean, title: string, content: string, o
       </DialogActions>
     </Dialog>
   );
+}
+
+function _getChilds(allVersions:string[][], currentVersion: string[]){
+  const canBeChilds = allVersions.filter(v => v.length === currentVersion.length + 1)
+  const trueChilds = canBeChilds.filter(v => _arrayEquality(v.slice(0, currentVersion.length), currentVersion))
+  return trueChilds
+}
+
+function _arrayEquality(arr1 : any[], arr2: any[]){
+  if(arr1.length !== arr2.length) return false
+  for(const i in arr1){
+    if (arr1[i] !== arr2[i]) return false
+  }
+  return true
 }

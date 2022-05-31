@@ -1,9 +1,11 @@
 import React from 'react';
 import { Molecule } from '../../types/entities';
 import { Marger } from '../../helpers';
-import { Typography, makeStyles, Link } from '@material-ui/core';
+import { Typography, makeStyles, Link, Icon } from '@material-ui/core';
 import { TreeView, TreeItem } from '@material-ui/lab';
 import Settings from '../../Settings';
+import clsx from 'clsx';
+import AddMolecule from '../AddMolecule/AddMolecule';
 
 const useStyles = makeStyles(theme => ({
   name: {
@@ -50,6 +52,11 @@ const useStyles = makeStyles(theme => ({
   contentTree: {
     backgroundColor: 'unset !important',
   },
+  versionTitle: {
+    display:"flex",
+    gap:"1rem", 
+    alignItems : "center"
+  }
 }));
 
 interface MoleculeTree {
@@ -57,7 +64,7 @@ interface MoleculeTree {
   children: MoleculeTree[];
 }
 
-function createMoleculeTree(molecules: Molecule[]) : MoleculeTree {
+function createMoleculeTree(molecules: Molecule[]): MoleculeTree {
   const root = molecules.find(m => m.parent === null);
   if (!root) {
     return {
@@ -71,7 +78,7 @@ function createMoleculeTree(molecules: Molecule[]) : MoleculeTree {
 
   for (const mol of molecules) {
     id_to_mol[mol.id] = mol;
-  }  
+  }
 
   // Root will always be the first element of object
   // Other elements will be "fast access" nodes
@@ -87,7 +94,7 @@ function createMoleculeTree(molecules: Molecule[]) : MoleculeTree {
       // case: parent is inserted
       tree[node.molecule.parent!].children.push(node);
     }
-    else {      
+    else {
       // Otherwise, insert until find 
       const parent_mol = {
         molecule: id_to_mol[node.molecule.parent!],
@@ -97,7 +104,7 @@ function createMoleculeTree(molecules: Molecule[]) : MoleculeTree {
       insertInTree(parent_mol);
     }
   }
-  
+
   for (const mol of molecules) {
     if (mol.id in tree) {
       continue;
@@ -120,6 +127,10 @@ function createMoleculeTree(molecules: Molecule[]) : MoleculeTree {
 }
 
 export default function MoleculeVersion(props: { versions: Molecule[], current: Molecule, onVersionChange: (id: string) => void }) {
+
+  const [newVersion, setNewVersion] = React.useState(false);
+  const [parent, setParent] = React.useState<Molecule|undefined>(undefined);  
+
   const classes = useStyles();
 
   function formatVersion(molecule: Molecule) {
@@ -131,26 +142,32 @@ export default function MoleculeVersion(props: { versions: Molecule[], current: 
   }
 
   function renderMoleculeLabel(molecule: Molecule) {
+    if (molecule.version === "root") return (
+      <Typography component="span" className={classes.alias}>
+        <strong> {molecule.name} ({molecule.alias})</strong>
+      </Typography>
+    )
+
     return (
       <Typography component="span" className={classes.alias}>
-        <Link 
-          href={"/molecule/" + molecule.alias + "?version=" + molecule.id} 
+        <Link
+          href={"/molecule/" + molecule.alias + "?version=" + molecule.id}
           className={classes.moleculeLink}
-          id={"link-to-" + molecule.id} 
+          id={"link-to-" + molecule.id}
           color={molecule.id === props.current.id ? "secondary" : "primary"}
           onClick={(e: React.MouseEvent<any>) => {
             e.preventDefault();
             props.onVersionChange(molecule.id);
           }}
         >
-          <strong>{formatVersion(molecule)}</strong> • ({formatDetails(molecule)})
+          <strong>{formatVersion(molecule)}</strong> • ({formatDetails(molecule)}) <Link onClick={() => { setNewVersion(true); setParent(molecule)}} style={{ color: "orange", fontSize: "small" }}> <Icon style={{ fontSize: "x-small" }} className={clsx("fas", "fa-plus", classes.linkIcon)} /> Add a child molecule </Link>
         </Link>
       </Typography>
     );
   }
 
-  function handleMoleculeClick(molecule_id: string) {
-    const link = document.getElementById('link-to-' + molecule_id);
+  function handleMoleculeClick(molecule: Molecule) {
+    const link = document.getElementById('link-to-' + molecule.id);
 
     if (link) {
       link.click();
@@ -159,38 +176,81 @@ export default function MoleculeVersion(props: { versions: Molecule[], current: 
 
   function renderTreeItem(tree: MoleculeTree) {
     return (
-      <TreeItem 
-        onClick={() => handleMoleculeClick(tree.molecule.id)} 
-        key={tree.molecule.id} 
-        nodeId={tree.molecule.id} 
+      <TreeItem
+        onClick={() => handleMoleculeClick(tree.molecule)}
+        key={tree.molecule.id}
+        nodeId={tree.molecule.id}
         label={renderMoleculeLabel(tree.molecule)}
         classes={{
           content: classes.contentTree
         }}
+
       >
         {tree.children.length ? tree.children.map(m => renderTreeItem(m)) : null}
       </TreeItem>
+
     );
   }
 
-  const tree = React.useMemo(() => createMoleculeTree(props.versions), [props]);
-  const mol_ids = props.versions.map(v => v.id);
+  function createTreesAndIds(mols: Molecule[]) {
+    const trees: { [ff: string]: MoleculeTree } = {}
+    const mol_ids: { [ff: string]: string[] } = {}
+    const ffs = new Set(mols.map(mol => mol.force_field))
+    for (const ff of ffs) {
+      const ffMols = mols.filter(mols => mols.force_field === ff)
+      trees[ff] = createMoleculeTree(ffMols)
+      mol_ids[ff] = ffMols.map(m => m.id)
+
+    }
+    return { trees, mol_ids }
+  }
+
+  const { trees, mol_ids } = React.useMemo(() => createTreesAndIds(props.versions), [props]);
 
   return (
     <div>
       <Marger size="1.5rem" />
 
-      <Typography variant="h4">
-        Versions
-      </Typography>
+      <div className={classes.versionTitle}>
+        <Typography variant="h4">
+          Versions
+        </Typography>
+
+        <Link className={classes.link} style={{ color: "orange" }} onClick={() => setNewVersion(true)}>
+          <Icon className={clsx("fas", "fa-plus", classes.linkIcon)} />
+          <span>
+            Add a version
+          </span>
+        </Link>
+      </div>
+
+
 
       <Marger size="1.5rem" />
+      {Object.entries(trees).map((obj) => {
+        return (
+          <div>
+            <span> {obj[0]} </span>
+            <TreeView expanded={mol_ids[obj[0]]} >
+              {renderTreeItem(obj[1])}
+            </TreeView>
+          </div>
 
-      <TreeView expanded={mol_ids}>
-        {renderTreeItem(tree)}
-      </TreeView>
+        )
+      })}
 
       <Marger size="1.5rem" />
+      {newVersion && <AddMolecule
+        parent={parent}
+        model={!parent ? { name: props.current.name, alias: props.current.alias, smiles: props.current.smiles, category: props.current.category, tree_id: props.current.tree_id } : undefined}
+        versions={props.versions}
+        open
+        onClose={() => {setNewVersion(false); setParent(undefined)}}
+        onChange={() => {
+          setNewVersion(false);
+          setParent(undefined)
+        }}
+      />}
     </div>
   );
 }
