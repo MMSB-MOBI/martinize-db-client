@@ -620,6 +620,7 @@ class AddMolecule extends React.Component<AddMoleculeProps, AddMoleculeState> {
               </div> }
 
               {props.model && <div>
+                <div className={classes.parentFixedBlock}>
                 <SimpleSelect
                     id="s-ff-v-new"
                     label="Used force field"
@@ -634,86 +635,104 @@ class AddMolecule extends React.Component<AddMoleculeProps, AddMoleculeState> {
                     value={force_field}
                     required
                   />
+                </div>
+
+                <Marger size="1rem" />
+                
                 {(force_field && current_ff_versions.length === 0) && <span> No version of this molecule is registered for this force field. You will create a new one </span>} 
                 {(force_field && current_ff_versions.length !== 0) && <span> {current_ff_versions.length} versions of this molecule are registered for this force field. Choose your parent or create a new version </span>} 
-                {force_field && <SimpleSelect
-                    id="s-parent-version"
-                    label="Select parent molecule"
-                    onChange={v => {
-                      this.setState({parent : current_ff_versions.find(m => m.version === v)?.id ?? ""})
-                      this.setState({version : this.automaticGuessOfNextVersion(v, force_field)})
-                      this.setState({parent_version : v})}
+                
+                <Marger size="1rem" />
 
-                    }
-                    values={current_ff_versions.map(m => ({ id: m.version, name: m.version })).concat([{id: "0.0", name: "new version"}])}
-                    value={parent_version}
-                    required
-                  />}
+                <div className={classes.parentFixedBlock}>
+                  {force_field && <SimpleSelect
+                      id="s-parent-version"
+                      label="Select parent molecule"
+                      onChange={v => {
+                        this.setState({parent : current_ff_versions.find(m => m.version === v)?.id ?? ""})
+                        this.setState({version : this.automaticGuessOfNextVersion(v, force_field)})
+                        this.setState({parent_version : v})}
 
-                  {parent_version && <div>
-                      <div>
-                        <TextField
-                          label="Molecule Version" 
-                          placeholder="Unique number to identify molecule"
-                          value={version}
-                          onChange={v => this.setState({ version: v.target.value })}
-                          variant="outlined"
-                          required
-                          disabled
-                        />
+                      }
+                      values={current_ff_versions.map(m => ({ id: m.version, name: m.version })).concat([{id: "0.0", name: "new version"}])}
+                      value={parent_version}
+                      required
+                    />}
+                </div>
+                
+                <Marger size="1rem" />
 
-                        <SimpleSelect 
-                          id="s-martinize-creation-new"
-                          label="Creation way"
-                          onChange={v => this.setState({ create_way: v })}
-                          values={Object.entries(this.settings.create_way).map(([id, name]) => ({ id, name }))}
-                          value={this.state.create_way}
-                          required
-                        />
-
-                        <TextField
-                          label="Citations" 
-                          placeholder="PubMed IDs, authors..."
-                          value={this.state.citation}
-                          onChange={v => this.setState({ citation: v.target.value })}
-                          variant="outlined"
-                          required
-                        />
-                      </div>
-                        
-
-                      <div>
-                        <TextField
-                          label="Command line" 
-                          placeholder="If a software has been used"
-                          value={this.state.command_line}
-                          onChange={v => this.setState({ command_line: v.target.value })}
-                          variant="outlined"
-                        />
-
-                        <TextField
-                          label="Validation information" 
-                          value={this.state.validation}
-                          onChange={v => this.setState({ validation: v.target.value })}
-                          variant="outlined"
-                        />
-                      </div>
-
-                      <div>
+                {parent_version && <div>
+                    <div className={classes.commandLineAndVersionBlock}> 
+                      <div className={classes.commandLineAndVersionBlock}>
                       <TextField
-                        label="Comments" 
-                        value={this.state.comments}
-                        onChange={v => this.setState({ comments: v.target.value })}
+                        label="Molecule Version" 
+                        placeholder="Unique number to identify molecule"
+                        value={version}
+                        onChange={v => this.setState({ version: v.target.value })}
                         variant="outlined"
-                        multiline
-                        rows="4"
-                        className={classes.commentInput}
+                        required
+                        disabled
+                      />
+
+                      <SimpleSelect 
+                        id="s-martinize-creation-new"
+                        label="Creation way"
+                        onChange={v => this.setState({ create_way: v })}
+                        values={Object.entries(this.settings.create_way).map(([id, name]) => ({ id, name }))}
+                        value={this.state.create_way}
+                        required
                       />
                       </div>
 
-                      {this.renderAttachedFiles(files)}
+                      <TextField
+                        label="Citations" 
+                        placeholder="PubMed IDs, authors..."
+                        value={this.state.citation}
+                        onChange={v => this.setState({ citation: v.target.value })}
+                        variant="outlined"
+                        required
+                      />
+                    </div>
 
-                  </div>}
+                    <Marger size="1rem" />  
+
+                    <div className={classes.commandLineAndVersionBlock}> 
+                      <TextField
+                        label="Command line" 
+                        placeholder="If a software has been used"
+                        value={this.state.command_line}
+                        onChange={v => this.setState({ command_line: v.target.value })}
+                        variant="outlined"
+                      />
+
+                      <TextField
+                        label="Validation information" 
+                        value={this.state.validation}
+                        onChange={v => this.setState({ validation: v.target.value })}
+                        variant="outlined"
+                      />
+                    </div>
+
+                    <Marger size="1rem" />
+
+                    <div>
+                    <TextField
+                      label="Comments" 
+                      value={this.state.comments}
+                      onChange={v => this.setState({ comments: v.target.value })}
+                      variant="outlined"
+                      multiline
+                      rows="4"
+                      className={classes.commentInput}
+                    />
+                    </div>
+
+                    <Marger size="1.5rem" />
+
+                    {this.renderAttachedFiles(files)}
+
+                </div>}
 
                   
 
