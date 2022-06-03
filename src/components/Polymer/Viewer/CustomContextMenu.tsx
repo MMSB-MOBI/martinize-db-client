@@ -40,7 +40,7 @@ export default class CustomContextMenu extends React.Component<props> {
                 if (!d.links) nodetoLink.push(d)
                 else if (d.links!.length === 1) nodetoLink.push(d)
                 else if (d.links!.length === 0) nodetoLink.push(d)
-                 
+
             })
 
         console.log("nodetolink", nodetoLink)
@@ -124,6 +124,8 @@ export default class CustomContextMenu extends React.Component<props> {
         this.props.handleUpdate();
 
     }
+
+
 
     giveConnexeNode = (node: SimulationNode, svg: d3.Selection<SVGSVGElement, unknown, null, undefined>) => {
         //Give one node and class on focus rest of polymer nodes 
@@ -252,7 +254,7 @@ export default class CustomContextMenu extends React.Component<props> {
             .attr("fill", hull.getAttribute("fill"))
             .style("opacity", 0.7)
             .attr("id", function (d: SimulationGroup) { return d.id })
-            .on('click', function (this: any, event: any, d: SimulationGroup) : void {
+            .on('click', function (this: any, event: any, d: SimulationGroup): void {
                 self.expandBigNodes(this, svg, mongroup);
             });
     }
@@ -358,6 +360,37 @@ export default class CustomContextMenu extends React.Component<props> {
         })
     }
 
+    removeLinksSelected = (nodes: d3.Selection<SVGSVGElement, SimulationNode, null, undefined>) => {
+        let listnodes: SimulationNode[] = []
+        nodes.each((node: SimulationNode) => {
+            listnodes.push(node);
+        })
+
+        console.log("Remove links between : ", listnodes)
+        for (let node of listnodes) {
+            console.log( "Start for le node numero ", node.id )
+            if (node.links !== undefined) {
+                for (let linkednode of node.links) {
+                    console.log(linkednode)
+                    if (listnodes.includes(linkednode)) {
+                            console.log( linkednode.id,  node.id)
+                            // BUUUUUUUUG
+                             
+                            node.links = node.links!.filter((nodeToRM: SimulationNode) => nodeToRM.id !== linkednode.id);
+                            this.props.svg.selectAll("line").filter((link: any) => ((link.source.id === node.id) && (link.target.id === linkednode.id))).remove();
+                    }
+                }
+            }
+        }
+
+        this.props.handleUpdate();
+    }
+
+    clear = () => {
+        this.props.svg.selectAll<SVGCircleElement, SimulationNode>("circle")
+            .each(node => this.removeNode(node))
+    }
+
     // Si des noeuds sont selectionnés
     ifSelectedNode = () => {
         if (this.props.selected.size() > 0) {
@@ -367,6 +400,7 @@ export default class CustomContextMenu extends React.Component<props> {
                     {this.props.selected.size()} nodes selected
                 </Typography>
                 <Divider />
+                <MenuItem onClick={() => { this.removeLinksSelected(this.props.selected) }}>Remove links between </MenuItem>
                 <MenuItem onClick={() => { this.groupPolymer(this.props.selected, this.props.svg) }}> Group this polymer</MenuItem>
                 <MenuItem onClick={() => { this.removeSelectedNodes(this.props.selected) }}> Remove {this.props.selected.size()} selected nodes</MenuItem>
                 <MenuItem onClick={() => { this.props.handlePaste(this.props.selected) }}> Paste {this.props.selected.size()} selected nodes</MenuItem>
@@ -405,6 +439,7 @@ export default class CustomContextMenu extends React.Component<props> {
                 open={true} >
                 {this.ifnode()}
                 {this.ifSelectedNode()}
+                <MenuItem onClick={() => { this.clear() }}>Clear</MenuItem>
                 <MenuItem onClick={() => { this.addMagicLink() }}>Magic Link it</MenuItem>
                 <MenuItem onClick={() => { this.removeBadLinks(this.props.svg) }}>Remove bad links</MenuItem>
                 <MenuItem onClick={() => { DownloadJson(this.props.simulation, this.props.forcefield) }}>Download Json</MenuItem>

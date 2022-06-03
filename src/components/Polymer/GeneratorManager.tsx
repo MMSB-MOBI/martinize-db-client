@@ -79,11 +79,11 @@ export default class GeneratorManager extends React.Component {
 
   currentForceField = '';
 
-  // warningfunction = (message: string) : void =>  {
-  //   this.setState({ Warningmessage: message })
-  // }
+  warningfunction = (message: string): void => {
+    this.setState({ Warningmessage: message })
+  }
 
-  // setWarning(warningfunction: any)
+
 
   addprotsequence = (sequence: string) => {
     let i = 0;
@@ -324,7 +324,6 @@ export default class GeneratorManager extends React.Component {
         else {
           const link = linkstr.split(' ').filter((e) => { return e !== "" })
 
-          console.log("add this link ", link)
           let idlink1 = parseInt(atoms[parseInt(link[0]) - 1].split(' ').filter((e) => { return e !== "" })[2])
           let idlink2 = parseInt(atoms[parseInt(link[1]) - 1].split(' ').filter((e) => { return e !== "" })[2])
 
@@ -523,7 +522,7 @@ export default class GeneratorManager extends React.Component {
       //dicErreur.errorlinks.push([resname1, idname1, resname2, idname2])
       console.log(dicoError.errorlinks.length)
       if (dicoError.errorlinks.length > 0) {
-        this.setState({ Warningmessage: "Fail ! Wrong links : " + dicoError.errorlinks })
+        this.warningfunction( "Fail ! Wrong links : " + dicoError.errorlinks +". You can correct this mistake with \"click right\" -> \"Remove bad links\".")
         for (let i of dicoError.errorlinks) {
           alarmBadLinks(i[1].toString(), i[3].toString())
         }
@@ -566,7 +565,7 @@ export default class GeneratorManager extends React.Component {
       <Grid
         container
         component="main" >
-        <Warning message={this.state.Warningmessage} close={() => { this.setState({ Warningmessage: "" }) }}></Warning>
+        <Warning reponse={undefined} message={this.state.Warningmessage} close={() => { this.setState({ Warningmessage: "" }) }}></Warning>
 
         <AppBar position="static">
           <Marger size="1rem" />
@@ -586,11 +585,11 @@ export default class GeneratorManager extends React.Component {
             addlink={this.addlink}
             send={this.ClickToSend}
             dataForceFieldMolecule={this.state.dataForForm}
+            warningfunction={this.warningfunction}
           />
 
           {this.state.loading ? (
-            <><RunPolyplyDialog show={this.state.sending} send={this.Send}> </RunPolyplyDialog>
-              <CircularProgress /></>
+            <RunPolyplyDialog show={this.state.sending} send={this.Send}> </RunPolyplyDialog>
           ) : (<></>)
           }
           {this.state.submit ? (
@@ -601,6 +600,7 @@ export default class GeneratorManager extends React.Component {
         </Grid>
         <Grid item xs={7} style={{ height: "100vw" }}>
           <PolymerViewer
+            warningfunction={this.warningfunction}
             forcefield={this.currentForceField}
             getSimulation={(SimulationFromViewer: d3.Simulation<SimulationNode, SimulationLink>) => { this.setState({ Simulation: SimulationFromViewer }) }}
             newNodes={this.state.nodesToAdd}

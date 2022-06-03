@@ -9,6 +9,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 
 interface propsalert {
     message: string,
+    reponse: boolean|undefined,
     close: () => void;
 }
 

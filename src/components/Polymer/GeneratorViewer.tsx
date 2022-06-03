@@ -4,15 +4,15 @@ import CustomContextMenu from "./Viewer/CustomContextMenu";
 import { SimulationNode, SimulationLink, SimulationGroup } from './SimulationType';
 import { initSVG, initSimulation, reloadSimulation } from './Viewer/SimulationSVGFunction';
 import { addNodeToSVG, addLinkToSVG, setSVG, setRadius } from './addNodeLink';
-import { generateID } from './GeneratorManager'
+import { decreaseID, generateID } from './GeneratorManager'
 import './GeneratorViewer.css';
-import Warning from "./Dialog/warning";
 
 interface propsviewer {
-   
+
   forcefield: string,
   newNodes: SimulationNode[];
   newLinks: SimulationLink[];
+  warningfunction: (arg: any) => void;
   getSimulation: (arg: any) => void;
 }
 
@@ -21,9 +21,8 @@ interface statecustommenu {
   y: number,
   nodeClick: SimulationNode | undefined,
   hullClick: Element | undefined,
-  nodeToRemove: SimulationNode[],
+
   show: boolean,
-  Warningmessage: string
 }
 
 export default class GeneratorViewer extends React.Component<propsviewer, statecustommenu> {
@@ -34,8 +33,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
     nodeClick: undefined,
     hullClick: undefined,
     show: false,
-    nodeToRemove: [],
-    Warningmessage: ''
+
   };
 
 
@@ -65,7 +63,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
   simulation = initSimulation(this.taille, this.currentnodeRadius);
 
   componentDidMount() {
- 
+
     //Draw svg frame
     initSVG(this.ref, this.taille);
     console.log(document.getElementsByClassName("svg"))
@@ -109,7 +107,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
 
   componentDidUpdate(prevProps: propsviewer, prevStates: statecustommenu) {
     //Check state and props 
-    if ((prevProps.newNodes !== this.props.newNodes) || (prevProps.newLinks !== this.props.newLinks) || (this.state.nodeToRemove !== prevStates.nodeToRemove)) {
+    if ((prevProps.newNodes !== this.props.newNodes) || (prevProps.newLinks !== this.props.newLinks)) {
       this.UpdateSVG()
     }
   }
@@ -282,9 +280,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
     this.UpdateSVG()
   };
 
-  warningfunction = (message: string) => {
-    this.setState({ Warningmessage: message })
-  }
+
 
   render() {
 
@@ -317,20 +313,71 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
 
     }
 
-    return (
-      <div className="svg"
-        onClick={(e) => { clickAncCloseMenu(e) }}
-        onContextMenu={this.handleContextMenu}
-        style={{ cursor: 'context-menu' }}
-        ref={(ref: HTMLDivElement) => this.frame = ref} >
+    const handleDelete = (event: React.KeyboardEvent) => {
+      if (event.key === "Delete") {
+        d3.select(this.ref)
+          .selectAll('circle.onfocus')
+          .each((nodeToRemove: any) => {
+            if (nodeToRemove.links !== undefined) {
+              for (let linkednode of nodeToRemove.links) {
+                //remove link between node and removed node
+                linkednode.links = linkednode.links!.filter((nodeToRM: SimulationNode) => nodeToRM.id !== nodeToRemove.id);
+              }
+            }
+            d3.select(this.ref).selectAll<SVGCircleElement, SimulationNode>("circle").filter((d: SimulationNode) => (d.id === nodeToRemove.id)).remove();
+            //and then remove link inside svg
+            d3.select(this.ref).selectAll("line").filter((link: any) => ((link.source.id === nodeToRemove.id) || (link.target.id === nodeToRemove.id))).remove();
 
-        <svg className="container" id="svg" ref={(ref: SVGSVGElement) => this.ref = ref}></svg>
+            console.log("Nombre de nodes au dessus de ", nodeToRemove.id, ...[d3.select(this.ref).selectAll<SVGCircleElement, SimulationNode>("circle")
+              .filter((d: SimulationNode) => ((Number(d.id) > (Number(nodeToRemove.id)))))
+              .data().length])
 
-        <Warning message={this.state.Warningmessage} close={() => { this.setState({ Warningmessage: "" }) }}></Warning>
+            console.log("le node a supprimé est : ", nodeToRemove)
+            //Update new ID to fit with polyply 
+            d3.select(this.ref).selectAll<SVGCircleElement, SimulationNode>("circle")
+              .filter((d: SimulationNode) => ((Number(d.id) > (Number(nodeToRemove.id)))))
+              .each((d) => {
+                //Compute new ID 
+                let newID: number = parseInt(d.id) - 1
+                //d.index = newID
+                d.id = newID.toString()
+                d.index = newID
+                console.log("New ", d)
+              })
+            //Check if minimun id != de currentID 
+            //Mettre une condition d'arret pour ne pas decrease 
 
-        {ifContextMenuShouldAppear(this.state.show)}
+            decreaseID()
 
-      </div >);
+          })
+
+      }
+
+
+    }
+  
+
+
+
+  return(
+
+
+      <div className = "svg"
+        onKeyDown = {(e: React.KeyboardEvent) => handleDelete(e)}
+tabIndex = { 0}
+onClick = {(e) => { clickAncCloseMenu(e) }}
+onContextMenu = { this.handleContextMenu }
+style = {{ cursor: 'context-menu' }}
+ref = {(ref: HTMLDivElement) => this.frame = ref} >
+
+  <svg className="container" id="svg" ref={(ref: SVGSVGElement) => this.ref = ref}></svg>
+
+{ ifContextMenuShouldAppear(this.state.show) }
+
+      </div >
+
+
+    );
   }
 
 }

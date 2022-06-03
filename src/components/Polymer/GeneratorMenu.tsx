@@ -13,7 +13,7 @@ import { SimpleSelect } from "../../Shared";
 import Link from "@mui/material/Link";
 
 interface propsmenu {
-
+  warningfunction: (arg: any) => void;
   setForcefield: (ff: string) => void,
   addFromITP: (itp: string) => void,
   addnodeFromJson: (jsondata: JSON) => void,
@@ -28,7 +28,7 @@ interface propsmenu {
 interface GeneratorMenuState extends FormState {
   id1: string | undefined;
   id2: string | undefined;
-  Warningmessage: string;
+
 }
 
 
@@ -46,7 +46,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
       numberToAdd: 1,
       id1: undefined,
       id2: undefined,
-      Warningmessage: "",
+
     }
   }
 
@@ -60,10 +60,10 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
 
   CheckNewMolecule(): void {
     if (this.state.forcefield === '') {
-      this.setState({ Warningmessage: "Field Forcefield null" })
+      this.props.warningfunction("Field Forcefield null")
     }
     else if (this.state.moleculeToAdd === '') {
-      this.setState({ Warningmessage: "Field Molecule null" })
+      this.props.warningfunction("Field Molecule null")
       //this.props.addnode
     }
     else {
@@ -76,7 +76,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
 
     //checkLink( )
     if ((typeof (idLink1) == 'undefined') || (typeof (idLink2) == 'undefined')) {
-      this.setState({ Warningmessage: "Problem link : id number undefined" })
+      this.props.warningfunction("Problem link : id number undefined" )
     }
     else {
       this.props.addlink(idLink1, idLink2)
@@ -117,16 +117,16 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
       else if (ext === 'ff') {
         let reader = new FileReader();
         reader.onload = (event: any) => {
-          this.setState({ Warningmessage: event.target.result })
+          this.props.warningfunction(event.target.result)
         }
         reader.readAsText(file);
       }
       else {
-        this.setState({ Warningmessage: "Fichier inconnu" })
+        this.props.warningfunction("File unkown")
       }
     }
     else {
-      this.setState({ Warningmessage: "Only one files should be upload" })
+      this.props.warningfunction("Only one files should be upload")
       console.log(selectorFiles)
     }
 
@@ -138,7 +138,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
     return (
       <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
         <Marger size="2rem" />
-        <Typography component="h1" variant="h3" align="center" style={{ fontWeight: 700, fontSize: '2.5rem', marginBottom: '0rem' }}>
+        <Typography component="h1" align="center" style={{ fontWeight: 700, fontSize: '2.5rem', marginBottom: '0rem' }}>
           Design your own polymer :
         </Typography>
 
@@ -158,13 +158,13 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
 
         <Grid container component="main" style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }}>
 
-          <Grid item xs={5}>
-          <Typography variant="h6" >
+          <Grid item xs={6}>
+            <Typography variant="h6" >
               First choose your forcefield :
             </Typography>
 
           </Grid>
-          <Grid item xs={5}>
+          <Grid item xs={4}>
             {Object.keys(this.props.dataForceFieldMolecule).length === 0 ? (
               <CircularProgress />
             ) :
@@ -332,7 +332,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
             </Grid>
           }
           <Marger size="1rem" />
-          <Warning message={this.state.Warningmessage} close={() => { this.setState({ Warningmessage: "" }); }}></Warning>
+
         </Grid >
       </div >
     )
