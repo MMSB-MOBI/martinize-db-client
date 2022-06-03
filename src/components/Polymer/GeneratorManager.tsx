@@ -366,13 +366,55 @@ export default class GeneratorManager extends React.Component {
 
   }
 
+  giveConnexeNode = (node: SimulationNode ) => {
+    //Give one node and class on focus rest of polymer nodes 
+    //Return one selection of connexe nodes
+
+    //clean the previous selected nodes
+     
+    // Create a list and add our initial node in it
+    let s = [];
+    s.push(node);
+    // Mark the first node as explored
+    let explored: any[] = [];
+    //List of id 
+    let connexeNodesId = new Set();
+    connexeNodesId.add(node.id);
+    //Chek si le noeud n'est pas connecter aux autres 
+    if (node.links === undefined) {
+      connexeNodesId.add(node.id);
+    }
+    else {
+      //continue while list of linked node is not emphty 
+      while (s.length !== 0) {
+        let firstNode = s.shift();
+        //console.log(firstNode)
+        if (firstNode !== undefined) {
+          for (let connectedNodes of firstNode!.links!) {
+            s.push(connectedNodes);
+            connexeNodesId.add(connectedNodes.id);
+          }
+          explored.push(firstNode)
+          s = s.filter(val => !explored.includes(val));
+        }
+      }
+    }
+    // Return a selection of one connexe graph 
+    // Maybe juste one node
+    return  connexeNodesId 
+  }
+
 
   addnode = (toadd: FormState): void => {
     //Check forcefield 
-    if ((this.currentForceField === '') || (this.currentForceField === toadd.forcefield)) {
+    if (toadd.numberToAdd > 500) {
+      this.setState({ Warningmessage: "Whaou !!! To many nodes ! (limite 500)" })
+    }
+    else if ((this.currentForceField === '') || (this.currentForceField === toadd.forcefield)) {
       this.currentForceField = toadd.forcefield;
       const newMolecule: SimulationNode[] = [];
       let newlinks = [];
+
       // convert to node object et injecte dans la list
       for (let i = 0; i < toadd.numberToAdd; i++) {
         let mol = {
@@ -438,8 +480,13 @@ export default class GeneratorManager extends React.Component {
 
   ClickToSend = (): void => {
     console.log("Go to server");
+    console.log( this.state.Simulation?.nodes()[1] )
+    let nodeNumber = this.state.Simulation?.nodes().length
     if (this.state.Simulation === undefined) {
       this.setState({ Warningmessage: "Error Simulation undefined " })
+    }
+    else if ( nodeNumber !== this.giveConnexeNode( this.state.Simulation?.nodes()[1] ).size) {
+      this.setState({ Warningmessage: "OULALALA C'est pas connexe du tout ! Ajoute des liens" })
     }
     else {
       // Doit montrer le modal dialog
@@ -522,7 +569,7 @@ export default class GeneratorManager extends React.Component {
       //dicErreur.errorlinks.push([resname1, idname1, resname2, idname2])
       console.log(dicoError.errorlinks.length)
       if (dicoError.errorlinks.length > 0) {
-        this.warningfunction( "Fail ! Wrong links : " + dicoError.errorlinks +". You can correct this mistake with \"click right\" -> \"Remove bad links\".")
+        this.warningfunction("Fail ! Wrong links : " + dicoError.errorlinks + ". You can correct this mistake with \"click right\" -> \"Remove bad links\".")
         for (let i of dicoError.errorlinks) {
           alarmBadLinks(i[1].toString(), i[3].toString())
         }

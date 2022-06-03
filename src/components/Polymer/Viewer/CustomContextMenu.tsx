@@ -20,6 +20,7 @@ interface props {
     forcefield: string,
     handlePaste: (arg: any, arg2?: string) => void;
     handleUpdate: () => void;
+    
     svg: d3.Selection<SVGSVGElement, unknown, null, undefined>;
 }
 

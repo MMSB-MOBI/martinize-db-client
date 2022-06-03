@@ -28,7 +28,7 @@ export function addNodeToSVG(newnode: SimulationNode[], simulation: any, update:
 
     let div: any;
     // Define the div for the tooltip
-    
+
     if (document.getElementsByClassName("tooltip").length === 0) {
         div = d3.select("body")
             .append("div")
@@ -112,22 +112,22 @@ export function addNodeToSVG(newnode: SimulationNode[], simulation: any, update:
         const closest = incontact(d)
         if (closest) {
             console.log("closest", closest)
-            // if (checkLink(d, closest)) {
-            const newlink = { source: d, target: closest }
+            if (checkLink(d, closest)) {
+                const newlink = { source: d, target: closest }
 
-            if (d.links) d.links.push(closest);
-            else d.links = [closest];
+                if (d.links) d.links.push(closest);
+                else d.links = [closest];
 
-            if (closest.links) closest.links.push(d);
-            else closest.links = [d];
+                if (closest.links) closest.links.push(d);
+                else closest.links = [d];
 
-            console.log("newlink", newlink)
-            d3.select(Mysvg).selectAll("line")
-                .data([newlink], (d: any) => d.source.id + "-" + d.target.id)
-                .enter();
-            addLinkToSVG([newlink]);
-            update();
-            // }
+                console.log("newlink", newlink)
+                d3.select(Mysvg).selectAll("line")
+                    .data([newlink], (d: any) => d.source.id + "-" + d.target.id)
+                    .enter();
+                addLinkToSVG([newlink]);
+                update();
+            }
         }
         simulation.velocityDecay(0.3)
             .alphaDecay(0.0228/*1 - Math.pow(0.001, 1 / self.simulation.alphaMin())*/)
@@ -162,21 +162,17 @@ function hashStringToColor(str: string) {
     return "#" + ("0" + r.toString(16)).substr(-2) + ("0" + g.toString(16)).substr(-2) + ("0" + b.toString(16)).substr(-2);
 };
 
-// export function checkLink(node1: SimulationNode, node2: SimulationNode) {
+export function checkLink(node1: SimulationNode, node2: SimulationNode) {
 
-//     if ((node1.links === undefined) || (node2.links === undefined)) return true;
-//     if (node1.links!.length > 4) {
-//         console.log(node1)
-//         warning("Node number #" + node1.id + "  too many links ")
-//         return false;
-//     }
-//     if (node2.links!.length > 4) {
-//         console.log(node2)
-//         warning("Node number #" + node2.id + "  too many links ")
-//         return false;
-//     }
-//     return true;
-// }
+    if ((node1.links === undefined) || (node2.links === undefined)) return true;
+    for (let n of node1.links){
+        if (n === node2) return false
+    } 
+    for (let n of node2.links){
+        if (n === node1) return false
+    }
+    return true;
+}
 
 export function addLinkToSVG(newLink: SimulationLink[]): void {
     const link = d3.select(Mysvg).selectAll("line")
@@ -192,4 +188,3 @@ export function addLinkToSVG(newLink: SimulationLink[]): void {
         .attr("source", function (d: any) { return d.source.id })
         .attr("target", function (d: any) { return d.target.id });
 }
-
