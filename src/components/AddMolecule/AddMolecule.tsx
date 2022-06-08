@@ -392,7 +392,7 @@ class AddMolecule extends React.Component<AddMoleculeProps, AddMoleculeState> {
     if(parent === "0.0") {
       const firsts = allVersions.map(v => parseInt(v[0]))
       firsts.sort()
-      const firstNumber = firsts.length > 0 ? firsts[0] : 0
+      const firstNumber = firsts.length > 0 ? firsts[firsts.length - 1] : 0
       return (firstNumber + 1).toString() + ".0" 
     }
     else {

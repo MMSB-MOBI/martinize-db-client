@@ -115,6 +115,8 @@ function createMoleculeTree(molecules: Molecule[]): MoleculeTree {
       continue;
     }
 
+    if (mol.parent !== root.id) continue
+
     const mol_data = {
       molecule: mol,
       children: []
@@ -193,12 +195,18 @@ export default function MoleculeVersion(props: { versions: Molecule[], current: 
   }
 
   function createTreesAndIds(mols: Molecule[]) {
-    const trees: { [ff: string]: MoleculeTree } = {}
+    const trees: { [ff: string]: MoleculeTree[] } = {}
     const mol_ids: { [ff: string]: string[] } = {}
     const ffs = new Set(mols.map(mol => mol.force_field))
     for (const ff of ffs) {
+      trees[ff] = []
       const ffMols = mols.filter(mols => mols.force_field === ff)
-      trees[ff] = createMoleculeTree(ffMols)
+      const roots = ffMols.filter(mol => mol.parent === null)
+      const notRoots = ffMols.filter(mol => mol.parent !== null)
+      for (const root of roots){
+        trees[ff].push(createMoleculeTree([root].concat(notRoots)))
+      }
+      
       mol_ids[ff] = ffMols.map(m => m.id)
 
     }
@@ -231,9 +239,13 @@ export default function MoleculeVersion(props: { versions: Molecule[], current: 
         return (
           <div>
             <span> {obj[0]} </span>
-            <TreeView expanded={mol_ids[obj[0]]} >
-              {renderTreeItem(obj[1])}
-            </TreeView>
+            {obj[1].map(molTree => {
+              return(
+              <TreeView expanded={mol_ids[obj[0]]} >
+                {renderTreeItem(molTree)}
+              </TreeView>)
+            })}
+            
           </div>
 
         )
