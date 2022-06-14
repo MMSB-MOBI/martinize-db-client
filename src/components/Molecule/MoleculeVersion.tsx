@@ -114,9 +114,6 @@ function createMoleculeTree(molecules: Molecule[]): MoleculeTree {
       // Root is already added
       continue;
     }
-
-    if (mol.parent !== root.id) continue
-
     const mol_data = {
       molecule: mol,
       children: []
@@ -204,7 +201,9 @@ export default function MoleculeVersion(props: { versions: Molecule[], current: 
       const roots = ffMols.filter(mol => mol.parent === null)
       const notRoots = ffMols.filter(mol => mol.parent !== null)
       for (const root of roots){
-        trees[ff].push(createMoleculeTree([root].concat(notRoots)))
+        const rootVersion = root.version.split(".")[0]
+        const notRootsVersion = notRoots.filter(mol => mol.version.split(".")[0] === rootVersion)
+        trees[ff].push(createMoleculeTree([root].concat(notRootsVersion)))
       }
       
       mol_ids[ff] = ffMols.map(m => m.id)
