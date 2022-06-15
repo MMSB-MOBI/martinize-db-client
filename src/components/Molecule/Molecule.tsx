@@ -136,13 +136,13 @@ class MoleculePageBase extends React.Component<MPBP, MPBS> {
     }
   };
 
-  onDelete = () => {
-    const { molecule, versions } = this.state;
-    if (!molecule) {
+  onDelete = (molecules: string[]) => {
+    const { versions } = this.state;
+    if (molecules.length === 0) {
       return;
     }
 
-    const new_versions = versions.filter(e => e.id !== molecule.id);
+    const new_versions = versions.filter(e => !(molecules.includes(e.id)));
     const new_molecule = new_versions[0];
 
     if (!new_molecule) {
@@ -203,7 +203,7 @@ class MoleculePageBase extends React.Component<MPBP, MPBS> {
             addOnStartup={this.addOnStartup}
             editOnStartup={this.editOnStartup}
             parent={parent}
-            onDelete={this.onDelete}
+            onDelete={(toDel: string[]) => this.onDelete(toDel)}
           />
 
           <Divider />

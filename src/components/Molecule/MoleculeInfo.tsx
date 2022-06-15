@@ -71,7 +71,7 @@ export default function MoleculeInfo<T extends StashedMolecule | Molecule>(props
   addOnStartup?: boolean,
   editOnStartup?: boolean,
   parent?: Molecule,
-  onDelete: () => void,
+  onDelete: (toDel : string[]) => void,
 }) {
   const { molecule, stashed } = props;
 
@@ -115,8 +115,8 @@ export default function MoleculeInfo<T extends StashedMolecule | Molecule>(props
 
     setLoading(true);
     ApiHelper.request((props.stashed ? "moderation" : "molecule") + '/destroy/' + molecule.id, { method: 'DELETE' })
-      .then(() => {
-        props.onDelete();
+      .then((resp) => {
+        props.onDelete(resp);
       })
       .catch(notifyError)
       .finally(() => {
