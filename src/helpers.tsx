@@ -84,8 +84,27 @@ export function errorToText(error: [any, APIError] | APIError | number | undef
       return "This username contains invalid characters, or its length is less than 2 characters.";
     case 322:
       return "Email address is invalid.";
+    case 323: 
+      return 'Itp name is incorred'
+    case 324:
+      return 'Top files are missing'
+    case 325:
+      return 'Consistency error in version tree'
+    case 326:
+      return 'History was not found'
+    case 327:
+      return 'History files not found'
+
     case 401:
       return "Martinize program failed with an exit code.";
+    case 501:
+      return 'Error with Job Manager'
+    case 502:
+      return 'Job not found'
+    case 503:
+       return 'User was not provided'
+    case 504: 
+      return 'Job was not provided'
     default: {
       if (Array.isArray(error)) {
         return error[1].message + ".";
