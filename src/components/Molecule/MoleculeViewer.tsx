@@ -89,7 +89,7 @@ class MoleculeViewer extends React.Component<MVProps, MVState> {
 
         // Load the PDB into NGL
 
-        return this.ngl.load(new Blob([pdb]), { ext: 'pdb', name: this.props.id + ".pdb" })
+        return this.ngl.load(new Blob([pdb]), { ext: 'pdb', name: this.props.id + ".pdb", coarse_grained: true})
           .then((component) => {
             component.add<BallAndStickRepresentation>('ball+stick', undefined, {radius: true, color: true, beads, ff:this.props.ff, radiusFactor : 0.2})
             component.center()

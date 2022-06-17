@@ -336,7 +336,7 @@ export function DeleteModal(props: { onAccept: () => void, onClose: () => void, 
       <DialogContent>
         <LoadFader when={props.loading}>
           <DialogContentText>
-            The molecule will be deleted and could not be restored. Do you want to continue ?
+            The molecule and its children will be deleted and could not be restored. Do you want to continue ?
           </DialogContentText>
         </LoadFader>
       </DialogContent>
