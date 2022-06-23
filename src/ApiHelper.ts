@@ -201,7 +201,7 @@ export const ApiHelper = new class APIHelper {
   rawRequest(url: string, options: {
     onprogress?: (percentage: number) => void,
     method?: string,
-    body?: string | Document | Blob | ArrayBufferView | ArrayBuffer | FormData | URLSearchParams | ReadableStream<Uint8Array> | null,
+    body?: Document | XMLHttpRequestBodyInit | null,
     type?: "arraybuffer" | "blob" | "document" | "json" | "text",
     timeout?: number,
     latency?: number,

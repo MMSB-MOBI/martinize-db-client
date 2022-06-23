@@ -1,6 +1,6 @@
 import React from 'react';
 import { SnackbarProvider, useSnackbar } from 'notistack';
-import uuidv4 from 'uuid/v4';
+import { v4 as uuidv4 } from 'uuid';
 
 export interface ToasterMessage { 
   msg: string, 
