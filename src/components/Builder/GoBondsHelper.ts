@@ -306,6 +306,7 @@ export default class GoBondsHelper extends BaseBondsHelper {
    * This will not work with the modified itp files producted by this object.
    */
   static async readFromItps(stage: NglWrapper, itp_files: File[]) {
+    console.log("itps", itp_files)
     const bonds = new GoBondsHelper(stage);
 
     const index = itp_files.find(e => e.name === "go-table_VirtGoSites.itp");

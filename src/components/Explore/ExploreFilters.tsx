@@ -140,7 +140,7 @@ export default function MoleculeFilters(props: {
     const e = {
       ...props
     };
-
+    //@ts-ignore
     delete e.onFiltersChange;
 
     return e;

@@ -1,5 +1,5 @@
 import React from 'react';
-import uuid from 'uuid/v4';
+import { v4 as uuid } from 'uuid';
 import { toast } from '../Toaster';
 // @ts-ignore
 import { Theme, withTheme, CircularProgress } from '@material-ui/core';
@@ -83,7 +83,8 @@ class MoleculeViewer extends React.Component<MVProps, MVState> {
       .then(async ({ radius, pdb, top, itps }) => {
         // Apply the radius to NGL
         applyUserRadius(radius);
-
+        console.log("FF", this.props.ff)
+        console.log(Settings.martinize_variables.force_fields_info)
         const polarizableFF = Settings.martinize_variables.force_fields_info[this.props.ff].polarizable
         const beads = await itpBeads(top, itps, polarizableFF); 
 
