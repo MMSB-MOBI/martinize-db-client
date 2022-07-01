@@ -1,4 +1,4 @@
-import { CircularProgress, Grid, Paper } from "@mui/material";
+import {  Grid, Paper } from "@mui/material";
 import * as React from "react";
 import GeneratorMenu from './GeneratorMenu';
 import PolymerViewer from './GeneratorViewer';
@@ -9,12 +9,10 @@ import { simulationToJson } from './generateJson';
 import { alarmBadLinks } from './addNodeLink';
 import SocketIo from 'socket.io-client';
 import RunPolyplyDialog from "./Dialog/RunPolyplyDialog";
-import submitbox from "./Dialog/submitDialogBox";
 import ItpFile from 'itp-parser-forked'; import ApiHelper from "../../ApiHelper";
 import AppBar from '@material-ui/core/AppBar';
 import Typography from "@material-ui/core/Typography";
 import { blue } from "@material-ui/core/colors";
-import MembraneBuilder from "../Builder/MembraneBuilder";
 import { Marger } from "../../helpers";
 import GeneratorViewer from "./GeneratorViewer";
 
@@ -30,8 +28,9 @@ interface StateSimulation {
   linksToAdd: SimulationLink[],
   dataForForm: { [forcefield: string]: string[] },
   loading: Boolean,
-  sending: boolean,
-  submit: string
+  stepsubmit: number | undefined,
+  itp: string,
+  gro: string
 }
 
 
@@ -45,8 +44,6 @@ export let decreaseID = (): void => {
   console.log("new currentAvaibleID", currentAvaibleID)
   currentAvaibleID--;
 }
-
-
 
 export default class GeneratorManager extends React.Component {
   createTheme(hint: 'light' | 'dark') {
@@ -63,7 +60,6 @@ export default class GeneratorManager extends React.Component {
     };
   }
 
-
   //myViewerRef = React.createRef();
 
   state: StateSimulation = {
@@ -73,8 +69,9 @@ export default class GeneratorManager extends React.Component {
     dataForForm: {},
     Warningmessage: "",
     loading: false,
-    sending: false,
-    submit: ""
+    stepsubmit: undefined,
+    itp: "",
+    gro: ""
   }
 
   currentForceField = '';
@@ -82,8 +79,6 @@ export default class GeneratorManager extends React.Component {
   warningfunction = (message: string): void => {
     this.setState({ Warningmessage: message })
   }
-
-
 
   addprotsequence = (sequence: string) => {
     let i = 0;
@@ -192,6 +187,9 @@ export default class GeneratorManager extends React.Component {
     }
   }
 
+  addNEwMolFromITP = (itpstring: string) => {
+    console.log(itpstring)
+  }
 
   addFromITP = (itpstring: string) => {
     const itp = ItpFile.readFromString(itpstring);
@@ -210,7 +208,6 @@ export default class GeneratorManager extends React.Component {
     //Super pratique 
     //Garder en memoire l'id d'avant sur l'itp 
     let oldid = 0
-
 
     for (let nodestr of atoms) {
       const nodelist = nodestr.split(' ').filter((e) => { return e !== "" })
@@ -345,10 +342,7 @@ export default class GeneratorManager extends React.Component {
           }
         }
       }
-
       return [newMolecules, newlinks]
-
-
     }
   }
 
@@ -363,15 +357,14 @@ export default class GeneratorManager extends React.Component {
     else {
       this.setState({ Warningmessage: "Change forcefield to " + this.currentForceField })
     }
-
   }
 
-  giveConnexeNode = (node: SimulationNode ) => {
+  giveConnexeNode = (node: SimulationNode) => {
     //Give one node and class on focus rest of polymer nodes 
     //Return one selection of connexe nodes
 
     //clean the previous selected nodes
-     
+
     // Create a list and add our initial node in it
     let s = [];
     s.push(node);
@@ -401,7 +394,7 @@ export default class GeneratorManager extends React.Component {
     }
     // Return a selection of one connexe graph 
     // Maybe juste one node
-    return  connexeNodesId 
+    return connexeNodesId
   }
 
 
@@ -446,8 +439,6 @@ export default class GeneratorManager extends React.Component {
 
       this.setState({ Warningmessage: "Change forcefield to " + this.currentForceField })
     }
-
-
   }
 
   addlink = (id1: string, id2: string): void => {
@@ -478,27 +469,33 @@ export default class GeneratorManager extends React.Component {
     this.setState({ linksToAdd: newlinks });
   }
 
+  closeDialog = (): void => {
+
+    this.setState({ stepsubmit: undefined, loading: false, itp: "", gro: "" })
+
+  }
+
+
   ClickToSend = (): void => {
     console.log("Go to server");
-    console.log( this.state.Simulation?.nodes()[1] )
+    this.setState({ stepsubmit: 0 })
+    console.log(this.state.Simulation?.nodes()[1])
     let nodeNumber = this.state.Simulation?.nodes().length
     if (this.state.Simulation === undefined) {
       this.setState({ Warningmessage: "Error Simulation undefined " })
     }
-    else if ( nodeNumber !== this.giveConnexeNode( this.state.Simulation?.nodes()[1] ).size) {
+    else if (nodeNumber !== this.giveConnexeNode(this.state.Simulation?.nodes()[1]).size) {
       this.setState({ Warningmessage: "OULALALA C'est pas connexe du tout ! Ajoute des liens" })
     }
     else {
-      // Doit montrer le modal dialog
-      this.setState({ sending: true })
       // Make dialog box appaer
       this.setState({ loading: true })
     }
   }
 
   Send = (density: string, name: string): void => {
-    this.setState({ sending: false })
-    this.setState({ submit: "Sending ..." })
+
+    this.setState({ stepsubmit: 1 })
 
     const jsonpolymer = simulationToJson(this.state.Simulation!, this.currentForceField)
 
@@ -511,57 +508,47 @@ export default class GeneratorManager extends React.Component {
     const socket = SocketIo.connect("http://localhost:4123");
     socket.emit('runpolyply', data)
 
+    socket.on("itp", (res: string) => {
+      // if (res !== "") {
+      this.setState({ stepsubmit: 2 })
+      this.setState({ itp: res })
+      //   // Besoin de verifier que l'itp fourni par polyply est le meme polymere que celui afficher
+      //   const jsonpolymer = simulationToJson(this.state.Simulation!, this.currentForceField)
 
-    socket.on("itp", (itp: string) => {
-      if (itp !== "") {
-        this.setState({ submit: "ITP Done ! Go for gro ..." })
-        // Besoin de verifier que l'itp fourni par polyply est le meme polymere que celui afficher
-        const jsonpolymer = simulationToJson(this.state.Simulation!, this.currentForceField)
+      //   const klcdwu = this.returnITPinfo(res)
 
-        const klcdwu = this.returnITPinfo(itp)
+      //   const NBatomsITP: number = klcdwu![0].length
+      //   const NBlinksITP: number = klcdwu![1].length
+      //   const NBatomsSIM: number = jsonpolymer.nodes.length
+      //   const NBlinksSIM: number = jsonpolymer.links.length
 
-        const NBatomsITP: number = klcdwu![0].length
-        const NBlinksITP: number = klcdwu![1].length
-        const NBatomsSIM: number = jsonpolymer.nodes.length
-        const NBlinksSIM: number = jsonpolymer.links.length
+      //   console.log(NBatomsITP, NBlinksITP, NBatomsSIM, NBlinksSIM)
+      //   if (NBatomsSIM !== NBatomsITP) {
+      //     this.setState({ Warningmessage: "WHOUWHOUWHOU alert au node" })
+      //     this.setState({ loading: false })
+      //     this.setState({ submit: undefined })
 
-        console.log(NBatomsITP, NBlinksITP, NBatomsSIM, NBlinksSIM)
-        if (NBatomsSIM !== NBatomsITP) {
-          this.setState({ Warningmessage: "WHOUWHOUWHOU alert au node " })
-          this.setState({ loading: false })
-          this.setState({ submit: "" })
-
-        }
-        else if (NBlinksSIM !== NBlinksITP) {
-          this.setState({ Warningmessage: "WHOUWHOUWHOU alert au link " })
-          this.setState({ loading: false })
-          this.setState({ submit: "" })
-        }
-        else socket.emit("continue")
-        console.log("continue")
-      }
-
+      //   }
+      //   else if (NBlinksSIM !== NBlinksITP) {
+      //     this.setState({ Warningmessage: "WHOUWHOUWHOU alert au link" })
+      //     this.setState({ loading: false })
+      //     this.setState({ submit: undefined })
+      //   }
+      //   else {
+      socket.emit("continue")
+      //     }
+      //     console.log("continue")
+      //   }
     })
 
     socket.on("gro", (data: string) => {
-      const blob = new Blob([data], { type: "text" });
-      this.setState({ loading: false })
-      this.setState({ submit: "" })
-
-      const a = document.createElement("a");
-      a.download = "out.gro";
-      a.href = window.URL.createObjectURL(blob);
-      const clickEvt = new MouseEvent("click", {
-        view: window,
-        bubbles: true,
-        cancelable: true,
-      });
-      a.dispatchEvent(clickEvt);
-      a.remove();
+      console.log("gro !")
+      this.setState({ gro: data })
+      this.setState({ stepsubmit: 3 })
     })
 
     socket.on("oups", (dicoError: any) => {
-      this.setState({ submit: "" })
+      this.setState({ stepsubmit: undefined })
       this.setState({ loading: false })
       console.log(dicoError)
 
@@ -633,16 +620,13 @@ export default class GeneratorManager extends React.Component {
             send={this.ClickToSend}
             dataForceFieldMolecule={this.state.dataForForm}
             warningfunction={this.warningfunction}
-          />
+            addNEwMolFromITP={this.addNEwMolFromITP} />
 
           {this.state.loading ? (
-            <RunPolyplyDialog show={this.state.sending} send={this.Send}> </RunPolyplyDialog>
+            <RunPolyplyDialog send={this.Send} currentStep={this.state.stepsubmit} itp={this.state.itp} gro={this.state.gro} close={this.closeDialog}> </RunPolyplyDialog>
           ) : (<></>)
           }
-          {this.state.submit ? (
-            submitbox(this.state.submit)
-          ) : (<></>)
-          }
+
 
         </Grid>
         <Grid item xs={7} style={{ height: "100vw" }}>

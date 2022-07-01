@@ -8,15 +8,27 @@ import TextField from '@mui/material/TextField';
 import FormControl from '@mui/material/FormControl';
 import OutlinedInput from '@mui/material/OutlinedInput';
 import InputAdornment from '@mui/material/InputAdornment';
+import { Stepper } from '@material-ui/core';
+import Step from '@mui/material/Step';
+import StepLabel from '@mui/material/StepLabel';
+import Typography from '@mui/material/Typography';
+import { Marger } from '../../../helpers';
+import Icon from '@mui/material/Icon';
+import JSZip from 'jszip';
+
 
 interface props {
-    show: boolean,
     send: (arg1: string, arg2: string) => void;
+    currentStep: number | undefined;
+    itp: string,
+    gro: string,
+    close: () => void;
 }
 
 interface state {
     density: string,
     name: string,
+
 }
 
 export default class RunPolyplyDialog extends React.Component<props, state> {
@@ -29,64 +41,130 @@ export default class RunPolyplyDialog extends React.Component<props, state> {
         this.state = {
             density: "1000",
             name: "polymol",
+
         }
     }
 
+    steps = ['Set density and name', 'ITP creation', 'GRO creation'];
 
-    handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    dl(s: string, filename: string) {
 
+        const blob = new Blob([s], { type: "text" });
+        const a = document.createElement("a");
+        a.download = filename;
+        a.href = window.URL.createObjectURL(blob);
+        const clickEvt = new MouseEvent("click", {
+            view: window,
+            bubbles: true,
+            cancelable: true,
+        });
+        a.dispatchEvent(clickEvt);
+        a.remove();
     }
 
+    async dlzip(itp: string, gro: string, filename: string) {
 
-    show = () => {
-        console.log("Dialog avec polyply !!!", this.props.show)
-        if (this.props.show) {
-            return <Dialog
-                open={this.props.show}
-            >
-                <DialogTitle>Send to polyply !</DialogTitle>
-                <DialogContent>
-                    <FormControl sx={{ m: 1, width: '25ch' }} variant="outlined"  >
-                        <TextField
-                            id="outlined-number"
-                            label="density"
-                            type="number"
-                            InputLabelProps={{
-                                shrink: true,
-                            }}
-                            value={this.state.density}
-                            onChange={(e) => this.setState({ density: e.target.value })}
-                        />
-                    </FormControl>
+        const zip = new JSZip();
 
-                    <FormControl sx={{ m: 1, width: '25ch' }} variant="outlined">
-                        <OutlinedInput
-                            id="outlined-adornment-weight"
-                            value={this.state.name}
-                            onChange={(e) => this.setState({ name: e.target.value })}
-                            endAdornment={<InputAdornment position="end">name</InputAdornment>}
-                            aria-describedby="outlined-weight-helper-text"
+        zip.file("out.itp", itp);
+        zip.file("out.gro", gro);
 
-                        />
+        const blob = zip.generateAsync({
+            type: "blob",
+            compression: "DEFLATE",
+            compressionOptions: { level: 6 },
+        });
 
-                    </FormControl>
-
-                </DialogContent>
-                <DialogActions>
-                    <Button onClick={() => { this.props.send(this.state.density, this.state.name) }}>Submit</Button>
-                </DialogActions>
-            </Dialog >
-        }
-        else return;
+        const a = document.createElement("a");
+        a.download = filename;
+        a.href = window.URL.createObjectURL(await blob);
+        const clickEvt = new MouseEvent("click", {
+            view: window,
+            bubbles: true,
+            cancelable: true,
+        });
+        a.dispatchEvent(clickEvt);
+        a.remove();
     }
 
 
     render() {
+
+        let show = false
+        if ( this.props.currentStep !== undefined) {
+            show = true
+        }
+
+
         return (
-            <div>
-                {this.show()}
-            </div >
-        );
+            show ? (
+                <Dialog maxWidth="sm" fullWidth open={true} >
+                    <DialogTitle>Send to polyply !</DialogTitle>
+
+                    <Stepper activeStep={this.props.currentStep!} orientation="vertical">
+
+                        {this.steps.map((label) => (
+                            <Step key={label}>
+                                <Marger size="1rem" />
+                                <StepLabel>{label}</StepLabel>
+                            </Step>
+                        ))}
+                        {this.props.currentStep ? (<></>) : (
+
+                            <><DialogContent>
+                                <FormControl sx={{ m: 1, width: '25ch' }} variant="outlined">
+                                    <TextField
+                                        id="outlined-number"
+                                        label="density"
+                                        type="number"
+                                        InputLabelProps={{
+                                            shrink: true,
+                                        }}
+                                        value={this.state.density}
+                                        onChange={(e) => this.setState({ density: e.target.value })} />
+                                </FormControl>
+
+                                <FormControl sx={{ m: 1, width: '25ch' }} variant="outlined">
+                                    <OutlinedInput
+                                        id="outlined-adornment-weight"
+                                        value={this.state.name}
+                                        onChange={(e) => this.setState({ name: e.target.value })}
+                                        endAdornment={<InputAdornment position="end">name</InputAdornment>}
+                                        aria-describedby="outlined-weight-helper-text" />
+                                </FormControl>
+
+                            </DialogContent><DialogActions>
+                                    <Button onClick={() => { this.props.send(this.state.density, this.state.name); }}>Submit</Button>
+                                </DialogActions></>)
+                        }
+
+                        {this.props.itp ? (<>
+
+                            <Button onClick={() => { this.dl(this.props.itp, "out.itp"); }}> <Icon className={"fas fa-download"} /> Dl itp</Button>
+                        </>
+                        ) : (<></>)}
+
+                        {this.props.gro ? (<>
+
+                            <Button onClick={() => { this.dl(this.props.gro, "out.gro"); }}> <Icon className={"fas fa-download"} /> Dl gro</Button>
+                        </>) : (<></>)}
+
+
+                        {(this.props.gro && this.props.itp) ? (<>
+
+                            <Button onClick={() => { this.dlzip(this.props.itp, this.props.gro, "out.zip"); }}> <Icon className={"fas fa-download"} /> Dl Zip</Button>
+                        </>) : (<></>)}
+
+                    </Stepper>
+
+
+                    <DialogActions>
+                        <Button onClick={() => { this.props.close() }}>Close !</Button>
+                    </DialogActions>
+
+                </Dialog >
+            ) : (<></>)
+        )
     }
 }
 
