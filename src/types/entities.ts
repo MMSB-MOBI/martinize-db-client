@@ -98,6 +98,7 @@ interface JobDoc extends CouchDoc {
   name: string;
   update_date? : string; 
   manual_bonds_edition?: boolean; 
+  comment: string; 
 }
 
 export interface ReadedJobDoc extends JobDoc { 

@@ -36,6 +36,7 @@ interface FormattedJob {
     type: string; 
     settings : JobSettings; 
     manual_bonds_edition?: boolean; 
+    comment: string; 
 }
 
 type SortableKeys = "id" | "name" | "date" | "ff" | "mode" | "type"; 
@@ -125,7 +126,8 @@ function formatData(jobs : RawJobDoc[]): FormattedJob[] {
         mode : job.settings.builder_mode,
         type : job.type, 
         settings : job.settings,
-        manual_bonds_edition : job.manual_bonds_edition
+        manual_bonds_edition : job.manual_bonds_edition,
+        comment: job.comment
     }))
 }
 
@@ -399,7 +401,7 @@ export default function HistoryTable(props : {
                     <TableCell> {job.name} </TableCell>
                     <TableCell> {job.date} </TableCell>
                     <TableCell> {job.ff} </TableCell>
-                    <TableCell> {job.mode} </TableCell>
+                    <TableCell> {job.manual_bonds_edition ? job.mode + "*" : job.mode} </TableCell>
                     <TableCell> {job.type} </TableCell>
                     <TableCell> <Link component="button" disabled={selectedNumber > 0} className={classes.personnalisedLink} onClick={() => visualizeJob(job.id)}> Visualize </Link> </TableCell>
                     <TableCell> <Link component="button" disabled={selectedNumber > 0} className={classes.personnalisedLink} onClick={() => downloadJob(job.id)}> Download </Link> </TableCell>
@@ -411,13 +413,14 @@ export default function HistoryTable(props : {
                     <Box>
                     <ul>
                         <li>Force field : {job.settings.ff}</li>
-                        <li> Position restrains : {job.settings.position} </li>
+                        <li>Position restrains : {job.settings.position} </li>
                         <li>Mode : {job.settings.builder_mode} {job.manual_bonds_edition ? " (with manual edition of bonds)" : ""} </li>
                         <li>C-terminal : {job.settings.cter} </li>
                         <li>N-terminal : {job.settings.nter} </li>
                         <li>Side-chain fix : {job.settings.sc_fix} </li>
                         <li>Cystein bridge : {job.settings.cystein_bridge} </li>
                         <li>Command line : {job.settings.commandline} </li> 
+                        {job.comment && <li> Comment : {job.comment}</li>}
                     </ul>
                     
                     </Box>

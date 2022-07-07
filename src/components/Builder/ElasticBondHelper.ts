@@ -144,6 +144,7 @@ clone() {
     const clone = ElasticBondsHelper.fromJSON(this.representation.stage, this.toJSON());
     // @ts-ignore
     clone.representation = this.representation;
+    clone._nglIdxToItpIdx = this._nglIdxToItpIdx
 
     return clone;
 }
@@ -164,7 +165,6 @@ static fromJSON(stage: NglWrapper, data: BaseBondsHelperJSON[]) {
     const obj = new ElasticBondsHelper(
         stage,
     );
-    
     const parsedRelations : Relations = []
 
     for (const chainData of data){

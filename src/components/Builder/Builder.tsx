@@ -1056,13 +1056,17 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     }
   }
 
-  onMoleculeDownload = async () => {
+  onMoleculeDownload = async (edited:boolean = false) => {
     if (!this.state.files) {
       console.warn("Hey, files should be present in component when this method is called.");
       return;
     }
 
     this.setState({ generating_files: true });
+
+    if(edited) {
+      await this.applyBondsToFiles(); 
+    }
 
     try {
       await this.downloadMolecule(); 
@@ -1222,24 +1226,38 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       toast("Can't apply new bonds to itp files", "error")
       console.error(e); 
     }
-
-    ApiHelper.request('history/update', { method: 'POST', 
-    parameters:  {jobId : this.jobId, files:this.state.files.itps.map(itp => itp.content), molIdxs: this.state.files.itps.map(itp => itp.mol_idx)}, body_mode : 'multipart'}).then(() => {
-      toast(`Job ${this.jobId} has been updated in history`, "success")
-    }).catch(e => {
-      toast(`Job ${this.jobId} can't be updated in history, an error occured`, "error")
-      console.error(e); 
-    })
   };
 
-  onGoEditorCancel = async () => {
-    this.restoreSettingsAfterGo(false);
+  onValidateComment = async (comment: string) => {
+    //this.restoreSettingsAfterGo(false);
+    if (!this.state.files){
+      console.error("files are not registered in state, should not happen")
+      return; 
+    }
+
+    if (!this.jobId){
+      console.error("job id is not registered, should not happen")
+      return; 
+    }
+
     try {
       await this.applyBondsToFiles(); 
     } catch(e) {
       toast("Can't apply new bonds to itp files", "error")
       console.error(e); 
     }
+
+    ApiHelper.request('history/update', { method: 'POST', 
+    parameters:  {jobId : this.jobId, files:this.state.files.itps.map(itp => itp.content), molIdxs: this.state.files.itps.map(itp => itp.mol_idx), editionComment: comment}, body_mode : 'multipart'}).then(() => {
+      toast(`Job has been saved in history`, "success")
+    }).catch(e => {
+      toast(`Job can't be saved in history, an error occured`, "error")
+      console.error(e); 
+    })
+  };
+
+  onGoEditorCancel = async () => {
+    this.restoreSettingsAfterGo(true);
   };
 
   onGoEditorStart = () => {
@@ -1254,6 +1272,8 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       // @ts-ignore
       go: this.state.files!.go!.clone(),
     };
+
+    console.log("saved vized params go", this.saved_viz_params.go)
 
     // Apply custom params
     this.onRepresentationChange(undefined, ['ball+stick']);
@@ -1601,7 +1621,6 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
               />}
 
               
-
               {this.state.running === 'go_editor' && <GoEditor 
                 stage={this.ngl}
                 cgCmp={this.state.coarse_grain_ngl!}
@@ -1621,6 +1640,8 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
                 onHistoryDownload={this.onHistoryDownload}
                 beadRadiusFactor={this.state.bead_radius_factor}
                 onBeadRadiusChange={this.onBeadRadiusChange}
+                onValidateComment={(comment) => this.onValidateComment(comment)}
+                onDownload={() => this.onMoleculeDownload(true)}
               />}
             </div>
             

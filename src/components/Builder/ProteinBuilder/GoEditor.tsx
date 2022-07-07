@@ -25,6 +25,8 @@ interface GoEditorProps {
 
   onValidate(): any;
   onCancel(): any;
+  onValidateComment(comment: string): any
+  onDownload() : any
 
   onRedrawGoBonds(highlight?: number | [number, number], opacity?: number, chain?:number): any;
   setColorForCgRepr(atomColors?: {[atom:string]: string}): any;
@@ -58,6 +60,8 @@ interface GoEditorState {
   show_side_chains: boolean;
   enable_history: boolean;
   want_save_bonds: boolean; 
+  save_to_history : boolean; 
+  edition_comment: string; 
 }
 
 interface PickedGoBond {
@@ -82,7 +86,9 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
     select_2: '',
     show_side_chains: false,
     enable_history: true,
-    want_save_bonds: false
+    want_save_bonds: false,
+    save_to_history : false,  
+    edition_comment : ''
   };
 
   protected get repr() {
@@ -113,7 +119,6 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
   componentDidMount() {
     // @ts-ignore
     window.GoEditor = this;
-
     this.props.stage.onClick(this.nglClickReciever);
     this.props.stage.removePanOnClick();
     this.repr.applySelection(this.selection_suffix);
@@ -813,18 +818,47 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
     )
   }
 
+  renderModalSaveToHistory() { 
+    return(
+      <Dialog open={this.state.save_to_history}>
+          <DialogTitle>
+            Save bonds ?
+          </DialogTitle>
+  
+          <DialogContent>
+            <DialogContentText>
+              Do you want to save your new bonds to history ? You can add a comment to identify this job
+            </DialogContentText>
+            <TextField fullWidth label="Comment" value = {this.state.edition_comment} variant="outlined" onChange={v => this.setState({ edition_comment: v.target.value })}> </TextField>
+          </DialogContent>
+      
+          <DialogActions>
+            <Button color="primary" onClick={() => {
+              this.setState({save_to_history:false})
+              //this.props.onCancel(); 
+              console.log("no")
+              }}>Cancel</Button>
+            <Button color="secondary" onClick={() => {
+              this.setState({save_to_history:false})
+              this.props.onValidateComment(this.state.edition_comment)}}>Validate</Button>
+          </DialogActions>
+        </Dialog>
+    )
+  }
+
   render() {
     let hist = this.props.goInstance.customBondsGet()
     return (
       <React.Fragment>
         {this.renderModalSaveBonds()}
+        {this.renderModalSaveToHistory()}
         <Marger size="1rem" />
 
-        {/* Theme */}
+        {/* Theme */}         
         <Typography variant="h5" align="center">
           Edit {this.props.mode === 'go' ? "Go" : "Elastic"} virtual bonds
         </Typography>
-
+        
         <Marger size="1rem" />
 
         {this.state.mode === 'idle' && this.state.selected?.type === 'atom' && this.renderAtomSelected()}
@@ -848,19 +882,9 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
             <Button 
               style={{ width: '100%' }} 
               color="primary" 
-              onClick={() => this.setState({want_save_bonds : true})}
+              onClick={() => {this.setState({save_to_history: true});}}
             >
-              <FaIcon check /> <span style={{ marginLeft: '.6rem' }}>Validate all modifications</span>
-            </Button>
-
-            <Marger size=".5rem" />
-
-            <Button 
-              style={{ width: '100%' }} 
-              color="secondary" 
-              onClick={this.props.onCancel}
-            >
-              <FaIcon ban /> <span style={{ marginLeft: '.6rem' }}>Cancel modifications</span>
+              <FaIcon save /> <span style={{ marginLeft: '.6rem' }}>Save to history</span>
             </Button>
 
             <Marger size="1rem" />
@@ -911,6 +935,20 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
         <Button onClick={() => this.props.onHistoryDownload()} color="primary">
           <FaIcon download /> <span style={{ marginLeft: '.6rem' }}>Download history</span>
         </Button>
+
+        <Button onClick={() => this.props.onDownload()} color="primary">
+          <FaIcon download /> <span style={{ marginLeft: '.6rem' }}>Download</span>
+        </Button>
+
+        <Box width="100%" justifyContent="space-between" display="flex">
+          <Button variant="outlined" color="secondary" type="button" onClick={this.props.onCancel}>
+            Back
+          </Button>
+
+          <Button variant="outlined" color="primary" type="submit" onClick={this.props.onValidate}>
+            Validate
+          </Button>
+        </Box>
 
       </React.Fragment>
     );
