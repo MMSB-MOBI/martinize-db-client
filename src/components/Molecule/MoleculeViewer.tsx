@@ -3,6 +3,8 @@ import { v4 as uuid } from 'uuid';
 import { toast } from '../Toaster';
 // @ts-ignore
 import { Theme, withTheme, CircularProgress } from '@material-ui/core';
+import Switch from '@mui/material/Switch';
+import FormControlLabel from '@mui/material/FormControlLabel';
 import ApiHelper from '../../ApiHelper';
 import { applyUserRadius, UserRadius } from '../../nglhelpers';
 import { itpBeads } from '../Builder/BeadsHelper';
@@ -10,6 +12,7 @@ import NglWrapper, { NglRepresentation, NglComponent } from '../Builder/NglWrapp
 import BallAndStickRepresentation from '@mmsb/ngl/declarations/representation/ballandstick-representation';
 import { AvailableForceFields } from '../../types/entities';
 import { Settings } from '../../Settings'
+import { boolean } from '@mmsb/ngl/declarations/utils';
 
 
 // Component types
@@ -18,6 +21,7 @@ type MVState = {
   component?: NglComponent,
   loading: boolean,
   file?: Blob,
+  autospin: boolean
 };
 
 class MoleculeViewer extends React.Component<MVProps, MVState> {
@@ -29,6 +33,7 @@ class MoleculeViewer extends React.Component<MVProps, MVState> {
     loading: false,
     component: undefined,
     file: undefined,
+    autospin: false,
   };
 
   componentDidMount() {
@@ -50,6 +55,14 @@ class MoleculeViewer extends React.Component<MVProps, MVState> {
 
   componentWillUnmount() {
     window.removeEventListener('resize', this.refreshStage);
+  }
+
+  changeAutospin = () => {
+    console.log("autospin before", this.state.autospin)
+    const newValue = this.state.autospin ? false : true
+    console.log("autospin new value", newValue)
+    this.setState({autospin: newValue})
+    this.ngl.stage.setSpin(newValue)
   }
 
   refreshStage = () => {
@@ -112,6 +125,7 @@ class MoleculeViewer extends React.Component<MVProps, MVState> {
         id={this.viewport_id}
         style={{ width: '100%', height: '100%', minHeight: '300px', borderRadius: '8px', border: '1px #82828278 dashed', position: 'relative' }}
       >
+        <FormControlLabel style={{ marginLeft:'1em', marginTop:'1em'}} componentsProps={{ typography: {sx:{fontSize:13}}}} control={<Switch size='small' checked={this.state.autospin} onChange={this.changeAutospin}/>} label="autospin" />
         {this.state.loading && <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', zIndex: 999 }}>
           <CircularProgress variant="determinate" value={50} />
         </div>}
