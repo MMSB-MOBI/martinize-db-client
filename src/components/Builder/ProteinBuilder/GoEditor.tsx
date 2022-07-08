@@ -514,7 +514,8 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
             style={{ width: '100%' , color: 'orange'}} 
             onClick={this.onSelectionStop}
           >
-            <FaIcon check /> <span style={{ marginLeft: '.6rem' }}>Validate bonds</span>
+            <FaIcon arrow-left /> 
+            <span style={{ marginLeft: '.6rem' }}>Back to Settings</span>
           </Button>
         </Box>
       </React.Fragment>
@@ -908,7 +909,7 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
               color="primary" 
               onClick={() => {this.setState({save_to_history: true});}}
             >
-              <FaIcon save /> <span style={{ marginLeft: '.6rem' }}>Save to history</span>
+              <FaIcon save /> <span style={{ marginLeft: '.6rem' }}>Save to builder history</span>
             </Button>
 
             <Marger size="1rem" />
@@ -956,15 +957,11 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
         </Typography>
 
         <Marger size="1rem" />
-        <Button onClick={() => this.props.onHistoryDownload()} color="primary">
-          <FaIcon download /> <span style={{ marginLeft: '.6rem' }}>Download history</span>
-        </Button>
-
-        <Button onClick={() => this.props.onDownload()} color="primary">
+        {this.state.mode === 'idle' && !this.state.selected && <Button onClick={() => this.props.onDownload()} color="primary">
           <FaIcon download /> <span style={{ marginLeft: '.6rem' }}>Download</span>
-        </Button>
+        </Button>}
 
-        <Box width="100%" justifyContent="space-between" display="flex">
+        {this.state.mode === 'idle' && !this.state.selected && <Box width="100%" justifyContent="space-between" display="flex">
           <Button variant="outlined" color="secondary" type="button" onClick={() => this.setState({want_go_back: true})}>
             Back
           </Button>
@@ -972,7 +969,7 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
           <Button variant="outlined" color="primary" type="submit" onClick={this.props.onValidate}>
             Validate
           </Button>
-        </Box>
+        </Box>}
 
       </React.Fragment>
     );
