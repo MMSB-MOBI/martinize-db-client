@@ -62,6 +62,7 @@ interface GoEditorState {
   want_save_bonds: boolean; 
   save_to_history : boolean; 
   edition_comment: string; 
+  want_go_back: boolean; 
 }
 
 interface PickedGoBond {
@@ -88,7 +89,8 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
     enable_history: true,
     want_save_bonds: false,
     save_to_history : false,  
-    edition_comment : ''
+    edition_comment : '',
+    want_go_back: false, 
   };
 
   protected get repr() {
@@ -846,12 +848,34 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
     )
   }
 
+  renderModalBack() {
+    return (
+      <Dialog open={!!this.state.want_go_back}>
+        <DialogTitle>
+          Get back to database ?
+        </DialogTitle>
+
+        <DialogContent>
+          <DialogContentText>
+            You will definitively lose unsaved changes made into Molecule Builder.
+          </DialogContentText>
+        </DialogContent>
+
+        <DialogActions>
+          <Button color="primary" onClick={() => this.setState({want_go_back: false})}>Cancel</Button>
+          <Button color="secondary" onClick={this.props.onValidate}>Go back</Button>
+        </DialogActions>
+      </Dialog>
+    )
+  }
+
   render() {
     let hist = this.props.goInstance.customBondsGet()
     return (
       <React.Fragment>
         {this.renderModalSaveBonds()}
         {this.renderModalSaveToHistory()}
+        {this.renderModalBack()}
         <Marger size="1rem" />
 
         {/* Theme */}         
@@ -941,7 +965,7 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
         </Button>
 
         <Box width="100%" justifyContent="space-between" display="flex">
-          <Button variant="outlined" color="secondary" type="button" onClick={this.props.onCancel}>
+          <Button variant="outlined" color="secondary" type="button" onClick={() => this.setState({want_go_back: true})}>
             Back
           </Button>
 

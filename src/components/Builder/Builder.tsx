@@ -63,7 +63,7 @@ interface AtomRadius {
 type BuilderType = "martinize" | "insane"
 
 export interface MBState {
-  running: 'pdb' | 'pdb_read' | 'martinize_params' | 'martinize_generate' | 'martinize_error' | 'done' | 'go_editor' | 'load_error';
+  running: 'pdb' | 'pdb_read' | 'martinize_params' | 'martinize_generate' | 'martinize_error' | 'done' | 'go_editor' | 'load_error' | 'load_history';
   error?: any;
   martinize_error?: MZError;
   martinize_step: string;
@@ -165,6 +165,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       //Reload an history job
       const params = this.props.match.params as any
       const jobId = params.id
+      this.setState({running: 'load_history'})
       this.loadFromHistory(jobId)
 
     }
@@ -1541,6 +1542,11 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
                 <Divider />
               </div>
+
+              {this.state.running === 'load_history' && <div>
+                <Marger size='2rem'/>
+                <CircularProgress size={56}/>
+              </div>}
 
               {/* Forms... */}
               {this.state.running === 'pdb' && <LoadPdb 
