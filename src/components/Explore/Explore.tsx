@@ -1,6 +1,6 @@
 import React, { Fragment } from 'react';
 import './Explore.scss';
-import { setPageTitle, errorToText, Marger } from '../../helpers';
+import { setPageTitle, errorToText, Marger, FaIcon } from '../../helpers';
 import { RouteComponentProps } from 'react-router-dom';
 import qs from 'qs';
 import { Molecule } from '../../types/entities';
@@ -12,7 +12,6 @@ import AddMolecule from '../AddMolecule/AddMolecule';
 import { Link, Icon, Container, Typography } from '@material-ui/core';
 import clsx from 'clsx';
 import Settings from '../../Settings';
-
 // Icon <Icon className="fas fa-camera" />
 
 function getRealFilters(filters: Filters) {
@@ -46,6 +45,7 @@ type ExploreState = {
   loading: number,
   add_open: boolean,
   combine: boolean,
+  maintenance: boolean
 };
 
 export class Explore extends React.Component<RouteComponentProps, ExploreState> {
@@ -56,6 +56,7 @@ export class Explore extends React.Component<RouteComponentProps, ExploreState> 
     rowsPerPage: DEFAULT_ROWS_PER_PAGE,
     add_open: false,
     combine: true,
+    maintenance : false
   }
 
   previous_timeout = 0;
@@ -180,12 +181,21 @@ export class Explore extends React.Component<RouteComponentProps, ExploreState> 
     // Make the request
     ApiHelper.request('molecule/list', { parameters: to_send, latency: 200, auth: 'auto' })
       .then(mols => {
-        if (load_uuid === this.state.loading) {
-          this.setState({
-            loading: 0,
-            molecules: mols,
-            page: new_page !== undefined ? new_page : this.state.page
-          });
+        
+        if(mols.hasOwnProperty("maintenance") && mols['maintenance']){
+          this.setState({maintenance : true})
+        }
+
+        else {
+          if (load_uuid === this.state.loading) {
+            this.setState({
+              loading: 0,
+              molecules: mols,
+              page: new_page !== undefined ? new_page : this.state.page
+            });
+        }
+
+        
         }
       })
       .catch(e => {
@@ -212,6 +222,7 @@ export class Explore extends React.Component<RouteComponentProps, ExploreState> 
           Explore
         </Typography>
 
+      {! this.state.maintenance && <div>
         <div>
           <MoleculeFilters 
             {...(this.state.filters ?? {})}
@@ -251,6 +262,18 @@ export class Explore extends React.Component<RouteComponentProps, ExploreState> 
             this.setState({ add_open: false });
           }}
         />
+
+      </div> } 
+      
+      {this.state.maintenance && <div>
+        <Typography variant = "h5" align="center">
+          <div className='maintenance-div'> 
+            <FaIcon wrench /><span> Database is under maintenance. Please connect later. </span> 
+          </div>
+          
+        </Typography>
+      </div>}
+
 
         <Marger size={30} />
       </Container>

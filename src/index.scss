@@ -38,6 +38,13 @@ code {
   text-align: center !important;
 }
 
+.maintenance-div {
+  display: flex; 
+  align-items: center; 
+  gap : 1em; 
+  justify-content: center;
+}
+
 a {
   cursor: pointer;
 }
