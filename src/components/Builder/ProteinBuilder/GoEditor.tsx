@@ -805,7 +805,7 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
             this.setState({want_save_bonds:false})
             this.props.onCancel(); 
             }}>No</Button>
-          <Button color="secondary" onClick={this.props.onValidate}>Yes</Button>
+          <Button color="secondary" onClick={() => { this.setState({want_save_bonds:false}); this.props.onValidateComment(false, '')}}>Yes</Button>
         </DialogActions>
       </Dialog>
     )
@@ -854,7 +854,7 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
 
         <DialogActions>
           <Button color="primary" onClick={() => this.setState({want_go_back: false})}>Cancel</Button>
-          <Button color="secondary" onClick={() => this.props.onValidateComment(false, '')}>Go back</Button>
+          <Button color="secondary" onClick={() => this.props.onValidate()}>Go back</Button>
         </DialogActions>
       </Dialog>
     )
