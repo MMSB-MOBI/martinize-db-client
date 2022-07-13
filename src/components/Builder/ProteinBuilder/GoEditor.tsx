@@ -25,7 +25,7 @@ interface GoEditorProps {
 
   onValidate(): any;
   onCancel(): any;
-  onValidateComment(comment: string): any
+  onValidateComment(new_project: boolean, comment: string): any
   onDownload() : any
 
   onRedrawGoBonds(highlight?: number | [number, number], opacity?: number, chain?:number): any;
@@ -689,16 +689,6 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
             label="Show side chains"
           />
 
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={this.state.enable_history} 
-                onChange={this.onHistoryChange} 
-                color="secondary"
-              />
-            }
-            label="Enable history"
-          />
         </Box>
 
         <Marger size="1.5rem" />
@@ -806,7 +796,7 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
 
         <DialogContent>
           <DialogContentText>
-            Do you want to save your new bonds to history ? It will erase the previous save for this molecule.
+            Do you want to save your modifications ? It will erase the previous save for this molecule.
           </DialogContentText>
         </DialogContent>
 
@@ -843,7 +833,7 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
               }}>Cancel</Button>
             <Button color="secondary" onClick={() => {
               this.setState({save_to_history:false})
-              this.props.onValidateComment(this.state.edition_comment)}}>Validate</Button>
+              this.props.onValidateComment(true, this.state.edition_comment)}}>Validate</Button>
           </DialogActions>
         </Dialog>
     )
@@ -864,7 +854,7 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
 
         <DialogActions>
           <Button color="primary" onClick={() => this.setState({want_go_back: false})}>Cancel</Button>
-          <Button color="secondary" onClick={this.props.onValidate}>Go back</Button>
+          <Button color="secondary" onClick={() => this.props.onValidateComment(false, '')}>Go back</Button>
         </DialogActions>
       </Dialog>
     )
@@ -909,7 +899,19 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
               color="primary" 
               onClick={() => {this.setState({save_to_history: true});}}
             >
-              <FaIcon save /> <span style={{ marginLeft: '.6rem' }}>Save to builder history</span>
+              <FaIcon save /> <span style={{ marginLeft: '.6rem' }}>Save as new project</span>
+            </Button>
+
+            <Button 
+              style={{ width: '100%' }} 
+              color="primary" 
+              onClick={() => {this.setState({want_save_bonds: true});}}
+            >
+              <FaIcon save /> <span style={{ marginLeft: '.6rem' }}>Update current project</span>
+            </Button>
+
+            <Button onClick={() => this.props.onDownload()} color="primary"  style={{ width: '100%' }} >
+              <FaIcon download /> <span style={{ marginLeft: '.6rem' }}>Download CG files</span>
             </Button>
 
             <Marger size="1rem" />
@@ -957,9 +959,6 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
         </Typography>
 
         <Marger size="1rem" />
-        {this.state.mode === 'idle' && !this.state.selected && <Button onClick={() => this.props.onDownload()} color="primary">
-          <FaIcon download /> <span style={{ marginLeft: '.6rem' }}>Download</span>
-        </Button>}
 
         {this.state.mode === 'idle' && !this.state.selected && <Box width="100%" justifyContent="space-between" display="flex">
           <Button variant="outlined" color="secondary" type="button" onClick={() => this.setState({want_go_back: true})}>

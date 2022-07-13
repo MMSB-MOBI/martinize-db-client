@@ -1229,8 +1229,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     }
   };
 
-  onValidateComment = async (comment: string) => {
-    //this.restoreSettingsAfterGo(false);
+  validateFirstStep = async () => {
     if (!this.state.files){
       console.error("files are not registered in state, should not happen")
       return; 
@@ -1247,9 +1246,14 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       toast("Can't apply new bonds to itp files", "error")
       console.error(e); 
     }
+  }
+
+  onValidateComment = async (new_project: boolean, comment: string) => {
+    //this.restoreSettingsAfterGo(false);
+    this.validateFirstStep(); 
 
     ApiHelper.request('history/update', { method: 'POST', 
-    parameters:  {jobId : this.jobId, files:this.state.files.itps.map(itp => itp.content), molIdxs: this.state.files.itps.map(itp => itp.mol_idx), editionComment: comment}, body_mode : 'multipart'}).then(() => {
+    parameters:  {jobId : this.jobId, files:this.state.files?.itps.map(itp => itp.content), molIdxs: this.state.files?.itps.map(itp => itp.mol_idx), editionComment: comment, newProject : new_project}, body_mode : 'multipart'}).then(() => {
       toast(`Job has been saved in history`, "success")
     }).catch(e => {
       toast(`Job can't be saved in history, an error occured`, "error")
@@ -1646,7 +1650,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
                 onHistoryDownload={this.onHistoryDownload}
                 beadRadiusFactor={this.state.bead_radius_factor}
                 onBeadRadiusChange={this.onBeadRadiusChange}
-                onValidateComment={(comment) => this.onValidateComment(comment)}
+                onValidateComment={(new_project, comment) => this.onValidateComment(new_project, comment)}
                 onDownload={() => this.onMoleculeDownload(true)}
               />}
             </div>
