@@ -159,7 +159,7 @@ export default function MoleculeVersion(props: { versions: Molecule[], current: 
             props.onVersionChange(molecule.id);
           }}
         >
-          <strong>{formatVersion(molecule)}</strong> • ({formatDetails(molecule)}) <Link onClick={() => { setNewVersion(true); setParent(molecule)}} style={{ color: "orange", fontSize: "small" }}> <Icon style={{ fontSize: "x-small" }} className={clsx("fas", "fa-plus", classes.linkIcon)} /> Add a child molecule </Link>
+          <strong>{formatVersion(molecule)}</strong> • ({formatDetails(molecule)}) <Link onClick={() => { setNewVersion(true); setParent(molecule)}} style={{ color: "orange", fontSize: "small" }}> <Icon style={{ fontSize: "x-small" }} className={clsx("fas", "fa-plus", classes.linkIcon)} /> Add a derived model </Link>
         </Link>
       </Typography>
     );
@@ -226,7 +226,7 @@ export default function MoleculeVersion(props: { versions: Molecule[], current: 
         <Link className={classes.link} style={{ color: "orange" }} onClick={() => setNewVersion(true)}>
           <Icon className={clsx("fas", "fa-plus", classes.linkIcon)} />
           <span>
-            Add a version
+            Add a new model
           </span>
         </Link>
       </div>
