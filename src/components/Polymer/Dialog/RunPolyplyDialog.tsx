@@ -8,13 +8,19 @@ import TextField from '@mui/material/TextField';
 import FormControl from '@mui/material/FormControl';
 import OutlinedInput from '@mui/material/OutlinedInput';
 import InputAdornment from '@mui/material/InputAdornment';
-import { Stepper } from '@material-ui/core';
-import Step from '@mui/material/Step';
-import StepLabel from '@mui/material/StepLabel';
+
 import Typography from '@mui/material/Typography';
 import { Marger } from '../../../helpers';
 import Icon from '@mui/material/Icon';
 import JSZip from 'jszip';
+import ResultViewer from './ResultViewer';
+
+import { styled } from '@mui/material/styles';
+import Stepper from '@mui/material/Stepper';
+import Step from '@mui/material/Step';
+import StepLabel from '@mui/material/StepLabel';
+import StepConnector, { stepConnectorClasses } from '@mui/material/StepConnector';
+
 
 
 interface props {
@@ -22,6 +28,8 @@ interface props {
     currentStep: number | undefined;
     itp: string,
     gro: string,
+    pdb: string,
+    warning: string,
     close: () => void;
 }
 
@@ -45,7 +53,7 @@ export default class RunPolyplyDialog extends React.Component<props, state> {
         }
     }
 
-    steps = ['Set density and name', 'ITP creation', 'GRO creation'];
+    steps = ['Set parameters', 'Generate ITP', 'Generate GRO', 'Generate visualisation'];
 
     dl(s: string, filename: string) {
 
@@ -91,7 +99,7 @@ export default class RunPolyplyDialog extends React.Component<props, state> {
     render() {
 
         let show = false
-        if ( this.props.currentStep !== undefined) {
+        if (this.props.currentStep !== undefined) {
             show = true
         }
 
@@ -101,17 +109,31 @@ export default class RunPolyplyDialog extends React.Component<props, state> {
                 <Dialog maxWidth="sm" fullWidth open={true} >
                     <DialogTitle>Send to polyply !</DialogTitle>
 
-                    <Stepper activeStep={this.props.currentStep!} orientation="vertical">
+                    <DialogContent>
 
-                        {this.steps.map((label) => (
-                            <Step key={label}>
-                                <Marger size="1rem" />
-                                <StepLabel>{label}</StepLabel>
-                            </Step>
-                        ))}
+
+                        <Stepper activeStep={this.props.currentStep!} orientation="vertical" >
+
+                            {this.steps.map((label) => (
+                                <Step key={label}>
+                                    <Marger size="1rem" />
+                                    <StepLabel>{label}</StepLabel>
+                                </Step>
+                            ))}
+
+
+                            {this.props.warning ? (
+                                <Typography> {this.props.warning} </Typography>
+
+                            ) : (<></>)}
+
+
+
+                        </Stepper>
+
                         {this.props.currentStep ? (<></>) : (
 
-                            <><DialogContent>
+                            <>
                                 <FormControl sx={{ m: 1, width: '25ch' }} variant="outlined">
                                     <TextField
                                         id="outlined-number"
@@ -133,29 +155,34 @@ export default class RunPolyplyDialog extends React.Component<props, state> {
                                         aria-describedby="outlined-weight-helper-text" />
                                 </FormControl>
 
-                            </DialogContent><DialogActions>
+                                <DialogActions>
                                     <Button onClick={() => { this.props.send(this.state.density, this.state.name); }}>Submit</Button>
                                 </DialogActions></>)
                         }
 
-                        {this.props.itp ? (<>
+                    </DialogContent>
+                    {this.props.itp ? (<>
 
-                            <Button onClick={() => { this.dl(this.props.itp, "out.itp"); }}> <Icon className={"fas fa-download"} /> Dl itp</Button>
-                        </>
-                        ) : (<></>)}
+                        <Button onClick={() => { this.dl(this.props.itp, "out.itp"); }}> <Icon className={"fas fa-download"} /> Download .itp</Button>
+                    </>
+                    ) : (<></>)}
 
-                        {this.props.gro ? (<>
+                    {this.props.gro ? (<>
 
-                            <Button onClick={() => { this.dl(this.props.gro, "out.gro"); }}> <Icon className={"fas fa-download"} /> Dl gro</Button>
-                        </>) : (<></>)}
+                        <Button onClick={() => { this.dl(this.props.gro, "out.gro"); }}> <Icon className={"fas fa-download"} /> Download .gro</Button>
+                    </>) : (<></>)}
 
 
-                        {(this.props.gro && this.props.itp) ? (<>
+                    {(this.props.gro && this.props.itp) ? (<>
 
-                            <Button onClick={() => { this.dlzip(this.props.itp, this.props.gro, "out.zip"); }}> <Icon className={"fas fa-download"} /> Dl Zip</Button>
-                        </>) : (<></>)}
+                        <Button onClick={() => { this.dlzip(this.props.itp, this.props.gro, "out.zip"); }}> <Icon className={"fas fa-download"} /> Download all</Button>
+                    </>) : (<></>)}
 
-                    </Stepper>
+                    {this.props.pdb ? (<>
+                        <div>
+                            <ResultViewer pdb={this.props.pdb} itp={this.props.itp} ff="martini3001" />
+                        </div>
+                    </>) : (<></>)}
 
 
                     <DialogActions>

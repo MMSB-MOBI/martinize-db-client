@@ -23,6 +23,7 @@ interface propsmenu {
   addlink: (arg1: any, arg2: any) => void,
   addprotsequence: (arg0: string) => void,
   send: () => void,
+  addNEwCustomLink: (arg0: string) => void,
   dataForceFieldMolecule: {} | JSON,
 }
 
@@ -107,6 +108,8 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
     }
   }
 
+
+
   handleUpload = (selectorFiles: FileList) => {
     if (selectorFiles.length === 1) {
       let file = selectorFiles[0]
@@ -156,6 +159,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
 
   }
 
+
   render() {
     let forcefield = this.state.forcefield;
 
@@ -163,6 +167,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
       <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
         <CreateLink
           close={() => { this.setState({ createLink: false }) }}
+          addthisRule={(s: string) => this.props.addNEwCustomLink(s)}
           showCreate={this.state.createLink}
         >
 
@@ -223,7 +228,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
           <Marger size="2rem" />
           <Grid item xs={6}>
             <Typography variant="h6" >
-              Design your own itp link file:
+              (BETA) Design your own itp link file:
             </Typography>
 
           </Grid>
@@ -237,16 +242,15 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
 
           <Marger size="2rem" />
 
-
+{/* 
           {(forcefield !== '') &&
-            <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center' }}>
+            <><Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center' }}>
 
               <Typography variant="h6" >
                 Upload a polymer:
               </Typography>
             </Grid>
-          }
-          {(forcefield !== '') &&
+           
             <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center' }}>
               <Input
 
@@ -255,12 +259,13 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
                 type="file"
               />
             </Grid>
-          }
+            </>
+          } */}
           {(forcefield !== '') &&
             <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center' }}>
 
               <Typography variant="h6" >
-                Add my own molecule (.itp):
+              (BETA) Add my own molecule (.itp):
               </Typography>
             </Grid>
           }

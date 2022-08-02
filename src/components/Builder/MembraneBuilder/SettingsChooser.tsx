@@ -6,6 +6,7 @@ import { toast } from '../../Toaster';
 import { TabContext, TabPanel } from '@material-ui/lab';
 import Settings from '../../../Settings';
 
+
 export interface SettingsInsane {
   box_type: string;
   box_size: number[];

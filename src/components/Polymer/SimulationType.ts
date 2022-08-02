@@ -16,6 +16,7 @@ export interface SimulationNode extends SimulationNodeDatum {
   fx?: number | null,
   fy?: number | null,
   group?: number,
+  from_itp?: string,
 }
 
 export interface SimulationLink extends SimulationNodeDatum {

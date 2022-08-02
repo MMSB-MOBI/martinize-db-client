@@ -1,9 +1,8 @@
-import {  Grid, Paper } from "@mui/material";
+import { Grid, Paper } from "@mui/material";
 import * as React from "react";
 import GeneratorMenu from './GeneratorMenu';
 import PolymerViewer from './GeneratorViewer';
 import { FormState, SimulationNode, SimulationLink } from './SimulationType';
-
 import Warning from "./Dialog/warning";
 import { simulationToJson } from './generateJson';
 import { alarmBadLinks } from './addNodeLink';
@@ -24,13 +23,16 @@ import GeneratorViewer from "./GeneratorViewer";
 interface StateSimulation {
   Simulation: d3.Simulation<SimulationNode, SimulationLink> | undefined,
   Warningmessage: string;
+  customITP: any[];
+  dialogWarning: string;
   nodesToAdd: SimulationNode[],
   linksToAdd: SimulationLink[],
   dataForForm: { [forcefield: string]: string[] },
   loading: Boolean,
   stepsubmit: number | undefined,
   itp: string,
-  gro: string
+  gro: string,
+  pdb: string
 }
 
 
@@ -64,14 +66,17 @@ export default class GeneratorManager extends React.Component {
 
   state: StateSimulation = {
     Simulation: undefined,
+    customITP: [],
     nodesToAdd: [],
     linksToAdd: [],
     dataForForm: {},
     Warningmessage: "",
+    dialogWarning: "",
     loading: false,
     stepsubmit: undefined,
     itp: "",
-    gro: ""
+    gro: "",
+    pdb: ""
   }
 
   currentForceField = '';
@@ -188,7 +193,96 @@ export default class GeneratorManager extends React.Component {
   }
 
   addNEwMolFromITP = (itpstring: string) => {
-    console.log(itpstring)
+    // Besoin de traiter different l'information 
+    // Ajouter un -seqf
+    // json avevc champs supp 
+    // "from_itp":"nom de la molecule"
+    // "id": 0...1
+
+
+    const itp = ItpFile.readFromString(itpstring);
+
+    let molname = ""
+    for (let l of itp.getField('moleculetype')) {
+      if (!l.startsWith(";")) {
+        molname = l.split(" ")[0]
+      }
+    }
+    console.log("add this custom molecule  ", molname)
+    const atoms = itp.getField('atoms')
+    const links = itp.getField('bonds')
+
+    //Add molname inside the list of residue that you can choose
+    // 1st generer une liste de noeuds
+    console.log(molname)
+    console.log("atoms", atoms.length)
+    console.log("links", links.length)
+    const newMolecules: SimulationNode[] = [];
+
+    this.state.customITP.push(itpstring)
+
+    // convert to node object et injecte dans la list
+    //Voila la forme du bordel
+    // 1 P5    1 POPE NH3  1  0.0
+    //Super pratique 
+    //Garder en memoire l'id d'avant sur l'itp 
+    let oldid = 0
+
+    console.log(atoms.length)
+    for (let nodestr of atoms) {
+
+      console.log(nodestr)
+      const nodelist = nodestr.split(' ').filter((e) => { return e !== "" })
+      //check si c'est une bead de l'ancian residu ou pas
+      if (oldid == parseInt(nodelist[2])) continue
+      //check s'ils sont inside le forcefield 
+      if (!(this.state.dataForForm[this.currentForceField].includes(nodelist[3]))) {
+        this.setState({ Warningmessage: nodelist[3] + " not in " + this.currentForceField + ". Be sur that you give the definition in the itp file" })
+        console.log(nodelist[3] + " not in " + this.currentForceField)
+      }
+
+      let mol = {
+        "resname": nodelist[3],
+        "seqid": 0,
+        "id": generateID(),
+        "from_itp": molname,
+      };
+      console.log(newMolecules.length)
+      newMolecules.push(mol)
+      oldid = parseInt(nodelist[2])
+    }
+
+
+    let newlinks = []
+    // 3rd faire la liste des liens
+    for (let linkstr of links) {
+      if (linkstr.startsWith(";")) continue
+      else if (linkstr.startsWith("#")) continue
+      else {
+        const link = linkstr.split(' ').filter((e) => { return e !== "" })
+
+        let idlink1 = parseInt(atoms[parseInt(link[0]) - 1].split(' ').filter((e) => { return e !== "" })[2])
+        let idlink2 = parseInt(atoms[parseInt(link[1]) - 1].split(' ').filter((e) => { return e !== "" })[2])
+
+        let node1 = newMolecules[idlink1 - 1]
+        let node2 = newMolecules[idlink2 - 1]
+
+        if (idlink1 !== idlink2) {
+          newlinks.push({
+            "source": newMolecules[idlink1 - 1],
+            "target": newMolecules[idlink2 - 1]
+          });
+
+          if (node1.links) node1.links.push(node2);
+          else node1.links = [node2];
+
+          if (node2.links) node2.links.push(node1);
+          else node2.links = [node1];
+        }
+      }
+    }
+    this.setState({ nodesToAdd: newMolecules, linksToAdd: newlinks });
+
   }
 
   addFromITP = (itpstring: string) => {
@@ -471,7 +565,7 @@ export default class GeneratorManager extends React.Component {
 
   closeDialog = (): void => {
 
-    this.setState({ stepsubmit: undefined, loading: false, itp: "", gro: "" })
+    this.setState({ stepsubmit: undefined, loading: false, itp: "", gro: "", pdb:"", dialogWarning: "" })
 
   }
 
@@ -499,46 +593,55 @@ export default class GeneratorManager extends React.Component {
 
     const jsonpolymer = simulationToJson(this.state.Simulation!, this.currentForceField)
 
-    const data = {
-      polymer: jsonpolymer,
-      density: density,
-      name: name
+    let data = {}
+    if (this.state.customITP.length == 0) {
+      data = {
+        polymer: jsonpolymer,
+        density: density,
+        name: name
+      }
     }
+    else {
+      data = {
+        polymer: jsonpolymer,
+        density: density,
+        name: name,
+        customITP: this.state.customITP
+      }
+    }
+
 
     const socket = SocketIo.connect("http://localhost:4123");
     socket.emit('runpolyply', data)
 
     socket.on("itp", (res: string) => {
-      // if (res !== "") {
-      this.setState({ stepsubmit: 2 })
-      this.setState({ itp: res })
-      //   // Besoin de verifier que l'itp fourni par polyply est le meme polymere que celui afficher
-      //   const jsonpolymer = simulationToJson(this.state.Simulation!, this.currentForceField)
+      if (res !== "") {
+        this.setState({ stepsubmit: 2 })
+        this.setState({ itp: res })
+        // Besoin de verifier que l'itp fourni par polyply est le meme polymere que celui afficher
+        // const jsonpolymer = simulationToJson(this.state.Simulation!, this.currentForceField)
 
-      //   const klcdwu = this.returnITPinfo(res)
+        // const klcdwu = this.returnITPinfo(res)
 
-      //   const NBatomsITP: number = klcdwu![0].length
-      //   const NBlinksITP: number = klcdwu![1].length
-      //   const NBatomsSIM: number = jsonpolymer.nodes.length
-      //   const NBlinksSIM: number = jsonpolymer.links.length
+        // const NBatomsITP: number = klcdwu![0].length
+        // const NBlinksITP: number = klcdwu![1].length
+        // const NBatomsSIM: number = jsonpolymer.nodes.length
+        // const NBlinksSIM: number = jsonpolymer.links.length
 
-      //   console.log(NBatomsITP, NBlinksITP, NBatomsSIM, NBlinksSIM)
-      //   if (NBatomsSIM !== NBatomsITP) {
-      //     this.setState({ Warningmessage: "WHOUWHOUWHOU alert au node" })
-      //     this.setState({ loading: false })
-      //     this.setState({ submit: undefined })
+        // console.log(NBatomsITP, NBlinksITP, NBatomsSIM, NBlinksSIM)
+        // if (NBatomsSIM !== NBatomsITP) {
+        //   this.setState({ dialogWarning: "WHOUWHOUWHOU alert au node" })
 
-      //   }
-      //   else if (NBlinksSIM !== NBlinksITP) {
-      //     this.setState({ Warningmessage: "WHOUWHOUWHOU alert au link" })
-      //     this.setState({ loading: false })
-      //     this.setState({ submit: undefined })
-      //   }
-      //   else {
-      socket.emit("continue")
-      //     }
-      //     console.log("continue")
-      //   }
+        // }
+        // else if (NBlinksSIM !== NBlinksITP) {
+        //   this.setState({ dialogWarning: "WHOUWHOUWHOU alert au link" })
+
+        // }
+        // else {
+        socket.emit("continue")
+        // }
+        // console.log("continue")
+      }
     })
 
     socket.on("gro", (data: string) => {
@@ -547,24 +650,41 @@ export default class GeneratorManager extends React.Component {
       this.setState({ stepsubmit: 3 })
     })
 
+    socket.on("pdb", (data: string) => {
+      console.log(data)
+      this.setState({ pdb: data })
+      this.setState({ stepsubmit: 4 })
+    })
+
+
     socket.on("oups", (dicoError: any) => {
       this.setState({ stepsubmit: undefined })
       this.setState({ loading: false })
       console.log(dicoError)
 
       //Si il y a des erreur, on affiche un warning 
-      //dicErreur.errorlinks.push([resname1, idname1, resname2, idname2])
-      console.log(dicoError.errorlinks.length)
+
       if (dicoError.errorlinks.length > 0) {
         this.warningfunction("Fail ! Wrong links : " + dicoError.errorlinks + ". You can correct this mistake with \"click right\" -> \"Remove bad links\".")
         for (let i of dicoError.errorlinks) {
           alarmBadLinks(i[1].toString(), i[3].toString())
         }
       }
+      else if (dicoError.OSError) {
+        console.log(dicoError.OSError)
+        this.setState({ Warningmessage: dicoError.OSError })
+      }
+
+      else if (dicoError.PythonError) {
+        // (dicoError.disjoint === true) 
+        this.setState({ Warningmessage: dicoError.PythonError })
+      }
+
       else {
         // (dicoError.disjoint === true) 
         this.setState({ Warningmessage: "Fail ! Your molecule consists of disjoint parts.Perhaps links were not applied correctly. Peut etre une option a ajouter pour mettre 2 molecule dans le melange ????????" })
       }
+
     })
   }
 
@@ -620,10 +740,18 @@ export default class GeneratorManager extends React.Component {
             send={this.ClickToSend}
             dataForceFieldMolecule={this.state.dataForForm}
             warningfunction={this.warningfunction}
-            addNEwMolFromITP={this.addNEwMolFromITP} />
+            addNEwMolFromITP={this.addNEwMolFromITP}
+            addNEwCustomLink={(rule) => { this.state.customITP.push(rule) }} />
 
           {this.state.loading ? (
-            <RunPolyplyDialog send={this.Send} currentStep={this.state.stepsubmit} itp={this.state.itp} gro={this.state.gro} close={this.closeDialog}> </RunPolyplyDialog>
+            <RunPolyplyDialog 
+            send={this.Send} 
+            currentStep={this.state.stepsubmit} 
+            itp={this.state.itp} 
+            gro={this.state.gro} 
+            pdb={this.state.pdb} 
+            close={this.closeDialog} 
+            warning={this.state.dialogWarning}> </RunPolyplyDialog>
           ) : (<></>)
           }
 

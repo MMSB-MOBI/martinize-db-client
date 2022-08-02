@@ -51,10 +51,9 @@ function simulationToJsonBlob(simulation: d3.Simulation<SimulationNode, Simulati
 
 export function simulationToJson(simulation: d3.Simulation<SimulationNode, SimulationLink>, ff: string) {
 
-    let nodes: { "resname": string, "seqid": number, "id": Number }[] = []
+    let nodes: { "resname": string, "seqid": number, "id": Number, "from_itp"? :string }[] = []
 
     let myLinks: { "source": number, "target": number }[] = [];
-
 
     for (let n of simulation.nodes()) {
         let bignodeinfo = []
@@ -80,15 +79,23 @@ export function simulationToJson(simulation: d3.Simulation<SimulationNode, Simul
                         }
                     }
                 }
-
             }
         }
         else {
+            n.from_itp ? 
+            nodes.push({
+                "resname": n.resname,
+                "seqid": 0,
+                "id": Number(n.id),
+                "from_itp" : n.from_itp,
+            }) :
             nodes.push({
                 "resname": n.resname,
                 "seqid": 0,
                 "id": Number(n.id)
-            })
+            }) 
+
+
             if (n.links !== undefined) {
                 for (let link of n.links!) {
                     //filter existing link
