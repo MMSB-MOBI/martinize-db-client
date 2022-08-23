@@ -587,7 +587,7 @@ export default class GeneratorManager extends React.Component {
     }
   }
 
-  Send = (density: string, name: string): void => {
+  Send = (box: string, name: string): void => {
 
     this.setState({ stepsubmit: 1 })
 
@@ -597,14 +597,14 @@ export default class GeneratorManager extends React.Component {
     if (this.state.customITP.length == 0) {
       data = {
         polymer: jsonpolymer,
-        density: density,
+        box: box,
         name: name
       }
     }
     else {
       data = {
         polymer: jsonpolymer,
-        density: density,
+        box: box,
         name: name,
         customITP: this.state.customITP
       }

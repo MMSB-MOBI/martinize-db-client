@@ -34,7 +34,7 @@ interface props {
 }
 
 interface state {
-    density: string,
+    box: string,
     name: string,
 
 }
@@ -47,7 +47,7 @@ export default class RunPolyplyDialog extends React.Component<props, state> {
 
         // Set the state directly. Use props if necessary.
         this.state = {
-            density: "1000",
+            box: "10",
             name: "polymol",
 
         }
@@ -137,13 +137,13 @@ export default class RunPolyplyDialog extends React.Component<props, state> {
                                 <FormControl sx={{ m: 1, width: '25ch' }} variant="outlined">
                                     <TextField
                                         id="outlined-number"
-                                        label="density"
+                                        label="box size"
                                         type="number"
                                         InputLabelProps={{
                                             shrink: true,
                                         }}
-                                        value={this.state.density}
-                                        onChange={(e) => this.setState({ density: e.target.value })} />
+                                        value={this.state.box}
+                                        onChange={(e) => this.setState({ box: e.target.value })} />
                                 </FormControl>
 
                                 <FormControl sx={{ m: 1, width: '25ch' }} variant="outlined">
@@ -156,7 +156,7 @@ export default class RunPolyplyDialog extends React.Component<props, state> {
                                 </FormControl>
 
                                 <DialogActions>
-                                    <Button onClick={() => { this.props.send(this.state.density, this.state.name); }}>Submit</Button>
+                                    <Button onClick={() => { this.props.send(this.state.box, this.state.name); }}>Submit</Button>
                                 </DialogActions></>)
                         }
 
