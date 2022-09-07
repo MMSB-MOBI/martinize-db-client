@@ -10,7 +10,14 @@ import { Settings } from '../../../Settings'
 
 
 // Component types
-type MVProps = { pdb: string, ff: AvailableForceFields, itp:string,  theme: Theme };
+type MVProps = { 
+    pdb: string, 
+    ff: AvailableForceFields, 
+    itp:string,  
+    theme: Theme , 
+    top : string};
+
+
 type MVState = {
     component?: NglComponent,
     loading: boolean,
@@ -61,15 +68,16 @@ class ResultViewer extends React.Component<MVProps, MVState> {
 
         // Apply the radius to NGL
         //applyUserRadius(radius);
-        const polarizableFF = Settings.martinize_variables.force_fields_info[this.props.ff].polarizable
-        //const beads = await itpBeads(top, this.props.itp, polarizableFF);
+        const myff = "martini3001"
+        const polarizableFF = Settings.martinize_variables.force_fields_info[myff].polarizable
+        const beads = await itpBeads(this.props.top, [this.props.itp], polarizableFF);
 
         // Load the PDB into NGL
 
         this.ngl.load(new Blob([this.props.pdb]), { ext: 'pdb', name: "out.pdb" , coarse_grained: true})
             .then((component) => {
-                component.add<BallAndStickRepresentation>("ball+stick")
-                //component.add<BallAndStickRepresentation>('ball+stick', undefined, { radius: true, color: true, /* beads */, ff: this.props.ff, radiusFactor: 0.2 })
+                //component.add<BallAndStickRepresentation>("ball+stick")
+                component.add<BallAndStickRepresentation>('ball+stick', undefined, { radius: true, color: true, beads , ff: myff, radiusFactor: 0.2 })
                 component.center()
                 this.setState({ component });
             })

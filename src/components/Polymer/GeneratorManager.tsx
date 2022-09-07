@@ -31,7 +31,8 @@ interface StateSimulation {
   stepsubmit: number | undefined,
   itp: string,
   gro: string,
-  pdb: string
+  pdb: string,
+  top: string
 }
 
 
@@ -73,6 +74,7 @@ export default class GeneratorManager extends React.Component {
     dialogWarning: "",
     loading: false,
     stepsubmit: undefined,
+    top: "",
     itp: "",
     gro: "",
     pdb: ""
@@ -589,7 +591,7 @@ export default class GeneratorManager extends React.Component {
     }
   }
 
-  Send = (box: string, name: string): void => {
+  Send = (box: string, name: string, number: string): void => {
 
     this.setState({ stepsubmit: 1 })
 
@@ -600,7 +602,8 @@ export default class GeneratorManager extends React.Component {
       data = {
         polymer: jsonpolymer,
         box: box,
-        name: name
+        name: name,
+        number: number
       }
     }
     else {
@@ -608,6 +611,7 @@ export default class GeneratorManager extends React.Component {
         polymer: jsonpolymer,
         box: box,
         name: name,
+        number: number,
         customITP: this.state.customITP
       }
     }
@@ -615,6 +619,11 @@ export default class GeneratorManager extends React.Component {
 
     const socket = SocketIo.connect("http://localhost:4123");
     socket.emit('runpolyply', data)
+
+    socket.on("top", (topfilestr: string) => {
+      this.setState({ top: topfilestr })
+    })
+
 
     socket.on("itp", (res: string) => {
       if (res !== "") {
@@ -744,7 +753,7 @@ export default class GeneratorManager extends React.Component {
             dataForceFieldMolecule={this.state.dataForForm}
             warningfunction={this.warningfunction}
             addNEwMolFromITP={this.addNEwMolFromITP}
-            addNEwCustomLink={(name : string, itpstring: string) => {let dictionary: { [name: string]: string } = this.state.customITP ; dictionary[ name] = itpstring ; this.setState({ customITP: dictionary })}} />
+            addNEwCustomLink={(name: string, itpstring: string) => { let dictionary: { [name: string]: string } = this.state.customITP; dictionary[name] = itpstring; this.setState({ customITP: dictionary }) }} />
 
           {this.state.loading ? (
             <RunPolyplyDialog
@@ -754,6 +763,7 @@ export default class GeneratorManager extends React.Component {
               gro={this.state.gro}
               pdb={this.state.pdb}
               close={this.closeDialog}
+              top={this.state.top}
               warning={this.state.dialogWarning}> </RunPolyplyDialog>
           ) : (<></>)
           }

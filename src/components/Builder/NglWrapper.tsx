@@ -103,7 +103,7 @@ export class NglComponent {
   }
 
   add<T extends Representation>(type: ViableRepresentation, parameters?: Partial<RepresentationParameters>,  schemeParameters?:SchemeParameters) {
-    
+    console.log(schemeParameters)
     const repr: RepresentationElement = this.component.addRepresentation(type, parameters);
 
     const wrapper = new NglRepresentation<T>(repr);
@@ -117,7 +117,7 @@ export class NglComponent {
       if(schemeParameters.color){
         params["color"] = this.martiniSchemes.getProteinColorScheme(schemeParameters.ff, schemeParameters.beads)
       }
-
+      console.log(params )
       repr.setParameters(params)
     }
 

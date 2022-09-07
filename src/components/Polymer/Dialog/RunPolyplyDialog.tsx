@@ -20,8 +20,9 @@ import StepLabel from '@mui/material/StepLabel';
 
 
 interface props {
-    send: (arg1: string, arg2: string) => void;
+    send: (arg1: string, arg2: string, number: string) => void;
     currentStep: number | undefined;
+    top: string,
     itp: string,
     gro: string,
     pdb: string,
@@ -32,6 +33,7 @@ interface props {
 interface state {
     box: string,
     name: string,
+    numberpolymer: string
 
 }
 
@@ -45,7 +47,7 @@ export default class RunPolyplyDialog extends React.Component<props, state> {
         this.state = {
             box: "10",
             name: "polymol",
-
+            numberpolymer: "1"
         }
     }
 
@@ -91,23 +93,19 @@ export default class RunPolyplyDialog extends React.Component<props, state> {
         a.remove();
     }
 
-
     render() {
-
         let show = false
         if (this.props.currentStep !== undefined) {
             show = true
         }
 
-
         return (
             show ? (
                 <Dialog maxWidth="sm" fullWidth open={true} >
+
                     <DialogTitle>Send to polyply !</DialogTitle>
 
                     <DialogContent>
-
-
                         <Stepper activeStep={this.props.currentStep!} orientation="vertical" >
 
                             {this.steps.map((label) => (
@@ -122,15 +120,11 @@ export default class RunPolyplyDialog extends React.Component<props, state> {
                                 <Typography> {this.props.warning} </Typography>
 
                             ) : (<></>)}
-
-
-
                         </Stepper>
 
                         {this.props.currentStep ? (<></>) : (
-
                             <>
-                                <FormControl sx={{ m: 1, width: '25ch' }} variant="outlined">
+                                <FormControl sx={{ m: 1, width: '12ch' }} variant="outlined">
                                     <TextField
                                         id="outlined-number"
                                         label="box size"
@@ -140,6 +134,18 @@ export default class RunPolyplyDialog extends React.Component<props, state> {
                                         }}
                                         value={this.state.box}
                                         onChange={(e) => this.setState({ box: e.target.value })} />
+                                </FormControl>
+
+                                <FormControl sx={{ m: 1, width: '16ch' }} variant="outlined">
+                                    <TextField
+                                        id="outlined-number"
+                                        label="Number of polymer"
+                                        type="number"
+                                        InputLabelProps={{
+                                            shrink: true,
+                                        }}
+                                        value={this.state.numberpolymer}
+                                        onChange={(e) => this.setState({ numberpolymer: e.target.value })} />
                                 </FormControl>
 
                                 <FormControl sx={{ m: 1, width: '25ch' }} variant="outlined">
@@ -152,7 +158,7 @@ export default class RunPolyplyDialog extends React.Component<props, state> {
                                 </FormControl>
 
                                 <DialogActions>
-                                    <Button onClick={() => { this.props.send(this.state.box, this.state.name); }}>Submit</Button>
+                                    <Button onClick={() => { this.props.send(this.state.box, this.state.name, this.state.numberpolymer); }}>Submit</Button>
                                 </DialogActions></>)
                         }
 
@@ -176,13 +182,13 @@ export default class RunPolyplyDialog extends React.Component<props, state> {
 
                     {this.props.pdb ? (<>
                         <div>
-                            <ResultViewer pdb={this.props.pdb} itp={this.props.itp} ff="martini3001" />
+                            <ResultViewer top={this.props.top} pdb={this.props.pdb} itp={this.props.itp} ff="martini3001" />
                         </div>
                     </>) : (<></>)}
 
 
-                    <DialogActions>
-                        <Button onClick={() => { this.props.close() }}>Close !</Button>
+                    <DialogActions >
+                        <Button color='warning' onClick={() => { this.props.close() }}>Close</Button>
                     </DialogActions>
 
                 </Dialog >

@@ -15,7 +15,8 @@ export function setRadius(newradius: number) {
 
 export function alarmBadLinks(id1: string, id2: string) {
     console.log("ALERT bad Link", id1, id2);
-    d3.select(Mysvg).selectAll<SVGElement, SimulationLink>("line")
+    d3.select(Mysvg)
+        .selectAll<SVGElement, SimulationLink>("line")
         .filter((d: SimulationLink) => (((d.source.id === id1) && (d.target.id === id2)) || ((d.source.id === id2) && (d.target.id === id1))))
         .attr("class", "error")
         .attr('stroke', "red")
@@ -200,10 +201,10 @@ function hashStringToColor(str: string) {
 export function checkLink(node1: SimulationNode, node2: SimulationNode) {
 
     if ((node1.links === undefined) || (node2.links === undefined)) return true;
-    for (let n of node1.links){
+    for (let n of node1.links) {
         if (n === node2) return false
-    } 
-    for (let n of node2.links){
+    }
+    for (let n of node2.links) {
         if (n === node1) return false
     }
     return true;
