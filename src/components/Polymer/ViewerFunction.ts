@@ -21,6 +21,41 @@ export function alarmBadLinks(id1: string, id2: string) {
         .attr('stroke', "red")
 }
 
+export function removeNode(nodeToRemove: SimulationNode, updateFunction: () => void, decreaseIDFunction: () => void) {
+    console.log("remove this little node : ", nodeToRemove.id)
+    //remove link in object node
+    if (nodeToRemove.links !== undefined) {
+        for (let linkednode of nodeToRemove.links) {
+            //remove link between node and removed node
+            linkednode.links = linkednode.links!.filter((nodeToRM: SimulationNode) => nodeToRM.id !== nodeToRemove.id);
+        }
+    }
+    d3.select(Mysvg).selectAll<SVGCircleElement, SimulationNode>("circle").filter((d: SimulationNode) => (d.id === nodeToRemove.id)).remove();
+    //and then remove link inside svg
+    d3.select(Mysvg).selectAll("line").filter((link: any) => ((link.source.id === nodeToRemove.id) || (link.target.id === nodeToRemove.id))).remove();
+
+    console.log("Nombre de nodes au dessus de ", nodeToRemove.id, ...[d3.select(Mysvg).selectAll<SVGCircleElement, SimulationNode>("circle")
+        .filter((d: SimulationNode) => ((Number(d.id) > (Number(nodeToRemove.id)))))
+        .data().length])
+
+    console.log("le node a supprimé est : ", nodeToRemove)
+    //Update new ID to fit with polyply 
+    d3.select(Mysvg).selectAll<SVGCircleElement, SimulationNode>("circle")
+        .filter((d: SimulationNode) => ((Number(d.id) > (Number(nodeToRemove.id)))))
+        .each(d => {
+            //Compute new ID 
+            let newID: number = parseInt(d.id) - 1
+            //d.index = newID
+            d.id = newID.toString()
+            d.index = newID
+            console.log("New ", d)
+        })
+    //Check if minimun id != de currentID 
+    //Mettre une condition d'arret pour ne pas decrease 
+    decreaseIDFunction()
+    updateFunction();
+}
+
 export function addNodeToSVG(newnode: SimulationNode[], simulation: any, update: () => void) {
     const node = d3.select(Mysvg).selectAll("circle")
         .data(newnode, (d: any) => d.id)
