@@ -29,7 +29,7 @@
     "clsx": "^1.1.1",
     "d3": "^7.1.1",
     "itp-parser-forked": "^2.3.2",
-    "jszip": "^3.4.0",
+    "jszip": "^3.7.0",
     "localforage": "^1.7.3",
     "node-sass": "^4.14.1",
     "notistack": "^0.9.16",
