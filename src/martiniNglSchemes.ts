@@ -1,9 +1,7 @@
-import { NglRepresentation } from "./components/Builder/NglWrapper";
 import * as ngl from '@mmsb/ngl';
-import AtomProxy from '@mmsb/ngl/declarations/proxy/atom-proxy';
 import { AvailableForceFields } from './types/entities'
 import { Bead } from './components/Builder/BeadsHelper'
-import { cpuUsage } from "process";
+
 const martini3ColorScheme: { [beadType: string]: { color : string, hydrophobicity : number }} = require('./schemes/martini3_cyan_orange.json');
 const martini2ColorScheme: { [beadType: string]: { color : string, hydrophobicity : number } } = require('./schemes/martini2_cyan_orange.json');
 const martini3BeadsAA : { [bead : string] : {aminoAcid : string, atomName: string}[]} = require('./schemes/martini3_beads_aa.json')

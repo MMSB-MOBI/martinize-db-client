@@ -6,7 +6,6 @@ import { toast } from '../../Toaster';
 import { errorToText, Marger, setPageTitle } from '../../../helpers';
 import UserIcon from '@material-ui/icons/PersonAdd';
 import { Link as RouterLink } from 'react-router-dom';
-import { Alert } from '@material-ui/lab';
 
 const useStyles = makeStyles(theme => ({
   root: {

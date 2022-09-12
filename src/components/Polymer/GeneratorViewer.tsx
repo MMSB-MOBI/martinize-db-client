@@ -2,8 +2,8 @@ import * as React from "react";
 import * as d3 from "d3";
 import CustomContextMenu from "./Viewer/CustomContextMenu";
 import { SimulationNode, SimulationLink, SimulationGroup } from './SimulationType';
-import { initSVG, initSimulation, reloadSimulation } from './Viewer/SimulationSVGFunction';
-import { addNodeToSVG, addLinkToSVG, setSVG, setRadius, removeNode } from './ViewerFunction';
+
+import { initSimulation, reloadSimulation, addNodeToSVG, addLinkToSVG, setSVG, setRadius, removeNode } from './ViewerFunction';
 import { decreaseID, generateID } from './GeneratorManager'
 import './GeneratorViewer.css';
 
@@ -43,21 +43,12 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
   frameCount = 0
 
   taille = 800;
-  nodeRadius = 10;
-  currentnodeRadius = 10;
+  nodeRadius = 50;
+  currentnodeRadius = 50;
   mouseX = 0;
   mouseY = 0;
   prevPropsNewnode: any = null;
   prevPropsNewLink: any = null;
-
-  /* Quad tree structure
-  tree =  d3.quadtree<SimulationNode>();
-  if(this.props.nodes.length > 0) {
-    this.tree
-    .x((d)=>d.x??0)
-    .y((d)=>d.y??0)
-    .addAll(this.props.nodes);
-  }*/
 
   // Init simulation 
   simulation = initSimulation(this.taille, this.currentnodeRadius);
@@ -65,19 +56,57 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
   componentDidMount() {
 
     //Draw svg frame
-    initSVG(this.ref, this.taille);
-    console.log(document.getElementsByClassName("svg"))
+    d3.select(this.ref)
+      .attr("style", "outline: thin solid grey;")
+      .attr("width", this.taille)
+      .attr("height", this.taille)
 
-    const mySVG = d3.select(this.ref)
+    console.log("InitSVG");
 
-    mySVG.call(d3.zoom<SVGSVGElement, unknown>().scaleExtent([0.1, 1.8]).on("zoom", (event) => {
+    //Define brush behaviour
+    const brush = d3.brush();
+    const gBrush = d3.select(this.ref).append("g")
+      .attr("class", "brush")
+    gBrush
+      .call(brush
+        .on("start brush", (event: any) => {
+          //this.simulation.stop(); //Stop simulation when brush
+          const selection: any = event.selection; //Get brush zone coord [[x0, y0], [x1, y1]],
+          if (selection) {
+            //unselect nodes 
+            d3.select(this.ref)
+              .selectAll("path")
+              .attr("class", "nodes");
+
+            //select all node inside brush zone 
+            d3.select(this.ref)
+              .selectAll("path")
+              .filter((d: any) => ((d.x < selection[1][0]) && (d.x > selection[0][0]) && (d.y < selection[1][1]) && (d.y > selection[0][1])))
+              .attr("class", "onfocus");
+
+            //Faire verif :
+            //Si 2 noeuds sont selectionnés le lien qui les unis est selectionné par defaut 
+            // mysvg.selectAll("line")
+            //   .filter((d: any) => ((d.x < selection[1][0]) && (d.x > selection[0][0]) && (d.y < selection[1][1]) && (d.y > selection[0][1])))
+            //   .attr("class", "onfocus");
+            // Si un noeud sort de la zone enlever le onfocus
+          }
+        })
+        .on("end", (event: any) => {
+          if (!event.selection) return;
+          console.log(event)
+          brush.clear(gBrush)
+        })
+      );
+
+    d3.select(this.ref).call(d3.zoom<SVGSVGElement, unknown>().scaleExtent([0.1, 1.8]).on("zoom", (event) => {
       //On recupere la valeur de zoom 
       const zoomValue = event.transform.k;
       //On modifie le rayon en fonction du zoom 
       this.currentnodeRadius = this.nodeRadius * zoomValue;
       console.log("zoom value", zoomValue);
 
-      mySVG.selectAll("circle")
+      d3.select(this.ref).selectAll("circle")
         // .each( (d: SimulationNode) => {
         //   console.log("r", node.attr("r"))
         //   const newr = parseInt(node.attr("r")) * zoomValue / parseInt(node.attr("r"))
@@ -88,7 +117,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
         .attr("r", this.currentnodeRadius)
         .attr("stroke-width", this.currentnodeRadius / 4)
 
-      mySVG.selectAll("line")
+      d3.select(this.ref).selectAll("line")
         .attr("stroke-width", this.currentnodeRadius / 3)
 
       //Change simulation property
@@ -114,9 +143,6 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
 
   // Define graph property
   UpdateSVG = () => {
-    console.log("UpdateSVG", this)
-    const svgContext = d3.select(this.ref);
-
     // Verifier si on doit bien ajouter des props ou si c'est deja fait 
     if (this.prevPropsNewLink !== this.props.newLinks) {
       let Linktoadd: SimulationLink[] = [];
@@ -129,7 +155,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
     }
     // Si des news props apparaissent depuis manager on ajoute les noeuds !!!
     if (this.prevPropsNewnode !== this.props.newNodes) {
-      addNodeToSVG(this.props.newNodes, this.simulation, this.handleUpdateSVG)
+      addNodeToSVG(this.props.newNodes, this.simulation, this.UpdateSVG)
 
       //Keep the previous props in memory
       this.prevPropsNewLink = this.props.newLinks;
@@ -140,7 +166,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
     const groups: SimulationGroup[] = [];
 
     const svgPath = [];
-    svgContext
+    d3.select(this.ref)
       .selectAll('path.area')
       .each(function () {
         svgPath.push(this);
@@ -149,7 +175,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
     if (svgPath.length !== 0) {
       for (let i = 1; i <= svgPath.length; i++) {
         let selectedNodes: SimulationNode[] = [];
-        d3.select(this.ref).selectAll("circle")
+        d3.select(this.ref).selectAll("path")
           .filter((d: any) => (d.group === i))
           .each((d: any) => {
             selectedNodes.push(d);
@@ -165,7 +191,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
     }
     //Send new simulation to Manager component
     this.props.getSimulation(this.simulation)
-    reloadSimulation(svgContext, this.simulation, groups)
+    reloadSimulation(this.simulation, groups)
   }
 
   handleClose = () => {
@@ -223,7 +249,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
 
     console.log("newNodes", newNodes)
 
-    addNodeToSVG(newNodes, this.simulation, this.handleUpdateSVG)
+    addNodeToSVG(newNodes, this.simulation, this.UpdateSVG)
     // and then addLink
     // create newlink
     let newlinks: SimulationLink[] = []
@@ -260,23 +286,17 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
     event.preventDefault();
     const element = document.elementFromPoint(event.clientX, event.clientY);
     console.log(element)
-    if (element?.tagName === "circle") {
+    if (element?.className === "nodes") {
       const nodeToRm: any = d3.select(element).data()[0]
       this.setState({ x: event.clientX, y: event.clientY, nodeClick: nodeToRm, show: true, });
     }
     else if (element?.tagName === "path") {
-      console.log(element)
       this.setState({ x: event.clientX, y: event.clientY, show: true, hullClick: element });
     }
     else {
       this.setState({ x: event.clientX, y: event.clientY, show: true });
     }
   };
-
-  handleUpdateSVG = () => {
-    this.UpdateSVG()
-  };
-
 
   render() {
     const ifContextMenuShouldAppear = (show: boolean) => {
@@ -289,7 +309,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
           hullClick={this.state.hullClick}
           svg={d3.select(this.ref)}
           handlePaste={this.pasteThesedNodes}
-          handleUpdate={this.handleUpdateSVG}
+          handleUpdate={this.UpdateSVG}
           simulation={this.simulation}>
         </CustomContextMenu>;
       }

@@ -1,5 +1,6 @@
-import { SimulationNode, SimulationLink } from './SimulationType';
+import { SimulationNode, SimulationLink, SimulationGroup } from './SimulationType';
 import * as d3 from "d3";
+import { donne_la_color, donne_la_shape } from './Viewer/Legend'
 
 
 let Mysvg: SVGElement;
@@ -10,6 +11,75 @@ export function setSVG(svgref: SVGElement) {
 let radius: number;
 export function setRadius(newradius: number) {
     radius = newradius;
+}
+//Define simulation forcefield 
+export function initSimulation(sizeSVG: number, sizeNodeRadius: number): d3.Simulation<SimulationNode, SimulationLink> {
+    const simulation = d3.forceSimulation<SimulationNode, SimulationLink>()
+        .force("charge", d3.forceManyBody())
+        .force("x", d3.forceX(sizeSVG / 2).strength(0.02))
+        .force("y", d3.forceY(sizeSVG / 2).strength(0.02))
+        .force("link", d3.forceLink()
+            //.distance(() => { return sizeNodeRadius * 2.5 })
+        )
+    return simulation
+}
+
+export function reloadSimulation(simulation: d3.Simulation<SimulationNode, SimulationLink>, groupsData: SimulationGroup[]) {
+    console.log("Reload simulation");
+
+    const updatePolymerPath = (listOfGroups: SimulationGroup[]) => {
+        //If groups are created
+        if (listOfGroups.length !== 0) {
+            for (let group of listOfGroups) {
+                let coords: [number, number][] = [];
+
+                group.nodes!.map((d: SimulationNode) => coords.push([d.x!, d.y!]))
+                let hull = d3.polygonHull(coords)
+
+                d3.select(Mysvg).selectAll("path")
+                    .filter(function () {
+                        return d3.select(this).attr("group") === group.id.toString(); // filter by single attribute
+                    })
+                    .data([hull])
+                    .attr("d", (d) => "M" + d!.join("L") + "Z")
+            }
+        }
+    }
+
+    // Define ticked with coords 
+    const ticked = () => {
+        console.log("Tick");
+        d3.select(Mysvg).selectAll("line")
+            .attr("x1", (d: any) => d.source.x)
+            .attr("y1", (d: any) => d.source.y)
+            .attr("x2", (d: any) => d.target.x)
+            .attr("y2", (d: any) => d.target.y);
+
+        d3.select(Mysvg).selectAll("path").attr('transform', (d: any) => { return 'translate(' + d.x + ',' + d.y + ')'; });
+        updatePolymerPath(groupsData)
+
+        //Fait remonter les noeuds dans le svg
+        //svg.selectAll(".nodes").raise()
+    }
+    let simulationnodes: SimulationNode[] = []
+
+    // //DETECTION DE NOUVEAU LIENS ???????????????????????
+    const slinks: SimulationLink[] = [];
+    d3.select(Mysvg).selectAll("line").each((d: any) => slinks.push(d))
+
+    // const bignodes: SimulationNode[] = []
+    // svg.selectAll("circle.BIGnodes").each((d: any) => bignodes.push(d))
+    d3.select(Mysvg).selectAll("path").each((d: any) => simulationnodes.push(d))
+
+    simulation.nodes(simulationnodes)
+        .force<d3.ForceLink<SimulationNode, SimulationLink>>("link")?.links(slinks);
+
+    simulation
+        .on("tick", ticked)
+        .alpha(1)
+        .alphaMin(0.1)
+        .velocityDecay(0.1)
+        .restart();
 }
 
 
@@ -31,17 +101,13 @@ export function removeNode(nodeToRemove: SimulationNode, updateFunction: () => v
             linkednode.links = linkednode.links!.filter((nodeToRM: SimulationNode) => nodeToRM.id !== nodeToRemove.id);
         }
     }
-    d3.select(Mysvg).selectAll<SVGCircleElement, SimulationNode>("circle").filter((d: SimulationNode) => (d.id === nodeToRemove.id)).remove();
+    d3.select(Mysvg).selectAll<SVGCircleElement, SimulationNode>("path").filter((d: SimulationNode) => (d.id === nodeToRemove.id)).remove();
     //and then remove link inside svg
     d3.select(Mysvg).selectAll("line").filter((link: any) => ((link.source.id === nodeToRemove.id) || (link.target.id === nodeToRemove.id))).remove();
 
-    console.log("Nombre de nodes au dessus de ", nodeToRemove.id, ...[d3.select(Mysvg).selectAll<SVGCircleElement, SimulationNode>("circle")
-        .filter((d: SimulationNode) => ((Number(d.id) > (Number(nodeToRemove.id)))))
-        .data().length])
-
     console.log("le node a supprimé est : ", nodeToRemove)
     //Update new ID to fit with polyply 
-    d3.select(Mysvg).selectAll<SVGCircleElement, SimulationNode>("circle")
+    d3.select(Mysvg).selectAll<SVGCircleElement, SimulationNode>("path")
         .filter((d: SimulationNode) => ((Number(d.id) > (Number(nodeToRemove.id)))))
         .each(d => {
             //Compute new ID 
@@ -58,10 +124,6 @@ export function removeNode(nodeToRemove: SimulationNode, updateFunction: () => v
 }
 
 export function addNodeToSVG(newnode: SimulationNode[], simulation: any, update: () => void) {
-    const node = d3.select(Mysvg).selectAll("circle")
-        .data(newnode, (d: any) => d.id)
-        .enter();
-
     let div: any;
     // Define the div for the tooltip
 
@@ -74,44 +136,51 @@ export function addNodeToSVG(newnode: SimulationNode[], simulation: any, update:
         div = d3.select("body").select("div.tooltip")
     }
 
-    // Define entering nodes     
-    node.append('circle')
-        .attr("class", "nodes")
-        .attr("r", radius)
-        .attr("fill", function (d: SimulationNode) { return hashStringToColor(d.resname) })
-        .attr('stroke', "grey")
-        .attr("stroke-width", radius / 4)
-        .attr("expand", "true")
-        .attr("id", function (d: SimulationNode) { return d.id })
-        .call(d3.drag<SVGCircleElement, SimulationNode>()
-            .on("drag", dragged)
-            .on("end", dragended)
-        )
-        .on("mouseover", function (event: any, d: SimulationNode) {
-            div.transition()
-                .duration(20)
-                .style("opacity", 1)
+    for (let x of newnode) {
+        //Define entering nodes     
+        d3.select(Mysvg)
+            .append("g")
+            .attr("class", "nodes")
+            .selectAll(".path")
+            .data([x])
+            .enter().append("path")
+            // @ts-ignore
+            .attr("d", d3.symbol().type(d3[donne_la_shape(x.resname)]).size(radius))
+            .attr("fill", donne_la_color(x.resname))
+            .attr('stroke', "grey")
+            // .attr("stroke-width", 2)
+            .attr("expand", "true")
+            .attr("id", function (d: SimulationNode) { return d.id })
+            .call(d3.drag<any, SimulationNode>()
+                .on("drag", dragged)
+                .on("end", dragended)
+            )
+            .on("mouseover", function (event: any, d: SimulationNode) {
+                div.transition()
+                    .duration(20)
+                    .style("opacity", 1)
 
-            div.html(d.resname + " #" + d.id)
-                .style("left", (event.clientX) + "px")
-                .style("top", (event.clientY) + 20 + "px")
-        })
-        .on("mouseout", function (d) {
-            div.transition()
-                .duration(500)
-                .style("opacity", 0);
-        })
-        .on('click', function (this: any, e: any, d: SimulationNode) {
-            if (e.ctrlKey) {
-                d3.select(this).attr("class", "onfocus")
-            }
-            else console.log(d);
-        });
+                div.html(d.resname + " #" + d.id)
+                    .style("left", (event.clientX) + "px")
+                    .style("top", (event.clientY) + 20 + "px")
+            })
+            .on("mouseout", function (d) {
+                div.transition()
+                    .duration(500)
+                    .style("opacity", 0);
+            })
+            .on('click', function (this: any, e: any, d: SimulationNode) {
+                if (e.ctrlKey) {
+                    d3.select(this).attr("class", "onfocus")
+                }
+                else console.log(d);
+            });
 
+    }
 
 
     // Define drag behaviour  
-    type dragEvent = d3.D3DragEvent<SVGCircleElement, SimulationNode, any>;
+    type dragEvent = d3.D3DragEvent<any, SimulationNode, any>;
 
     const clamp = (x: number, lo: number, hi: number) => {
         return x < lo ? lo : x > hi ? hi : x;
@@ -187,16 +256,16 @@ export function addNodeToSVG(newnode: SimulationNode[], simulation: any, update:
 
 }
 
-function hashStringToColor(str: string) {
-    var hash = 5381;
-    for (var i = 0; i < str.length; i++) {
-        hash = ((hash << 5) + hash) + str.charCodeAt(i); /* hash * 33 + c */
-    }
-    var r = (hash & 0xFF0000) >> 16;
-    var g = (hash & 0x00FF00) >> 8;
-    var b = hash & 0x0000FF;
-    return "#" + ("0" + r.toString(16)).substr(-2) + ("0" + g.toString(16)).substr(-2) + ("0" + b.toString(16)).substr(-2);
-};
+// function hashStringToColor(str: string) {
+//     var hash = 5381;
+//     for (var i = 0; i < str.length; i++) {
+//         hash = ((hash << 5) + hash) + str.charCodeAt(i); /* hash * 33 + c */
+//     }
+//     var r = (hash & 0xFF0000) >> 16;
+//     var g = (hash & 0x00FF00) >> 8;
+//     var b = hash & 0x0000FF;
+//     return "#" + ("0" + r.toString(16)).substr(-2) + ("0" + g.toString(16)).substr(-2) + ("0" + b.toString(16)).substr(-2);
+// };
 
 export function checkLink(node1: SimulationNode, node2: SimulationNode) {
 
@@ -218,7 +287,7 @@ export function addLinkToSVG(newLink: SimulationLink[]): void {
     link.append("line")
         .attr("class", "links")
         .attr("stroke", "grey")
-        .attr("stroke-width", radius / 3)
+        .attr("stroke-width", radius / 10)
         .attr("opacity", 0.5)
         .attr("stroke-linecap", "round")
         .attr("source", function (d: any) { return d.source.id })

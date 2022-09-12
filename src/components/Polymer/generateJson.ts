@@ -123,10 +123,6 @@ export function simulationToJson(simulation: d3.Simulation<SimulationNode, Simul
 }
 
 export function simulationToJsonold(simulation: d3.Simulation<SimulationNode, SimulationLink>, ff: string) {
-    console.log(simulation.nodes())
-
-
-    // console.log("debut", startingnode!)
     const _ = simulation.nodes().map(obj => {
         return {
             "resname": obj.resname,

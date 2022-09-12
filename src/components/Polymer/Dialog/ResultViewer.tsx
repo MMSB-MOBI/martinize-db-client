@@ -1,7 +1,5 @@
 import React from 'react';
 import { Theme, withTheme, CircularProgress } from '@material-ui/core';
-import ApiHelper from '../../../ApiHelper';
-import { applyUserRadius, UserRadius } from '../../../nglhelpers';
 import { itpBeads } from '../../Builder/BeadsHelper';
 import NglWrapper, { NglRepresentation, NglComponent } from '../../Builder/NglWrapper';
 import BallAndStickRepresentation from '@mmsb/ngl/declarations/representation/ballandstick-representation';

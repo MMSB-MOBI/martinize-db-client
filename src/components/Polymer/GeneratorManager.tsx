@@ -112,7 +112,6 @@ export default class GeneratorManager extends React.Component {
       //find 3 letter code 
 
       let res3: string = Object.keys(fastaconv).find((key: string) => fastaconv[key] === res)!
-      console.log(res3)
       let mol = {
         "resname": res3,
         "seqid": 0,
@@ -234,7 +233,7 @@ export default class GeneratorManager extends React.Component {
 
       const nodelist = nodestr.split(' ').filter((e) => { return e !== "" })
       //check si c'est une bead de l'ancien residu ou pas
-      if (parseInt(nodelist[2]) == 0) { }
+      if (parseInt(nodelist[2]) === 0) { }
 
       if (oldid === parseInt(nodelist[2])) continue
 
@@ -244,7 +243,6 @@ export default class GeneratorManager extends React.Component {
         "id": generateID(),
         "from_itp": molname,
       };
-      console.log("add this : ", mol)
       newMolecules.push(mol)
       oldid = parseInt(nodelist[2])
     }
@@ -598,7 +596,7 @@ export default class GeneratorManager extends React.Component {
     const jsonpolymer = simulationToJson(this.state.Simulation!, this.currentForceField)
 
     let data = {}
-    if (Object.keys(this.state.customITP).length == 0) {
+    if (Object.keys(this.state.customITP).length === 0) {
       data = {
         polymer: jsonpolymer,
         box: box,
