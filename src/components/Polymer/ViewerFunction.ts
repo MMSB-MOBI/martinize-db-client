@@ -28,6 +28,7 @@ export function reloadSimulation(simulation: d3.Simulation<SimulationNode, Simul
     console.log("Reload simulation");
 
     const updatePolymerPath = (listOfGroups: SimulationGroup[]) => {
+        //console.log( "update polymer group path ", listOfGroups)
         //If groups are created
         if (listOfGroups.length !== 0) {
             for (let group of listOfGroups) {
@@ -36,7 +37,7 @@ export function reloadSimulation(simulation: d3.Simulation<SimulationNode, Simul
                 group.nodes!.map((d: SimulationNode) => coords.push([d.x!, d.y!]))
                 let hull = d3.polygonHull(coords)
 
-                d3.select(Mysvg).selectAll("path")
+                d3.select(Mysvg).selectAll("path.group_path")
                     .filter(function () {
                         return d3.select(this).attr("group") === group.id.toString(); // filter by single attribute
                     })
@@ -55,7 +56,10 @@ export function reloadSimulation(simulation: d3.Simulation<SimulationNode, Simul
             .attr("x2", (d: any) => d.target.x)
             .attr("y2", (d: any) => d.target.y);
 
-        d3.select(Mysvg).selectAll("path").attr('transform', (d: any) => { return 'translate(' + d.x + ',' + d.y + ')'; });
+        d3.select(Mysvg)
+            .selectAll("path:not(.group_path)")
+            .attr('transform', (d: any) => { return 'translate(' + d.x + ',' + d.y + ')'; });
+
         updatePolymerPath(groupsData)
 
         //Fait remonter les noeuds dans le svg
@@ -101,13 +105,14 @@ export function removeNode(nodeToRemove: SimulationNode, updateFunction: () => v
             linkednode.links = linkednode.links!.filter((nodeToRM: SimulationNode) => nodeToRM.id !== nodeToRemove.id);
         }
     }
-    d3.select(Mysvg).selectAll<SVGCircleElement, SimulationNode>("path").filter((d: SimulationNode) => (d.id === nodeToRemove.id)).remove();
+
+    d3.select(Mysvg).selectAll<SVGCircleElement, SimulationNode>("path:not(.group_path)").filter((d: SimulationNode) => (d.id === nodeToRemove.id)).remove();
     //and then remove link inside svg
     d3.select(Mysvg).selectAll("line").filter((link: any) => ((link.source.id === nodeToRemove.id) || (link.target.id === nodeToRemove.id))).remove();
 
     console.log("le node a supprimé est : ", nodeToRemove)
     //Update new ID to fit with polyply 
-    d3.select(Mysvg).selectAll<SVGCircleElement, SimulationNode>("path")
+    d3.select(Mysvg).selectAll<SVGCircleElement, SimulationNode>("path:not(.group_path)")
         .filter((d: SimulationNode) => ((Number(d.id) > (Number(nodeToRemove.id)))))
         .each(d => {
             //Compute new ID 
@@ -143,7 +148,8 @@ export function addNodeToSVG(newnode: SimulationNode[], simulation: any, update:
             .attr("class", "nodes")
             .selectAll(".path")
             .data([x])
-            .enter().append("path")
+            .enter()
+            .append("path")
             // @ts-ignore
             .attr("d", d3.symbol().type(d3[donne_la_shape(x.resname)]).size(radius))
             .attr("fill", donne_la_color(x.resname))

@@ -6,6 +6,7 @@ import { SimulationNode, SimulationLink, SimulationGroup } from './SimulationTyp
 import { initSimulation, reloadSimulation, addNodeToSVG, addLinkToSVG, setSVG, setRadius, removeNode } from './ViewerFunction';
 import { decreaseID, generateID } from './GeneratorManager'
 import './GeneratorViewer.css';
+import { Data3DTexture } from "three";
 
 interface propsviewer {
 
@@ -75,12 +76,12 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
           if (selection) {
             //unselect nodes 
             d3.select(this.ref)
-              .selectAll("path")
+              .selectAll("path:not(.group_path)")
               .attr("class", "nodes");
 
             //select all node inside brush zone 
             d3.select(this.ref)
-              .selectAll("path")
+              .selectAll("path:not(.group_path)")
               .filter((d: any) => ((d.x < selection[1][0]) && (d.x > selection[0][0]) && (d.y < selection[1][1]) && (d.y > selection[0][1])))
               .attr("class", "onfocus");
 
@@ -106,19 +107,19 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
       this.currentnodeRadius = this.nodeRadius * zoomValue;
       console.log("zoom value", zoomValue);
 
-      d3.select(this.ref).selectAll("circle")
-        // .each( (d: SimulationNode) => {
-        //   console.log("r", node.attr("r"))
-        //   const newr = parseInt(node.attr("r")) * zoomValue / parseInt(node.attr("r"))
-        //   console.log("newr", newr)
-        //   const newstrokew = parseInt(node.attr("r")) * zoomValue / 4
-        //   node.attr("r", newr)
-        //   node.attr("stroke-width", newstrokew))
-        .attr("r", this.currentnodeRadius)
-        .attr("stroke-width", this.currentnodeRadius / 4)
+      // d3.select(this.ref).selectAll("path")
+      //   // .each( (d: SimulationNode) => {
+      //   //   console.log("r", node.attr("r"))
+      //   //   const newr = parseInt(node.attr("r")) * zoomValue / parseInt(node.attr("r"))
+      //   //   console.log("newr", newr)
+      //   //   const newstrokew = parseInt(node.attr("r")) * zoomValue / 4
+      //   //   node.attr("r", newr)
+      //   //   node.attr("stroke-width", newstrokew))
+      //   .attr("r", this.currentnodeRadius)
+      //   .attr("stroke-width", this.currentnodeRadius / 4)
 
-      d3.select(this.ref).selectAll("line")
-        .attr("stroke-width", this.currentnodeRadius / 3)
+      // d3.select(this.ref).selectAll("line")
+      //   .attr("stroke-width", this.currentnodeRadius / 3)
 
       //Change simulation property
       this.simulation.force("link", d3.forceLink()
@@ -165,19 +166,22 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
     // Build a list of grouped nodes instead of compute it a each iteration
     const groups: SimulationGroup[] = [];
 
-    const svgPath = [];
+    const svgPath: d3.BaseType[] = [];
     d3.select(this.ref)
-      .selectAll('path.area')
+      .selectAll('path.group_path')
       .each(function () {
         svgPath.push(this);
       });
 
     if (svgPath.length !== 0) {
       for (let i = 1; i <= svgPath.length; i++) {
+        console.log("Parcours les path id ")
         let selectedNodes: SimulationNode[] = [];
-        d3.select(this.ref).selectAll("path")
+        d3.select(this.ref)
+          .selectAll("path:not(.group_path)")
           .filter((d: any) => (d.group === i))
           .each((d: any) => {
+            console.log(d)
             selectedNodes.push(d);
           });
         //If nodes was removed
@@ -185,7 +189,10 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
           groups.push({ id: i, nodes: selectedNodes })
         }
         else {
-          d3.select(this.ref).selectAll('path.area').filter((g: any) => parseInt(g.group) === i).remove()
+          d3.select(this.ref)
+            .selectAll("path.group_path")
+            .filter((g: any) => parseInt(g.group) === i)
+            .remove()
         }
       }
     }
@@ -290,7 +297,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
       const nodeToRm: any = d3.select(element).data()[0]
       this.setState({ x: event.clientX, y: event.clientY, nodeClick: nodeToRm, show: true, });
     }
-    else if (element?.tagName === "path") {
+    else if (element?.className === "group_path") {
       this.setState({ x: event.clientX, y: event.clientY, show: true, hullClick: element });
     }
     else {

@@ -116,12 +116,12 @@
     },
     "P3HT": 
     {
-        "color" : "#000000"   ,
+        "color" : "#000F00"   ,
         "shape" : "symbolDiamond"
     },
     "PE": 
     {
-        "color" : "#000000"   ,
+        "color" : "#0F0000"   ,
         "shape" : "symbolDiamond"
     },
     "PEO": 
@@ -131,32 +131,32 @@
     },
     "OHter": 
     {
-        "color" : "#000000"   ,
+        "color" : "#00BFFF"   ,
         "shape" : "symbolCircle"
     },
     "PMA": 
     {
-        "color" : "#000000"   ,
+        "color" : "#BB0000"   ,
         "shape" : "symbolDiamond"
     },
     "PMMA": 
     {
-        "color" : "#000000"   ,
+        "color" : "#BB550F"   ,
         "shape" : "symbolDiamond"
     },
     "PS": 
     {
-        "color" : "#000000"   ,
+        "color" : "#00BB00"   ,
         "shape" : "symbolDiamond"
     },
     "PSS": 
     {
-        "color" : "#000000"   ,
-        "shape" : "symbolDiamond"
+        "color" : "#19F600"   ,
+        "shape" : "symbolCross"
     },
     "PVA": 
     {
-        "color" : "#000000"   ,
-        "shape" : "symbolDiamond"
+        "color" : "#923000"   ,
+        "shape" : "symbolCross"
     }
 }
