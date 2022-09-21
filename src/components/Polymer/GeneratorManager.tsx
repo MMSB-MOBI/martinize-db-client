@@ -13,6 +13,7 @@ import AppBar from '@material-ui/core/AppBar';
 import Typography from "@material-ui/core/Typography";
 import { blue } from "@material-ui/core/colors";
 import { Marger } from "../../helpers";
+import { SERVER_ROOT } from '../../constants';
 import FixLink from "./Dialog/FixLink";
 
 // Pour plus tard
@@ -625,7 +626,8 @@ export default class GeneratorManager extends React.Component {
       }
     }
 
-    const socket = SocketIo.connect("http://localhost:4123");
+
+    const socket = SocketIo.connect(SERVER_ROOT);
     socket.emit('runpolyply', data)
 
     socket.on("top", (topfilestr: string) => {
