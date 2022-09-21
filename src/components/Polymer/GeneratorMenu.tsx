@@ -14,6 +14,7 @@ import HistoryBuild from "../Builder/HistoryBuild";
 import { Link as RouterLink, RouteComponentProps } from 'react-router-dom';
 
 interface propsmenu {
+  customITPS: { [name: string]: string };
   warningfunction: (arg: any) => void;
   setForcefield: (ff: string) => void,
   addFromITP: (itp: string) => void,
@@ -23,7 +24,7 @@ interface propsmenu {
   addlink: (arg1: any, arg2: any) => void,
   addprotsequence: (arg0: string) => void,
   send: () => void,
-  addNEwCustomLink: (arg0: string) => void,
+  addNEwCustomLink: (arg0: string, arg1: string) => void,
   dataForceFieldMolecule: {} | JSON,
 }
 
@@ -166,8 +167,9 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
     return (
       <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
         <CreateLink
+          customITPS={this.props.customITPS}
           close={() => { this.setState({ createLink: false }) }}
-          addthisRule={(s: string) => this.props.addNEwCustomLink(s)}
+          addthisRule={(name: string, content : string) => this.props.addNEwCustomLink(name, content)}
           showCreate={this.state.createLink}
         >
 
@@ -404,7 +406,6 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
                 variant="contained"
                 onClick={() => this.CheckNewLink(this.state.id1, this.state.id2)}>
                 Add link
-
               </Button>
 
             </Grid>
@@ -412,9 +413,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
           <Marger size="2rem" />
           {
             (forcefield !== '') &&
-
             <Grid item xs={6} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }}>
-
               <Button id="send" variant="contained" color="success" endIcon={<AutoFixHigh />} onClick={() => this.props.send()}>
                 Polyply That!
               </Button>

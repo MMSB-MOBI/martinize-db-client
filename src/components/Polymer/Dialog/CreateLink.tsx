@@ -8,12 +8,13 @@ import { Input, TextField, Typography } from '@material-ui/core';
 import ItpFile from 'itp-parser-forked';
 import Grid from '@mui/material/Grid';
 import { SimpleSelect } from '../../../Shared';
-import { ThreeSixtyRounded } from '@material-ui/icons';
+import { Marger } from '../../../helpers';
 
 interface props {
+    customITPS: { [name: string]: string },
     close: () => void,
     showCreate: boolean,
-    addthisRule: (s: string) => void,
+    addthisRule: (arg0: string, arg1: string) => void,
 }
 
 interface state {
@@ -48,7 +49,10 @@ export default class CreateLink extends React.Component<props, state> {
         }
     }
 
+
     componentDidUpdate(prevProps: Readonly<props>, prevState: Readonly<state>, snapshot?: any): void {
+
+
         if ((this.state.beadselected1 !== undefined) && (this.state.beadselected2 !== undefined) && (this.state.angleid !== undefined)) {
             if ((prevState.beadselected1 !== this.state.beadselected1) || (prevState.beadselected2 !== this.state.beadselected2) || (prevState.angleid !== this.state.angleid)) {
                 this.run()
@@ -69,7 +73,7 @@ export default class CreateLink extends React.Component<props, state> {
         // ; -BB BB MEE
         // 300 303 305 2 140.00 25.0
 
-        const nextbead = ( this.state.beadlistitp1.length + parseInt(this.state.beadselected2)).toString()
+        const nextbead = (this.state.beadlistitp1.length + parseInt(this.state.beadselected2)).toString()
         let res = `
     ;  connexion rule
     [link]
@@ -81,7 +85,6 @@ export default class CreateLink extends React.Component<props, state> {
     `+ this.state.angleid + ` ` + this.state.beadselected1 + ` ` + nextbead + ` 2 140.00 25.0
     `
         this.setState({ out: res })
-
     }
 
     extract_idbeads = (li: string[]) => {
@@ -96,57 +99,24 @@ export default class CreateLink extends React.Component<props, state> {
         return out
     }
 
-    handleUpload1 = (selectorFiles: FileList) => {
+    handleUpload1 = (itpname: string) => {
+        this.setState({ itp1: itpname })
         this.setState({ error: "" })
-        if (selectorFiles.length === 1) {
-            let file = selectorFiles[0]
-            const ext = file.name.split('.').slice(-1)[0]
-            if (ext === 'itp') {
-                let reader = new FileReader();
-                reader.onload = (event: any) => {
-                    this.setState({ itp1: event.target.result })
-                    const parseditp1 = ItpFile.readFromString(this.state.itp1!);
-                    const beads = this.extract_idbeads(parseditp1.getField('atoms'))
-                    this.setState({ beadlistitp1: beads })
-                }
-                reader.readAsText(file);
-            }
-            else {
-                this.setState({ error: "Bad file ! Should be an itp" })
-                console.log("Bad file ! Should be an itp")
-            }
-        }
-        else {
-            console.log("Only one files should be upload")
-            this.setState({ error: "Only one files should be upload" })
-        }
+        const parseditp1 = ItpFile.readFromString(this.props.customITPS[itpname]);
+        const beads = this.extract_idbeads(parseditp1.getField('atoms'))
+        console.log( beads)
+        this.setState({ beadlistitp1: beads })
     }
 
-    handleUpload2 = (selectorFiles: FileList) => {
+    handleUpload2 = (itpname: string) => {
+        this.setState({ itp2: itpname })
         this.setState({ error: "" })
-        if (selectorFiles.length === 1) {
-            let file = selectorFiles[0]
-            const ext = file.name.split('.').slice(-1)[0]
-            if (ext === 'itp') {
-                let reader = new FileReader();
-                reader.onload = (event: any) => {
-                    this.setState({ itp2: event.target.result })
-                    const parseditp2 = ItpFile.readFromString(this.state.itp2!);
-                    const beads = this.extract_idbeads(parseditp2.getField('atoms'))
-                    this.setState({ beadlistitp2: beads })
-                }
-                reader.readAsText(file);
-            }
-            else {
-                this.setState({ error: "Bad file ! Should be an itp" })
-                console.log("Bad file ! Should be an itp")
-            }
-        }
-        else {
-            console.log("Only one files should be upload")
-            this.setState({ error: "Only one files should be upload" })
-        }
+        const parseditp2 = ItpFile.readFromString(this.props.customITPS[itpname]);
+        const beads = this.extract_idbeads(parseditp2.getField('atoms'))
+        this.setState({ beadlistitp2: beads })
     }
+
+
 
     show = () => {
         if (this.props.showCreate) {
@@ -156,23 +126,27 @@ export default class CreateLink extends React.Component<props, state> {
                 <DialogTitle>Hello! Welcome to the Itp link file creation! </DialogTitle>
                 <DialogContent>
 
-                    <Typography> Itp 1 : </Typography>
-                    <Input
-                        color="primary"
-                        onChange={(e: any) => this.handleUpload1(e.target.files)}
-                        type="file"
-                    />
+                    <Typography> Please choose your molecule to link : </Typography>
 
-                    {/* {(this.state.beadselected1 !== undefined) &&
-                        <Typography>  Bead : {this.state.beadlistitp1[parseInt(this.state.beadselected1)].bead}  id : {this.state.beadlistitp1[parseInt(this.state.beadselected1)].id} </Typography>
-                    } */}
+                    <SimpleSelect
+                        required
+                        label="Molecule number 1 :"
+                        variant="standard"
+                        values={Object.keys(this.props.customITPS).map(e => ({ id: e, name: e }))}
+                        id="itp1"
+                        value={this.state.itp1 ?? ''}
+                        onChange={v => this.handleUpload1(v)} />
 
-                    <Typography> Itp 2 : </Typography>
-                    <Input
-                        color="primary"
-                        onChange={(e: any) => this.handleUpload2(e.target.files)}
-                        type="file"
-                    />
+                    <Marger size={'2'}></Marger>
+
+                    <SimpleSelect
+                        required
+                        label="Molecule number 2 :"
+                        variant="standard"
+                        values={Object.keys(this.props.customITPS).map(e => ({ id: e, name: e }))}
+                        id="itp2"
+                        value={this.state.itp2 ?? ''}
+                        onChange={v => this.handleUpload2(v)} />
 
                     {((this.state.beadlistitp2 !== undefined) && (this.state.beadlistitp1 !== undefined)) &&
                         <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
@@ -182,7 +156,7 @@ export default class CreateLink extends React.Component<props, state> {
                                 required
                                 label="Start angle"
                                 variant="standard"
-                                values={this.state.beadlistitp1.map((e: any) => ({ id: e.id, name: e.id }))}
+                                values={this.state.beadlistitp1.map((e: any) => ({ id: e.id, name: `Id : ${e.id}, Bead : ${e.bead}`  }))}
                                 id="beadangle"
                                 value={this.state.angleid}
                                 onChange={v => { this.setState({ angleid: v }) }} />
@@ -193,7 +167,7 @@ export default class CreateLink extends React.Component<props, state> {
                                 required
                                 label="Bead to connect itp 1"
                                 variant="standard"
-                                values={this.state.beadlistitp1.map((e: any) => ({ id: e.id, name: e.id }))}
+                                values={this.state.beadlistitp1.map((e: any) => ({ id: e.id, name: `Id : ${e.id}, Bead : ${e.bead}` }))}
                                 id="bead1"
                                 value={this.state.beadselected1}
                                 onChange={v => { this.setState({ beadselected1: v }) }} />
@@ -231,7 +205,7 @@ export default class CreateLink extends React.Component<props, state> {
 
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => { this.props.addthisRule(this.state.out!); this.props.close() }}>Add this link</Button>
+                    <Button onClick={() => { this.props.addthisRule("tempname", this.state.out!); this.props.close() }}>Add this link</Button>
                     <Button onClick={() => { this.props.close() }}>Close that</Button>
                 </DialogActions>
             </Dialog >

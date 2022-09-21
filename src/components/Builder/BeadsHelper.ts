@@ -21,6 +21,7 @@ export async function itpBeads(top_file : File|string, itp_files:File[]|string[]
     })
 
     let bb_registration: string[] = []
+    
 
     const system = await TopFile.read(top, itps)
     for (const molecule of system.molecules){

@@ -5,7 +5,7 @@ import PolymerViewer from './GeneratorViewer';
 import { FormState, SimulationNode, SimulationLink } from './SimulationType';
 import Warning from "./Dialog/warning";
 import { simulationToJson } from './generateJson';
-import { alarmBadLinks } from './addNodeLink';
+import { alarmBadLinks } from './ViewerFunction';
 import SocketIo from 'socket.io-client';
 import RunPolyplyDialog from "./Dialog/RunPolyplyDialog";
 import ItpFile from 'itp-parser-forked'; import ApiHelper from "../../ApiHelper";
@@ -23,7 +23,7 @@ import { SERVER_ROOT } from '../../constants';
 interface StateSimulation {
   Simulation: d3.Simulation<SimulationNode, SimulationLink> | undefined,
   Warningmessage: string;
-  customITP: any[];
+  customITP: { [name: string]: string };
   dialogWarning: string;
   nodesToAdd: SimulationNode[],
   linksToAdd: SimulationLink[],
@@ -32,7 +32,8 @@ interface StateSimulation {
   stepsubmit: number | undefined,
   itp: string,
   gro: string,
-  pdb: string
+  pdb: string,
+  top: string
 }
 
 
@@ -66,7 +67,7 @@ export default class GeneratorManager extends React.Component {
 
   state: StateSimulation = {
     Simulation: undefined,
-    customITP: [],
+    customITP: {},
     nodesToAdd: [],
     linksToAdd: [],
     dataForForm: {},
@@ -74,6 +75,7 @@ export default class GeneratorManager extends React.Component {
     dialogWarning: "",
     loading: false,
     stepsubmit: undefined,
+    top: "",
     itp: "",
     gro: "",
     pdb: ""
@@ -214,32 +216,28 @@ export default class GeneratorManager extends React.Component {
 
     //Add molname inside the list of residue that you can choose
     // 1st generer une liste de noeuds
-    console.log(molname)
-    console.log("atoms", atoms.length)
-    console.log("links", links.length)
+    console.log("Number of atoms", atoms.length, "Number of links", links.length)
     const newMolecules: SimulationNode[] = [];
 
-    this.state.customITP.push(itpstring)
+    let dictionary: { [name: string]: string } = this.state.customITP
+    dictionary[molname] = itpstring
+    this.setState({ customITP: dictionary })
 
     // convert to node object et injecte dans la list
     //Voila la forme du bordel
     // 1 P5    1 POPE NH3  1  0.0
     //Super pratique 
     //Garder en memoire l'id d'avant sur l'itp 
-    let oldid = 0
+    let oldid = -1
 
-    console.log(atoms.length)
     for (let nodestr of atoms) {
+      if (nodestr.startsWith(';')) continue
 
-      console.log(nodestr)
       const nodelist = nodestr.split(' ').filter((e) => { return e !== "" })
-      //check si c'est une bead de l'ancian residu ou pas
-      if (oldid == parseInt(nodelist[2])) continue
-      //check s'ils sont inside le forcefield 
-      if (!(this.state.dataForForm[this.currentForceField].includes(nodelist[3]))) {
-        this.setState({ Warningmessage: nodelist[3] + " not in " + this.currentForceField + ". Be sur that you give the definition in the itp file" })
-        console.log(nodelist[3] + " not in " + this.currentForceField)
-      }
+      //check si c'est une bead de l'ancien residu ou pas
+      if (parseInt(nodelist[2]) == 0) { }
+
+      if (oldid === parseInt(nodelist[2])) continue
 
       let mol = {
         "resname": nodelist[3],
@@ -247,46 +245,53 @@ export default class GeneratorManager extends React.Component {
         "id": generateID(),
         "from_itp": molname,
       };
-      console.log(newMolecules.length)
+      console.log("add this : ", mol)
       newMolecules.push(mol)
       oldid = parseInt(nodelist[2])
     }
 
-
+    console.log(newMolecules)
     let newlinks = []
     // 3rd faire la liste des liens
-    for (let linkstr of links) {
-      if (linkstr.startsWith(";")) continue
-      else if (linkstr.startsWith("#")) continue
-      else {
-        const link = linkstr.split(' ').filter((e) => { return e !== "" })
+    if (newMolecules.length !== 1) {
+      for (let linkstr of links) {
 
-        let idlink1 = parseInt(atoms[parseInt(link[0]) - 1].split(' ').filter((e) => { return e !== "" })[2])
-        let idlink2 = parseInt(atoms[parseInt(link[1]) - 1].split(' ').filter((e) => { return e !== "" })[2])
+        if (linkstr.startsWith(";")) continue
+        else if (linkstr.startsWith("#")) continue
+        else {
+          const link = linkstr.split(' ').filter((e) => { return e !== "" })
 
-        let node1 = newMolecules[idlink1 - 1]
-        let node2 = newMolecules[idlink2 - 1]
+          let idlink1 = parseInt(atoms[parseInt(link[0]) - 1].split(' ').filter((e) => { return e !== "" })[2])
+          let idlink2 = parseInt(atoms[parseInt(link[1]) - 1].split(' ').filter((e) => { return e !== "" })[2])
 
-        if (idlink1 !== idlink2) {
-          newlinks.push({
-            "source": newMolecules[idlink1 - 1],
-            "target": newMolecules[idlink2 - 1]
-          });
+          let node1 = newMolecules[idlink1 - 1]
+          let node2 = newMolecules[idlink2 - 1]
 
-          if (node1.links) node1.links.push(node2);
-          else node1.links = [node2];
+          if (idlink1 !== idlink2) {
+            newlinks.push({
+              "source": newMolecules[idlink1 - 1],
+              "target": newMolecules[idlink2 - 1]
+            });
 
-          if (node2.links) node2.links.push(node1);
-          else node2.links = [node1];
+            if (node1.links) node1.links.push(node2);
+            else node1.links = [node2];
+
+            if (node2.links) node2.links.push(node1);
+            else node2.links = [node1];
+          }
         }
       }
+      this.setState({ nodesToAdd: newMolecules, linksToAdd: newlinks });
     }
-    this.setState({ nodesToAdd: newMolecules, linksToAdd: newlinks });
+    this.setState({ nodesToAdd: newMolecules });
+
+    this.state.dataForForm[this.currentForceField].push(molname)
 
   }
 
   addFromITP = (itpstring: string) => {
     const itp = ItpFile.readFromString(itpstring);
+
     const atoms = itp.getField('atoms')
     const links = itp.getField('bonds')
     let good = true
@@ -565,7 +570,7 @@ export default class GeneratorManager extends React.Component {
 
   closeDialog = (): void => {
 
-    this.setState({ stepsubmit: undefined, loading: false, itp: "", gro: "", pdb:"", dialogWarning: "" })
+    this.setState({ stepsubmit: undefined, loading: false, itp: "", gro: "", pdb: "", dialogWarning: "" })
 
   }
 
@@ -579,7 +584,7 @@ export default class GeneratorManager extends React.Component {
       this.setState({ Warningmessage: "Error Simulation undefined " })
     }
     else if (nodeNumber !== this.giveConnexeNode(this.state.Simulation?.nodes()[1]).size) {
-      this.setState({ Warningmessage: "OULALALA C'est pas connexe du tout ! Ajoute des liens" })
+      this.setState({ Warningmessage: "Not connexe ! Ajoute des liens" })
     }
     else {
       // Make dialog box appaer
@@ -587,18 +592,19 @@ export default class GeneratorManager extends React.Component {
     }
   }
 
-  Send = (box: string, name: string): void => {
+  Send = (box: string, name: string, number: string): void => {
 
     this.setState({ stepsubmit: 1 })
 
     const jsonpolymer = simulationToJson(this.state.Simulation!, this.currentForceField)
 
     let data = {}
-    if (this.state.customITP.length == 0) {
+    if (Object.keys(this.state.customITP).length == 0) {
       data = {
         polymer: jsonpolymer,
         box: box,
-        name: name
+        name: name,
+        number: number
       }
     }
     else {
@@ -606,6 +612,7 @@ export default class GeneratorManager extends React.Component {
         polymer: jsonpolymer,
         box: box,
         name: name,
+        number: number,
         customITP: this.state.customITP
       }
     }
@@ -614,15 +621,21 @@ export default class GeneratorManager extends React.Component {
     const socket = SocketIo.connect(SERVER_ROOT);
     socket.emit('runpolyply', data)
 
+    socket.on("top", (topfilestr: string) => {
+      this.setState({ top: topfilestr })
+    })
+
+
     socket.on("itp", (res: string) => {
       if (res !== "") {
         this.setState({ stepsubmit: 2 })
         this.setState({ itp: res })
-        // Besoin de verifier que l'itp fourni par polyply est le meme polymere que celui afficher
+        //Besoin de verifier que l'itp fourni par polyply est le meme polymere que celui afficher
         // const jsonpolymer = simulationToJson(this.state.Simulation!, this.currentForceField)
 
         // const klcdwu = this.returnITPinfo(res)
 
+        // console.log("this.returnITPinfo(res)", klcdwu)
         // const NBatomsITP: number = klcdwu![0].length
         // const NBlinksITP: number = klcdwu![1].length
         // const NBatomsSIM: number = jsonpolymer.nodes.length
@@ -634,13 +647,17 @@ export default class GeneratorManager extends React.Component {
 
         // }
         // else if (NBlinksSIM !== NBlinksITP) {
-        //   this.setState({ dialogWarning: "WHOUWHOUWHOU alert au link" })
+        //   this.setState({ dialogWarning: "Probleme de lien entre le fichier generé par polyply et la representation" })
+        //   //Check missing links
+        //   console.log(this.state.Simulation)
+        //   socket.emit("continue")
 
         // }
         // else {
-        socket.emit("continue")
+        //   socket.emit("continue")
         // }
-        // console.log("continue")
+        socket.emit("continue")
+        console.log("continue")
       }
     })
 
@@ -651,7 +668,6 @@ export default class GeneratorManager extends React.Component {
     })
 
     socket.on("pdb", (data: string) => {
-      console.log(data)
       this.setState({ pdb: data })
       this.setState({ stepsubmit: 4 })
     })
@@ -664,20 +680,16 @@ export default class GeneratorManager extends React.Component {
 
       //Si il y a des erreur, on affiche un warning 
 
+      //check 
       if (dicoError.errorlinks.length > 0) {
         this.warningfunction("Fail ! Wrong links : " + dicoError.errorlinks + ". You can correct this mistake with \"click right\" -> \"Remove bad links\".")
         for (let i of dicoError.errorlinks) {
           alarmBadLinks(i[1].toString(), i[3].toString())
         }
       }
-      else if (dicoError.OSError) {
-        console.log(dicoError.OSError)
-        this.setState({ Warningmessage: dicoError.OSError })
-      }
-
-      else if (dicoError.PythonError) {
-        // (dicoError.disjoint === true) 
-        this.setState({ Warningmessage: dicoError.PythonError })
+      else if (dicoError.message.length) {
+        console.log(dicoError.message)
+        this.setState({ Warningmessage: dicoError.message })
       }
 
       else {
@@ -738,20 +750,22 @@ export default class GeneratorManager extends React.Component {
             addnode={this.addnode}
             addlink={this.addlink}
             send={this.ClickToSend}
+            customITPS={this.state.customITP}
             dataForceFieldMolecule={this.state.dataForForm}
             warningfunction={this.warningfunction}
             addNEwMolFromITP={this.addNEwMolFromITP}
-            addNEwCustomLink={(rule) => { this.state.customITP.push(rule) }} />
+            addNEwCustomLink={(name: string, itpstring: string) => { let dictionary: { [name: string]: string } = this.state.customITP; dictionary[name] = itpstring; this.setState({ customITP: dictionary }) }} />
 
           {this.state.loading ? (
-            <RunPolyplyDialog 
-            send={this.Send} 
-            currentStep={this.state.stepsubmit} 
-            itp={this.state.itp} 
-            gro={this.state.gro} 
-            pdb={this.state.pdb} 
-            close={this.closeDialog} 
-            warning={this.state.dialogWarning}> </RunPolyplyDialog>
+            <RunPolyplyDialog
+              send={this.Send}
+              currentStep={this.state.stepsubmit}
+              itp={this.state.itp}
+              gro={this.state.gro}
+              pdb={this.state.pdb}
+              close={this.closeDialog}
+              top={this.state.top}
+              warning={this.state.dialogWarning}> </RunPolyplyDialog>
           ) : (<></>)
           }
 
