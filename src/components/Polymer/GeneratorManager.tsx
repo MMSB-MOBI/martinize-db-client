@@ -13,7 +13,7 @@ import AppBar from '@material-ui/core/AppBar';
 import Typography from "@material-ui/core/Typography";
 import { blue } from "@material-ui/core/colors";
 import { Marger } from "../../helpers";
-import GeneratorViewer from "./GeneratorViewer";
+import { SERVER_ROOT } from '../../constants';
 
 // Pour plus tard
 //https://github.com/korydondzila/React-TypeScript-D3/tree/master/src/components
@@ -611,7 +611,7 @@ export default class GeneratorManager extends React.Component {
     }
 
 
-    const socket = SocketIo.connect("http://localhost:4123");
+    const socket = SocketIo.connect(SERVER_ROOT);
     socket.emit('runpolyply', data)
 
     socket.on("itp", (res: string) => {
