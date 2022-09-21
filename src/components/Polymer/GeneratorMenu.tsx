@@ -26,6 +26,8 @@ interface propsmenu {
   send: () => void,
   addNEwCustomLink: (arg0: string, arg1: string) => void,
   dataForceFieldMolecule: {} | JSON,
+  errorlink : any[],
+  fixlinkcomponentappear : () => void;
 }
 
 interface GeneratorMenuState extends FormState {
@@ -413,9 +415,17 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
           <Marger size="2rem" />
           {
             (forcefield !== '') &&
-            <Grid item xs={6} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }}>
+            <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }}>
               <Button id="send" variant="contained" color="success" endIcon={<AutoFixHigh />} onClick={() => this.props.send()}>
                 Polyply That!
+              </Button>
+            </Grid>
+          }
+          {
+            ((forcefield !== '') && (this.props.errorlink.length !== 0)) &&
+            <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }}>
+              <Button id="send" variant="contained" color="error" endIcon={<AutoFixHigh />} onClick={() => this.props.fixlinkcomponentappear()}>
+                Fix link
               </Button>
             </Grid>
           }

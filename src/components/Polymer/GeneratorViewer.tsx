@@ -2,14 +2,11 @@ import * as React from "react";
 import * as d3 from "d3";
 import CustomContextMenu from "./Viewer/CustomContextMenu";
 import { SimulationNode, SimulationLink, SimulationGroup } from './SimulationType';
-
 import { initSimulation, reloadSimulation, addNodeToSVG, addLinkToSVG, setSVG, setRadius, removeNode } from './ViewerFunction';
 import { decreaseID, generateID } from './GeneratorManager'
 import './GeneratorViewer.css';
-import { Data3DTexture } from "three";
 
 interface propsviewer {
-
   forcefield: string,
   newNodes: SimulationNode[];
   newLinks: SimulationLink[];
@@ -22,7 +19,6 @@ interface statecustommenu {
   y: number,
   nodeClick: SimulationNode | undefined,
   hullClick: Element | undefined,
-
   show: boolean,
 }
 
@@ -52,7 +48,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
   prevPropsNewLink: any = null;
 
   // Init simulation 
-  simulation = initSimulation(this.taille, this.currentnodeRadius);
+  simulation = initSimulation(this.taille, this.nodeRadius);
 
   componentDidMount() {
 
@@ -104,7 +100,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
       //On recupere la valeur de zoom 
       const zoomValue = event.transform.k;
       //On modifie le rayon en fonction du zoom 
-      this.currentnodeRadius = this.nodeRadius * zoomValue;
+      //this.currentnodeRadius = this.nodeRadius * zoomValue;
       console.log("zoom value", zoomValue);
 
       // d3.select(this.ref).selectAll("path")
@@ -123,14 +119,14 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
 
       //Change simulation property
       this.simulation.force("link", d3.forceLink()
-        .distance(this.currentnodeRadius * 2.5))
-        .force("x", d3.forceX(this.taille / 2).strength(0.02 / zoomValue))
-        .force("y", d3.forceY(this.taille / 2).strength(0.02 / zoomValue))
+        .distance(this.nodeRadius/3 * zoomValue ))
+        // .force("x", d3.forceX(this.taille / 2).strength(0.02 / zoomValue))
+        // .force("y", d3.forceY(this.taille / 2).strength(0.02 / zoomValue))
 
-      setRadius(this.currentnodeRadius)
+      //setRadius(this.currentnodeRadius)
       this.UpdateSVG()
     }));
-    setRadius(this.currentnodeRadius)
+    setRadius(this.nodeRadius)
     setSVG(this.ref);
   }
 
@@ -175,13 +171,11 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
 
     if (svgPath.length !== 0) {
       for (let i = 1; i <= svgPath.length; i++) {
-        console.log("Parcours les path id ")
         let selectedNodes: SimulationNode[] = [];
         d3.select(this.ref)
           .selectAll("path:not(.group_path)")
           .filter((d: any) => (d.group === i))
           .each((d: any) => {
-            console.log(d)
             selectedNodes.push(d);
           });
         //If nodes was removed

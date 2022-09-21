@@ -2,7 +2,7 @@
     "GLY" : 
     {
         "color" : "#FF0000" ,
-        "shape" : "symbolTriangle"
+        "shape" : "myHexagone"
     },
     "ALA": 
     {
@@ -101,7 +101,7 @@
     },
     "TYR": 
     {
-        "color" : "#yellow"   ,
+        "color" : "#EBAA8D"   ,
         "shape" : "symbolTriangle"
     },
     "TRP": 
@@ -111,8 +111,8 @@
     },
     "DEX": 
     {
-        "color" : "#000000"   ,
-        "shape" : "symbolStar"
+        "color" : "#EB008D"   ,
+        "shape" : "hexagon"
     },
     "P3HT": 
     {

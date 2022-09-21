@@ -6,7 +6,7 @@ import Typography from '@mui/material/Typography';
 import * as d3 from "d3";
 import { SimulationNode, SimulationLink, SimulationGroup } from '../SimulationType';
 import { DownloadJson } from '../generateJson';
-import { addLinkToSVG, addNodeToSVG, removeNode } from "../ViewerFunction";
+import { addLinkToSVG, addNodeToSVG, reloadSimulation, removeNode } from "../ViewerFunction";
 import { decreaseID } from '../GeneratorManager'
 
 
@@ -164,26 +164,61 @@ export default class CustomContextMenu extends React.Component<props> {
 
     //list d3 qui forme le polygon autour de cette liste
     groupPolymer = (listNodesD3: d3.Selection<SVGCircleElement, SimulationNode, SVGSVGElement, unknown>, svg: d3.Selection<SVGSVGElement, unknown, null, undefined>) => {
-        console.log("find group polymer fonction ", listNodesD3)
-
         //clean the previous selected nodes
         svg
             .selectAll<SVGCircleElement, SimulationNode>('path.onfocus')
             .attr("class", "nodes");
 
-
         let idCreatedPolygoneNode: SimulationNode[] = [];
         listNodesD3.each((d: SimulationNode) => {
+
             if ((idCreatedPolygoneNode.includes(d) === false) && (d.group === undefined)) {
                 let connexe = this.giveConnexeNode(d, svg);
                 if (connexe.size() < 4) {
-                    console.log("Trop petit pour faire un group, hull needs 4 nodes")
+                    console.log("each node ", d.id, "Trop petit pour faire un group, hull needs 4 nodes")
                     return
                 }
                 // else if (deja fait donc il faut regarder si les noeuds id sont deja group ou si un des noeud est deja groupé)  ; 
                 else {
+                    //Create hull to group polymer 
 
-                    this.createPolymerPolygon(connexe, svg);
+                    //Get the last id with the number of group_path object in d3
+                    let id = svg.selectAll(".group_path").data().length + 1
+                    //Get coord of every nodes
+                    let selectedNodesCoords: [number, number][] = [];
+                    connexe
+                        .each((d: SimulationNode) => {
+                            selectedNodesCoords.push([d.x!, d.y!]);
+                            //and give a id 
+                            d.group = id
+                        });
+
+                    const color = d3.interpolateTurbo(id / 12);
+                    let hull = d3.polygonHull(selectedNodesCoords);
+                    //stupid hack 
+                    let self = this
+
+                    console.log("Create hull number :", id)
+                    svg
+                        .selectAll("group_path")
+                        .data([hull])
+                        .enter()
+                        .append("path")
+                        .attr("group", id)
+                        .attr("class", "group_path")
+                        .attr("d", (d) => "M" + d!.join("L") + "Z")
+                        .attr("fill", color)
+                        .attr("stroke", color)
+                        .attr("stroke-width", "20")
+                        .attr("stroke-location", "outside")
+                        .attr("stroke-linejoin", "round")
+                        .style("opacity", 0.2)
+                        .on('click', function () {
+                            self.colapse({ id: id, nodesD3: connexe, color: color })
+                            this.remove()
+                            self.props.handleUpdate();
+                        });
+
                     connexe.each((d: SimulationNode) => {
                         idCreatedPolygoneNode.push(d)
                     });
@@ -227,15 +262,15 @@ export default class CustomContextMenu extends React.Component<props> {
         }
         // Return a selection of one connexe graph 
         // Maybe juste one node
-        return svg.selectAll<SVGCircleElement, SimulationNode>('path').filter((d: SimulationNode) => connexeNodesId.has(d.id))
+        return svg.selectAll<SVGCircleElement, SimulationNode>('path.nodes').filter((d: SimulationNode) => connexeNodesId.has(d.id))
     }
 
 
-    expandBigNodes = (bignode: SVGPathElement, svg: d3.Selection<SVGSVGElement, unknown, null, undefined>, dataNodes: SimulationGroup): void => {
+    expandgroup_node = (bignode: SVGPathElement, dataNodes: SimulationGroup): void => {
         console.log("EXPAND BIG BANG  !", bignode, dataNodes)
         bignode.remove()
-        const x = bignode.getAttribute("cx")
-        const y = bignode.getAttribute("cy")
+        const x = bignode.getAttribute("x")
+        const y = bignode.getAttribute("y")
         dataNodes.nodesD3!.data().map(n => n.x = parseInt(x!))
         dataNodes.nodesD3!.data().map(n => n.y = parseInt(y!))
         addNodeToSVG(dataNodes.nodesD3!.data(), this.props.simulation, this.props.handleUpdate)
@@ -258,105 +293,50 @@ export default class CustomContextMenu extends React.Component<props> {
         this.props.handleUpdate()
     }
 
-    colapse = (hull: SVGPathElement, svg: d3.Selection<SVGSVGElement, unknown, null, undefined>, listnodes: d3.Selection<SVGCircleElement, SimulationNode, SVGSVGElement, unknown>): void => {
-        let mongroup: SimulationGroup = { id: parseInt(hull.getAttribute("group")!), nodesD3: listnodes }
+    colapse = (group: SimulationGroup): void => {
+        //Create SimulationGroup object 
 
-        //Cheatcode
-        const self = this
-        console.log("Hello, on COLLAPSE")
-        console.log("SUPPRIME MOI CA !!", listnodes)
+
+        console.log("Colapse ", group.id)
         //Remove nodes from the svg 
-        svg.selectAll<SVGCircleElement, SimulationNode>("circle")
-            .filter((n: SimulationNode) => (n.group === mongroup.id))
+        this.props.svg.selectAll<SVGCircleElement, SimulationNode>("path.nodes")
+            .filter((n: SimulationNode) => (n.group === group.id))
             .remove()
 
         //Remove links from the svg
-        const listid = listnodes.data().map(n => n.id)
-
-        svg.selectAll("line").filter((link: any) => ((listid.includes(link.source.id) || listid.includes(link.target.id)))).remove();
-
-        console.log("data from svg", svg.selectAll("circle.BIGnodes").data(), "and data from fonction", mongroup)
-
-        let dataUpdate: SimulationGroup[] = svg.selectAll<SVGCircleElement, SimulationGroup>("circle.BIGnodes").data()
-        dataUpdate.push(mongroup)
-        svg.selectAll("circle.BIGnodes")
-            .data(dataUpdate)
-            .enter()
-            .append('circle')
-            .attr('class', "BIGnodes")
-            .attr("r", function (d: SimulationGroup) { return 30 + d.nodesD3!.data().length / 2 })
-            .attr("fill", hull.getAttribute("fill"))
-            .style("opacity", 0.7)
-            .attr("id", function (d: SimulationGroup) { return d.id })
-            .on('click', function (this: any, event: any, d: SimulationGroup): void {
-                self.expandBigNodes(this, svg, mongroup);
-            });
-    }
-
-    createPolymerPolygon = (listNodesD3: d3.Selection<SVGCircleElement, SimulationNode, SVGSVGElement, unknown>, svg: d3.Selection<SVGSVGElement, unknown, null, undefined>, groupeID?: number) => {
-
-        console.log("createPolymerPolygon with ", listNodesD3)
-
-        console.log(groupeID)
-        if (groupeID === undefined) {
-            groupeID = 1;
-            svg.selectAll("path.group_path")
-                .each(function () {
-                    var id = d3.select(this).attr("group");
-                    var numberid: number = +id;
-                    groupeID = numberid + 1;
-                });
-        }
-
-        //Get coord of every nodes
-        let selectedNodesCoords: [number, number][] = [];
-        listNodesD3
-            .each((d: SimulationNode) => {
-                selectedNodesCoords.push([d.x!, d.y!]);
-                d.group = groupeID
-            });
+              
+        const  listid = group.nodesD3!.data().map(n => n.id)
+        this.props.svg.selectAll("line").filter((link: any) => ((listid.includes(link.source.id) || listid.includes(link.target.id)))).remove();
 
 
-        console.log("path", selectedNodesCoords)
-        const color = d3.interpolateTurbo(groupeID! / 10);
-        let hull = d3.polygonHull(selectedNodesCoords);
-        //stupid hack 
-        let self = this
+        //Cheatcode
+        const self = this
 
-        svg
-            .selectAll("group_path")
-            .data([hull])
+        this.props.svg
+            .selectAll("group_node")
+            .data([group])
             .enter()
             .append("path")
-            .attr("expand", "false")
-            .attr("group", groupeID!)
-            .attr("class", "group_path")
-            .attr("d", (d) => "M" + d!.join("L") + "Z")
-            .attr("fill", color)
-            .attr("stroke", color)
-            .attr("stroke-width", "40")
-            .attr("stroke-location", "outside")
-            .attr("stroke-linejoin", "round")
-            .style("opacity", 0.2)
-            .on('click', function (this: SVGPathElement, event: any, d: [number, number][] | null) {
-                // if (this.getAttribute("expand") === "false") {
-                self.colapse(this, svg, listNodesD3)
-                self.props.handleUpdate()
-                this.setAttribute("display", "none")
-                // }
-                // else {
-                //     //listNodesD3.attr('display', null)
-                //     self.update();
-                //     this.setAttribute("expand", "false")
-                // }
+            .attr("group", group.id)
+            .attr('class', "group_node")
+            .attr("d", d3.symbol().type(d3.symbolCircle).size( 1000 * Math.sqrt( group.nodesD3!.data().length )  ))
+            .attr("fill", group.color!)
+            .style("opacity", 0.7)
+            .attr("id", function (d: SimulationGroup) { return d.id })
+            .attr("group", function (d: SimulationGroup) { return d.id })
+            .on('click', function (this: any, event: any, d: SimulationGroup): void {
+                self.expandgroup_node(this, group);
             });
+
+        //Remove the old path around nodes 
+
     }
+
 
     // Si des noeuds sont selectionnés
     ifSelectedNode = () => {
         let selectedNodes = this.props.svg.selectAll<SVGCircleElement, SimulationNode>('.onfocus')
         if (selectedNodes.size() > 0) {
-            console.log(this.props)
             return <div key={1}>
                 <Typography >
                     {selectedNodes.size()} nodes selected

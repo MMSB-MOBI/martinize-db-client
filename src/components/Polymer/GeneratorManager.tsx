@@ -13,6 +13,7 @@ import AppBar from '@material-ui/core/AppBar';
 import Typography from "@material-ui/core/Typography";
 import { blue } from "@material-ui/core/colors";
 import { Marger } from "../../helpers";
+import FixLink from "./Dialog/FixLink";
 
 // Pour plus tard
 //https://github.com/korydondzila/React-TypeScript-D3/tree/master/src/components
@@ -32,7 +33,9 @@ interface StateSimulation {
   itp: string,
   gro: string,
   pdb: string,
-  top: string
+  top: string,
+  itpfixing: boolean,
+  errorLink: any[]
 }
 
 
@@ -73,11 +76,13 @@ export default class GeneratorManager extends React.Component {
     Warningmessage: "",
     dialogWarning: "",
     loading: false,
+    itpfixing: false,
     stepsubmit: undefined,
     top: "",
     itp: "",
     gro: "",
-    pdb: ""
+    pdb: "",
+    errorLink: []
   }
 
   currentForceField = '';
@@ -209,7 +214,7 @@ export default class GeneratorManager extends React.Component {
       }
     }
     console.log("add this custom molecule  ", molname)
-    const atoms = itp.getField('atoms')
+    const atoms = itp.getField('atoms', true)
     const links = itp.getField('bonds')
 
     //Add molname inside the list of residue that you can choose
@@ -229,8 +234,6 @@ export default class GeneratorManager extends React.Component {
     let oldid = -1
 
     for (let nodestr of atoms) {
-      if (nodestr.startsWith(';')) continue
-
       const nodelist = nodestr.split(' ').filter((e) => { return e !== "" })
       //check si c'est une bead de l'ancien residu ou pas
       if (parseInt(nodelist[2]) === 0) { }
@@ -571,30 +574,38 @@ export default class GeneratorManager extends React.Component {
 
   }
 
+  closeFixlink = (): void => {
+    this.setState({ itpfixing: false })
+  }
+
 
   ClickToSend = (): void => {
     console.log("Go to server");
     this.setState({ stepsubmit: 0 })
-    console.log(this.state.Simulation?.nodes()[1])
-    let nodeNumber = this.state.Simulation?.nodes().length
     if (this.state.Simulation === undefined) {
       this.setState({ Warningmessage: "Error Simulation undefined " })
-    }
-    else if (nodeNumber !== this.giveConnexeNode(this.state.Simulation?.nodes()[1]).size) {
-      this.setState({ Warningmessage: "Not connexe ! Ajoute des liens" })
     }
     else {
       // Make dialog box appaer
       this.setState({ loading: true })
     }
+
   }
 
   Send = (box: string, name: string, number: string): void => {
 
+    //Check if there is more than one polymer 
+    const connexe1 = this.giveConnexeNode(this.state.Simulation!.nodes()[1])
+    const nodeNumber = this.state.Simulation?.nodes().length
+    if (nodeNumber !== connexe1.size) {
+      console.log("Not connexe ! Try to send 2 trucs")
+      //Get the first 
+      console.log(connexe1)
+    }
+
     this.setState({ stepsubmit: 1 })
 
     const jsonpolymer = simulationToJson(this.state.Simulation!, this.currentForceField)
-
     let data = {}
     if (Object.keys(this.state.customITP).length === 0) {
       data = {
@@ -613,7 +624,6 @@ export default class GeneratorManager extends React.Component {
         customITP: this.state.customITP
       }
     }
-
 
     const socket = SocketIo.connect("http://localhost:4123");
     socket.emit('runpolyply', data)
@@ -653,7 +663,7 @@ export default class GeneratorManager extends React.Component {
         // else {
         //   socket.emit("continue")
         // }
-        socket.emit("continue")
+        socket.emit("continue", this.state.itp)
         console.log("continue")
       }
     })
@@ -669,20 +679,24 @@ export default class GeneratorManager extends React.Component {
       this.setState({ stepsubmit: 4 })
     })
 
-
-    socket.on("oups", (dicoError: any) => {
+    socket.on("oups", async (dicoError: any) => {
       this.setState({ stepsubmit: undefined })
       this.setState({ loading: false })
-      console.log(dicoError)
-
+      
       //Si il y a des erreur, on affiche un warning 
 
       //check 
       if (dicoError.errorlinks.length > 0) {
-        this.warningfunction("Fail ! Wrong links : " + dicoError.errorlinks + ". You can correct this mistake with \"click right\" -> \"Remove bad links\".")
+        let listerror = []
+        //To show error on the svg
         for (let i of dicoError.errorlinks) {
+          listerror.push([i[1].toString(), i[3].toString()])
           alarmBadLinks(i[1].toString(), i[3].toString())
         }
+        this.warningfunction("Fail ! Wrong links : " + dicoError.errorlinks + ". You can correct this mistake with \"click right\" -> \"Remove bad links\" or with \"fixlink\" button in red")
+        this.setState({ itp: dicoError.itp, errorLink: listerror })
+        //socket.emit("continue",)
+
       }
       else if (dicoError.message.length) {
         console.log(dicoError.message)
@@ -710,8 +724,6 @@ export default class GeneratorManager extends React.Component {
 
   // fetching the GET route from the Express server which matches the GET route from server.js
   getDataForcefield = async () => {
-
-
     const response = await fetch('api/polymergenerator/data');
     const body = await response.json();
     if (response.status !== 200) {
@@ -719,6 +731,10 @@ export default class GeneratorManager extends React.Component {
     }
     return body;
   };
+
+  fixlinkcomponentappear = () => {
+    this.setState({ itpfixing: true })
+  }
 
   render() {
 
@@ -728,7 +744,12 @@ export default class GeneratorManager extends React.Component {
       <Grid
         container
         component="main" >
-        <Warning reponse={undefined} message={this.state.Warningmessage} close={() => { this.setState({ Warningmessage: "" }) }}></Warning>
+        <Warning
+          reponse={undefined}
+          message={this.state.Warningmessage}
+          close={() => { this.setState({ Warningmessage: "" }) }}>
+
+        </Warning>
 
         <AppBar position="static">
           <Marger size="1rem" />
@@ -740,6 +761,7 @@ export default class GeneratorManager extends React.Component {
         <Grid item md={4} component={Paper} elevation={6} square>
 
           <GeneratorMenu
+            errorlink={this.state.errorLink}
             addFromITP={this.addFromITP}
             addprotsequence={this.addprotsequence}
             setForcefield={this.setForcefield}
@@ -751,7 +773,8 @@ export default class GeneratorManager extends React.Component {
             dataForceFieldMolecule={this.state.dataForForm}
             warningfunction={this.warningfunction}
             addNEwMolFromITP={this.addNEwMolFromITP}
-            addNEwCustomLink={(name: string, itpstring: string) => { let dictionary: { [name: string]: string } = this.state.customITP; dictionary[name] = itpstring; this.setState({ customITP: dictionary }) }} />
+            addNEwCustomLink={(name: string, itpstring: string) => { let dictionary: { [name: string]: string; } = this.state.customITP; dictionary[name] = itpstring; this.setState({ customITP: dictionary }); }}
+            fixlinkcomponentappear={this.fixlinkcomponentappear} />
 
           {this.state.loading ? (
             <RunPolyplyDialog
@@ -765,6 +788,16 @@ export default class GeneratorManager extends React.Component {
               warning={this.state.dialogWarning}> </RunPolyplyDialog>
           ) : (<></>)
           }
+
+          {this.state.itpfixing ? (
+            <FixLink
+              itp={this.state.itp}
+              close={this.closeFixlink}
+              error={this.state.errorLink} > </FixLink>
+          ) : (<></>)
+          }
+
+
 
 
         </Grid>

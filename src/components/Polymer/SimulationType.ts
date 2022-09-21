@@ -27,5 +27,8 @@ export interface SimulationLink extends SimulationNodeDatum {
 export interface SimulationGroup extends SimulationNodeDatum {
   id: number,
   nodes?: SimulationNode[],
-  nodesD3?: d3.Selection<SVGCircleElement, SimulationNode, SVGSVGElement, unknown>
+  nodesD3?: d3.Selection<SVGCircleElement, SimulationNode, SVGSVGElement, unknown>,
+  color? : string,
+  x?: number,
+  y?: number,
 }

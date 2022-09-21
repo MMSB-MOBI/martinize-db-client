@@ -1,6 +1,6 @@
 import { SimulationNode, SimulationLink, SimulationGroup } from './SimulationType';
 import * as d3 from "d3";
-import { donne_la_color, donne_la_shape } from './Viewer/Legend'
+import { donne_la_color, get_d3shape } from './Viewer/Legend'
 
 
 let Mysvg: SVGElement;
@@ -19,7 +19,7 @@ export function initSimulation(sizeSVG: number, sizeNodeRadius: number): d3.Simu
         .force("x", d3.forceX(sizeSVG / 2).strength(0.02))
         .force("y", d3.forceY(sizeSVG / 2).strength(0.02))
         .force("link", d3.forceLink()
-            //.distance(() => { return sizeNodeRadius * 2.5 })
+            .distance(sizeNodeRadius / 3)
         )
     return simulation
 }
@@ -56,14 +56,17 @@ export function reloadSimulation(simulation: d3.Simulation<SimulationNode, Simul
             .attr("x2", (d: any) => d.target.x)
             .attr("y2", (d: any) => d.target.y);
 
+        updatePolymerPath(groupsData)
+
         d3.select(Mysvg)
             .selectAll("path:not(.group_path)")
             .attr('transform', (d: any) => { return 'translate(' + d.x + ',' + d.y + ')'; });
 
-        updatePolymerPath(groupsData)
+        //Fait remonter les noeuds dans le svg pour les mettre au premier plan 
 
-        //Fait remonter les noeuds dans le svg
-        //svg.selectAll(".nodes").raise()
+        d3.select(Mysvg)
+            .selectAll("g.nodes")
+            .raise()
     }
     let simulationnodes: SimulationNode[] = []
 
@@ -71,9 +74,9 @@ export function reloadSimulation(simulation: d3.Simulation<SimulationNode, Simul
     const slinks: SimulationLink[] = [];
     d3.select(Mysvg).selectAll("line").each((d: any) => slinks.push(d))
 
-    // const bignodes: SimulationNode[] = []
-    // svg.selectAll("circle.BIGnodes").each((d: any) => bignodes.push(d))
-    d3.select(Mysvg).selectAll("path").each((d: any) => simulationnodes.push(d))
+    const group_node: SimulationNode[] = []
+    d3.select(Mysvg).selectAll("path.group_path").each((d: any) => group_node.push(d))
+    d3.select(Mysvg).selectAll("path:not(.group_path)").each((d: any) => simulationnodes.push(d))
 
     simulation.nodes(simulationnodes)
         .force<d3.ForceLink<SimulationNode, SimulationLink>>("link")?.links(slinks);
@@ -150,8 +153,7 @@ export function addNodeToSVG(newnode: SimulationNode[], simulation: any, update:
             .data([x])
             .enter()
             .append("path")
-            // @ts-ignore
-            .attr("d", d3.symbol().type(d3[donne_la_shape(x.resname)]).size(radius))
+            .attr("d", d3.symbol().type( get_d3shape(x.resname) ).size(radius))
             .attr("fill", donne_la_color(x.resname))
             .attr('stroke', "grey")
             // .attr("stroke-width", 2)
@@ -262,16 +264,7 @@ export function addNodeToSVG(newnode: SimulationNode[], simulation: any, update:
 
 }
 
-// function hashStringToColor(str: string) {
-//     var hash = 5381;
-//     for (var i = 0; i < str.length; i++) {
-//         hash = ((hash << 5) + hash) + str.charCodeAt(i); /* hash * 33 + c */
-//     }
-//     var r = (hash & 0xFF0000) >> 16;
-//     var g = (hash & 0x00FF00) >> 8;
-//     var b = hash & 0x0000FF;
-//     return "#" + ("0" + r.toString(16)).substr(-2) + ("0" + g.toString(16)).substr(-2) + ("0" + b.toString(16)).substr(-2);
-// };
+
 
 export function checkLink(node1: SimulationNode, node2: SimulationNode) {
 
