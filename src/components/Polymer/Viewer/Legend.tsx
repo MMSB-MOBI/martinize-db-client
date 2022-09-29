@@ -60,9 +60,16 @@ export const donne_la_color = (residue: string) => {
 }
 
 export const get_d3shape = (residue: string): any => {
-    //@ts-ignore
-    if (Object.keys(customSymbol).includes(legend[residue]["shape"])) return customSymbol[legend[residue]["shape"]]
-    //@ts-ignore
-    if ((Object.keys(legend).includes(residue)) && supportedd3Symbol.includes(legend[residue]["shape"])) return d3[legend[residue]["shape"]]
-    return d3["symbolCircle"]
+    try {
+        //@ts-ignore
+        if (Object.keys(customSymbol).includes(legend[residue]["shape"])) return customSymbol[legend[residue]["shape"]]
+        //@ts-ignore
+        if ((Object.keys(legend).includes(residue)) && supportedd3Symbol.includes(legend[residue]["shape"])) return d3[legend[residue]["shape"]]
+        return d3["symbolCircle"]
+    } catch (error) {
+        console.error(error);
+        return d3["symbolCircle"]
+    }
+
+
 }

@@ -2,7 +2,7 @@ import * as React from "react";
 import * as d3 from "d3";
 import CustomContextMenu from "./Viewer/CustomContextMenu";
 import { SimulationNode, SimulationLink, SimulationGroup } from './SimulationType';
-import { initSimulation, reloadSimulation, addNodeToSVG, addLinkToSVG, setSVG, setRadius, removeNode } from './ViewerFunction';
+import { initSimulation, setsizeSVG, reloadSimulation, addNodeToSVG, addLinkToSVG, setSVG, setnodeSize, removeNode } from './ViewerFunction';
 import { decreaseID, generateID } from './GeneratorManager'
 import './GeneratorViewer.css';
 
@@ -19,8 +19,11 @@ interface statecustommenu {
   y: number,
   nodeClick: SimulationNode | undefined,
   hullClick: Element | undefined,
+  lineClick: SimulationLink | undefined,
   show: boolean,
 }
+
+let zoomValue = 1
 
 export default class GeneratorViewer extends React.Component<propsviewer, statecustommenu> {
 
@@ -29,6 +32,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
     y: 0,
     nodeClick: undefined,
     hullClick: undefined,
+    lineClick: undefined,
     show: false,
 
   };
@@ -37,21 +41,15 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
   // Ajouter un point d'exclamation veut dire qu'on est sur que la valeur n'est pas nul
   ref!: SVGSVGElement;
   frame!: HTMLDivElement;
-  frameCount = 0
-
   taille = 800;
-  nodeRadius = 50;
-  currentnodeRadius = 50;
+  nodeSize = 50;
   mouseX = 0;
   mouseY = 0;
   prevPropsNewnode: any = null;
   prevPropsNewLink: any = null;
-
-  // Init simulation 
-  simulation = initSimulation(this.taille, this.nodeRadius);
+  simulation!: d3.Simulation<SimulationNode, SimulationLink>;
 
   componentDidMount() {
-
     //Draw svg frame
     d3.select(this.ref)
       .attr("style", "outline: thin solid grey;")
@@ -59,6 +57,11 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
       .attr("height", this.taille)
 
     console.log("InitSVG");
+
+
+    // Init simulation 
+    setsizeSVG(this.taille)
+    this.simulation = initSimulation(this.nodeSize);
 
     //Define brush behaviour
     const brush = d3.brush();
@@ -80,13 +83,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
               .selectAll("path:not(.group_path)")
               .filter((d: any) => ((d.x < selection[1][0]) && (d.x > selection[0][0]) && (d.y < selection[1][1]) && (d.y > selection[0][1])))
               .attr("class", "onfocus");
-
-            //Faire verif :
-            //Si 2 noeuds sont selectionnés le lien qui les unis est selectionné par defaut 
-            // mysvg.selectAll("line")
-            //   .filter((d: any) => ((d.x < selection[1][0]) && (d.x > selection[0][0]) && (d.y < selection[1][1]) && (d.y > selection[0][1])))
-            //   .attr("class", "onfocus");
-            // Si un noeud sort de la zone enlever le onfocus
+ 
           }
         })
         .on("end", (event: any) => {
@@ -98,35 +95,25 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
 
     d3.select(this.ref).call(d3.zoom<SVGSVGElement, unknown>().scaleExtent([0.1, 1.8]).on("zoom", (event) => {
       //On recupere la valeur de zoom 
-      const zoomValue = event.transform.k;
-      //On modifie le rayon en fonction du zoom 
-      //this.currentnodeRadius = this.nodeRadius * zoomValue;
+      zoomValue = event.transform.k;
+      //On modifie le rayon en fonction du zoom  
       console.log("zoom value", zoomValue);
 
-      // d3.select(this.ref).selectAll("path")
-      //   // .each( (d: SimulationNode) => {
-      //   //   console.log("r", node.attr("r"))
-      //   //   const newr = parseInt(node.attr("r")) * zoomValue / parseInt(node.attr("r"))
-      //   //   console.log("newr", newr)
-      //   //   const newstrokew = parseInt(node.attr("r")) * zoomValue / 4
-      //   //   node.attr("r", newr)
-      //   //   node.attr("stroke-width", newstrokew))
-      //   .attr("r", this.currentnodeRadius)
-      //   .attr("stroke-width", this.currentnodeRadius / 4)
+      d3.select(this.ref)
+        .selectAll<SVGCircleElement, SimulationNode>("path")
+        .attr("zoom", zoomValue)
+        .attr("transform", function () {
+          return this.getAttribute("transform") + ` scale(${zoomValue})`;
+        });
 
-      // d3.select(this.ref).selectAll("line")
-      //   .attr("stroke-width", this.currentnodeRadius / 3)
 
       //Change simulation property
-      this.simulation.force("link", d3.forceLink()
-        .distance(this.nodeRadius/3 * zoomValue ))
-        // .force("x", d3.forceX(this.taille / 2).strength(0.02 / zoomValue))
-        // .force("y", d3.forceY(this.taille / 2).strength(0.02 / zoomValue))
+      this.simulation
+        .force("link", d3.forceLink().distance(this.nodeSize * (zoomValue *zoomValue ) / 4))
 
-      //setRadius(this.currentnodeRadius)
       this.UpdateSVG()
     }));
-    setRadius(this.nodeRadius)
+    setnodeSize(this.nodeSize)
     setSVG(this.ref);
   }
 
@@ -152,7 +139,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
     }
     // Si des news props apparaissent depuis manager on ajoute les noeuds !!!
     if (this.prevPropsNewnode !== this.props.newNodes) {
-      addNodeToSVG(this.props.newNodes, this.simulation, this.UpdateSVG)
+      addNodeToSVG(this.props.newNodes, this.simulation, this.UpdateSVG, zoomValue)
 
       //Keep the previous props in memory
       this.prevPropsNewLink = this.props.newLinks;
@@ -250,7 +237,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
 
     console.log("newNodes", newNodes)
 
-    addNodeToSVG(newNodes, this.simulation, this.UpdateSVG)
+    addNodeToSVG(newNodes, this.simulation, this.UpdateSVG, zoomValue)
     // and then addLink
     // create newlink
     let newlinks: SimulationLink[] = []
@@ -281,18 +268,22 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
     this.UpdateSVG()
   }
 
-
   handleContextMenu = (event: React.MouseEvent) => {
     console.log("Custom menu");
     event.preventDefault();
     const element = document.elementFromPoint(event.clientX, event.clientY);
-    console.log(element)
+
     if (element?.className === "nodes") {
       const nodeToRm: any = d3.select(element).data()[0]
       this.setState({ x: event.clientX, y: event.clientY, nodeClick: nodeToRm, show: true, });
     }
     else if (element?.className === "group_path") {
       this.setState({ x: event.clientX, y: event.clientY, show: true, hullClick: element });
+    }
+    else if (element?.tagName === "line") {
+      const link: any = d3.select(element).data()[0]
+      this.setState({ x: event.clientX, y: event.clientY, show: true, lineClick: link });
+      console.log(link)
     }
     else {
       this.setState({ x: event.clientX, y: event.clientY, show: true });
@@ -308,10 +299,12 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
           y={this.state.y}
           nodeClick={this.state.nodeClick}
           hullClick={this.state.hullClick}
+          lineClick={this.state.lineClick}
           svg={d3.select(this.ref)}
           handlePaste={this.pasteThesedNodes}
           handleUpdate={this.UpdateSVG}
-          simulation={this.simulation}>
+          simulation={this.simulation}
+          zoom={zoomValue}>
         </CustomContextMenu>;
       }
       else return;
@@ -325,7 +318,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
 
     const handleDelete = (event: React.KeyboardEvent) => {
       if (event.key === "Delete") {
-        d3.select(this.ref).selectAll<SVGCircleElement, SimulationNode>('circle.onfocus').each((node: SimulationNode) => {
+        d3.select(this.ref).selectAll<SVGCircleElement, SimulationNode>('path.onfocus').each((node: SimulationNode) => {
           removeNode(node, this.UpdateSVG, decreaseID);
         })
       }

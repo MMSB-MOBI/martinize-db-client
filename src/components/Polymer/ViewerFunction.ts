@@ -8,18 +8,24 @@ export function setSVG(svgref: SVGElement) {
     Mysvg = svgref;
 }
 
-let radius: number;
-export function setRadius(newradius: number) {
-    radius = newradius;
+let nodeSize: number;
+export function setnodeSize(newnodeSize: number) {
+    nodeSize = newnodeSize;
 }
+
+let sizeSVG: number;
+export function setsizeSVG(newsizeSVG: number) {
+    sizeSVG = newsizeSVG;
+}
+
+
 //Define simulation forcefield 
-export function initSimulation(sizeSVG: number, sizeNodeRadius: number): d3.Simulation<SimulationNode, SimulationLink> {
+export function initSimulation( sizeNodenodeSize: number): d3.Simulation<SimulationNode, SimulationLink> {
     const simulation = d3.forceSimulation<SimulationNode, SimulationLink>()
-        .force("charge", d3.forceManyBody())
-        .force("x", d3.forceX(sizeSVG / 2).strength(0.02))
-        .force("y", d3.forceY(sizeSVG / 2).strength(0.02))
-        .force("link", d3.forceLink()
-            .distance(sizeNodeRadius / 3)
+        .force("charge", d3.forceManyBody().strength(-150))
+        .force("x", d3.forceX(sizeSVG / 2).strength(0.1))
+        .force("y", d3.forceY(sizeSVG / 2).strength(0.1))
+        .force("link", d3.forceLink().distance(sizeNodenodeSize / 4)
         )
     return simulation
 }
@@ -59,8 +65,8 @@ export function reloadSimulation(simulation: d3.Simulation<SimulationNode, Simul
         updatePolymerPath(groupsData)
 
         d3.select(Mysvg)
-            .selectAll("path:not(.group_path)")
-            .attr('transform', (d: any) => { return 'translate(' + d.x + ',' + d.y + ')'; });
+            .selectAll<SVGCircleElement, SimulationNode>("path:not(.group_path)")
+            .attr("transform", function (d) { return 'translate(' + d.x + ',' + d.y + `) scale(${this.getAttribute("zoom")})`; });
 
         //Fait remonter les noeuds dans le svg pour les mettre au premier plan 
 
@@ -83,9 +89,9 @@ export function reloadSimulation(simulation: d3.Simulation<SimulationNode, Simul
 
     simulation
         .on("tick", ticked)
-        .alpha(1)
-        .alphaMin(0.1)
-        .velocityDecay(0.1)
+        .alpha(0.1)
+        .alphaMin(0.0)
+        .velocityDecay(0.2)
         .restart();
 }
 
@@ -131,7 +137,7 @@ export function removeNode(nodeToRemove: SimulationNode, updateFunction: () => v
     updateFunction();
 }
 
-export function addNodeToSVG(newnode: SimulationNode[], simulation: any, update: () => void) {
+export function addNodeToSVG(newnodes: SimulationNode[], simulation: any, update: () => void, zoomValue: number) {
     let div: any;
     // Define the div for the tooltip
 
@@ -144,17 +150,20 @@ export function addNodeToSVG(newnode: SimulationNode[], simulation: any, update:
         div = d3.select("body").select("div.tooltip")
     }
 
-    for (let x of newnode) {
+    for (let node of newnodes) {
         //Define entering nodes     
         d3.select(Mysvg)
             .append("g")
             .attr("class", "nodes")
             .selectAll(".path")
-            .data([x])
+            .data([node])
             .enter()
             .append("path")
-            .attr("d", d3.symbol().type( get_d3shape(x.resname) ).size(radius))
-            .attr("fill", donne_la_color(x.resname))
+            .attr("zoom", zoomValue)
+            .attr("x" , sizeSVG / 4 )
+            .attr("y" , sizeSVG / 4 )
+            .attr("d", d3.symbol().type(get_d3shape(node.resname)).size(nodeSize * 2))
+            .attr("fill", donne_la_color(node.resname))
             .attr('stroke', "grey")
             // .attr("stroke-width", 2)
             .attr("expand", "true")
@@ -242,16 +251,17 @@ export function addNodeToSVG(newnode: SimulationNode[], simulation: any, update:
                 update();
             }
         }
-        simulation.velocityDecay(0.3)
-            .alphaDecay(0.0228/*1 - Math.pow(0.001, 1 / self.simulation.alphaMin())*/)
+        simulation
+            .velocityDecay(0.3)
+            .alphaDecay(0.1) /*1 - Math.pow(0.001, 1 / self.simulation.alphaMin())*/
             .alpha(1)
-            .alphaTarget(0)
+            .alphaTarget(0.8)
             .restart();
     }
 
     //Add function to detect contact between nodes and create link
     const incontact = (c: SimulationNode): SimulationNode | null => {
-        let closest: [number, SimulationNode | null] = [radius * 2.2, null];
+        let closest: [number, SimulationNode | null] = [nodeSize / 2, null];
         simulation.nodes().forEach((d: SimulationNode) => {
             if (d.id === c.id) return;
             const dist = Math.sqrt(((c.x ?? 0) - (d.x ?? 0)) * ((c.x ?? 0) - (d.x ?? 0))
@@ -286,7 +296,7 @@ export function addLinkToSVG(newLink: SimulationLink[]): void {
     link.append("line")
         .attr("class", "links")
         .attr("stroke", "grey")
-        .attr("stroke-width", radius / 10)
+        .attr("stroke-width", nodeSize / 10)
         .attr("opacity", 0.5)
         .attr("stroke-linecap", "round")
         .attr("source", function (d: any) { return d.source.id })

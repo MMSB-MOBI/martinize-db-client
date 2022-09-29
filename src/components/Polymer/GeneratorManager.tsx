@@ -46,9 +46,12 @@ export let generateID = (): string => {
   return currentAvaibleID.toString()
 }
 
-export let decreaseID = (): void => {
-  console.log("new currentAvaibleID", currentAvaibleID)
-  currentAvaibleID--;
+export let decreaseID = (clear = false): void => {
+  if (clear) currentAvaibleID = -1
+  else {
+    console.log("new currentAvaibleID", currentAvaibleID)
+    currentAvaibleID--;
+  }
 }
 
 export default class GeneratorManager extends React.Component {
@@ -85,6 +88,8 @@ export default class GeneratorManager extends React.Component {
     pdb: "",
     errorLink: []
   }
+
+  socket = SocketIo.connect(SERVER_ROOT);
 
   currentForceField = '';
 
@@ -592,6 +597,10 @@ export default class GeneratorManager extends React.Component {
     }
 
   }
+  grossecorection = (itpfix: string) => {
+    this.setState({ stepsubmit: 2, loading: true })
+    this.socket.emit("continue", itpfix)
+  }
 
   Send = (box: string, name: string, number: string): void => {
 
@@ -602,9 +611,14 @@ export default class GeneratorManager extends React.Component {
       console.log("Not connexe ! Try to send 2 trucs")
       //Get the first 
       console.log(connexe1)
+      
+      this.warningfunction("Your polymer is composed by "+connexe1.size+" sub part.")
+        
     }
-
-    this.setState({ stepsubmit: 1 })
+    else{
+      this.setState({ stepsubmit: 1 })
+    }
+    
 
     const jsonpolymer = simulationToJson(this.state.Simulation!, this.currentForceField)
     let data = {}
@@ -626,16 +640,14 @@ export default class GeneratorManager extends React.Component {
       }
     }
 
+    this.socket.emit('runpolyply', data)
 
-    const socket = SocketIo.connect(SERVER_ROOT);
-    socket.emit('runpolyply', data)
-
-    socket.on("top", (topfilestr: string) => {
+    this.socket.on("top", (topfilestr: string) => {
       this.setState({ top: topfilestr })
     })
 
 
-    socket.on("itp", (res: string) => {
+    this.socket.on("itp", (res: string) => {
       if (res !== "") {
         this.setState({ stepsubmit: 2 })
         this.setState({ itp: res })
@@ -665,26 +677,26 @@ export default class GeneratorManager extends React.Component {
         // else {
         //   socket.emit("continue")
         // }
-        socket.emit("continue", this.state.itp)
+        this.socket.emit("continue", this.state.itp)
         console.log("continue")
       }
     })
 
-    socket.on("gro", (data: string) => {
+    this.socket.on("gro", (data: string) => {
       console.log("gro !")
       this.setState({ gro: data })
       this.setState({ stepsubmit: 3 })
     })
 
-    socket.on("pdb", (data: string) => {
+    this.socket.on("pdb", (data: string) => {
       this.setState({ pdb: data })
       this.setState({ stepsubmit: 4 })
     })
 
-    socket.on("oups", async (dicoError: any) => {
+    this.socket.on("oups", async (dicoError: any) => {
       this.setState({ stepsubmit: undefined })
       this.setState({ loading: false })
-      
+
       //Si il y a des erreur, on affiche un warning 
 
       //check 
@@ -795,7 +807,8 @@ export default class GeneratorManager extends React.Component {
             <FixLink
               itp={this.state.itp}
               close={this.closeFixlink}
-              error={this.state.errorLink} > </FixLink>
+              error={this.state.errorLink}
+              send={this.grossecorection} > </FixLink>
           ) : (<></>)
           }
 
