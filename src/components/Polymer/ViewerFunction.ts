@@ -20,13 +20,12 @@ export function setsizeSVG(newsizeSVG: number) {
 
 
 //Define simulation forcefield 
-export function initSimulation( sizeNodenodeSize: number): d3.Simulation<SimulationNode, SimulationLink> {
+export function initSimulation(sizeNodenodeSize: number): d3.Simulation<SimulationNode, SimulationLink> {
     const simulation = d3.forceSimulation<SimulationNode, SimulationLink>()
         .force("charge", d3.forceManyBody().strength(-150))
-        .force("x", d3.forceX(sizeSVG / 2).strength(0.1))
-        .force("y", d3.forceY(sizeSVG / 2).strength(0.1))
-        .force("link", d3.forceLink().distance(sizeNodenodeSize / 4)
-        )
+        .force("x", d3.forceX(sizeSVG / 2).strength(0.2))
+        .force("y", d3.forceY(sizeSVG / 2).strength(0.2))
+        .force("link", d3.forceLink().distance(sizeNodenodeSize / 3).strength(0.5))
     return simulation
 }
 
@@ -90,8 +89,8 @@ export function reloadSimulation(simulation: d3.Simulation<SimulationNode, Simul
     simulation
         .on("tick", ticked)
         .alpha(0.1)
-        .alphaMin(0.0)
-        .velocityDecay(0.2)
+        .alphaMin(0.005)
+        .velocityDecay(0.15)
         .restart();
 }
 
@@ -160,8 +159,8 @@ export function addNodeToSVG(newnodes: SimulationNode[], simulation: any, update
             .enter()
             .append("path")
             .attr("zoom", zoomValue)
-            .attr("x" , sizeSVG / 4 )
-            .attr("y" , sizeSVG / 4 )
+            .attr("x", sizeSVG / 4)
+            .attr("y", sizeSVG / 4)
             .attr("d", d3.symbol().type(get_d3shape(node.resname)).size(nodeSize * 2))
             .attr("fill", donne_la_color(node.resname))
             .attr('stroke', "grey")
@@ -215,8 +214,7 @@ export function addNodeToSVG(newnodes: SimulationNode[], simulation: any, update
         d.fy = clamp(event.y, 0, sizeSVGNumber);
 
         simulation
-            .alphaDecay(.0005)
-            .velocityDecay(0.2)
+            .velocityDecay(0.8)
             .alpha(0.1)
             .restart();
     }
@@ -252,10 +250,6 @@ export function addNodeToSVG(newnodes: SimulationNode[], simulation: any, update
             }
         }
         simulation
-            .velocityDecay(0.3)
-            .alphaDecay(0.1) /*1 - Math.pow(0.001, 1 / self.simulation.alphaMin())*/
-            .alpha(1)
-            .alphaTarget(0.8)
             .restart();
     }
 

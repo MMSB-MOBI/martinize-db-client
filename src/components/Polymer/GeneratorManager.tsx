@@ -598,7 +598,8 @@ export default class GeneratorManager extends React.Component {
 
   }
   grossecorection = (itpfix: string) => {
-    this.setState({ stepsubmit: 2, loading: true })
+
+    this.setState({ stepsubmit: 2, loading: true, itp : itpfix, itpfixing: false, errorLink :[] })
     this.socket.emit("continue", itpfix)
   }
 
@@ -611,118 +612,119 @@ export default class GeneratorManager extends React.Component {
       console.log("Not connexe ! Try to send 2 trucs")
       //Get the first 
       console.log(connexe1)
-      
-      this.warningfunction("Your polymer is composed by "+connexe1.size+" sub part.")
-        
-    }
-    else{
-      this.setState({ stepsubmit: 1 })
-    }
-    
 
-    const jsonpolymer = simulationToJson(this.state.Simulation!, this.currentForceField)
-    let data = {}
-    if (Object.keys(this.state.customITP).length === 0) {
-      data = {
-        polymer: jsonpolymer,
-        box: box,
-        name: name,
-        number: number
-      }
+      this.warningfunction("Your polymer is composed by X sub part.")
+
     }
     else {
-      data = {
-        polymer: jsonpolymer,
-        box: box,
-        name: name,
-        number: number,
-        customITP: this.state.customITP
-      }
-    }
-
-    this.socket.emit('runpolyply', data)
-
-    this.socket.on("top", (topfilestr: string) => {
-      this.setState({ top: topfilestr })
-    })
+      this.setState({ stepsubmit: 1 })
 
 
-    this.socket.on("itp", (res: string) => {
-      if (res !== "") {
-        this.setState({ stepsubmit: 2 })
-        this.setState({ itp: res })
-        //Besoin de verifier que l'itp fourni par polyply est le meme polymere que celui afficher
-        // const jsonpolymer = simulationToJson(this.state.Simulation!, this.currentForceField)
 
-        // const klcdwu = this.returnITPinfo(res)
-
-        // console.log("this.returnITPinfo(res)", klcdwu)
-        // const NBatomsITP: number = klcdwu![0].length
-        // const NBlinksITP: number = klcdwu![1].length
-        // const NBatomsSIM: number = jsonpolymer.nodes.length
-        // const NBlinksSIM: number = jsonpolymer.links.length
-
-        // console.log(NBatomsITP, NBlinksITP, NBatomsSIM, NBlinksSIM)
-        // if (NBatomsSIM !== NBatomsITP) {
-        //   this.setState({ dialogWarning: "WHOUWHOUWHOU alert au node" })
-
-        // }
-        // else if (NBlinksSIM !== NBlinksITP) {
-        //   this.setState({ dialogWarning: "Probleme de lien entre le fichier generé par polyply et la representation" })
-        //   //Check missing links
-        //   console.log(this.state.Simulation)
-        //   socket.emit("continue")
-
-        // }
-        // else {
-        //   socket.emit("continue")
-        // }
-        this.socket.emit("continue", this.state.itp)
-        console.log("continue")
-      }
-    })
-
-    this.socket.on("gro", (data: string) => {
-      console.log("gro !")
-      this.setState({ gro: data })
-      this.setState({ stepsubmit: 3 })
-    })
-
-    this.socket.on("pdb", (data: string) => {
-      this.setState({ pdb: data })
-      this.setState({ stepsubmit: 4 })
-    })
-
-    this.socket.on("oups", async (dicoError: any) => {
-      this.setState({ stepsubmit: undefined })
-      this.setState({ loading: false })
-
-      //Si il y a des erreur, on affiche un warning 
-
-      //check 
-      if (dicoError.errorlinks.length > 0) {
-        let listerror = []
-        //To show error on the svg
-        for (let i of dicoError.errorlinks) {
-          listerror.push([i[1].toString(), i[3].toString()])
-          alarmBadLinks(i[1].toString(), i[3].toString())
+      const jsonpolymer = simulationToJson(this.state.Simulation!, this.currentForceField)
+      let data = {}
+      if (Object.keys(this.state.customITP).length === 0) {
+        data = {
+          polymer: jsonpolymer,
+          box: box,
+          name: name,
+          number: number
         }
-        this.warningfunction("Fail ! Wrong links : " + dicoError.errorlinks + ". You can correct this mistake with \"click right\" -> \"Remove bad links\" or with \"fixlink\" button in red")
-        this.setState({ itp: dicoError.itp, errorLink: listerror })
-        //socket.emit("continue",)
-
       }
-      else if (dicoError.message.length) {
-        console.log(dicoError.message)
-        this.setState({ Warningmessage: dicoError.message })
-      }
-
       else {
-        // (dicoError.disjoint === true) 
-        this.setState({ Warningmessage: "Fail ! Your molecule consists of disjoint parts.Perhaps links were not applied correctly. Peut etre une option a ajouter pour mettre 2 molecule dans le melange ????????" })
+        data = {
+          polymer: jsonpolymer,
+          box: box,
+          name: name,
+          number: number,
+          customITP: this.state.customITP
+        }
       }
 
-    })
+      this.socket.emit('runpolyply', data)
+
+      this.socket.on("top", (topfilestr: string) => {
+        this.setState({ top: topfilestr })
+      })
+
+
+      this.socket.on("itp", (res: string) => {
+        if (res !== "") {
+          this.setState({ stepsubmit: 2 })
+          this.setState({ itp: res })
+          //Besoin de verifier que l'itp fourni par polyply est le meme polymere que celui afficher
+          // const jsonpolymer = simulationToJson(this.state.Simulation!, this.currentForceField)
+
+          // const klcdwu = this.returnITPinfo(res)
+
+          // console.log("this.returnITPinfo(res)", klcdwu)
+          // const NBatomsITP: number = klcdwu![0].length
+          // const NBlinksITP: number = klcdwu![1].length
+          // const NBatomsSIM: number = jsonpolymer.nodes.length
+          // const NBlinksSIM: number = jsonpolymer.links.length
+
+          // console.log(NBatomsITP, NBlinksITP, NBatomsSIM, NBlinksSIM)
+          // if (NBatomsSIM !== NBatomsITP) {
+          //   this.setState({ dialogWarning: "WHOUWHOUWHOU alert au node" })
+
+          // }
+          // else if (NBlinksSIM !== NBlinksITP) {
+          //   this.setState({ dialogWarning: "Probleme de lien entre le fichier generé par polyply et la representation" })
+          //   //Check missing links
+          //   console.log(this.state.Simulation)
+          //   socket.emit("continue")
+
+          // }
+          // else {
+          //   socket.emit("continue")
+          // }
+          this.socket.emit("continue", this.state.itp)
+          console.log("continue")
+        }
+      })
+
+      this.socket.on("gro", (data: string) => {
+        console.log("gro !")
+        this.setState({ gro: data })
+        this.setState({ stepsubmit: 3 })
+      })
+
+      this.socket.on("pdb", (data: string) => {
+        this.setState({ pdb: data })
+        this.setState({ stepsubmit: 4 })
+      })
+
+      this.socket.on("oups", async (dicoError: any) => {
+        this.setState({ stepsubmit: undefined })
+        this.setState({ loading: false })
+
+        //Si il y a des erreur, on affiche un warning 
+
+        //check 
+        if (dicoError.errorlinks.length > 0) {
+          let listerror = []
+          //To show error on the svg
+          for (let i of dicoError.errorlinks) {
+            listerror.push([i[1].toString(), i[3].toString()])
+            alarmBadLinks(i[1].toString(), i[3].toString())
+          }
+          this.warningfunction("Fail ! Wrong links : " + dicoError.errorlinks + ". You can correct this mistake with \"click right\" -> \"Remove bad links\" or with \"fixlink\" button in red")
+          this.setState({ itp: dicoError.itp, errorLink: listerror })
+          //socket.emit("continue",)
+
+        }
+        else if (dicoError.message.length) {
+          console.log(dicoError.message)
+          this.setState({ Warningmessage: dicoError.message })
+        }
+
+        else {
+          // (dicoError.disjoint === true) 
+          this.setState({ Warningmessage: "Fail ! Your molecule consists of disjoint parts.Perhaps links were not applied correctly. Peut etre une option a ajouter pour mettre 2 molecule dans le melange ????????" })
+        }
+
+      })
+    }
   }
 
   componentDidMount() {
@@ -793,7 +795,7 @@ export default class GeneratorManager extends React.Component {
           {this.state.loading ? (
             <RunPolyplyDialog
               send={this.Send}
-              currentStep={this.state.stepsubmit}
+              currentStep={this.state.stepsubmit!}
               itp={this.state.itp}
               gro={this.state.gro}
               pdb={this.state.pdb}

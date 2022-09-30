@@ -83,7 +83,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
               .selectAll("path:not(.group_path)")
               .filter((d: any) => ((d.x < selection[1][0]) && (d.x > selection[0][0]) && (d.y < selection[1][1]) && (d.y > selection[0][1])))
               .attr("class", "onfocus");
- 
+
           }
         })
         .on("end", (event: any) => {
@@ -94,24 +94,29 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
       );
 
     d3.select(this.ref).call(d3.zoom<SVGSVGElement, unknown>().scaleExtent([0.1, 1.8]).on("zoom", (event) => {
-      //On recupere la valeur de zoom 
-      zoomValue = event.transform.k;
-      //On modifie le rayon en fonction du zoom  
-      console.log("zoom value", zoomValue);
+      if (zoomValue !== event.transform.k) {
+        console.log(event)
+        //On recupere la valeur de zoom 
+        zoomValue = event.transform.k;
+        //On modifie le rayon en fonction du zoom  
+        console.log("zoom value", zoomValue);
 
-      d3.select(this.ref)
-        .selectAll<SVGCircleElement, SimulationNode>("path")
-        .attr("zoom", zoomValue)
-        .attr("transform", function () {
-          return this.getAttribute("transform") + ` scale(${zoomValue})`;
-        });
+        d3.select(this.ref)
+          .selectAll<SVGCircleElement, SimulationNode>("path")
+          .attr("zoom", zoomValue)
+          .attr("transform", function () {
+            return this.getAttribute("transform") + ` scale(${zoomValue})`;
+          });
 
+        console.log("distance", (this.nodeSize / 4) * zoomValue)
 
-      //Change simulation property
-      this.simulation
-        .force("link", d3.forceLink().distance(this.nodeSize * (zoomValue *zoomValue ) / 4))
+        //Change simulation property
+        this.simulation
+          .force("link", d3.forceLink().distance((this.nodeSize / 3) * (zoomValue * zoomValue)).strength(0.5))
+       
+        this.UpdateSVG()
+      }
 
-      this.UpdateSVG()
     }));
     setnodeSize(this.nodeSize)
     setSVG(this.ref);
@@ -311,6 +316,8 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
     }
 
     const clickAncCloseMenu = (event: React.MouseEvent) => {
+      event.preventDefault();
+      console.log("clickAncCloseMenu")
       if (this.state.show) {
         this.handleClose()
       }
