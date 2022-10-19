@@ -197,7 +197,7 @@ interface ModalState {
   content: string;
 }
 
-class ModalMoleculeSelector extends React.Component<{ open: boolean; onChoose(molecule: Molecule): any; onCancel(): any; }, ModalState> {
+export class ModalMoleculeSelector extends React.Component<{ open: boolean; onChoose(molecule: Molecule): any; onCancel(): any; }, ModalState> {
   timeout: NodeJS.Timeout | undefined;
 
   state: ModalState = {

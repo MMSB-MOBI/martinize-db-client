@@ -6,7 +6,7 @@ import Typography from '@mui/material/Typography';
 import * as d3 from "d3";
 import { SimulationNode, SimulationLink, SimulationGroup } from '../SimulationType';
 import { DownloadJson } from '../generateJson';
-import { addLinkToSVG, addNodeToSVG, reloadSimulation, removeNode } from "../ViewerFunction";
+import { addLinkToSVG, addNodeToSVG,  removeNode } from "../ViewerFunction";
 import { decreaseID } from '../GeneratorManager'
 
 
@@ -20,11 +20,23 @@ interface props {
     forcefield: string,
     handlePaste: (arg: any, arg2?: string) => void;
     handleUpdate: () => void;
+    change_current_position_fixlink: (arg: any) => void,
     svg: d3.Selection<SVGSVGElement, unknown, null, undefined>;
     zoom: number
 }
 
 export default class CustomContextMenu extends React.Component<props> {
+
+    check_if_error_link(link: SimulationLink) {
+        let boo = false
+        this.props.svg.selectAll<SVGPathElement, SimulationLink>("line.error")
+            .each((l: SimulationLink) => {
+                if (l === link) { 
+                    boo = true}
+            })
+        return boo
+    }
+
 
     addMagicLink() {
         console.log("Add link between node to create a chain")
@@ -120,7 +132,7 @@ export default class CustomContextMenu extends React.Component<props> {
 
         link.source.links = link.source.links!.filter((nodelink: SimulationNode) => nodelink !== link.target);
         link.target.links = link.target.links!.filter((nodelink: SimulationNode) => nodelink !== link.source);
-        this.props.svg.selectAll<SVGLineElement, SimulationLink>("line").filter((l: SimulationLink) => ( l === link)).remove();
+        this.props.svg.selectAll<SVGLineElement, SimulationLink>("line").filter((l: SimulationLink) => (l === link)).remove();
         this.props.handleUpdate();
     }
 
@@ -380,10 +392,15 @@ export default class CustomContextMenu extends React.Component<props> {
 
                 {(this.props.lineClick) &&
                     <div>
+                        {(this.check_if_error_link(this.props.lineClick)) &&
+                            <MenuItem onClick={() => { this.props.change_current_position_fixlink(this.props.lineClick!) }}> Fix this error </MenuItem>
+                        }
                         <MenuItem onClick={() => { this.removeThisLink(this.props.lineClick!) }}> Remove this link </MenuItem>
                         <Divider />
                     </div>
                 }
+
+
 
                 {(this.props.hullClick) &&
                     <div key={0}>

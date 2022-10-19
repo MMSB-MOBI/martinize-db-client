@@ -35,8 +35,9 @@ interface StateSimulation {
   gro: string,
   pdb: string,
   top: string,
-  itpfixing: boolean,
-  errorLink: any[]
+  errorLink: string[][],
+  current_position_fixlink: number | undefined,
+  errorfix: any
 }
 
 
@@ -80,22 +81,46 @@ export default class GeneratorManager extends React.Component {
     Warningmessage: "",
     dialogWarning: "",
     loading: false,
-    itpfixing: false,
     stepsubmit: undefined,
     top: "",
     itp: "",
     gro: "",
     pdb: "",
-    errorLink: []
+    errorLink: [],
+    current_position_fixlink: undefined,
+    errorfix: undefined
   }
 
   socket = SocketIo.connect(SERVER_ROOT);
 
   currentForceField = '';
 
+  change_current_position_fixlink = (linktofix: SimulationLink): void => {
+    console.log("change_current_position_fixlink")
+    let c = 0
+
+    for (let bordel of this.state.errorLink) {
+      let l = [linktofix.source.id, linktofix.target.id]
+      // Super dumb condition 
+      if (((bordel[0] === l[0]) && (bordel[1] === l[1])) || ((bordel[1] === l[0]) && (bordel[0] === l[1]))) {
+        this.setState({ current_position_fixlink: c })
+        return
+      }
+      c = c + 1
+    }
+
+  }
+
   warningfunction = (message: string): void => {
     this.setState({ Warningmessage: message })
   }
+
+  ce_truc_est_fixed = (id: number): void => {
+    let copy = this.state.errorfix
+    copy[id].is_fixed = true
+    this.setState({ errorfix: copy })
+  }
+
 
   addprotsequence = (sequence: string) => {
     let i = 0;
@@ -174,6 +199,9 @@ export default class GeneratorManager extends React.Component {
           oldID: node.id,
           newID: newid,
         })
+        if (!(this.state.dataForForm[this.currentForceField].includes(node.resname))) {
+          this.setState({ Warningmessage: node.resname + " not in " + this.currentForceField + ". Please do something !!! (But please don't cry)" })
+        }
 
         node.id = newid
         newMolecule.push(node)
@@ -256,7 +284,6 @@ export default class GeneratorManager extends React.Component {
       oldid = parseInt(nodelist[2])
     }
 
-    console.log(newMolecules)
     let newlinks = []
     // 3rd faire la liste des liens
     if (newMolecules.length !== 1) {
@@ -295,85 +322,85 @@ export default class GeneratorManager extends React.Component {
 
   }
 
-  addFromITP = (itpstring: string) => {
-    const itp = ItpFile.readFromString(itpstring);
+  // addFromITP = (itpstring: string) => {
+  //   const itp = ItpFile.readFromString(itpstring);
 
-    const atoms = itp.getField('atoms')
-    const links = itp.getField('bonds')
-    let good = true
-    // 1st generer une liste de noeuds
+  //   const atoms = itp.getField('atoms')
+  //   const links = itp.getField('bonds')
+  //   let good = true
+  //   // 1st generer une liste de noeuds
 
-    console.log("atoms", atoms.length)
-    console.log("links", links.length)
-    const newMolecules: SimulationNode[] = [];
+  //   console.log("atoms", atoms.length)
+  //   console.log("links", links.length)
+  //   const newMolecules: SimulationNode[] = [];
 
-    // convert to node object et injecte dans la list
-    //Voila la forme du bordel
-    // 1 P5    1 POPE NH3  1  0.0
-    //Super pratique 
-    //Garder en memoire l'id d'avant sur l'itp 
-    let oldid = 0
+  //   // convert to node object et injecte dans la list
+  //   //Voila la forme du bordel
+  //   // 1 P5    1 POPE NH3  1  0.0
+  //   //Super pratique 
+  //   //Garder en memoire l'id d'avant sur l'itp 
+  //   let oldid = 0
 
-    for (let nodestr of atoms) {
-      const nodelist = nodestr.split(' ').filter((e) => { return e !== "" })
-      // 2nd check s'ils sont inside le forcefield 
-      if (!(this.state.dataForForm[this.currentForceField].includes(nodelist[3]))) {
-        this.setState({ Warningmessage: nodelist[3] + " not in " + this.currentForceField })
-        console.log(nodelist[3] + " not in " + this.currentForceField)
-        good = false
-        break
-      }
-      else if (nodelist[2] !== oldid.toString()) {
-        let mol = {
-          "resname": nodelist[3],
-          "seqid": 0,
-          "id": generateID(),
-        };
+  //   for (let nodestr of atoms) {
+  //     const nodelist = nodestr.split(' ').filter((e) => { return e !== "" })
+  //     // 2nd check s'ils sont inside le forcefield 
+  //     if (!(this.state.dataForForm[this.currentForceField].includes(nodelist[3]))) {
+  //       this.setState({ Warningmessage: nodelist[3] + " not in " + this.currentForceField })
+  //       console.log(nodelist[3] + " not in " + this.currentForceField)
+  //       good = false
+  //       break
+  //     }
+  //     else if (nodelist[2] !== oldid.toString()) {
+  //       let mol = {
+  //         "resname": nodelist[3],
+  //         "seqid": 0,
+  //         "id": generateID(),
+  //       };
 
-        newMolecules.push(mol)
-        oldid = parseInt(nodelist[2])
-      }
-    }
+  //       newMolecules.push(mol)
+  //       oldid = parseInt(nodelist[2])
+  //     }
+  //   }
 
-    if (good) {
+  //   if (good) {
 
-      let newlinks = []
-      // 3rd faire la liste des liens
-      for (let linkstr of links) {
-        if (linkstr.startsWith(";")) continue
-        else if (linkstr.startsWith("#")) continue
-        else {
-          const link = linkstr.split(' ').filter((e) => { return e !== "" })
+  //     let newlinks = []
+  //     // 3rd faire la liste des liens
+  //     for (let linkstr of links) {
+  //       if (linkstr.startsWith(";")) continue
+  //       else if (linkstr.startsWith("#")) continue
+  //       else {
+  //         const link = linkstr.split(' ').filter((e) => { return e !== "" })
 
-          console.log("add this link ", link)
-          let idlink1 = parseInt(atoms[parseInt(link[0]) - 1].split(' ').filter((e) => { return e !== "" })[2])
-          let idlink2 = parseInt(atoms[parseInt(link[1]) - 1].split(' ').filter((e) => { return e !== "" })[2])
+  //         console.log("add this link ", link)
+  //         let idlink1 = parseInt(atoms[parseInt(link[0]) - 1].split(' ').filter((e) => { return e !== "" })[2])
+  //         let idlink2 = parseInt(atoms[parseInt(link[1]) - 1].split(' ').filter((e) => { return e !== "" })[2])
 
-          let node1 = newMolecules[idlink1 - 1]
-          let node2 = newMolecules[idlink2 - 1]
+  //         let node1 = newMolecules[idlink1 - 1]
+  //         let node2 = newMolecules[idlink2 - 1]
 
-          if (idlink1 !== idlink2) {
-            newlinks.push({
-              "source": newMolecules[idlink1 - 1],
-              "target": newMolecules[idlink2 - 1]
-            });
+  //         if (idlink1 !== idlink2) {
+  //           newlinks.push({
+  //             "source": newMolecules[idlink1 - 1],
+  //             "target": newMolecules[idlink2 - 1]
+  //           });
 
-            if (node1.links) node1.links.push(node2);
-            else node1.links = [node2];
+  //           if (node1.links) node1.links.push(node2);
+  //           else node1.links = [node2];
 
-            if (node2.links) node2.links.push(node1);
-            else node2.links = [node1];
+  //           if (node2.links) node2.links.push(node1);
+  //           else node2.links = [node1];
 
-          }
-        }
-      }
+  //         }
+  //       }
+  //     }
 
-      this.setState({ nodesToAdd: newMolecules });
-      this.setState({ linksToAdd: newlinks });
+  //     this.setState({ nodesToAdd: newMolecules });
+  //     this.setState({ linksToAdd: newlinks });
 
 
-    }
-  }
+  //   }
+  // }
 
   returnITPinfo = (itpstring: string) => {
     const itp = ItpFile.readFromString(itpstring);
@@ -580,10 +607,6 @@ export default class GeneratorManager extends React.Component {
 
   }
 
-  closeFixlink = (): void => {
-    this.setState({ itpfixing: false })
-  }
-
 
   ClickToSend = (): void => {
     console.log("Go to server");
@@ -599,9 +622,34 @@ export default class GeneratorManager extends React.Component {
   }
   grossecorection = (itpfix: string) => {
 
-    this.setState({ stepsubmit: 2, loading: true, itp : itpfix, itpfixing: false, errorLink :[] })
+    this.setState({ stepsubmit: 2, loading: true, itp: itpfix, current_position_fixlink: undefined, errorLink: [] })
     this.socket.emit("continue", itpfix)
   }
+
+  getbeadslist = (idres: string) => {
+
+    const itplineToDico = (li: string[]) => {
+      // 301 SC3  128 ARG SC1 301  0.0
+      let out = []
+      for (let e of li) {
+        const esplit = e.split(' ').filter(e => e !== '')
+        out.push({ idbead: esplit[0], idres: esplit[2], resname: esplit[3], bead: esplit[4], })
+      }
+      return out
+    }
+
+    //Need to change because id start with 0 and id res start with 1 
+    const idresmodif = Number(idres) + 1
+    const itp = ItpFile.readFromString(this.state.itp);
+
+    const atoms = itp.getField('atoms', true)
+    const listparseditp = itplineToDico(atoms)
+    console.log(listparseditp)
+    console.log(idresmodif)
+    return listparseditp.filter((e: any) => (parseInt(e.idres) === idresmodif))
+  }
+
+
 
   Send = (box: string, name: string, number: string): void => {
 
@@ -702,19 +750,42 @@ export default class GeneratorManager extends React.Component {
 
         //check 
         if (dicoError.errorlinks.length > 0) {
-          let listerror = []
+          let listerror: any[][] = []
           //To show error on the svg
           for (let i of dicoError.errorlinks) {
             listerror.push([i[1].toString(), i[3].toString()])
             alarmBadLinks(i[1].toString(), i[3].toString())
           }
           this.warningfunction("Fail ! Wrong links : " + dicoError.errorlinks + ". You can correct this mistake with \"click right\" -> \"Remove bad links\" or with \"fixlink\" button in red")
-          this.setState({ itp: dicoError.itp, errorLink: listerror })
+
+          this.setState({ itp: dicoError.itp })
+          let generate_error_fixing_state = Array.from({ length: listerror.length }, (_, i) => {
+            const bead_list_start = this.getbeadslist(listerror[i][0])
+            const bead_list_end = this.getbeadslist(listerror[i][1])
+
+            const startbead = bead_list_start[0]["idbead"]
+            const endbead = bead_list_end[0]["idbead"]
+            const startresname = bead_list_start[0]["resname"]
+            const endresname = bead_list_end[0]["resname"]
+
+            return {
+              start: startbead,
+              end: endbead,
+              startresname: startresname,
+              endresname: endresname,
+              angle: "0.336",
+              force: "1200",
+              startchoice: bead_list_start,
+              endchoice: bead_list_end,
+              is_fixed: false
+            };
+          })
+          this.setState({ errorLink: listerror, errorfix: generate_error_fixing_state })
           //socket.emit("continue",)
 
         }
         else if (dicoError.message.length) {
-          console.log(dicoError.message)
+
           this.setState({ Warningmessage: dicoError.message })
         }
 
@@ -749,7 +820,7 @@ export default class GeneratorManager extends React.Component {
   };
 
   fixlinkcomponentappear = () => {
-    this.setState({ itpfixing: true })
+    this.setState({ current_position_fixlink: 0 })
   }
 
   render() {
@@ -773,12 +844,39 @@ export default class GeneratorManager extends React.Component {
           <Marger size="1rem" />
         </AppBar>
 
+        {this.state.loading ? (
+          <RunPolyplyDialog
+            send={this.Send}
+            currentStep={this.state.stepsubmit!}
+            itp={this.state.itp}
+            gro={this.state.gro}
+            pdb={this.state.pdb}
+            close={this.closeDialog}
+            top={this.state.top}
+            warning={this.state.dialogWarning}> </RunPolyplyDialog>
+        ) : (<></>)
+        }
+
+        {(this.state.current_position_fixlink !== undefined) ? (
+          <FixLink
+            function_truc={this.ce_truc_est_fixed}
+            current_position={this.state.current_position_fixlink}
+            itp={this.state.itp}
+            close={() => { this.setState({ current_position_fixlink: undefined }) }}
+            send={this.grossecorection}
+            fixing_error={this.state.errorfix}
+            update_error={(e: any): void => {
+              this.setState({ errorfix: e });
+            }} > </FixLink>
+        ) : (<></>)
+        }
+
+
 
         <Grid item md={4} component={Paper} elevation={6} square>
 
           <GeneratorMenu
             errorlink={this.state.errorLink}
-            addFromITP={this.addFromITP}
             addprotsequence={this.addprotsequence}
             setForcefield={this.setForcefield}
             addnodeFromJson={this.addnodeFromJson}
@@ -792,34 +890,13 @@ export default class GeneratorManager extends React.Component {
             addNEwCustomLink={(name: string, itpstring: string) => { let dictionary: { [name: string]: string; } = this.state.customITP; dictionary[name] = itpstring; this.setState({ customITP: dictionary }); }}
             fixlinkcomponentappear={this.fixlinkcomponentappear} />
 
-          {this.state.loading ? (
-            <RunPolyplyDialog
-              send={this.Send}
-              currentStep={this.state.stepsubmit!}
-              itp={this.state.itp}
-              gro={this.state.gro}
-              pdb={this.state.pdb}
-              close={this.closeDialog}
-              top={this.state.top}
-              warning={this.state.dialogWarning}> </RunPolyplyDialog>
-          ) : (<></>)
-          }
-
-          {this.state.itpfixing ? (
-            <FixLink
-              itp={this.state.itp}
-              close={this.closeFixlink}
-              error={this.state.errorLink}
-              send={this.grossecorection} > </FixLink>
-          ) : (<></>)
-          }
-
 
 
 
         </Grid>
         <Grid item xs={7} style={{ height: "100vw" }}>
           <PolymerViewer
+            change_current_position_fixlink={this.change_current_position_fixlink}
             warningfunction={this.warningfunction}
             forcefield={this.currentForceField}
             getSimulation={(SimulationFromViewer: d3.Simulation<SimulationNode, SimulationLink>) => { this.setState({ Simulation: SimulationFromViewer }) }}

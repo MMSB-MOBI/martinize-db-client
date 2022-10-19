@@ -12,8 +12,11 @@ import { Marger } from '../../../helpers';
 interface props {
     send: (itp: string) => void;
     itp: string,
-    error: any[],
     close: () => void,
+    current_position: number | undefined,
+    fixing_error: any[],
+    update_error: (e: any) => void,
+    function_truc: (id: number) => void
 }
 
 interface state {
@@ -22,29 +25,21 @@ interface state {
     angleid: any,
     tofix: any[],
     out: string | undefined,
-    errorfix: any[],
+
 }
 
 export default class FixLink extends React.Component<props, state> {
-
-
     constructor(props: props) {
         // Required step: always call the parent class' constructor
         super(props);
 
         // Set the state directly. Use props if necessary.
         this.state = {
-            numeroLink: 0,
+            numeroLink: this.props.current_position ? this.props.current_position : 0,
             bonds: [],
             tofix: [],
             angleid: undefined,
             out: undefined,
-            errorfix: Array.from({ length: this.props.error.length }, (_, i) => {
-                const startbead = this.getbeadslist(this.props.error[i][0])[0]["idbead"]
-                const endbead = this.getbeadslist(this.props.error[i][1])[0]["idbead"]
-                let dic = { start: startbead, end: endbead, angle: "0.336", force: "1200" };
-                return dic
-            })
         }
     }
 
@@ -53,12 +48,11 @@ export default class FixLink extends React.Component<props, state> {
     }
 
     ApplyFix = () => {
-        console.log(this.state.errorfix)
 
         const splititp = this.props.itp.split("[ bonds ]")
         let itpFIX = splititp[0] + "[ bonds ]\n"
 
-        for (const fix of this.state.errorfix) {
+        for (const fix of this.props.fixing_error) {
             itpFIX = itpFIX + `${fix["start"]} ${fix["end"]} 1 ${fix["angle"]} ${fix["force"]}\n`
         }
 
@@ -69,48 +63,33 @@ export default class FixLink extends React.Component<props, state> {
     }
 
 
-    itplineToDico = (li: string[]) => {
-        // 301 SC3  128 ARG SC1 301  0.0
-        let out = []
-        for (let e of li) {
-            const esplit = e.split(' ').filter(e => e !== '')
-            out.push({ idbead: esplit[0], idres: esplit[2], resname: esplit[3], bead: esplit[4], })
-        }
-        return out
-    }
 
-    getbeadslist = (idres: string) => {
-        //Need to change because id start with 0 and id res start with 1 
-        const idresmodif = Number(idres) + 1
-        const itp = ItpFile.readFromString(this.props.itp);
-        const atoms = itp.getField('atoms', true)
-        const listparseditp = this.itplineToDico(atoms)
-        return listparseditp.filter((e: any) => (e.idres == idresmodif))
-    }
 
     handlechangeBead = (beadtruc: string, position: string) => {
-        let copy = this.state.errorfix
+        let copy = this.props.fixing_error
         copy[this.state.numeroLink][position] = beadtruc
-        this.setState({ errorfix: copy })
-        //console.log(this.state.errorfix)
+        this.props.update_error(copy)
+        //console.log(this.props.fixing_error)
     }
 
     handleangle = (a: string) => {
-        let copy = this.state.errorfix
+        let copy = this.props.fixing_error
         copy[this.state.numeroLink]["angle"] = a
-        this.setState({ errorfix: copy })
-        //console.log(this.state.errorfix)
+        this.props.update_error(copy)
+        //console.log(this.props.fixing_error)
     }
 
     handleforce = (f: string) => {
-        let copy = this.state.errorfix
+        let copy = this.props.fixing_error
         copy[this.state.numeroLink]["force"] = f
-        this.setState({ errorfix: copy })
-        //console.log(this.state.errorfix)
+        this.props.update_error(copy)
+        //console.log(this.props.fixing_error)
     }
 
 
     render() {
+
+        console.log(this.props, this.state)
 
         return (
             <Dialog open={true}  >
@@ -121,18 +100,18 @@ export default class FixLink extends React.Component<props, state> {
                     <FormControl>
                         <Grid container component="main"  >
 
-                            <Grid item xs={4} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }}>
+                            <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }}>
 
-                                <Typography variant='h5'> Residue #{this.props.error[this.state.numeroLink][0]}</Typography>
+                                <Typography variant='h6'> Residue {this.props.fixing_error[this.state.numeroLink]['startresname']}  #{this.props.fixing_error[this.state.numeroLink]['start']}</Typography>
 
                                 <RadioGroup
                                     aria-labelledby="demo-radio-buttons-group-label"
-                                    value={this.state.errorfix[this.state.numeroLink]["start"]}
+                                    value={this.props.fixing_error[this.state.numeroLink]["start"]}
                                     name="radio-buttons-group"
-                                    onChange={(e) => { this.handlechangeBead((e.target as HTMLInputElement).value, "start") }}
+                                    onChange={(e) => { this.props.function_truc(this.state.numeroLink); this.handlechangeBead((e.target as HTMLInputElement).value, "start") }}
                                 >
                                     {
-                                        this.getbeadslist(this.props.error[this.state.numeroLink][0])
+                                        this.props.fixing_error[this.state.numeroLink]["startchoice"]
                                             .map((e: any) => {
                                                 return <FormControlLabel
                                                     labelPlacement="start"
@@ -143,19 +122,19 @@ export default class FixLink extends React.Component<props, state> {
                                     }
                                 </RadioGroup>
                             </Grid>
-                            <Grid item xs={3}  >
+                            <Grid item xs={2}  >
                             </Grid>
-                            <Grid item xs={4} style={{ textAlign: 'right', alignItems: 'right', justifyContent: 'center', }}>
+                            <Grid item xs={5} style={{ textAlign: 'right', alignItems: 'right', justifyContent: 'center', }}>
 
-                                <Typography variant='h5'> Residue #{this.props.error[this.state.numeroLink][1]} </Typography>
+                                <Typography variant='h6'> Residue {this.props.fixing_error[this.state.numeroLink]['endresname']}  #{this.props.fixing_error[this.state.numeroLink]['end']}</Typography>
                                 <RadioGroup
                                     aria-labelledby="demo-radio-buttons-group-label"
-                                    value={this.state.errorfix[this.state.numeroLink]["end"]}
+                                    value={this.props.fixing_error[this.state.numeroLink]["end"]}
                                     name="radio-buttons-group"
-                                    onChange={(e) => { this.handlechangeBead((e.target as HTMLInputElement).value, "end") }}
+                                    onChange={(e) => { this.props.function_truc(this.state.numeroLink); this.handlechangeBead((e.target as HTMLInputElement).value, "end") }}
                                 >
                                     {
-                                        this.getbeadslist(this.props.error[this.state.numeroLink][1])
+                                        this.props.fixing_error[this.state.numeroLink]["endchoice"]
                                             .map((e: any) => {
                                                 return <FormControlLabel
                                                     value={e.idbead}
@@ -175,7 +154,7 @@ export default class FixLink extends React.Component<props, state> {
                                     type="number"
                                     inputProps={{ step: "0.1" }}
                                     defaultValue="0.336"
-                                    onChange={v => this.handleangle(v.target.value)}
+                                    onChange={v => { this.props.function_truc(this.state.numeroLink); this.handleforce(v.target.value) }}
                                 />
                             </Grid>
 
@@ -190,7 +169,7 @@ export default class FixLink extends React.Component<props, state> {
                                     type="number"
                                     inputProps={{ step: "100" }}
                                     defaultValue="1200"
-                                    onChange={v => this.handleforce(v.target.value)}
+                                    onChange={v => { this.props.function_truc(this.state.numeroLink); this.handleforce(v.target.value) }}
                                 />
                             </Grid>
                         </Grid>
@@ -204,19 +183,20 @@ export default class FixLink extends React.Component<props, state> {
                 <DialogActions>
                     {this.state.numeroLink ? (<>
                         <div>
-                            <Button onClick={() => { this.setState({ numeroLink: this.state.numeroLink - 1 }) }}>Previous Link</Button>
+                            <Button onClick={() => { this.props.function_truc(this.state.numeroLink); this.setState({ numeroLink: this.state.numeroLink - 1 }) }}>Previous Link</Button>
                         </div>
                     </>) : (<></>)}
 
-                    <Button color='warning' onClick={() => { this.props.close() }}>Remove and close</Button>
+                    <Button color='warning' onClick={() => { this.props.close() }}>Close</Button>
 
-                    {(this.state.numeroLink + 1) === this.props.error.length ? (<>
-                        <div>
-                            <Button onClick={() => { this.ApplyFix() }}>Apply</Button>
-                        </div>
-                    </>) : (<>
-                        <Button onClick={() => { this.setState({ numeroLink: this.state.numeroLink + 1 }) }}>Next Link</Button>
-                    </>)}
+                    {((this.state.numeroLink + 1) !== this.props.fixing_error.length) &&
+                        <Button onClick={() => { this.props.function_truc(this.state.numeroLink); this.setState({ numeroLink: this.state.numeroLink + 1 }) }}>Next Link</Button>
+                    }
+
+                    {(this.props.fixing_error.map((e: any) => { return e.is_fixed }).includes(false)) ?
+                        <>  </> :
+                        <Button color='success' onClick={() => { this.ApplyFix() }}>Apply</Button>
+                    }
 
                 </DialogActions>
             </Dialog >

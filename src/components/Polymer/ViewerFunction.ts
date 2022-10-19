@@ -18,14 +18,13 @@ export function setsizeSVG(newsizeSVG: number) {
     sizeSVG = newsizeSVG;
 }
 
-
 //Define simulation forcefield 
 export function initSimulation(sizeNodenodeSize: number): d3.Simulation<SimulationNode, SimulationLink> {
     const simulation = d3.forceSimulation<SimulationNode, SimulationLink>()
-        .force("charge", d3.forceManyBody().strength(-150))
+        .force("charge", d3.forceManyBody().strength(-sizeNodenodeSize*3))
         .force("x", d3.forceX(sizeSVG / 2).strength(0.2))
         .force("y", d3.forceY(sizeSVG / 2).strength(0.2))
-        .force("link", d3.forceLink().distance(sizeNodenodeSize / 3).strength(0.5))
+        .force("link", d3.forceLink().distance( (sizeNodenodeSize / 4) ).strength(0.5))
     return simulation
 }
 
@@ -102,6 +101,9 @@ export function alarmBadLinks(id1: string, id2: string) {
         .filter((d: SimulationLink) => (((d.source.id === id1) && (d.target.id === id2)) || ((d.source.id === id2) && (d.target.id === id1))))
         .attr("class", "error")
         .attr('stroke', "red")
+        .on('click', function (this: any, e: any, l : SimulationLink) {
+            console.log( "ERROR", l)
+        });
 }
 
 export function removeNode(nodeToRemove: SimulationNode, updateFunction: () => void, decreaseIDFunction: () => void) {
@@ -158,6 +160,7 @@ export function addNodeToSVG(newnodes: SimulationNode[], simulation: any, update
             .data([node])
             .enter()
             .append("path")
+            .attr("class", "nodes")
             .attr("zoom", zoomValue)
             .attr("x", sizeSVG / 4)
             .attr("y", sizeSVG / 4)

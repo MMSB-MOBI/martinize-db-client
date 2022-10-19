@@ -12,6 +12,7 @@ interface propsviewer {
   newLinks: SimulationLink[];
   warningfunction: (arg: any) => void;
   getSimulation: (arg: any) => void;
+  change_current_position_fixlink: (arg: any) => void;
 }
 
 interface statecustommenu {
@@ -93,7 +94,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
         })
       );
 
-    d3.select(this.ref).call(d3.zoom<SVGSVGElement, unknown>().scaleExtent([0.1, 1.8]).on("zoom", (event) => {
+    d3.select(this.ref).call(d3.zoom<SVGSVGElement, unknown>().scaleExtent([0.5, 1.5]).on("zoom", (event) => {
       if (zoomValue !== event.transform.k) {
         console.log(event)
         //On recupere la valeur de zoom 
@@ -112,8 +113,11 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
 
         //Change simulation property
         this.simulation
-          .force("link", d3.forceLink().distance((this.nodeSize / 3) * (zoomValue * zoomValue)).strength(0.5))
-       
+          .force("link", d3.forceLink().distance( (this.nodeSize / 4) * (zoomValue * zoomValue ) ).strength(0.9))
+          .force("charge", d3.forceManyBody().strength(-this.nodeSize*3* (zoomValue * zoomValue )))
+
+        console.log( zoomValue ,  (this.nodeSize / 4) * (zoomValue * zoomValue ) )
+
         this.UpdateSVG()
       }
 
@@ -188,7 +192,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
   }
 
   handleClose = () => {
-    this.setState({ show: false, nodeClick: undefined, hullClick: undefined })
+    this.setState({ show: false, nodeClick: undefined, hullClick: undefined, lineClick: undefined })
   };
 
   pasteThesedNodes = (listNodesToPaste: any, idStarting?: string) => {
@@ -277,10 +281,10 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
     console.log("Custom menu");
     event.preventDefault();
     const element = document.elementFromPoint(event.clientX, event.clientY);
-
-    if (element?.className === "nodes") {
+    console.log( element )
+    if (element?.classList[0]=== "nodes") {
       const nodeToRm: any = d3.select(element).data()[0]
-      this.setState({ x: event.clientX, y: event.clientY, nodeClick: nodeToRm, show: true, });
+      this.setState({ x: event.clientX, y: event.clientY, show: true, nodeClick: nodeToRm, });
     }
     else if (element?.className === "group_path") {
       this.setState({ x: event.clientX, y: event.clientY, show: true, hullClick: element });
@@ -309,7 +313,9 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
           handlePaste={this.pasteThesedNodes}
           handleUpdate={this.UpdateSVG}
           simulation={this.simulation}
-          zoom={zoomValue}>
+          zoom={zoomValue}
+          change_current_position_fixlink={this.props.change_current_position_fixlink}
+        >
         </CustomContextMenu>;
       }
       else return;
