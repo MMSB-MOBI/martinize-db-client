@@ -301,7 +301,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
               <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center' }}>
 
                 <Typography variant="h6" >
-                  (BETA) Add my own molecule (.itp ??):
+                   Add my own molecule:
                 </Typography>
               </Grid>
 
@@ -325,6 +325,10 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
                 </Typography>
               </Grid>
               <Marger size="1rem" />
+
+              <Grid item xs={10} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
+                <Typography variant="h6" >Add from database or history: </Typography>
+              </Grid>
 
               <Grid item xs={4} style={{ textAlign: 'left', alignItems: 'center' }}>
                 <Button variant="outlined" color="primary" onClick={() => this.setState({ database_modal_chooser: true })}>
@@ -396,6 +400,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
               <Grid item xs={10} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
                 <Typography variant="h6" >Add a new link: </Typography>
               </Grid>
+               
 
               <Grid item xs={3} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
                 <TextField
@@ -406,6 +411,9 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
                   onChange={v => this.setState({ id1: v.target.value })}
                   variant="standard" />
               </Grid>
+
+              <Grid item xs={1} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} > </Grid>
+
 
               <Grid item xs={3} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
                 <TextField

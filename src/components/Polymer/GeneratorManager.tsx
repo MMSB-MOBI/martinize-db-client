@@ -275,7 +275,7 @@ export default class GeneratorManager extends React.Component {
       if (oldid === parseInt(nodelist[2])) continue
 
       let mol = {
-        "resname": nodelist[3],
+        "resname": nodelist[3].replace('\t', ''),
         "seqid": 0,
         "id": generateID(),
         "from_itp": molname,
@@ -287,16 +287,20 @@ export default class GeneratorManager extends React.Component {
     let newlinks = []
     // 3rd faire la liste des liens
     if (newMolecules.length !== 1) {
+      console.log(newMolecules )
+      
       for (let linkstr of links) {
-
         if (linkstr.startsWith(";")) continue
         else if (linkstr.startsWith("#")) continue
         else {
           const link = linkstr.split(' ').filter((e) => { return e !== "" })
-
+          
           let idlink1 = parseInt(atoms[parseInt(link[0]) - 1].split(' ').filter((e) => { return e !== "" })[2])
           let idlink2 = parseInt(atoms[parseInt(link[1]) - 1].split(' ').filter((e) => { return e !== "" })[2])
-
+          console.log( "bug itp file with tabulation")
+          // console.log(link)
+          // console.log(linkstr)
+          // console.log( "id", idlink1 , idlink1 )
           let node1 = newMolecules[idlink1 - 1]
           let node2 = newMolecules[idlink2 - 1]
 
