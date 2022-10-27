@@ -149,7 +149,7 @@ class MoleculeChooser extends React.Component<MCProps, MCState> {
             label="Used force field"
             variant="standard"
             id="ff_select"
-            values={this.force_fields.filter((ff:string) => Settings.martinize_variables.force_fields_info[ff].supported).map(e => ({ id: e, name: e }))}
+            values={this.force_fields.filter((ff:string) => Settings.martinize_variables.force_fields_info[ff].type !== "modified").map(e => ({ id: e, name: e }))}
             value={this.state.ff}
             onChange={val => this.setState({ ff: val })}
             noMinWidth

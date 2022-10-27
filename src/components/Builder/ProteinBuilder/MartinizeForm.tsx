@@ -57,7 +57,7 @@ export interface MartinizeFormProps {
 }
 
 export default function MartinizeForm(props: MartinizeFormProps) {
-  const force_fields = Settings.martinize_variables.force_fields.filter((ff: string) => Settings.martinize_variables.force_fields_info[ff].supported).map(e => ({ id: e, name: e }));
+  const force_fields = Settings.martinize_variables.force_fields.filter((ff: string) => Settings.martinize_variables.force_fields_info[ff].type !== "modified").map(e => ({ id: e, name: e }));
   const classes = useStyles();
 
   function getAvailableModes() {

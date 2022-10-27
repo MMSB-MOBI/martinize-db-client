@@ -8,7 +8,7 @@ export interface SettingsJson {
 interface ForceFieldsInfo{
   [ff_name:string]:{
     polarizable:boolean
-    supported: boolean
+    type: "protein" | "supported" | "modified"
   }
 }
 
