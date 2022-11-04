@@ -5,7 +5,7 @@ import PolymerViewer from './GeneratorViewer';
 import { FormState, SimulationNode, SimulationLink } from './SimulationType';
 import Warning from "./Dialog/warning";
 import { simulationToJson } from './generateJson';
-import { alarmBadLinks } from './ViewerFunction';
+import { alarmBadLinks, linkcorrected } from './ViewerFunction';
 import SocketIo from 'socket.io-client';
 import RunPolyplyDialog from "./Dialog/RunPolyplyDialog";
 import ItpFile from 'itp-parser-forked'; import ApiHelper from "../../ApiHelper";
@@ -116,11 +116,30 @@ export default class GeneratorManager extends React.Component {
   }
 
   ce_truc_est_fixed = (id: number): void => {
-    let copy = this.state.errorfix
-    copy[id].is_fixed = true
-    this.setState({ errorfix: copy })
+    this.state.errorfix[id].is_fixed = true
+    // let copy = this.state.errorfix
+    // copy[id].is_fixed = true
+    // this.setState({ errorfix: copy })
+    let id1 = parseInt(this.state.errorfix[id]['startchoice'][0]['idres']) - 1
+    let id2 = parseInt(this.state.errorfix[id]['endchoice'][0]['idres']) - 1
+    linkcorrected(id1.toString(), id2.toString())
   }
 
+
+  new_modification = (): void => {
+    this.setState({
+      top: "",
+      itp: "",
+      gro: "",
+      pdb: "",
+      errorLink: [],
+      current_position_fixlink: undefined,
+      errorfix: undefined
+    })
+
+
+    console.log("new_modification")
+  }
 
   addprotsequence = (sequence: string) => {
     let i = 0;
@@ -229,6 +248,7 @@ export default class GeneratorManager extends React.Component {
       this.setState({ linksToAdd: newlinks });
       this.setState({ nodesToAdd: newMolecule });
     }
+    this.new_modification()
   }
 
   addNEwMolFromITP = (itpstring: string) => {
@@ -265,45 +285,58 @@ export default class GeneratorManager extends React.Component {
     // 1 P5    1 POPE NH3  1  0.0
     //Super pratique 
     //Garder en memoire l'id d'avant sur l'itp 
-    let oldid = -1
+
+
+    //init first res id 
+    let resid = -1
 
     for (let nodestr of atoms) {
-      const nodelist = nodestr.split(' ').filter((e) => { return e !== "" })
+      const nodestrfix = nodestr.replaceAll('\t', ' ')
+      const nodelist = nodestrfix.split(' ').filter((e) => { return e !== "" })
       //check si c'est une bead de l'ancien residu ou pas
-      if (parseInt(nodelist[2]) === 0) { }
+      console.log(nodestrfix, nodelist)
 
-      if (oldid === parseInt(nodelist[2])) continue
+      if (resid === -1) {
+        let mol = {
+          "resname": nodelist[3],
+          "seqid": 0,
+          "id": generateID(),
+          "from_itp": molname,
+        };
+        newMolecules.push(mol)
+        resid = parseInt(nodelist[2])
+      }
+      else if (resid !== parseInt(nodelist[2])) {
+        let mol = {
+          "resname": nodelist[3],
+          "seqid": 0,
+          "id": generateID(),
+          "from_itp": molname,
+        };
+        newMolecules.push(mol)
+        resid = parseInt(nodelist[2])
+      }
 
-      let mol = {
-        "resname": nodelist[3].replace('\t', ''),
-        "seqid": 0,
-        "id": generateID(),
-        "from_itp": molname,
-      };
-      newMolecules.push(mol)
-      oldid = parseInt(nodelist[2])
     }
+    console.log(newMolecules)
 
     let newlinks = []
     // 3rd faire la liste des liens
     if (newMolecules.length !== 1) {
-      console.log(newMolecules )
-      
       for (let linkstr of links) {
         if (linkstr.startsWith(";")) continue
         else if (linkstr.startsWith("#")) continue
         else {
           const link = linkstr.split(' ').filter((e) => { return e !== "" })
-          
-          let idlink1 = parseInt(atoms[parseInt(link[0]) - 1].split(' ').filter((e) => { return e !== "" })[2])
-          let idlink2 = parseInt(atoms[parseInt(link[1]) - 1].split(' ').filter((e) => { return e !== "" })[2])
-          console.log( "bug itp file with tabulation")
-          // console.log(link)
-          // console.log(linkstr)
-          // console.log( "id", idlink1 , idlink1 )
+
+          let idlink1 = parseInt(atoms[parseInt(link[0]) - 1].replaceAll('\t', ' ').split(' ').filter((e) => { return e !== "" })[2])
+          let idlink2 = parseInt(atoms[parseInt(link[1]) - 1].replaceAll('\t', ' ').split(' ').filter((e) => { return e !== "" })[2])
+          console.log("bug itp file with tabulation")
+
           let node1 = newMolecules[idlink1 - 1]
           let node2 = newMolecules[idlink2 - 1]
 
+          console.log(node1, node2)
           if (idlink1 !== idlink2) {
             newlinks.push({
               "source": newMolecules[idlink1 - 1],
@@ -324,6 +357,7 @@ export default class GeneratorManager extends React.Component {
 
     this.state.dataForForm[this.currentForceField].push(molname)
 
+    this.new_modification()
   }
 
   // addFromITP = (itpstring: string) => {
@@ -575,6 +609,7 @@ export default class GeneratorManager extends React.Component {
 
       this.setState({ Warningmessage: "Change forcefield to " + this.currentForceField })
     }
+    this.new_modification()
   }
 
   addlink = (id1: string, id2: string): void => {
@@ -603,6 +638,7 @@ export default class GeneratorManager extends React.Component {
     else node2.links = [node1];
 
     this.setState({ linksToAdd: newlinks });
+    this.new_modification()
   }
 
   closeDialog = (): void => {
@@ -807,10 +843,6 @@ export default class GeneratorManager extends React.Component {
       .then((value: JSON) => { console.log(value); this.setState({ dataForForm: value }) })
       .catch((err: any) => { console.log(err); this.setState({ dataForForm: {} }) });
 
-
-    // this.getDataForcefield()
-    //   .then((value: JSON) => this.setState({ dataForForm: value }))
-    //   .catch((err: any) => { console.log(err); this.setState({ dataForForm: {} }) });
   }
 
   // fetching the GET route from the Express server which matches the GET route from server.js
@@ -828,10 +860,7 @@ export default class GeneratorManager extends React.Component {
   }
 
   render() {
-
-
     return (
-
       <Grid
         container
         component="main" >
@@ -863,7 +892,7 @@ export default class GeneratorManager extends React.Component {
 
         {(this.state.current_position_fixlink !== undefined) ? (
           <FixLink
-            function_truc={this.ce_truc_est_fixed}
+            is_fixed={this.ce_truc_est_fixed}
             current_position={this.state.current_position_fixlink}
             itp={this.state.itp}
             close={() => { this.setState({ current_position_fixlink: undefined }) }}
@@ -895,11 +924,10 @@ export default class GeneratorManager extends React.Component {
             fixlinkcomponentappear={this.fixlinkcomponentappear} />
 
 
-
-
         </Grid>
         <Grid item xs={7} style={{ height: "100vw" }}>
           <PolymerViewer
+            modification={this.new_modification}
             change_current_position_fixlink={this.change_current_position_fixlink}
             warningfunction={this.warningfunction}
             forcefield={this.currentForceField}

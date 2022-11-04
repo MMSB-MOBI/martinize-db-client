@@ -138,7 +138,7 @@ function DrawerElements(props: RouteComponentProps) {
       {
         path: '/polymer',
         link: true,
-        icon: 'beer',
+        icon: 'draw-polygon',
         text: 'Polymer Generator',
         //condition: !!Settings.logged,
         font : "bold"

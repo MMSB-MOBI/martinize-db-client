@@ -21,10 +21,10 @@ export function setsizeSVG(newsizeSVG: number) {
 //Define simulation forcefield 
 export function initSimulation(sizeNodenodeSize: number): d3.Simulation<SimulationNode, SimulationLink> {
     const simulation = d3.forceSimulation<SimulationNode, SimulationLink>()
-        .force("charge", d3.forceManyBody().strength(-sizeNodenodeSize*3))
+        .force("charge", d3.forceManyBody().strength(-sizeNodenodeSize * 3))
         .force("x", d3.forceX(sizeSVG / 2).strength(0.2))
         .force("y", d3.forceY(sizeSVG / 2).strength(0.2))
-        .force("link", d3.forceLink().distance( (sizeNodenodeSize / 4) ).strength(0.5))
+        .force("link", d3.forceLink().distance((sizeNodenodeSize / 4)).strength(0.5))
     return simulation
 }
 
@@ -101,8 +101,8 @@ export function alarmBadLinks(id1: string, id2: string) {
         .filter((d: SimulationLink) => (((d.source.id === id1) && (d.target.id === id2)) || ((d.source.id === id2) && (d.target.id === id1))))
         .attr("class", "error")
         .attr('stroke', "red")
-        .on('click', function (this: any, e: any, l : SimulationLink) {
-            console.log( "ERROR", l)
+        .on('click', function (this: any, e: any, l: SimulationLink) {
+            console.log("ERROR", l)
         });
 }
 
@@ -130,7 +130,7 @@ export function removeNode(nodeToRemove: SimulationNode, updateFunction: () => v
             //d.index = newID
             d.id = newID.toString()
             d.index = newID
-            console.log("New ", d)
+
         })
     //Check if minimun id != de currentID 
     //Mettre une condition d'arret pour ne pas decrease 
@@ -284,6 +284,15 @@ export function checkLink(node1: SimulationNode, node2: SimulationNode) {
     }
     return true;
 }
+
+export function linkcorrected(idnode1: string, idnode2: string) {
+     
+    d3.select(Mysvg)
+        .selectAll<SVGElement, SimulationLink>("line")
+        .filter((d: SimulationLink) => ((d.source.id === idnode1) && (d.target.id === idnode2) || (d.target.id === idnode1) && (d.source.id === idnode2)))
+        .attr('stroke', "green")
+}
+
 
 export function addLinkToSVG(newLink: SimulationLink[]): void {
     const link = d3.select(Mysvg).selectAll("line")

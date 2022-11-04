@@ -13,6 +13,7 @@ interface propsviewer {
   warningfunction: (arg: any) => void;
   getSimulation: (arg: any) => void;
   change_current_position_fixlink: (arg: any) => void;
+  modification: () => void;
 }
 
 interface statecustommenu {
@@ -49,6 +50,18 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
   prevPropsNewnode: any = null;
   prevPropsNewLink: any = null;
   simulation!: d3.Simulation<SimulationNode, SimulationLink>;
+
+
+
+  polymer_is_modified = () => {
+    this.props.modification()
+    d3.select(this.ref)
+      .selectAll<SVGElement, SimulationLink>("line.error")
+      .attr("class", "links")
+      .attr("stroke", "grey")
+    console.log( "polymer_is_modified")
+  }
+
 
   componentDidMount() {
     //Draw svg frame
@@ -113,10 +126,10 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
 
         //Change simulation property
         this.simulation
-          .force("link", d3.forceLink().distance( (this.nodeSize / 4) * (zoomValue * zoomValue ) ).strength(0.9))
-          .force("charge", d3.forceManyBody().strength(-this.nodeSize*3* (zoomValue * zoomValue )))
+          .force("link", d3.forceLink().distance((this.nodeSize / 4) * (zoomValue * zoomValue)).strength(0.9))
+          .force("charge", d3.forceManyBody().strength(-this.nodeSize * 3 * (zoomValue * zoomValue)))
 
-        console.log( zoomValue ,  (this.nodeSize / 4) * (zoomValue * zoomValue ) )
+        console.log(zoomValue, (this.nodeSize / 4) * (zoomValue * zoomValue))
 
         this.UpdateSVG()
       }
@@ -145,11 +158,12 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
         // }
       }
       addLinkToSVG(Linktoadd)
+      this.polymer_is_modified()
     }
     // Si des news props apparaissent depuis manager on ajoute les noeuds !!!
     if (this.prevPropsNewnode !== this.props.newNodes) {
       addNodeToSVG(this.props.newNodes, this.simulation, this.UpdateSVG, zoomValue)
-
+      this.polymer_is_modified()
       //Keep the previous props in memory
       this.prevPropsNewLink = this.props.newLinks;
       this.prevPropsNewnode = this.props.newNodes;
@@ -274,6 +288,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
 
     }
     addLinkToSVG(newlinks)
+    this.polymer_is_modified()
     this.UpdateSVG()
   }
 
@@ -281,8 +296,8 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
     console.log("Custom menu");
     event.preventDefault();
     const element = document.elementFromPoint(event.clientX, event.clientY);
-    console.log( element )
-    if (element?.classList[0]=== "nodes") {
+    console.log(element)
+    if (element?.classList[0] === "nodes") {
       const nodeToRm: any = d3.select(element).data()[0]
       this.setState({ x: event.clientX, y: event.clientY, show: true, nodeClick: nodeToRm, });
     }

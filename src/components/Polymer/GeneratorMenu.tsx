@@ -7,7 +7,7 @@ import Typography from "@mui/material/Typography";
 import CreateLink from "./Dialog/CreateLink";
 import AutoFixHigh from "@mui/material/Icon/Icon";
 import { FaIcon, Marger } from "../../helpers";
-import { CircularProgress, Divider, FormControl, Grid, Input, Paper, } from '@material-ui/core';
+import { Badge, CircularProgress, Divider, FormControl, Grid, Icon, Input, Paper, } from '@material-ui/core';
 import { SimpleSelect } from "../../Shared";
 import Link from "@mui/material/Link";
 import { Link as RouterLink } from 'react-router-dom';
@@ -189,7 +189,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
 
         <ModalHistorySelector
           open={this.state.history_modal_chooser}
-          onChoose={this.itpfromhistory} 
+          onChoose={this.itpfromhistory}
           onCancel={() => this.setState({ history_modal_chooser: false })}
         />
 
@@ -301,7 +301,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
               <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center' }}>
 
                 <Typography variant="h6" >
-                   Add my own molecule:
+                  Add my own molecule:
                 </Typography>
               </Grid>
 
@@ -333,18 +333,23 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
               <Grid item xs={4} style={{ textAlign: 'left', alignItems: 'center' }}>
                 <Button variant="outlined" color="primary" onClick={() => this.setState({ database_modal_chooser: true })}>
                   (BETA) Load from database
+                  <Badge color="secondary" >
+                  <Icon className={"fas fa-" + "upload"} />
+                </Badge>
                 </Button>
               </Grid>
 
-
-
+ 
               <Grid item xs={1}>
 
               </Grid>
 
               <Grid item xs={4} style={{ textAlign: 'left', alignItems: 'center' }}>
                 <Button variant="outlined" color="primary" onClick={() => this.setState({ history_modal_chooser: true })}>
-                   Load from history
+                  Load from history
+                  <Badge color="secondary" >
+                  <Icon className={"fas fa-" + "upload"} />
+                </Badge>
                 </Button>
               </Grid>
 
@@ -389,6 +394,10 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
                   variant="outlined"
                   onClick={() => this.CheckNewMolecule()}>
                   add
+
+                  <Badge color="secondary" >
+                    <Icon className={"fas fa-" + "plus"} />
+                  </Badge>
                 </Button>
               </Grid>
 
@@ -400,7 +409,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
               <Grid item xs={10} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
                 <Typography variant="h6" >Add a new link: </Typography>
               </Grid>
-               
+
 
               <Grid item xs={3} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
                 <TextField
@@ -430,7 +439,10 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
                   id="addlink"
                   variant="contained"
                   onClick={() => this.CheckNewLink(this.state.id1, this.state.id2)}>
-                  Add link
+                  Add link 
+                  <Badge color="secondary" >
+                    <Icon className={"fas fa-" + "link"} />
+                  </Badge>
                 </Button>
 
               </Grid>
@@ -439,7 +451,10 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
 
               <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }}>
                 <Button id="send" variant="contained" color="success" endIcon={<AutoFixHigh />} onClick={() => this.props.send()}>
-                  Polyply That!
+                  Polyply That!  
+                  <Badge color="secondary" >
+                  <Icon className={"fas fa-" + "magic"} />
+                </Badge>
                 </Button>
               </Grid>
             </>}
@@ -448,7 +463,10 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
             ((forcefield !== '') && (this.props.errorlink.length !== 0)) &&
             <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }}>
               <Button id="send" variant="contained" color="error" endIcon={<AutoFixHigh />} onClick={() => this.props.fixlinkcomponentappear()}>
-                Fix link
+                Fix link  
+                <Badge color="secondary" >
+                  <Icon className={"fas fa-" + "pen"} />
+                </Badge>
               </Button>
             </Grid>
           }

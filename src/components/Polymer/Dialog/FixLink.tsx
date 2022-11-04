@@ -16,7 +16,7 @@ interface props {
     current_position: number | undefined,
     fixing_error: any[],
     update_error: (e: any) => void,
-    function_truc: (id: number) => void
+    is_fixed: (id: number) => void
 }
 
 interface state {
@@ -44,7 +44,8 @@ export default class FixLink extends React.Component<props, state> {
     }
 
     componentDidUpdate(prevProps: Readonly<props>, prevState: Readonly<state>, snapshot?: any): void {
-        //console.log(this.props.error)
+        console.log(this.props, this.state)
+        
     }
 
     ApplyFix = () => {
@@ -89,8 +90,8 @@ export default class FixLink extends React.Component<props, state> {
 
     render() {
 
-        console.log(this.props, this.state)
 
+        this.props.is_fixed(this.state.numeroLink) 
         return (
             <Dialog open={true}  >
                 <DialogTitle>Hello! Bienvenue sur le composant de fix bonds! </DialogTitle>
@@ -102,13 +103,13 @@ export default class FixLink extends React.Component<props, state> {
 
                             <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }}>
 
-                                <Typography variant='h6'> Residue {this.props.fixing_error[this.state.numeroLink]['startresname']}  #{this.props.fixing_error[this.state.numeroLink]['start']}</Typography>
+                                <Typography variant='h6'> Residue {this.props.fixing_error[this.state.numeroLink]['startresname']}  #{this.props.fixing_error[this.state.numeroLink]['startchoice'][0]['idres']} </Typography>
 
                                 <RadioGroup
                                     aria-labelledby="demo-radio-buttons-group-label"
                                     value={this.props.fixing_error[this.state.numeroLink]["start"]}
                                     name="radio-buttons-group"
-                                    onChange={(e) => { this.props.function_truc(this.state.numeroLink); this.handlechangeBead((e.target as HTMLInputElement).value, "start") }}
+                                    onChange={(e) => { this.handlechangeBead((e.target as HTMLInputElement).value, "start") }}
                                 >
                                     {
                                         this.props.fixing_error[this.state.numeroLink]["startchoice"]
@@ -126,12 +127,12 @@ export default class FixLink extends React.Component<props, state> {
                             </Grid>
                             <Grid item xs={5} style={{ textAlign: 'right', alignItems: 'right', justifyContent: 'center', }}>
 
-                                <Typography variant='h6'> Residue {this.props.fixing_error[this.state.numeroLink]['endresname']}  #{this.props.fixing_error[this.state.numeroLink]['end']}</Typography>
+                                <Typography variant='h6'> Residue {this.props.fixing_error[this.state.numeroLink]['endresname']}  #{this.props.fixing_error[this.state.numeroLink]['endchoice'][0]['idres']} </Typography>
                                 <RadioGroup
                                     aria-labelledby="demo-radio-buttons-group-label"
                                     value={this.props.fixing_error[this.state.numeroLink]["end"]}
                                     name="radio-buttons-group"
-                                    onChange={(e) => { this.props.function_truc(this.state.numeroLink); this.handlechangeBead((e.target as HTMLInputElement).value, "end") }}
+                                    onChange={(e) => { this.handlechangeBead((e.target as HTMLInputElement).value, "end") }}
                                 >
                                     {
                                         this.props.fixing_error[this.state.numeroLink]["endchoice"]
@@ -154,7 +155,7 @@ export default class FixLink extends React.Component<props, state> {
                                     type="number"
                                     inputProps={{ step: "0.1" }}
                                     defaultValue="0.336"
-                                    onChange={v => { this.props.function_truc(this.state.numeroLink); this.handleforce(v.target.value) }}
+                                    onChange={v => { this.handleforce(v.target.value) }}
                                 />
                             </Grid>
 
@@ -169,7 +170,7 @@ export default class FixLink extends React.Component<props, state> {
                                     type="number"
                                     inputProps={{ step: "100" }}
                                     defaultValue="1200"
-                                    onChange={v => { this.props.function_truc(this.state.numeroLink); this.handleforce(v.target.value) }}
+                                    onChange={v => { this.handleforce(v.target.value) }}
                                 />
                             </Grid>
                         </Grid>
@@ -183,14 +184,14 @@ export default class FixLink extends React.Component<props, state> {
                 <DialogActions>
                     {this.state.numeroLink ? (<>
                         <div>
-                            <Button onClick={() => { this.props.function_truc(this.state.numeroLink); this.setState({ numeroLink: this.state.numeroLink - 1 }) }}>Previous Link</Button>
+                            <Button onClick={() => { this.setState({ numeroLink: this.state.numeroLink - 1 }) }}>Previous Link</Button>
                         </div>
                     </>) : (<></>)}
 
                     <Button color='warning' onClick={() => { this.props.close() }}>Close</Button>
 
                     {((this.state.numeroLink + 1) !== this.props.fixing_error.length) &&
-                        <Button onClick={() => { this.props.function_truc(this.state.numeroLink); this.setState({ numeroLink: this.state.numeroLink + 1 }) }}>Next Link</Button>
+                        <Button onClick={() => { this.setState({ numeroLink: this.state.numeroLink + 1 }) }}>Next Link</Button>
                     }
 
                     {(this.props.fixing_error.map((e: any) => { return e.is_fixed }).includes(false)) ?
