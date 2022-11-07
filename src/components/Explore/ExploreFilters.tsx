@@ -151,7 +151,7 @@ export default function MoleculeFilters(props: {
       <form onSubmit={e => e.preventDefault()}>
         <div className={classes.selectorsWrapper}>
           <MultipleSelect 
-            options={settings.force_fields.map(e => ({ value: e }))} 
+            options={settings.force_fields.filter(ff => Settings.martinize_variables.force_fields_info[ff].type !== "protein").map(e => ({ value: e }))} 
             value={props.force_fields || []}
             onChange={v => {
               const filters = getAllFilters();

@@ -3,13 +3,18 @@ import { Container, Typography, ListItem, List, Link, Box, CircularProgress } fr
 import { Marger, notifyError } from '../../helpers';
 import ApiHelper from '../../ApiHelper';
 import { SERVER_ROOT } from '../../constants';
+import Settings from '../../Settings'
 
 export default function ForceField() {
   const [available, setAvailable] = React.useState<string[] | null>(null);
-
+ 
   React.useEffect(() => {
     ApiHelper.request('force_fields/list')
-      .then(available => setAvailable(available))
+      .then(available => {
+        console.log("ff", available) 
+        console.log(Settings.martinize_variables.force_fields_info)
+        const downloadable = available.filter((ff: string) => Settings.martinize_variables.force_fields_info[ff].type === "supported")
+        setAvailable(downloadable)})
       .catch(notifyError)
   }, []);
   
@@ -22,7 +27,7 @@ export default function ForceField() {
       <Marger size={14} />
 
       <Typography variant="h6" style={{ textAlign: 'center' }}>
-        Available force fields
+        Available supported force fields
       </Typography>
 
       <Marger size={14} />

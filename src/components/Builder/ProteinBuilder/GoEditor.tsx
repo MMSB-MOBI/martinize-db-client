@@ -791,12 +791,12 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
     return(
     <Dialog open={!!this.state.want_save_bonds}>
         <DialogTitle>
-          Save bonds ?
+          Saving current set of bonds
         </DialogTitle>
 
         <DialogContent>
           <DialogContentText>
-            Do you want to save your modifications ? It will erase the previous save for this molecule.
+            You are about update the current job entry. This will erase the previous state from your history. 
           </DialogContentText>
         </DialogContent>
 
@@ -815,12 +815,12 @@ export default class GoEditor extends React.Component<GoEditorProps, GoEditorSta
     return(
       <Dialog open={this.state.save_to_history}>
           <DialogTitle>
-            Save bonds ?
+            Saving current set of bonds
           </DialogTitle>
   
           <DialogContent>
             <DialogContentText>
-              Do you want to save your new bonds to history ? You can add a comment to identify this job
+              You are about to create a new job entry in your history with this modified molecule. You may add comment to help identify this job. 
             </DialogContentText>
             <TextField fullWidth label="Comment" value = {this.state.edition_comment} variant="outlined" onChange={v => this.setState({ edition_comment: v.target.value })}> </TextField>
           </DialogContent>
