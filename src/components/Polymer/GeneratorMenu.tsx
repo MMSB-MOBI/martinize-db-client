@@ -7,7 +7,7 @@ import Typography from "@mui/material/Typography";
 import CreateLink from "./Dialog/CreateLink";
 import AutoFixHigh from "@mui/material/Icon/Icon";
 import { FaIcon, Marger } from "../../helpers";
-import { Badge, CircularProgress, Divider, FormControl, Grid, Icon, Input, Paper, } from '@material-ui/core';
+import { Badge, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Divider, FormControl, Grid, Icon, Input, Paper, } from '@material-ui/core';
 import { SimpleSelect } from "../../Shared";
 import Link from "@mui/material/Link";
 import { Link as RouterLink } from 'react-router-dom';
@@ -41,6 +41,7 @@ interface GeneratorMenuState extends FormState {
   database_modal_chooser: boolean;
   history_modal_chooser: boolean;
   builder_mode: string;
+  want_go_back: boolean
 }
 
 export default class GeneratorMenu extends React.Component<propsmenu, GeneratorMenuState> {
@@ -56,6 +57,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
     database_modal_chooser: false,
     history_modal_chooser: false,
     builder_mode: "classic",
+    want_go_back: false,
   }
 
   protected go_back_btn = React.createRef<any>();
@@ -102,6 +104,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
   };
 
   handleUpload = (selectorFiles: FileList) => {
+    this.setState({ want_go_back: false   });
     if (selectorFiles.length === 1) {
       let file = selectorFiles[0]
       const ext = file.name.split('.').slice(-1)[0]
@@ -157,15 +160,50 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
 
 
   nextFromMolecule = (molecule: Molecule | MoleculeWithFiles) => {
+    this.setState({ want_go_back: false   });
     this.setState({ database_modal_chooser: false });
     //@ts-ignore
     console.log(molecule)
   };
 
   itpfromhistory = (molecule: any) => {
+    this.setState({ want_go_back: false   });
     this.props.addNEwMolFromITP(molecule)
   };
 
+  onWantGoBack = (e: React.MouseEvent) => {
+    // Don't go to #!
+    e.preventDefault();
+
+    this.setState({
+      want_go_back: true
+    });
+  };
+
+  onWantGoBackCancel = () => {
+    this.setState({ want_go_back: false });
+  };
+
+  renderModalBackToDatabase() {
+    return (
+      <Dialog open={!!this.state.want_go_back} onClose={this.onWantGoBackCancel}>
+        <DialogTitle>
+          Get back to explore
+        </DialogTitle>
+
+        <DialogContent>
+          <DialogContentText>
+            You will definitively lose your beautiful polymer.
+          </DialogContentText>
+        </DialogContent>
+
+        <DialogActions>
+          <Button color="primary" onClick={this.onWantGoBackCancel}>Cancel</Button>
+          <Button color="secondary" onClick={this.onGoBack}>Go back</Button>
+        </DialogActions>
+      </Dialog>
+    )
+  }
 
 
   render() {
@@ -173,6 +211,8 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
 
     return (
       <div  >
+        {this.renderModalBackToDatabase()}
+
         <CreateLink
           customITPS={this.props.customITPS}
           close={() => { this.setState({ createLink: false }) }}
@@ -203,7 +243,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
           <Link
             href="#!"
             // When state is initial state (main loader), don't show the confirm modal
-            onClick={this.onGoBack}
+            onClick={this.state.want_go_back !== true ? this.onWantGoBack : this.onGoBack}
           >
             <FaIcon home style={{ fontSize: '1rem' }} />
             <span style={{ marginLeft: '.7rem', fontSize: '1.1rem' }}>
@@ -334,12 +374,12 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
                 <Button variant="outlined" color="primary" onClick={() => this.setState({ database_modal_chooser: true })}>
                   (BETA) Load from database
                   <Badge color="secondary" >
-                  <Icon className={"fas fa-" + "upload"} />
-                </Badge>
+                    <Icon className={"fas fa-" + "upload"} />
+                  </Badge>
                 </Button>
               </Grid>
 
- 
+
               <Grid item xs={1}>
 
               </Grid>
@@ -348,8 +388,8 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
                 <Button variant="outlined" color="primary" onClick={() => this.setState({ history_modal_chooser: true })}>
                   Load from history
                   <Badge color="secondary" >
-                  <Icon className={"fas fa-" + "upload"} />
-                </Badge>
+                    <Icon className={"fas fa-" + "upload"} />
+                  </Badge>
                 </Button>
               </Grid>
 
@@ -392,7 +432,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
                   endIcon={<Grain />}
                   id="addmol"
                   variant="outlined"
-                  onClick={() => this.CheckNewMolecule()}>
+                  onClick={() => {this.setState({ want_go_back: false   });this.CheckNewMolecule()}}>
                   add
 
                   <Badge color="secondary" >
@@ -438,8 +478,8 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
                 <Button
                   id="addlink"
                   variant="contained"
-                  onClick={() => this.CheckNewLink(this.state.id1, this.state.id2)}>
-                  Add link 
+                  onClick={() => {this.setState({ want_go_back: false   }); this.CheckNewLink(this.state.id1, this.state.id2)}}>
+                  Add link
                   <Badge color="secondary" >
                     <Icon className={"fas fa-" + "link"} />
                   </Badge>
@@ -451,10 +491,10 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
 
               <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }}>
                 <Button id="send" variant="contained" color="success" endIcon={<AutoFixHigh />} onClick={() => this.props.send()}>
-                  Polyply That!  
+                  Polyply That!
                   <Badge color="secondary" >
-                  <Icon className={"fas fa-" + "magic"} />
-                </Badge>
+                    <Icon className={"fas fa-" + "magic"} />
+                  </Badge>
                 </Button>
               </Grid>
             </>}
@@ -463,7 +503,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
             ((forcefield !== '') && (this.props.errorlink.length !== 0)) &&
             <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }}>
               <Button id="send" variant="contained" color="error" endIcon={<AutoFixHigh />} onClick={() => this.props.fixlinkcomponentappear()}>
-                Fix link  
+                Fix link
                 <Badge color="secondary" >
                   <Icon className={"fas fa-" + "pen"} />
                 </Badge>

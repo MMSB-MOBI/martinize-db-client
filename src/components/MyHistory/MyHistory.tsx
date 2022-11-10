@@ -127,7 +127,7 @@ export class ModalHistorySelector extends React.Component<{ open: boolean; onCho
   }
 
   componentDidUpdate(prevProps: Readonly<{ open: boolean; onChoose(molecule: Molecule): any; onCancel(): any; }>, prevState: Readonly<any>, snapshot?: any): void {
-    if (this.props.open) {
+    if (this.props.open && ( prevProps.open !== true)) {
 
       if (Settings.logged === LoginStatus.None) {
         return;
