@@ -27,6 +27,7 @@ interface statecustommenu {
 
 let zoomValue = 1
 
+
 export default class GeneratorViewer extends React.Component<propsviewer, statecustommenu> {
 
   state: statecustommenu = {

@@ -57,6 +57,8 @@ export let decreaseID = (clear = false): void => {
   }
 }
 
+
+
 export default class GeneratorManager extends React.Component {
   createTheme(hint: 'light' | 'dark') {
     const bgclr = hint === 'dark' ? '#303030' : '#fafafa';
@@ -112,7 +114,7 @@ export default class GeneratorManager extends React.Component {
     //     this.state.data_for_computation['userId'] = userid
     //     this.socket.emit("add_to_history", this.state.data_for_computation)
     //     this.closeDialog()
-        
+
     //   })
     //   .catch(err => console.log(err))
 
@@ -688,7 +690,11 @@ export default class GeneratorManager extends React.Component {
   grossecorection = (itpfix: string) => {
 
     this.setState({ stepsubmit: 2, loading: true, itp: itpfix, current_position_fixlink: undefined, errorLink: [] })
-    this.socket.emit("continue", itpfix)
+
+    this.state.data_for_computation['itp'] = itpfix
+
+    this.socket.emit("run_gro_generation", this.state.data_for_computation)
+
   }
 
   getbeadslist = (idres: string) => {
