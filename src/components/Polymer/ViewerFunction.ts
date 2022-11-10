@@ -290,7 +290,7 @@ export function linkcorrected(idnode1: string, idnode2: string) {
     d3.select(Mysvg)
         .selectAll<SVGElement, SimulationLink>("line")
         .filter((d: SimulationLink) => ((d.source.id === idnode1) && (d.target.id === idnode2) || (d.target.id === idnode1) && (d.source.id === idnode2)))
-        .attr('stroke', "green")
+        .attr('stroke', "#32CD32")
 }
 
 

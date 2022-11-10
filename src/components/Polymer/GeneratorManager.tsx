@@ -15,6 +15,7 @@ import { blue } from "@material-ui/core/colors";
 import { Marger } from "../../helpers";
 import { SERVER_ROOT } from '../../constants';
 import FixLink from "./Dialog/FixLink";
+import Settings from "../../Settings";
 
 // Pour plus tard
 //https://github.com/korydondzila/React-TypeScript-D3/tree/master/src/components
@@ -22,6 +23,7 @@ import FixLink from "./Dialog/FixLink";
 // Objectif : faire pareil avec element selectionnable dans le bloc menu et ajoutable dans le bloc viewer si deposer
 //https://javascript.plainenglish.io/how-to-implement-drag-and-drop-from-react-to-svg-d3-16700f01470c
 interface StateSimulation {
+  data_for_computation: any;
   Simulation: d3.Simulation<SimulationNode, SimulationLink> | undefined,
   Warningmessage: string;
   customITP: { [name: string]: string };
@@ -88,12 +90,36 @@ export default class GeneratorManager extends React.Component {
     pdb: "",
     errorLink: [],
     current_position_fixlink: undefined,
-    errorfix: undefined
+    errorfix: undefined,
+    data_for_computation: {}
   }
 
   socket = SocketIo.connect(SERVER_ROOT);
 
   currentForceField = '';
+
+  add_to_history = () => {
+    console.log(this.state)
+
+    //Method pour recuper l'id de l'utilisateur 
+    //C'est super moche je pense
+    //Mais ca fonctionne
+    //desolé 
+    // getHistory()
+    //   .then(jobs => {
+    //     const userid = jobs[0]['userId']
+    //     console.log( jobs)
+    //     this.state.data_for_computation['userId'] = userid
+    //     this.socket.emit("add_to_history", this.state.data_for_computation)
+    //     this.closeDialog()
+        
+    //   })
+    //   .catch(err => console.log(err))
+
+    this.state.data_for_computation['userId'] = Settings.user?.id
+    this.socket.emit("add_to_history", this.state.data_for_computation)
+    this.closeDialog()
+  }
 
   change_current_position_fixlink = (linktofix: SimulationLink): void => {
     console.log("change_current_position_fixlink")
@@ -108,7 +134,6 @@ export default class GeneratorManager extends React.Component {
       }
       c = c + 1
     }
-
   }
 
   warningfunction = (message: string): void => {
@@ -692,7 +717,6 @@ export default class GeneratorManager extends React.Component {
 
 
   Send = (box: string, name: string, number: string): void => {
-
     //Check if there is more than one polymer 
     const connexe1 = this.giveConnexeNode(this.state.Simulation!.nodes()[1])
     const nodeNumber = this.state.Simulation?.nodes().length
@@ -700,15 +724,10 @@ export default class GeneratorManager extends React.Component {
       console.log("Not connexe ! Try to send 2 trucs")
       //Get the first 
       console.log(connexe1)
-
       this.warningfunction("Your polymer is composed by X sub part.")
 
     }
     else {
-      this.setState({ stepsubmit: 1 })
-
-
-
       const jsonpolymer = simulationToJson(this.state.Simulation!, this.currentForceField)
       let data = {}
       if (Object.keys(this.state.customITP).length === 0) {
@@ -729,119 +748,134 @@ export default class GeneratorManager extends React.Component {
         }
       }
 
-      this.socket.emit('runpolyply', data)
-
-      this.socket.on("top", (topfilestr: string) => {
-        this.setState({ top: topfilestr })
-      })
-
-
-      this.socket.on("itp", (res: string) => {
-        if (res !== "") {
-          this.setState({ stepsubmit: 2 })
-          this.setState({ itp: res })
-          //Besoin de verifier que l'itp fourni par polyply est le meme polymere que celui afficher
-          // const jsonpolymer = simulationToJson(this.state.Simulation!, this.currentForceField)
-
-          // const klcdwu = this.returnITPinfo(res)
-
-          // console.log("this.returnITPinfo(res)", klcdwu)
-          // const NBatomsITP: number = klcdwu![0].length
-          // const NBlinksITP: number = klcdwu![1].length
-          // const NBatomsSIM: number = jsonpolymer.nodes.length
-          // const NBlinksSIM: number = jsonpolymer.links.length
-
-          // console.log(NBatomsITP, NBlinksITP, NBatomsSIM, NBlinksSIM)
-          // if (NBatomsSIM !== NBatomsITP) {
-          //   this.setState({ dialogWarning: "WHOUWHOUWHOU alert au node" })
-
-          // }
-          // else if (NBlinksSIM !== NBlinksITP) {
-          //   this.setState({ dialogWarning: "Probleme de lien entre le fichier generé par polyply et la representation" })
-          //   //Check missing links
-          //   console.log(this.state.Simulation)
-          //   socket.emit("continue")
-
-          // }
-          // else {
-          //   socket.emit("continue")
-          // }
-          this.socket.emit("continue", this.state.itp)
-          console.log("continue")
-        }
-      })
-
-      this.socket.on("gro", (data: string) => {
-        console.log("gro !")
-        this.setState({ gro: data })
-        this.setState({ stepsubmit: 3 })
-      })
-
-      this.socket.on("pdb", (data: string) => {
-        this.setState({ pdb: data })
-        this.setState({ stepsubmit: 4 })
-      })
-
-      this.socket.on("oups", async (dicoError: any) => {
-        this.setState({ stepsubmit: undefined })
-        this.setState({ loading: false })
-
-        //Si il y a des erreur, on affiche un warning 
-
-        //check 
-        if (dicoError.errorlinks.length > 0) {
-          let listerror: any[][] = []
-          //To show error on the svg
-          for (let i of dicoError.errorlinks) {
-            listerror.push([i[1].toString(), i[3].toString()])
-            alarmBadLinks(i[1].toString(), i[3].toString())
-          }
-          this.warningfunction("Fail ! Wrong links : " + dicoError.errorlinks + ". You can correct this mistake with \"click right\" -> \"Remove bad links\" or with \"fixlink\" button in red")
-
-          this.setState({ itp: dicoError.itp })
-          let generate_error_fixing_state = Array.from({ length: listerror.length }, (_, i) => {
-            const bead_list_start = this.getbeadslist(listerror[i][0])
-            const bead_list_end = this.getbeadslist(listerror[i][1])
-
-            const startbead = bead_list_start[0]["idbead"]
-            const endbead = bead_list_end[0]["idbead"]
-            const startresname = bead_list_start[0]["resname"]
-            const endresname = bead_list_end[0]["resname"]
-
-            return {
-              start: startbead,
-              end: endbead,
-              startresname: startresname,
-              endresname: endresname,
-              angle: "0.336",
-              force: "1200",
-              startchoice: bead_list_start,
-              endchoice: bead_list_end,
-              is_fixed: false
-            };
-          })
-          this.setState({ errorLink: listerror, errorfix: generate_error_fixing_state })
-          //socket.emit("continue",)
-
-        }
-        else if (dicoError.message.length) {
-
-          this.setState({ Warningmessage: dicoError.message })
-        }
-
-        else {
-          // (dicoError.disjoint === true) 
-          this.setState({ Warningmessage: "Fail ! Your molecule consists of disjoint parts.Perhaps links were not applied correctly. Peut etre une option a ajouter pour mettre 2 molecule dans le melange ????????" })
-        }
-
-      })
+      this.setState({ stepsubmit: 1, data_for_computation: data })
+      console.log("socket.emit('run_itp_generation')")
+      this.socket.emit('run_itp_generation', data)
     }
+
   }
+
+
 
   componentDidMount() {
     ApiHelper.request('polymergenerator/data')
       .then((value: JSON) => { console.log(value); this.setState({ dataForForm: value }) })
       .catch((err: any) => { console.log(err); this.setState({ dataForForm: {} }) });
+
+    //Ecoute sur le socket 
+    this.socket.on("itp", (res: string) => {
+      console.log("j'ai recu un itp")
+      if (res !== "") {
+        this.setState({ stepsubmit: 2 })
+        this.setState({ itp: res })
+        //Besoin de verifier que l'itp fourni par polyply est le meme polymere que celui afficher
+        // const jsonpolymer = simulationToJson(this.state.Simulation!, this.currentForceField)
+
+        // const klcdwu = this.returnITPinfo(res)
+
+        // console.log("this.returnITPinfo(res)", klcdwu)
+        // const NBatomsITP: number = klcdwu![0].length
+        // const NBlinksITP: number = klcdwu![1].length
+        // const NBatomsSIM: number = jsonpolymer.nodes.length
+        // const NBlinksSIM: number = jsonpolymer.links.length
+
+        // console.log(NBatomsITP, NBlinksITP, NBatomsSIM, NBlinksSIM)
+        // if (NBatomsSIM !== NBatomsITP) {
+        //   this.setState({ dialogWarning: "WHOUWHOUWHOU alert au node" })
+
+        // }
+        // else if (NBlinksSIM !== NBlinksITP) {
+        //   this.setState({ dialogWarning: "Probleme de lien entre le fichier generé par polyply et la representation" })
+        //   //Check missing links
+        //   console.log(this.state.Simulation)
+        //   socket.emit("continue")
+
+        // }
+        // else {
+        //   socket.emit("continue")
+        // }
+        //@ts-ignore
+        this.state.data_for_computation['itp'] = res
+
+        this.socket.emit("run_gro_generation", this.state.data_for_computation)
+        console.log("run_gro_generation")
+      }
+    })
+
+
+    this.socket.on("gro_top", (datafromsocket: any) => {
+      console.log("gro et top !")
+      this.setState({ gro: datafromsocket['gro'], top: datafromsocket['top'] })
+      this.setState({ stepsubmit: 3 })
+      //@ts-ignore
+      this.state.data_for_computation['gro'] = datafromsocket['gro']
+      //@ts-ignore
+      this.state.data_for_computation['top'] = datafromsocket['top']
+      this.socket.emit("run_pdb_generation", this.state.data_for_computation)
+      console.log("on emit run_pdb_generation")
+    })
+
+    this.socket.on("pdb", (data: string) => {
+      console.log("pdb recu")
+      this.setState({ pdb: data })
+      this.state.data_for_computation['pdb'] = data
+      this.setState({ stepsubmit: 4 })
+    })
+
+    this.socket.on("oups", async (dicoError: any) => {
+      console.log("oups")
+      this.setState({ stepsubmit: undefined })
+      this.setState({ loading: false })
+
+      //Si il y a des erreur, on affiche un warning 
+
+      //check 
+      if (dicoError.errorlinks.length > 0) {
+        let listerror: any[][] = []
+        //To show error on the svg
+        for (let i of dicoError.errorlinks) {
+          listerror.push([i[1].toString(), i[3].toString()])
+          alarmBadLinks(i[1].toString(), i[3].toString())
+        }
+        this.warningfunction("Fail ! Wrong links : " + dicoError.errorlinks + ". You can correct this mistake with \"click right\" -> \"Remove bad links\" or with \"fixlink\" button in red")
+
+        this.setState({ itp: dicoError.itp })
+        let generate_error_fixing_state = Array.from({ length: listerror.length }, (_, i) => {
+          const bead_list_start = this.getbeadslist(listerror[i][0])
+          const bead_list_end = this.getbeadslist(listerror[i][1])
+
+          const startbead = bead_list_start[0]["idbead"]
+          const endbead = bead_list_end[0]["idbead"]
+          const startresname = bead_list_start[0]["resname"]
+          const endresname = bead_list_end[0]["resname"]
+
+          return {
+            start: startbead,
+            end: endbead,
+            startresname: startresname,
+            endresname: endresname,
+            angle: "0.336",
+            force: "1200",
+            startchoice: bead_list_start,
+            endchoice: bead_list_end,
+            is_fixed: false
+          };
+        })
+        this.setState({ errorLink: listerror, errorfix: generate_error_fixing_state })
+        //socket.emit("continue",)
+
+      }
+      else if (dicoError.message.length) {
+
+        this.setState({ Warningmessage: dicoError.message })
+      }
+
+      else {
+        // (dicoError.disjoint === true) 
+        this.setState({ Warningmessage: "Fail ! Your molecule consists of disjoint parts.Perhaps links were not applied correctly. Peut etre une option a ajouter pour mettre 2 molecule dans le melange ????????" })
+      }
+
+    })
 
   }
 
@@ -885,6 +919,7 @@ export default class GeneratorManager extends React.Component {
             gro={this.state.gro}
             pdb={this.state.pdb}
             close={this.closeDialog}
+            add={this.add_to_history}
             top={this.state.top}
             warning={this.state.dialogWarning}> </RunPolyplyDialog>
         ) : (<></>)

@@ -10,7 +10,7 @@ interface MartinizeGeneratedProps {
   onReset(): any;
   theme: Theme;
   onThemeChange(): any;
-  virtualLinks: 'go' | 'elastic' | '' ;
+  virtualLinks: 'go' | 'elastic' | '';
 
   allAtomName: string;
 
@@ -32,7 +32,7 @@ interface MartinizeGeneratedProps {
   representations: ViableRepresentation[];
   onRepresentationChange(_: any, values: ViableRepresentation[]): any;
 
-  saved: string | false;
+  saved: string | false;
   edited: boolean;
   generatingFiles: boolean;
   onMoleculeDownload(): any;
@@ -41,29 +41,29 @@ interface MartinizeGeneratedProps {
 
   martinizeWarnings: any;
 
-  beadRadiusFactor : number; 
-  onBeadRadiusChange(_: any, value : number|number[]): any
+  beadRadiusFactor: number;
+  onBeadRadiusChange(_: any, value: number | number[]): any
 }
 
 interface MartinizeGeneratedStates {
-  wantReset: boolean, 
-  openWarning: boolean, 
-  warnings: string, 
+  wantReset: boolean,
+  openWarning: boolean,
+  warnings: string,
 }
 
 export default class MartinizeGenerated extends React.Component<MartinizeGeneratedProps, MartinizeGeneratedStates>{
   state: MartinizeGeneratedStates = {
-    wantReset : false, 
-    openWarning : false, 
+    wantReset: false,
+    openWarning: false,
     warnings: ""
   }
 
   componentDidMount() {
-    this.props.martinizeWarnings.text().then((fileStr:string) => {
-      this.setState({warnings: fileStr})
+    this.props.martinizeWarnings.text().then((fileStr: string) => {
+      this.setState({ warnings: fileStr })
     })
-    
-    
+
+
   }
 
   render() {
@@ -72,22 +72,22 @@ export default class MartinizeGenerated extends React.Component<MartinizeGenerat
 
         {(this.state.warnings.length !== 0) &&
 
-        <Alert severity="warning" action={
-          <Button 
-            size="medium"
-            color="inherit" 
-            onClick={() => this.setState({openWarning: true})}
-          >
-            Warnings were encountered
-          </Button>
-        }>
-        </Alert>}
+          <Alert severity="warning" action={
+            <Button
+              size="medium"
+              color="inherit"
+              onClick={() => this.setState({ openWarning: true })}
+            >
+              Warnings were encountered
+            </Button>
+          }>
+          </Alert>}
 
         <Dialog
           open={this.state.openWarning}
           fullWidth={true}
           maxWidth="lg"
-          >
+        >
           <DialogTitle>Gromacs encountered warnings : </DialogTitle>
           <DialogContent>
             <DialogContentText>
@@ -95,36 +95,36 @@ export default class MartinizeGenerated extends React.Component<MartinizeGenerat
             </DialogContentText>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => this.setState({openWarning: false})} color="primary">
+            <Button onClick={() => this.setState({ openWarning: false })} color="primary">
               Close
             </Button>
           </DialogActions>
         </Dialog>
-  
-        <Dialog open={this.state.wantReset} onClose={() => this.setState({wantReset: false})}>
+
+        <Dialog open={this.state.wantReset} onClose={() => this.setState({ wantReset: false })}>
           <DialogTitle>
             Restart molecule builder ?
           </DialogTitle>
-  
-  
+
+
           <DialogActions>
-            <Button color="primary" onClick={() => this.setState({wantReset: false})}>Cancel</Button>
+            <Button color="primary" onClick={() => this.setState({ wantReset: false })}>Cancel</Button>
             <Button color="secondary" onClick={this.props.onReset}>Restart builder</Button>
           </DialogActions>
         </Dialog>
-  
+
         <Marger size="1rem" />
-  
-        <Button 
-          style={{ width: '100%' }} 
-          color="primary" 
-          onClick={() => this.setState({wantReset : true})}
+
+        <Button
+          style={{ width: '100%' }}
+          color="primary"
+          onClick={() => this.setState({ wantReset: true })}
         >
           <FaIcon redo-alt /> <span style={{ marginLeft: '.6rem' }}>Restart builder</span>
         </Button>
-  
+
         <Marger size="1rem" />
-  
+
         {/* Theme */}
         <Typography variant="h6">
           Theme
@@ -137,44 +137,46 @@ export default class MartinizeGenerated extends React.Component<MartinizeGenerat
             />
           </FormGroup>
         </FormControl>
-  
+
         <Marger size="2rem" />
-  
-        {/* All Atom Settings */}
-        <Typography variant="h6">
-          All atom
-        </Typography>
-  
-        <Typography gutterBottom>
-          Opacity
-        </Typography>
-        <Slider
-          value={this.props.allAtomOpacity * 100}
-          valueLabelDisplay="auto"
-          step={10}
-          marks
-          min={10}
-          max={100}
-          onChange={this.props.onAllAtomOpacityChange}
-          color="secondary"
-        />
-  
-        <FormControl component="fieldset">
-          <FormGroup>
-            <FormControlLabel
-              control={<Switch checked={this.props.allAtomVisible} onChange={this.props.onAllAtomVisibilityChange} value="visible" />}
-              label="Visible"
+
+        {(this.props.allAtomName !== "NOTHING") &&
+          <>
+            {/* All Atom Settings */}
+            <Typography variant="h6">
+              All atom
+            </Typography>
+
+            <Typography gutterBottom>
+              Opacity
+            </Typography>
+            <Slider
+              value={this.props.allAtomOpacity * 100}
+              valueLabelDisplay="auto"
+              step={10}
+              marks
+              min={10}
+              max={100}
+              onChange={this.props.onAllAtomOpacityChange}
+              color="secondary"
             />
-          </FormGroup>
-        </FormControl>
-  
+
+            <FormControl component="fieldset">
+              <FormGroup>
+                <FormControlLabel
+                  control={<Switch checked={this.props.allAtomVisible} onChange={this.props.onAllAtomVisibilityChange} value="visible" />}
+                  label="Visible"
+                />
+              </FormGroup>
+            </FormControl>
+          </>}
         <Marger size="1rem" />
-  
+
         {/* Coarse Grained Settings */}
         <Typography variant="h6">
           Coarse grained
         </Typography>
-  
+
         <Typography gutterBottom>
           Opacity
         </Typography>
@@ -195,17 +197,17 @@ export default class MartinizeGenerated extends React.Component<MartinizeGenerat
           Beads radius factor
         </Typography>
 
-        <Slider
-          value={this.props.beadRadiusFactor}
-          valueLabelDisplay="auto"
-          step={0.1}
-          marks
-          min={0}
-          max={1}
-          onChange={this.props.onBeadRadiusChange}
-          color="secondary"
-        /> </React.Fragment>}
-  
+          <Slider
+            value={this.props.beadRadiusFactor}
+            valueLabelDisplay="auto"
+            step={0.1}
+            marks
+            min={0}
+            max={1}
+            onChange={this.props.onBeadRadiusChange}
+            color="secondary"
+          /> </React.Fragment>}
+
         <FormControl component="fieldset">
           <FormGroup>
             <FormControlLabel
@@ -214,39 +216,39 @@ export default class MartinizeGenerated extends React.Component<MartinizeGenerat
             />
           </FormGroup>
         </FormControl>
-  
+
         <Marger size="1rem" />
-  
+
         {/* Go / Elastic networks virtual bonds */}
         {this.props.virtualLinks && <React.Fragment>
           <Typography variant="h6">
             Virtual {this.props.virtualLinks === "go" ? "Go" : "Elastic"} bonds
           </Typography>
-  
+
           <Marger size=".5rem" />
-  
+
           {this.props.virtualLinks === "go" && <Box alignContent="center" justifyContent="center" width="100%">
-            <Button 
-              style={{ width: '100%' }} 
-              color="primary" 
+            <Button
+              style={{ width: '100%' }}
+              color="primary"
               onClick={this.props.onGoEditorStart}
             >
               <FaIcon pen /> <span style={{ marginLeft: '.6rem' }}>Edit</span>
             </Button>
           </Box>}
-  
+
           {this.props.virtualLinks === "elastic" && <Box alignContent="center" justifyContent="center" width="100%">
-            <Button 
-              style={{ width: '100%' }} 
-              color="primary" 
+            <Button
+              style={{ width: '100%' }}
+              color="primary"
               onClick={this.props.onGoEditorStart}
             >
               <FaIcon pen /> <span style={{ marginLeft: '.6rem' }}>Edit</span>
             </Button>
           </Box>}
-  
+
           <Marger size=".5rem" />
-  
+
           <Typography gutterBottom>
             Opacity
           </Typography>
@@ -260,7 +262,7 @@ export default class MartinizeGenerated extends React.Component<MartinizeGenerat
             onChange={this.props.onVirtualLinksOpacityChange}
             color="secondary"
           />
-  
+
           <FormControl component="fieldset">
             <FormGroup>
               <FormControlLabel
@@ -269,16 +271,16 @@ export default class MartinizeGenerated extends React.Component<MartinizeGenerat
               />
             </FormGroup>
           </FormControl>
-  
+
           <Marger size="1rem" />
         </React.Fragment>}
-  
+
         <Typography variant="h6">
           Representations
         </Typography>
-  
+
         <Marger size=".5rem" />
-  
+
         <div>
           {/* 'ball+stick' | 'ribbon' | 'surface' | 'hyperball' | 'line' */}
           <ToggleButtonGroup
@@ -322,27 +324,27 @@ export default class MartinizeGenerated extends React.Component<MartinizeGenerat
             </ToggleButton>
           </ToggleButtonGroup>
         </div>
-  
+
         <Marger size="1rem" />
-  
+
         <Divider style={{ width: '100%' }} />
-  
+
         <Marger size="1rem" />
-  
+
         <Box alignContent="center" justifyContent="center" width="100%">
-  
+
           <Marger size="1rem" />
-  
-          <Button 
-            style={{ width: '100%' }} 
-            color="primary" 
+
+          <Button
+            style={{ width: '100%' }}
+            color="primary"
             disabled={this.props.generatingFiles}
             onClick={this.props.onMoleculeDownload}
           >
             <FaIcon download /> <span style={{ marginLeft: '.6rem' }}>Download</span>
           </Button>
         </Box>
-  
+
       </React.Fragment>
     );
   }

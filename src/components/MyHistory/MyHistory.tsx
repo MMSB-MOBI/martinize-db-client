@@ -116,21 +116,34 @@ export class ModalHistorySelector extends React.Component<{ open: boolean; onCho
 
 
   componentDidMount() {
+
     if (Settings.logged === LoginStatus.None) {
       return;
     }
     setPageTitle("My history");
-    getHistory()
-      .then(jobs => {
-        this.setState({ jobs, loaded: true })
-      })
-      .catch(err => console.log(err))
 
+
+
+  }
+
+  componentDidUpdate(prevProps: Readonly<{ open: boolean; onChoose(molecule: Molecule): any; onCancel(): any; }>, prevState: Readonly<any>, snapshot?: any): void {
+    if (this.props.open) {
+
+      if (Settings.logged === LoginStatus.None) {
+        return;
+      }
+
+      getHistory()
+        .then(jobs => {
+          this.setState({ jobs, loaded: true })
+        })
+        .catch(err => console.log(err))
+    }
   }
 
   async molecule_to_itp(obj: any) {
     try {
-      const res: any = await ApiHelper.request(`history/itp/${obj.id}` )
+      const res: any = await ApiHelper.request(`history/itp/${obj.id}`)
       this.props.onChoose(res)
     } catch (e) {
       console.log("Error while loading molecules.", e);

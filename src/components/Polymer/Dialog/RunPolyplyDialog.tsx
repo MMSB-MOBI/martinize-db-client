@@ -16,9 +16,7 @@ import ResultViewer from './ResultViewer';
 import Stepper from '@mui/material/Stepper';
 import Step from '@mui/material/Step';
 import StepLabel from '@mui/material/StepLabel';
-import { CircularProgress, LinearProgress } from '@mui/material';
-
-
+import { LinearProgress } from '@mui/material';
 
 interface props {
     send: (arg1: string, arg2: string, number: string) => void;
@@ -29,13 +27,13 @@ interface props {
     pdb: string,
     warning: string,
     close: () => void;
+    add: () => void;
 }
 
 interface state {
     box: string,
     name: string,
     numberpolymer: string
-
 }
 
 export default class RunPolyplyDialog extends React.Component<props, state> {
@@ -186,7 +184,7 @@ export default class RunPolyplyDialog extends React.Component<props, state> {
                             <ResultViewer top={this.props.top} pdb={this.props.pdb} itp={this.props.itp} ff="martini3001" />
                         </div>
                     </>) : (<></>)}
- 
+
                     {((this.props.currentStep! === 0) || (this.props.currentStep! === 4)) ? (<>
                         <DialogActions >
                             <Button color='warning' onClick={() => { this.props.close() }}>Close</Button>
@@ -195,6 +193,15 @@ export default class RunPolyplyDialog extends React.Component<props, state> {
                         <Marger size="1rem" />
                         <LinearProgress />
                     </>)}
+
+                    {(this.props.currentStep! === 4) ? (<>
+                        <DialogActions >
+                            <Button color='success' onClick={() => { this.props.add() }}>Add to history</Button>
+                        </DialogActions>
+                    </>) : (<>
+
+                    </>)}
+
 
                 </Dialog >
             ) : (<></>)

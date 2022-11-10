@@ -23,16 +23,16 @@ import MartinizeGenerated from './ProteinBuilder/MartinizeGenerated';
 import GoEditor from './ProteinBuilder/GoEditor';
 import GoBondsHelper from './GoBondsHelper';
 import { BondsRepresentation } from './BondsRepresentation';
-import { BetaWarning } from '../../Shared'; 
+import { BetaWarning } from '../../Shared';
 import BaseBondsHelper from './BaseBondsHelper';
 import { getIdxSortedByChain } from './BaseBondsHelper';
 import ElasticBondHelper from './ElasticBondHelper';
 import Settings, { LoginStatus } from '../../Settings';
 import EmbeddedError from '../Errors/Errors';
-import { errorToText, loadMartinizeFiles } from '../../helpers'; 
+import { errorToText, loadMartinizeFiles } from '../../helpers';
 import ApiHelper from "../../ApiHelper";
 import ElasticBondsHelper from './ElasticBondHelper';
-import { MartinizeFile, MartinizeMode, ReadedJobFiles, ElasticOrGoBounds, ReadedJobDoc, AvailableForceFields } from '../../types/entities'; 
+import { MartinizeFile, MartinizeMode, ReadedJobFiles, ElasticOrGoBounds, ReadedJobDoc, AvailableForceFields } from '../../types/entities';
 import { Alert } from '@material-ui/lab'
 import { itpBeads, Bead } from './BeadsHelper';
 import BeadsLegend from './BeadsLegend'
@@ -43,7 +43,7 @@ window.NGL = ngl; window.BaseBondsHelper = BaseBondsHelper;
 interface MBProps extends RouteComponentProps {
   classes: Record<string, string>;
   theme: Theme;
-  location : any; 
+  location: any;
 }
 
 export interface MartinizeFiles {
@@ -53,17 +53,17 @@ export interface MartinizeFiles {
   top: MartinizeFile;
   go?: BaseBondsHelper;
   elastic_bonds?: BondsRepresentation;
-  warnings?: File; 
+  warnings?: File;
 }
 
-interface AtomRadius { 
+interface AtomRadius {
   [atom: string]: number;
 }
 
-type BuilderType = "martinize" | "insane"
+type BuilderType = "martinize" | "insane | polyply"
 
 export interface MBState {
-  running: 'pdb' | 'pdb_read' | 'martinize_params' | 'martinize_generate' | 'martinize_error' | 'done' | 'go_editor' | 'load_error' | 'load_history';
+  running: 'pdb' | 'pdb_read' | 'martinize_params' | 'martinize_generate' | 'martinize_error' | 'done' | 'go_editor' | 'load_error' | 'load_history';
   error?: any;
   martinize_error?: MZError;
   martinize_step: string;
@@ -75,8 +75,8 @@ export interface MBState {
   coarse_grain_ngl?: NglComponent;
 
   builder_force_field: AvailableForceFields;
-  builder_mode: MartinizeMode; 
-  builder_positions: 'none' | 'all' | 'backbone';
+  builder_mode: MartinizeMode;
+  builder_positions: 'none' | 'all' | 'backbone';
   builder_ef: string;
   builder_el: string;
   builder_eu: string;
@@ -99,10 +99,10 @@ export interface MBState {
   virtual_link_opacity: number;
   virtual_link_visible: boolean;
   representations: ViableRepresentation[];
-  
+
   files?: MartinizeFiles;
   generating_files: boolean;
-  saved: string | false;
+  saved: string | false;
   edited: boolean;
   want_reset: boolean;
   want_go_back: boolean;
@@ -111,12 +111,12 @@ export interface MBState {
 
   version?: string;
 
-  load_error_message?:string; 
-  send_mail: string; 
+  load_error_message?: string;
+  send_mail: string;
 
-  bead_radius_factor : number; 
+  bead_radius_factor: number;
 
-  polymer_number : number; 
+  polymer_number: number;
 
 }
 
@@ -132,7 +132,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
   protected root = React.createRef<HTMLDivElement>();
   protected go_back_btn = React.createRef<any>();
 
-  protected beads: Bead[] = []; 
+  protected beads: Bead[] = [];
 
   protected saved_viz_params?: {
     aa_enabled: boolean;
@@ -144,7 +144,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     go: BaseBondsHelper;
   };
 
-  protected jobId: string = ""; 
+  protected jobId: string = "";
 
   componentDidMount() {
     setPageTitle('Molecule Builder');
@@ -161,65 +161,65 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     this.changeCommandline('');
     this.getMartinizeVersion();
 
-    if ('id' in this.props.match.params){
+    if ('id' in this.props.match.params) {
       //Reload an history job
       const params = this.props.match.params as any
       const jobId = params.id
-      this.setState({running: 'load_history'})
+      this.setState({ running: 'load_history' })
       this.loadFromHistory(jobId)
 
     }
-   
+
   }
 
-  async loadFromHistory(jobId: string){
+  async loadFromHistory(jobId: string) {
     try {
-      this.jobId = jobId; 
-      const job : ReadedJobDoc = await ApiHelper.request(`history/get?jobId=${jobId}`)
+      this.jobId = jobId;
+      const job: ReadedJobDoc = await ApiHelper.request(`history/get?jobId=${jobId}`)
       this.reloadJobSettingsIntoState(job)
       const [allAtomFile, martinizeFiles, warnFile] = await Promise.all([this.loadAllAtomFile(job.files), loadMartinizeFiles(job), this.loadWarnings(job.files)])
       this.reloadJob(allAtomFile, martinizeFiles, warnFile)
-    }catch(e) {
-      this.setState({load_error_message : errorToText(e as any), running: 'load_error'})
+    } catch (e) {
+      this.setState({ load_error_message: errorToText(e as any), running: 'load_error' })
     }
-    
+
 
   }
 
-  reloadJobSettingsIntoState(job: ReadedJobDoc){
+  reloadJobSettingsIntoState(job: ReadedJobDoc) {
     this.setState({
       builder_force_field: job.settings.ff,
-      builder_mode : job.settings.builder_mode,
-      builder_positions : job.settings.position, 
-      builder_ef : job.settings.ef ?? this.original_state.builder_ef,
-      builder_el: job.settings.el ??  this.original_state.builder_el,
-      builder_eu: job.settings.eu ??  this.original_state.builder_eu,
-      builder_ea: job.settings.ea ??  this.original_state.builder_ea,
-      builder_ep: job.settings.ep ??  this.original_state.builder_ep,
-      builder_em: job.settings.em ??  this.original_state.builder_em,
+      builder_mode: job.settings.builder_mode,
+      builder_positions: job.settings.position,
+      builder_ef: job.settings.ef ?? this.original_state.builder_ef,
+      builder_el: job.settings.el ?? this.original_state.builder_el,
+      builder_eu: job.settings.eu ?? this.original_state.builder_eu,
+      builder_ea: job.settings.ea ?? this.original_state.builder_ea,
+      builder_ep: job.settings.ep ?? this.original_state.builder_ep,
+      builder_em: job.settings.em ?? this.original_state.builder_em,
       nTer: job.settings.nter,
-      cTer : job.settings.cter,
-      sc_fix : job.settings.sc_fix.toString(),
-      cystein_bridge : job.settings.cystein_bridge
-    }) 
+      cTer: job.settings.cter,
+      sc_fix: job.settings.sc_fix.toString(),
+      cystein_bridge: job.settings.cystein_bridge
+    })
   }
 
-  async loadAllAtomFile(files: ReadedJobFiles) : Promise<File> {
+  async loadAllAtomFile(files: ReadedJobFiles): Promise<File> {
     return new File([files.all_atom.content], files.all_atom.name, { type: files.all_atom.type })
   }
 
-  async loadWarnings(files: ReadedJobFiles) : Promise<File> {
+  async loadWarnings(files: ReadedJobFiles): Promise<File> {
     return new File([files.warnings.content], files.warnings.name, { type: files.warnings.type })
   }
 
-  async loadBonds(martinizeFiles: MartinizeFiles, mode : "go" | "elastic"){
-    
-    const bonds = mode === "go" ? await GoBondsHelper.readFromItps(this.ngl,  martinizeFiles.itps.flat().map((e:MartinizeFile) => e.content)) : mode === "elastic" ? await ElasticBondsHelper.readFromItps(this.ngl, martinizeFiles.itps.map((e:MartinizeFile) => ({content: e.content, mol_idx: e.mol_idx}))) : undefined
+  async loadBonds(martinizeFiles: MartinizeFiles, mode: "go" | "elastic") {
+
+    const bonds = mode === "go" ? await GoBondsHelper.readFromItps(this.ngl, martinizeFiles.itps.flat().map((e: MartinizeFile) => e.content)) : mode === "elastic" ? await ElasticBondsHelper.readFromItps(this.ngl, martinizeFiles.itps.map((e: MartinizeFile) => ({ content: e.content, mol_idx: e.mol_idx }))) : undefined
     const elastic_bonds = bonds?.representation
-    return {...martinizeFiles, elastic_bonds, go: bonds}
+    return { ...martinizeFiles, elastic_bonds, go: bonds }
   }
 
-  protected get original_state() : MBState {
+  protected get original_state(): MBState {
     return {
       running: 'pdb',
       builder_force_field: 'martini3001',
@@ -254,8 +254,8 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       error: undefined,
       martinize_step: '',
       send_mail: "false",
-      bead_radius_factor : 0.2,
-      polymer_number : 0 
+      bead_radius_factor: 0.2,
+      polymer_number: 0
     };
   }
 
@@ -308,20 +308,22 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
   }*/
 
 
-  async reloadJob(allAtomFile : File, martinizeFiles : MartinizeFiles, warnFile : File){
+  async reloadJob(allAtomFile: File | undefined, martinizeFiles: MartinizeFiles, warnFile: File) {
     try {
       const builder_mode = this.state.builder_mode
-      const completeFiles = builder_mode === "go" || builder_mode === "elastic" ? await this.loadBonds(martinizeFiles, builder_mode) : martinizeFiles
-      completeFiles.warnings = warnFile; 
-      this.initAllAtomPdb(allAtomFile); 
+      const completeFiles = builder_mode === "go" || builder_mode === "elastic" ? await this.loadBonds(martinizeFiles, builder_mode) : martinizeFiles
+      completeFiles.warnings = warnFile;
+      // XXXXX
+      //if (allAtomFile) this.initAllAtomPdb(allAtomFile);
       this.initCoarseGrainPdb({
-        files : completeFiles,
-        mode : builder_mode === "classic" ? undefined : builder_mode
+        files: completeFiles,
+        mode: builder_mode === "classic" ? undefined : builder_mode
       });
-      this.setState({files: completeFiles})
-    }catch(e) { 
-      notifyError(e as any) }
-    
+      this.setState({ files: completeFiles })
+    } catch (e) {
+      notifyError(e as any)
+    }
+
 
   }
 
@@ -332,13 +334,13 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     this.changeCommandline('');
     this.changeTheme('light');
   }
-  
+
 
   /* SET SETTINGS FOR REPRESENTATIONS */
 
-  setCoarseGrainRepresentation(parameters: Partial<RepresentationParameters>, representationType? : ViableRepresentation[]) {
+  setCoarseGrainRepresentation(parameters: Partial<RepresentationParameters>, representationType?: ViableRepresentation[]) {
     for (const repr of this.state.coarse_grain_ngl!.representations) {
-      if (!representationType || representationType.includes(repr.name as ViableRepresentation)) {
+      if (!representationType || representationType.includes(repr.name as ViableRepresentation)) {
         repr.set(parameters);
       }
     }
@@ -350,7 +352,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     }
   }
 
-  createTheme(hint: 'light' | 'dark') {
+  createTheme(hint: 'light' | 'dark') {
     const bgclr = hint === 'dark' ? '#303030' : '#fafafa';
 
     return createTheme({
@@ -364,7 +366,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     });
   }
 
-  changeTheme(hint: 'light' | 'dark') {
+  changeTheme(hint: 'light' | 'dark') {
     const theme = this.createTheme(hint);
 
     this.setState({
@@ -374,7 +376,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     this.ngl.set({ backgroundColor: theme.palette.background.default });
   }
 
-  async initCoarseGrainPdb(options: { files: MartinizeFiles, mode?: 'go' | 'elastic' }) {
+  async initCoarseGrainPdb(options: { files: MartinizeFiles, mode?: 'go' | 'elastic' }) {
     let component: NglComponent;
     const polarizableFF = Settings.martinize_variables.force_fields_info[this.state.builder_force_field].polarizable
     this.beads = await itpBeads(options.files.top.content, options.files.itps.map(itp => itp.content), polarizableFF, options.mode)
@@ -382,24 +384,24 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     applyUserRadius(options.files.radius);
 
     try {
-      component = await this.ngl.load(options.files.pdb.content, {coarse_grained:true});
+      component = await this.ngl.load(options.files.pdb.content, { coarse_grained: true });
     } catch (e) {
       console.error(e);
       toast("Unable to load generated PDB. Please retry by re-loading the page.");
       return;
     }
 
-    const repr = component.add<BallAndStickRepresentation>("ball+stick", {}, {radius: true, color: true, beads: this.beads, ff: this.state.builder_force_field, radiusFactor: this.state.bead_radius_factor});
+    const repr = component.add<BallAndStickRepresentation>("ball+stick", {}, { radius: true, color: true, beads: this.beads, ff: this.state.builder_force_field, radiusFactor: this.state.bead_radius_factor });
 
     component.center(500);
 
-    this.setAllAtomRepresentation({ opacity: .3 });
+    if (this.state.all_atom_ngl) this.setAllAtomRepresentation({ opacity: .3 });
 
     if (options.mode) {
       const coordinates: [number, number, number][][] = [];
 
       repr.atomIterator(ap => {
-        if(ap.chainIndex in coordinates) coordinates[ap.chainIndex].push([ap.x, ap.y, ap.z])
+        if (ap.chainIndex in coordinates) coordinates[ap.chainIndex].push([ap.x, ap.y, ap.z])
         else coordinates[ap.chainIndex] = [[ap.x, ap.y, ap.z]];
       });
 
@@ -425,7 +427,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
   }
 
   async initAllAtomPdb(file: File) {
-    const component = await this.ngl.load(file, {coarse_grained:false});
+    const component = await this.ngl.load(file, { coarse_grained: false });
 
     const repr = component.add<BallAndStickRepresentation>("ball+stick");
     component.center();
@@ -435,25 +437,25 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     this.setState({
       all_atom_ngl: component,
       all_atom_pdb: file,
-      polymer_number : repr.polymerNumber
+      polymer_number: repr.polymerNumber
     });
   }
 
   /* ADD OR REMOVE GO BONDS */
   async addOrRemoveGoBond(options: {
-    mode: 'add' | 'remove',
+    mode: 'add' | 'remove',
     /** For adding or removing a single bond. */
     target?: [number, number],
     /** For removing all nodes from atom */
     target_single?: number,
     /** For adding or removing all bonds between the set. */
-    target_ensembl?: [Set<number>, Set<number> | undefined],
+    target_ensembl?: [Set<number>, Set<number> | undefined],
     /** Enable history push. */
     enable_history?: boolean,
     chain: number,
-    }) {
+  }) {
 
-    
+
     if (!this.state.files || !this.state.files.go)
       return;
 
@@ -472,15 +474,15 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     }
 
     if (options.mode === "add") {
-      if(target !== undefined){
+      if (target !== undefined) {
         //Add a single bond
         const atom1 = go.nglIndexToRealIndex(target[0])
         const atom2 = go.nglIndexToRealIndex(target[1])
-        if (atom1.chain !== atom2.chain){
+        if (atom1.chain !== atom2.chain) {
           toast("You can't add bonds between 2 different chains", "error")
           return
         }
-        const chain = atom1.chain; 
+        const chain = atom1.chain;
         go.add(chain, go.createRealLine(atom1.index, atom2.index, chain));
         go.addCustomBonds(chain, atom1.index, atom2.index)
       }
@@ -488,10 +490,10 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
         // Add line between each element of set
         for (const atom1 of target_ensembl[0]) {
           const index1 = go.nglIndexToRealIndex(atom1)
-          
+
           for (const atom2 of target_ensembl[1]) {
             const index2 = go.nglIndexToRealIndex(atom2)
-            if(index1.chain === index2.chain){
+            if (index1.chain === index2.chain) {
               go.add(index1.chain, go.createRealLine(index1.index, index2.index, index1.chain));
               go.addCustomBonds(chain, index1.index, index2.index);
             }
@@ -503,10 +505,10 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
         // Link all atoms of the set together
         const real_indexes = [...target_ensembl[0]].map(e => go.nglIndexToRealIndex(e))
         const real_indexes_by_chain = getIdxSortedByChain(real_indexes)
-        
-        for (const [chain, index_set] of Object.entries(real_indexes_by_chain)){  
+
+        for (const [chain, index_set] of Object.entries(real_indexes_by_chain)) {
           const chainIdx = parseInt(chain)
-          if(isNaN(chainIdx)) throw new Error("Chain index is NaN")
+          if (isNaN(chainIdx)) throw new Error("Chain index is NaN")
           for (const index of index_set) {
             for (const counterpart of index_set) {
               if (index !== counterpart && !go.has(index, counterpart, chainIdx)) {
@@ -517,10 +519,10 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
           }
         }
 
-        
+
       }
 
-    } 
+    }
     else { //REMOVE
       if (target !== undefined) {
         // Source&Target are REAL ATOM index 
@@ -535,7 +537,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
         // INDEX are GO Index + 1
         // Remove every bond from this atom
 
-        const {chain, index} = go.nglIndexToRealIndex(target_single)
+        const { chain, index } = go.nglIndexToRealIndex(target_single)
 
         go.remove(chain, index);
 
@@ -549,16 +551,16 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
         const sortedByChain = getIdxSortedByChain(index_set)
 
-        for (const [chain, index_set] of Object.entries(sortedByChain)){
+        for (const [chain, index_set] of Object.entries(sortedByChain)) {
           const chainIdx = parseInt(chain)
-          if(isNaN(chainIdx)) throw new Error("Chain index is NaN")
+          if (isNaN(chainIdx)) throw new Error("Chain index is NaN")
           for (const index of index_set) {
             // Get the bonds linked to atoms in name set
             const bonds = go.findBondsOf(index, chainIdx).filter((n: any) => index_set.has(n));
             // Remove every targeted bond
             for (const bond of bonds) {
               go.remove(chainIdx, index, bond);
-              
+
               go.rmCustomBonds(chainIdx, index, bond);
             }
           }
@@ -568,11 +570,11 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
         // INDEXES are GO Indexes + 1
         // Convert every index to go name in a set
         const counterpart = [...target_ensembl[1]].map(e => go.nglIndexToRealIndex(e))
-        
+
         const counterpart_by_chain = getIdxSortedByChain(counterpart)
 
         for (const atom of target_ensembl[0]) {
-          const {chain, index} = go.nglIndexToRealIndex(atom)
+          const { chain, index } = go.nglIndexToRealIndex(atom)
           const counterpart_same_chain = counterpart_by_chain[chain]
           // Get the bonds linked to counterpart items
           const bonds = go.findBondsOf(index, chain).filter((n: any) => counterpart_same_chain.has(n));
@@ -587,20 +589,20 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       }
     }
     go.render(this.state.virtual_link_opacity);
-  
+
     this.setState({
       edited: true,
     });
   }
 
-  redrawGoBonds = (highlight?: [number, number] | number, opacity?: number, h_chain?:number) => {    
-    let realHighlightIdx = highlight; 
+  redrawGoBonds = (highlight?: [number, number] | number, opacity?: number, h_chain?: number) => {
+    let realHighlightIdx = highlight;
     if (typeof highlight === 'number') {
       // transform go index to real index
       // It's an atom, transform ngl index to real index
       const nglAtom = this.state.files!.go!.nglIndexToRealIndex(highlight)
-      realHighlightIdx = nglAtom.index; 
-     
+      realHighlightIdx = nglAtom.index;
+
     }
 
     let h1 = 0, h2 = 0;
@@ -614,7 +616,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     }
 
     // TODO improve
-    const predicate = realHighlightIdx !== undefined ? ((atom1: number, atom2: number, chain:number) => {
+    const predicate = realHighlightIdx !== undefined ? ((atom1: number, atom2: number, chain: number) => {
       if (realHighlightIdx && Array.isArray(realHighlightIdx)) {
         return ((atom1 === h1 && atom2 === h2) || (atom2 === h1 && atom1 === h2) && h_chain === chain);
       }
@@ -632,7 +634,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     );
   };
 
-  setSchemeIdColorForCg = (atomColors? : {[atomIdx: number]: string}) => {
+  setSchemeIdColorForCg = (atomColors?: { [atomIdx: number]: string }) => {
     const schemeId = atomColors ? this.state.coarse_grain_ngl!.martiniSchemes.highlightAtomColorScheme(this.state.builder_force_field, atomColors) : this.state.coarse_grain_ngl!.martiniSchemes.getRegisteredColorSchemeId(this.state.builder_force_field)
     for (const repr of this.state.coarse_grain_ngl!.representations) {
       repr.set({
@@ -652,7 +654,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
       go.representation.set({ opacity: vl_op });
       this.setCoarseGrainRepresentation({ opacity: cg_op });
-      
+
       for (const repr of this.state.coarse_grain_ngl!.representations) {
         repr.visible = cg_enabled;
       }
@@ -676,7 +678,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
   handleMartinizeBegin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
+
     const form_data: any = {};
     const s = this.state;
 
@@ -710,7 +712,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
     // form_data.pdb = s.all_atom_pdb;
 
-    this.setState({ 
+    this.setState({
       running: 'martinize_generate',
       error: undefined,
       martinize_error: undefined,
@@ -736,7 +738,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       this.setState({ martinize_step: str });
     };
 
-    const files: MartinizeFiles | undefined = await new Promise<MartinizeFiles>((resolve, reject) => {
+    const files: MartinizeFiles | undefined = await new Promise<MartinizeFiles>((resolve, reject) => {
       const files: Partial<MartinizeFiles> = {};
 
       // Begin the run
@@ -766,10 +768,10 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
             setMartinizeStep("Compiling bonds inside PDB file");
             break;
         }
-      }); 
+      });
 
       // File upload
-      socket.on('martinize download', ({ id, name, type, mol_idx }: { id: string, name: string, type: string, mol_idx:number }, file: ArrayBuffer, ok_cb: Function) => {
+      socket.on('martinize download', ({ id, name, type, mol_idx }: { id: string, name: string, type: string, mol_idx: number }, file: ArrayBuffer, ok_cb: Function) => {
         if (id !== RUN_ID) {
           return;
         }
@@ -808,8 +810,8 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
             });
             break;
           }
-          case 'martinize-warnings' : {
-            files.warnings = new File([file], name, {type})
+          case 'martinize-warnings': {
+            files.warnings = new File([file], name, { type })
           }
         }
 
@@ -821,7 +823,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
         if (id !== RUN_ID) {
           return;
         }
-        
+
         reject({ id, error, type, raw_run, stack });
       });
 
@@ -837,29 +839,29 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
       // When run ends
       socket.on('martinize end', (
-        { id, elastic_bonds, radius, savedToHistory, jobId }: { 
-          id: string, 
-          elastic_bonds?: ElasticOrGoBounds[], 
-          radius: { [name: string]: number; }, 
-          savedToHistory : boolean,
+        { id, elastic_bonds, radius, savedToHistory, jobId }: {
+          id: string,
+          elastic_bonds?: ElasticOrGoBounds[],
+          radius: { [name: string]: number; },
+          savedToHistory: boolean,
           jobId: string,
         }) => {
-          if (id !== RUN_ID) {
-            return;
-          }
-          
-          this.jobId = jobId; 
-          files.radius = radius;
+        if (id !== RUN_ID) {
+          return;
+        }
 
-          /*
-          if (elastic_bonds) {
-            files.elastic_bonds = new BondsRepresentation(this.ngl);
-            files.elastic_bonds.bonds = elastic_bonds;
-          }
-          */
-          if(savedToHistory) toast("Your job has been saved to history", "success")
-          else toast("Your job can't be saved to history. An error occured with the server.", "warning")
-          resolve(files as MartinizeFiles);
+        this.jobId = jobId;
+        files.radius = radius;
+
+        /*
+        if (elastic_bonds) {
+          files.elastic_bonds = new BondsRepresentation(this.ngl);
+          files.elastic_bonds.bonds = elastic_bonds;
+        }
+        */
+        if (savedToHistory) toast("Your job has been saved to history", "success")
+        else toast("Your job can't be saved to history. An error occured with the server.", "warning")
+        resolve(files as MartinizeFiles);
       });
     }).catch(error => {
       this.setState({
@@ -882,7 +884,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       // Init go sites
       files.go = await GoBondsHelper.readFromItps(this.ngl, files.itps.map(e => e.content));
     } else if (s.builder_mode === "elastic") {
-      files.go = await ElasticBondHelper.readFromItps(this.ngl, files.itps.map(e => ({mol_idx: e.mol_idx, content : e.content})));
+      files.go = await ElasticBondHelper.readFromItps(this.ngl, files.itps.map(e => ({ mol_idx: e.mol_idx, content: e.content })));
     }
 
     this.setState({ files, martinize_step: "" });
@@ -968,7 +970,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     for (const repr of this.state.all_atom_ngl!.representations) {
       repr.visible = checked;
     }
-    
+
     this.setState({ all_atom_visible: checked });
   };
 
@@ -1028,15 +1030,16 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     this.setState({ virtual_link_visible: checked });
   };
 
-  onBeadRadiusChange = (_: any, value: number | number[]) => {
-    if(Array.isArray(value)){
+  onBeadRadiusChange = (_: any, value: number | number[]) => {
+    if (Array.isArray(value)) {
       value = value[0]
     }
 
-    this.setState({bead_radius_factor : value})
+    this.setState({ bead_radius_factor: value })
 
-    this.setCoarseGrainRepresentation({ radiusType : "data", 
-      radiusData : this.state.coarse_grain_ngl!.martiniSchemes.applyRadiusFactor(this.state.builder_force_field, value)
+    this.setCoarseGrainRepresentation({
+      radiusType: "data",
+      radiusData: this.state.coarse_grain_ngl!.martiniSchemes.applyRadiusFactor(this.state.builder_force_field, value)
     }, ["ball+stick"]);
 
   }
@@ -1057,7 +1060,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     }
   }
 
-  onMoleculeDownload = async (edited:boolean = false) => {
+  onMoleculeDownload = async (edited: boolean = false) => {
     if (!this.state.files) {
       console.warn("Hey, files should be present in component when this method is called.");
       return;
@@ -1065,18 +1068,18 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
     this.setState({ generating_files: true });
 
-    if(edited) {
-      await this.applyBondsToFiles(); 
+    if (edited) {
+      await this.applyBondsToFiles();
     }
 
     try {
-      await this.downloadMolecule(); 
-    }catch(e){
+      await this.downloadMolecule();
+    } catch (e) {
       console.warn("Failed to build zip.", e);
     } finally {
       this.setState({ generating_files: false });
     }
-  };  
+  };
 
   onRepresentationAdd = (type: ViableRepresentation) => {
     const cmp_aa = this.state.all_atom_ngl!;
@@ -1090,7 +1093,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     cmp_coarse.add(type, {
       visible: this.state.coarse_grain_visible,
       opacity: this.state.coarse_grain_opacity,
-    }, {radius: true, color: true, beads: this.beads, ff: this.state.builder_force_field, radiusFactor : type === "surface" ? 1 : this.state.bead_radius_factor});
+    }, { radius: true, color: true, beads: this.beads, ff: this.state.builder_force_field, radiusFactor: type === "surface" ? 1 : this.state.bead_radius_factor });
 
     this.setState({
       representations: [...this.state.representations, type],
@@ -1180,7 +1183,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     return this.addOrRemoveGoBond({
       mode: 'remove',
       target: [real_atom_1, real_atom_2],
-      chain 
+      chain
     });
   };
 
@@ -1211,53 +1214,55 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
   onGoEditorValidate = async () => {
     this.restoreSettingsAfterGo(false);
 
-    if (!this.state.files){
+    if (!this.state.files) {
       console.error("files are not registered in state, should not happen")
-      return; 
+      return;
     }
 
-    if (!this.jobId){
+    if (!this.jobId) {
       console.error("job id is not registered, should not happen")
-      return; 
+      return;
     }
 
     try {
-      await this.applyBondsToFiles(); 
-    } catch(e) {
+      await this.applyBondsToFiles();
+    } catch (e) {
       toast("Can't apply new bonds to itp files", "error")
-      console.error(e); 
+      console.error(e);
     }
   };
 
   validateFirstStep = async () => {
-    if (!this.state.files){
+    if (!this.state.files) {
       console.error("files are not registered in state, should not happen")
-      return; 
+      return;
     }
 
-    if (!this.jobId){
+    if (!this.jobId) {
       console.error("job id is not registered, should not happen")
-      return; 
+      return;
     }
 
     try {
-      await this.applyBondsToFiles(); 
-    } catch(e) {
+      await this.applyBondsToFiles();
+    } catch (e) {
       toast("Can't apply new bonds to itp files", "error")
-      console.error(e); 
+      console.error(e);
     }
   }
 
   onValidateComment = async (new_project: boolean, comment: string) => {
     //this.restoreSettingsAfterGo(false);
-    this.validateFirstStep(); 
+    this.validateFirstStep();
 
-    ApiHelper.request('history/update', { method: 'POST', 
-    parameters:  {jobId : this.jobId, files:this.state.files?.itps.map(itp => itp.content), molIdxs: this.state.files?.itps.map(itp => itp.mol_idx), editionComment: comment, newProject : new_project}, body_mode : 'multipart'}).then(() => {
+    ApiHelper.request('history/update', {
+      method: 'POST',
+      parameters: { jobId: this.jobId, files: this.state.files?.itps.map(itp => itp.content), molIdxs: this.state.files?.itps.map(itp => itp.mol_idx), editionComment: comment, newProject: new_project }, body_mode: 'multipart'
+    }).then(() => {
       toast(`Job has been saved in history`, "success")
     }).catch(e => {
       toast(`Job can't be saved in history, an error occured`, "error")
-      console.error(e); 
+      console.error(e);
     })
   };
 
@@ -1323,15 +1328,15 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
   };
 
   applyBondsToFiles = async () => {
-    if (!this.state.files){
+    if (!this.state.files) {
       console.warn("Files should be loaded into component to apply bonds")
       return
     }
     const files = this.state.files
     const itps = [...files.itps]
-    if (files.go){
-    
-      const to_replace = await files.go.toOriginalFiles(); 
+    if (files.go) {
+
+      const to_replace = await files.go.toOriginalFiles();
 
       for (const mol_file of to_replace!) {
         const index = itps.findIndex(e => e.name === mol_file.file.name);
@@ -1339,7 +1344,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
           name: mol_file.file.name,
           content: mol_file.file,
           type: 'chemical/x-include-topology',
-          mol_idx : mol_file.mol_idx
+          mol_idx: mol_file.mol_idx
 
         };
 
@@ -1350,14 +1355,15 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
           itps.push(m_file);
         }
 
-        this.setState({files: {
-          top : this.state.files.top,
-          pdb : this.state.files.pdb,
-          radius : this.state.files.radius, 
-          elastic_bonds : this.state.files.elastic_bonds,
-          itps, 
-          go : this.state.files.go,
-          warnings: this.state.files.warnings
+        this.setState({
+          files: {
+            top: this.state.files.top,
+            pdb: this.state.files.pdb,
+            radius: this.state.files.radius,
+            elastic_bonds: this.state.files.elastic_bonds,
+            itps,
+            go: this.state.files.go,
+            warnings: this.state.files.warnings
           }
         })
 
@@ -1367,12 +1373,12 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
   }
 
   downloadMolecule = async () => {
-    if (!this.state.files){
+    if (!this.state.files) {
       console.warn("files should be loaded into component to download them.")
-      return; 
+      return;
     }
 
-    const zip = new JSZip(); 
+    const zip = new JSZip();
     const files = this.state.files
     zip.file(files.pdb.name, files.pdb.content);
     zip.file(files.top.name, files.top.content);
@@ -1388,8 +1394,14 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       }
     });
 
-    const original_name = this.state.all_atom_pdb!.name
-    const name = original_name.slice(0, original_name.indexOf('.pdb')) + '-CG'
+    let name = ""
+    if ( this.state.all_atom_pdb ){
+      const original_name = this.state.all_atom_pdb!.name
+      name = original_name.slice(0, original_name.indexOf('.pdb')) + '-CG'
+    }
+    else{
+      name = "TRUC"
+    }
 
     downloadBlob(generated, name + '.zip');
   }
@@ -1462,13 +1474,13 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
   getMartinizeVersion() {
     ApiHelper.request('molecule/martinize/version').then(request_res => {
-      this.setState({version: request_res.version})
-    }).catch(err => {console.error(err)})
+      this.setState({ version: request_res.version })
+    }).catch(err => { console.error(err) })
   }
 
   changeCommandline(value: string) {
     if (this.state.advanced === 'true') {
-      this.setState({commandline: value}, () => {})
+      this.setState({ commandline: value }, () => { })
     } else {
       const s = this.state
       const socket = SocketIo.connect(SERVER_ROOT);
@@ -1494,7 +1506,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
         form_data.use_go = "true";
         form_data.sc_fix = "true";
       }
-      
+
     }
   }
 
@@ -1510,32 +1522,32 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       <ThemeProvider theme={this.state.theme}>
         {this.renderModalBackToDatabase()}
         {/*<BetaWarning/>*/}
-        
-        <Grid 
-          container 
-          component="main" 
-          className={classes.root} 
-          ref={this.root} 
+
+        <Grid
+          container
+          component="main"
+          className={classes.root}
+          ref={this.root}
           style={{ backgroundColor: this.state.theme.palette.background.default }}
         >
-           
+
           <Grid item sm={8} md={4} component={Paper} elevation={6} className={classes.side} style={{ backgroundColor: is_dark ? '#232323' : '' }} square>
             <div className={classes.paper}>
               <div className={classes.header}>
                 <Typography component="h1" variant="h3" align="center" style={{ fontWeight: 700, fontSize: '2.5rem', marginBottom: '0rem' }}>
                   Build a molecule with martinize
                 </Typography>
-                <Typography variant="subtitle1" align="center" style={{fontSize: '0.7rem', fontStyle: 'italic', marginBottom: '1rem'}}>
+                <Typography variant="subtitle1" align="center" style={{ fontSize: '0.7rem', fontStyle: 'italic', marginBottom: '1rem' }}>
                   martinize version : {this.state.version}
                 </Typography>
 
                 <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
-                  <Link 
-                    href="#!" 
+                  <Link
+                    href="#!"
                     // When state is initial state (main loader), don't show the confirm modal
-                    onClick={this.state.running !== 'pdb' ? this.onWantGoBack : this.onGoBack}  
+                    onClick={this.state.running !== 'pdb' ? this.onWantGoBack : this.onGoBack}
                   >
-                    <FaIcon home style={{ fontSize: '1rem' }} /> 
+                    <FaIcon home style={{ fontSize: '1rem' }} />
                     <span style={{ marginLeft: '.7rem', fontSize: '1.1rem' }}>
                       MAD Home
                     </span>
@@ -1548,30 +1560,30 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
               </div>
 
               {this.state.running === 'load_history' && <div>
-                <Marger size='2rem'/>
-                <CircularProgress size={56}/>
+                <Marger size='2rem' />
+                <CircularProgress size={56} />
               </div>}
 
               {/* Forms... */}
-              {this.state.running === 'pdb' && <LoadPdb 
+              {this.state.running === 'pdb' && <LoadPdb
                 onFileSelect={this.onFileSelect}
                 error={this.state.error}
               />}
 
               {this.state.running === 'pdb_read' && this.allAtomLoading()}
 
-              {(this.state.running === 'martinize_params' || this.state.running === 'martinize_error') && <MartinizeForm 
+              {(this.state.running === 'martinize_params' || this.state.running === 'martinize_error') && <MartinizeForm
                 martinizeError={this.state.martinize_error}
-                onBuilderModeChange={value => this.setState({ builder_mode: value as any }, () => {this.changeCommandline(value)})}
-                onBuilderPositionChange={value => this.setState({ builder_positions: value as any }, () => {this.changeCommandline(value)})}
-                onForceFieldChange={(value : AvailableForceFields) => this.setState({ builder_force_field: value }, () => {this.changeCommandline(value)})}
+                onBuilderModeChange={value => this.setState({ builder_mode: value as any }, () => { this.changeCommandline(value) })}
+                onBuilderPositionChange={value => this.setState({ builder_positions: value as any }, () => { this.changeCommandline(value) })}
+                onForceFieldChange={(value: AvailableForceFields) => this.setState({ builder_force_field: value }, () => { this.changeCommandline(value) })}
                 onMartinizeBegin={this.handleMartinizeBegin}
                 onReset={() => this.reset()}
                 onElasticChange={(type, value) => {
                   // @ts-ignore
-                  this.setState({ [type]: value }, () => {this.changeCommandline(value)})
+                  this.setState({ [type]: value }, () => { this.changeCommandline(value) })
                 }}
-                onAdvancedChange={value => {this.changeCommandline(value)}}
+                onAdvancedChange={value => { this.changeCommandline(value) }}
                 builderForceField={this.state.builder_force_field}
                 builderMode={this.state.builder_mode}
                 builderPosition={this.state.builder_positions}
@@ -1587,23 +1599,25 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
                 cystein_bridge={this.state.cystein_bridge}
                 advanced={this.state.advanced}
                 commandline={this.state.commandline}
-                advancedActivate={() => {if(this.state.advanced === 'true') {
-                  this.setState({advanced: 'false'}, () => this.changeCommandline(''))
-                } else {
-                  this.setState({advanced: 'true'})
-                }}}
-                doSendMail={(bool) => this.setState({send_mail:bool.toString()})}
+                advancedActivate={() => {
+                  if (this.state.advanced === 'true') {
+                    this.setState({ advanced: 'false' }, () => this.changeCommandline(''))
+                  } else {
+                    this.setState({ advanced: 'true' })
+                  }
+                }}
+                doSendMail={(bool) => this.setState({ send_mail: bool.toString() })}
                 polymerNumber={this.state.polymer_number}
               />}
 
               {this.state.running === 'martinize_generate' && this.martinizeGenerating()}
 
-              {this.state.running === 'done' && <MartinizeGenerated 
+              {this.state.running === 'done' && <MartinizeGenerated
 
                 martinizeWarnings={this.state.files?.warnings}
                 onReset={() => this.reset()}
                 theme={this.state.theme}
-                allAtomName={this.state.all_atom_pdb!.name.split('.')[0]}
+                allAtomName={ this.state.all_atom_pdb ? this.state.all_atom_pdb!.name.split('.')[0] : "NOTHING" }
                 onThemeChange={this.onThemeChange}
                 virtualLinks={this.state.builder_mode === 'classic' ? '' : this.state.builder_mode}
                 allAtomOpacity={this.state.all_atom_opacity}
@@ -1630,8 +1644,8 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
                 onBeadRadiusChange={this.onBeadRadiusChange}
               />}
 
-              
-              {this.state.running === 'go_editor' && <GoEditor 
+
+              {this.state.running === 'go_editor' && <GoEditor
                 stage={this.ngl}
                 cgCmp={this.state.coarse_grain_ngl!}
                 onBondRemove={this.onBondRemove}
@@ -1654,20 +1668,20 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
                 onDownload={() => this.onMoleculeDownload(true)}
               />}
             </div>
-            
+
           </Grid>
 
-          
+
           <Grid item sm={4} md={8}>
-            {this.state.running === 'load_error' && 
+            {this.state.running === 'load_error' &&
               <Alert severity="error">{this.state.load_error_message}</Alert>
             }
-            <div id="ngl-stage" style={{ height: 'calc(100% - 5px)' }}/> 
-            {this.state.running === "done" && <BeadsLegend ff={this.state.builder_force_field}/>}
-                      
+            <div id="ngl-stage" style={{ height: 'calc(100% - 5px)' }} />
+            {this.state.running === "done" && <BeadsLegend ff={this.state.builder_force_field} />}
+
           </Grid>
 
-          
+
         </Grid>
       </ThemeProvider>
     );
@@ -1698,7 +1712,7 @@ export default withStyles(theme => ({
   },
   side: {
     zIndex: 3,
-    overflow: 'auto', 
+    overflow: 'auto',
     maxHeight: '100vh',
   },
 }))(withTheme(MartinizeBuilder));
