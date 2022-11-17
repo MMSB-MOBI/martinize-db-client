@@ -31,7 +31,7 @@ interface propsmenu {
   dataForceFieldMolecule: {} | JSON,
   errorlink: any[],
   fixlinkcomponentappear: () => void;
-
+  clear: () => void;
 }
 
 interface GeneratorMenuState extends FormState {
@@ -169,12 +169,13 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
   itpfromhistory = (molecule: any) => {
     this.setState({ want_go_back: false   });
     this.props.addNEwMolFromITP(molecule)
+    this.setState({ history_modal_chooser: false })
   };
 
   onWantGoBack = (e: React.MouseEvent) => {
     // Don't go to #!
     e.preventDefault();
-
+    this.props.clear()
     this.setState({
       want_go_back: true
     });
@@ -193,7 +194,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
 
         <DialogContent>
           <DialogContentText>
-            You will definitively lose your beautiful polymer.
+            You will definitively loose your beautiful polymer.
           </DialogContentText>
         </DialogContent>
 

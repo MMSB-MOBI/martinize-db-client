@@ -163,9 +163,6 @@ export default class GeneratorManager extends React.Component {
       current_position_fixlink: undefined,
       errorfix: undefined
     })
-
-
-    console.log("new_modification")
   }
 
   addprotsequence = (sequence: string) => {
@@ -358,12 +355,10 @@ export default class GeneratorManager extends React.Component {
 
           let idlink1 = parseInt(atoms[parseInt(link[0]) - 1].replaceAll('\t', ' ').split(' ').filter((e) => { return e !== "" })[2])
           let idlink2 = parseInt(atoms[parseInt(link[1]) - 1].replaceAll('\t', ' ').split(' ').filter((e) => { return e !== "" })[2])
-          console.log("bug itp file with tabulation")
-
+          
           let node1 = newMolecules[idlink1 - 1]
           let node2 = newMolecules[idlink2 - 1]
 
-          console.log(node1, node2)
           if (idlink1 !== idlink2) {
             newlinks.push({
               "source": newMolecules[idlink1 - 1],
@@ -688,13 +683,9 @@ export default class GeneratorManager extends React.Component {
 
   }
   grossecorection = (itpfix: string) => {
-
     this.setState({ stepsubmit: 2, loading: true, itp: itpfix, current_position_fixlink: undefined, errorLink: [] })
-
     this.state.data_for_computation['itp'] = itpfix
-
     this.socket.emit("run_gro_generation", this.state.data_for_computation)
-
   }
 
   getbeadslist = (idres: string) => {
@@ -899,6 +890,29 @@ export default class GeneratorManager extends React.Component {
     this.setState({ current_position_fixlink: 0 })
   }
 
+  clear = () => {
+    console.log( "clear !")
+    currentAvaibleID = -1
+    this.setState({
+      Simulation: undefined,
+      customITP: {},
+      nodesToAdd: [],
+      linksToAdd: [],
+      Warningmessage: "",
+      dialogWarning: "",
+      loading: false,
+      stepsubmit: undefined,
+      top: "",
+      itp: "",
+      gro: "",
+      pdb: "",
+      errorLink: [],
+      current_position_fixlink: undefined,
+      errorfix: undefined,
+      data_for_computation: {}
+    })
+  }
+
   render() {
     return (
       <Grid
@@ -950,6 +964,7 @@ export default class GeneratorManager extends React.Component {
         <Grid item md={4} component={Paper} elevation={6} square>
 
           <GeneratorMenu
+            clear={this.clear}
             errorlink={this.state.errorLink}
             addprotsequence={this.addprotsequence}
             setForcefield={this.setForcefield}
