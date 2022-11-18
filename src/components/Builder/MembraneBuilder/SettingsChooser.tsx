@@ -225,13 +225,8 @@ class SettingsChooser extends React.Component<SCProps, SCState> {
 
     return (
       <div>
-        <Typography color="error" style={{ fontWeight: 'bold', fontSize: '1.2rem' }}>
+        <Typography color="error" style={{ fontWeight: 'bold', fontSize: '1.2rem', marginBottom: '1rem'}}>
           {this.renderErrorText(error.error)}.
-        </Typography>
-        <Typography style={{ marginBottom: '1rem' }}>
-          <Link href="#!" onClick={download_fn}>
-            Download a dump of this run
-          </Link>
         </Typography>
 
         <Divider />
