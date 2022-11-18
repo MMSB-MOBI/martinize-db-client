@@ -27,7 +27,7 @@ interface props {
     pdb: string,
     warning: string,
     close: () => void;
-    add: () => void;
+    add_to_history: () => void;
 }
 
 interface state {
@@ -196,7 +196,7 @@ export default class RunPolyplyDialog extends React.Component<props, state> {
 
                     {(this.props.currentStep! === 4) ? (<>
                         <DialogActions >
-                            <Button color='success' onClick={() => { this.props.add() }}>Add to history</Button>
+                            <Button color='success' onClick={() => { this.props.add_to_history() }}>Add to history</Button>
                         </DialogActions>
                     </>) : (<>
 

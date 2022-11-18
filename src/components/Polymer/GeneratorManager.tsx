@@ -16,6 +16,7 @@ import { Marger } from "../../helpers";
 import { SERVER_ROOT } from '../../constants';
 import FixLink from "./Dialog/FixLink";
 import Settings from "../../Settings";
+import { boolean } from "@mmsb/ngl/declarations/utils";
 
 // Pour plus tard
 //https://github.com/korydondzila/React-TypeScript-D3/tree/master/src/components
@@ -102,24 +103,13 @@ export default class GeneratorManager extends React.Component {
 
   add_to_history = () => {
     console.log(this.state)
-
-    //Method pour recuper l'id de l'utilisateur 
-    //C'est super moche je pense
-    //Mais ca fonctionne
-    //desolé 
-    // getHistory()
-    //   .then(jobs => {
-    //     const userid = jobs[0]['userId']
-    //     console.log( jobs)
-    //     this.state.data_for_computation['userId'] = userid
-    //     this.socket.emit("add_to_history", this.state.data_for_computation)
-    //     this.closeDialog()
-
-    //   })
-    //   .catch(err => console.log(err))
-
     this.state.data_for_computation['userId'] = Settings.user?.id
     this.socket.emit("add_to_history", this.state.data_for_computation)
+
+    this.socket.on("add_to_history_answer", async (response: boolean) => {
+      if (response) this.warningfunction("Your polymer has been add to your history!")
+      else this.warningfunction("Fail ! We cannot add this polymer to your history!")
+    })
     this.closeDialog()
   }
 
@@ -243,7 +233,7 @@ export default class GeneratorManager extends React.Component {
           newID: newid,
         })
         if (!(this.state.dataForForm[this.currentForceField].includes(node.resname))) {
-          this.setState({ Warningmessage: node.resname + " not in " + this.currentForceField + ". Please do something !!! (But please don't cry)" })
+          this.setState({ Warningmessage: node.resname + " not in " + this.currentForceField + ". Please add a definition for your molecule." })
         }
 
         node.id = newid
@@ -355,7 +345,7 @@ export default class GeneratorManager extends React.Component {
 
           let idlink1 = parseInt(atoms[parseInt(link[0]) - 1].replaceAll('\t', ' ').split(' ').filter((e) => { return e !== "" })[2])
           let idlink2 = parseInt(atoms[parseInt(link[1]) - 1].replaceAll('\t', ' ').split(' ').filter((e) => { return e !== "" })[2])
-          
+
           let node1 = newMolecules[idlink1 - 1]
           let node2 = newMolecules[idlink2 - 1]
 
@@ -593,7 +583,7 @@ export default class GeneratorManager extends React.Component {
   addnode = (toadd: FormState): void => {
     //Check forcefield 
     if (toadd.numberToAdd > 500) {
-      this.setState({ Warningmessage: "Whaou !!! To many nodes ! (limite 500)" })
+      this.setState({ Warningmessage: "Are you crazy !!! This is too many molecules ! (limit 500)" })
     }
     else if ((this.currentForceField === '') || (this.currentForceField === toadd.forcefield)) {
       this.currentForceField = toadd.forcefield;
@@ -674,7 +664,7 @@ export default class GeneratorManager extends React.Component {
     console.log("Go to server");
     this.setState({ stepsubmit: 0 })
     if (this.state.Simulation === undefined) {
-      this.setState({ Warningmessage: "Error Simulation undefined " })
+      this.setState({ Warningmessage: "No molecule in your polymer. You need to build a polymer before." })
     }
     else {
       // Make dialog box appaer
@@ -718,10 +708,10 @@ export default class GeneratorManager extends React.Component {
     const connexe1 = this.giveConnexeNode(this.state.Simulation!.nodes()[1])
     const nodeNumber = this.state.Simulation?.nodes().length
     if (nodeNumber !== connexe1.size) {
-      console.log("Not connexe ! Try to send 2 trucs")
+      console.log("Not connexe !")
       //Get the first 
       console.log(connexe1)
-      this.warningfunction("Your polymer is composed by X sub part.")
+      this.warningfunction("Your polymer is composed by different parts. Please add link betwen every parts.")
 
     }
     else {
@@ -755,9 +745,14 @@ export default class GeneratorManager extends React.Component {
 
 
   componentDidMount() {
-    ApiHelper.request('polymergenerator/data')
-      .then((value: JSON) => { console.log(value); this.setState({ dataForForm: value }) })
-      .catch((err: any) => { console.log(err); this.setState({ dataForForm: {} }) });
+    this.socket.emit("get_polyply_data",)
+
+    this.socket.on("polyply_data", (data: any) => {
+      console.log( "les data sont la !!!")
+      this.setState({ dataForForm: data })
+    }
+    )
+
 
     //Ecoute sur le socket 
     this.socket.on("itp", (res: string) => {
@@ -869,7 +864,7 @@ export default class GeneratorManager extends React.Component {
 
       else {
         // (dicoError.disjoint === true) 
-        this.setState({ Warningmessage: "Fail ! Your molecule consists of disjoint parts.Perhaps links were not applied correctly. Peut etre une option a ajouter pour mettre 2 molecule dans le melange ????????" })
+        this.setState({ Warningmessage: "Fail ! Your molecule consists of disjoint parts.Perhaps links were not applied correctly." })
       }
 
     })
@@ -891,7 +886,7 @@ export default class GeneratorManager extends React.Component {
   }
 
   clear = () => {
-    console.log( "clear !")
+    console.log("clear !")
     currentAvaibleID = -1
     this.setState({
       Simulation: undefined,
@@ -939,7 +934,7 @@ export default class GeneratorManager extends React.Component {
             gro={this.state.gro}
             pdb={this.state.pdb}
             close={this.closeDialog}
-            add={this.add_to_history}
+            add_to_history={this.add_to_history}
             top={this.state.top}
             warning={this.state.dialogWarning}> </RunPolyplyDialog>
         ) : (<></>)

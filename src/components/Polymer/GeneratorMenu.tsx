@@ -74,10 +74,10 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
 
   CheckNewMolecule(): void {
     if (this.state.forcefield === '') {
-      this.props.warningfunction("Field Forcefield null")
+      this.props.warningfunction("Please select a forcefield")
     }
     else if (this.state.moleculeToAdd === '') {
-      this.props.warningfunction("Field Molecule null")
+      this.props.warningfunction("Please select a molecule.")
       //this.props.addnode
     }
     else {
@@ -90,7 +90,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
 
     //checkLink( )
     if ((typeof (idLink1) == 'undefined') || (typeof (idLink2) == 'undefined')) {
-      this.props.warningfunction("Problem link : id number undefined")
+      this.props.warningfunction("Please select id for your new link.")
     }
     else {
       this.props.addlink(idLink1, idLink2)
@@ -148,7 +148,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
         reader.readAsText(file);
       }
       else {
-        this.props.warningfunction("File unkown")
+        this.props.warningfunction("File extension unkown")
       }
     }
     else {

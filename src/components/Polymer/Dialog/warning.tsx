@@ -23,14 +23,14 @@ export default class Warning extends React.Component<propsalert> {
                 keepMounted
                 onClose={() => { this.props.close() }}
                 aria-describedby="alert-dialog-slide-description" >
-                <DialogTitle>{"Warning ! "}</DialogTitle>
+                <DialogTitle>{"Alert ! "}</DialogTitle>
                 <DialogContent>
                     <DialogContentText id="alert-dialog-slide-description">
                         {this.props.message}
                     </DialogContentText>
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => { this.props.close() }}>Ok Sir, I will fix my mistake !</Button>
+                    <Button onClick={() => { this.props.close() }}>Ok</Button>
                 </DialogActions>
             </Dialog>
         }
