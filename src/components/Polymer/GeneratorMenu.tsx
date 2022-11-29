@@ -28,7 +28,7 @@ interface propsmenu {
   addprotsequence: (arg0: string) => void,
   send: () => void,
   addNEwCustomLink: (arg0: string, arg1: string) => void,
-  dataForceFieldMolecule: {} | JSON,
+  dataForceFieldMolecule: { [forcefield: string]: string[] },
   errorlink: any[],
   fixlinkcomponentappear: () => void;
   clear: () => void;
@@ -48,7 +48,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
 
   // Set the state directly. Use props if necessary.
   state = {
-    forcefield: "",
+    forcefield: "martini3",
     moleculeToAdd: "",
     numberToAdd: 1,
     id1: undefined,
@@ -60,17 +60,13 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
     want_go_back: false,
   }
 
+
   protected go_back_btn = React.createRef<any>();
 
   closeCreate(): void {
     console.log(this.state)
     // this.setState( {createLink : false})
   }
-
-  GetMolFField(jsonformdata: any, ff: string): string[] {
-    return jsonformdata[ff];
-  }
-
 
   CheckNewMolecule(): void {
     if (this.state.forcefield === '') {
@@ -104,7 +100,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
   };
 
   handleUpload = (selectorFiles: FileList) => {
-    this.setState({ want_go_back: false   });
+    this.setState({ want_go_back: false });
     if (selectorFiles.length === 1) {
       let file = selectorFiles[0]
       const ext = file.name.split('.').slice(-1)[0]
@@ -158,16 +154,15 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
 
   }
 
-
   nextFromMolecule = (molecule: Molecule | MoleculeWithFiles) => {
-    this.setState({ want_go_back: false   });
+    this.setState({ want_go_back: false });
     this.setState({ database_modal_chooser: false });
     //@ts-ignore
     console.log(molecule)
   };
 
   itpfromhistory = (molecule: any) => {
-    this.setState({ want_go_back: false   });
+    this.setState({ want_go_back: false });
     this.props.addNEwMolFromITP(molecule)
     this.setState({ history_modal_chooser: false })
   };
@@ -234,6 +229,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
           onCancel={() => this.setState({ history_modal_chooser: false })}
         />
 
+
         <Marger size="2rem" />
         <Typography component="h1" variant="h3" align="center" style={{ fontWeight: 700, fontSize: '2.5rem', marginBottom: '1rem' }}>
           Design your own polymer:
@@ -256,46 +252,47 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
         </div>
 
 
+
         <Divider variant='middle' />
 
         <Marger size="2rem" />
 
-        <Grid container component="main" style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }}>
+        <Grid container component="main" style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'left', }}>
+          <Grid item xs={1}></Grid>
+          <Grid item xs={5}>
+            <Typography variant="h6" > Current forcefield : </Typography>
+          </Grid>
+          <Grid item xs={5}>
+            <Typography variant="h6" sx={{ fontWeight: 'bold' }}>{this.state.forcefield}</Typography>
+          </Grid>
+          <Grid item xs={1}></Grid>
 
-          <Grid item xs={6}>
-            <Typography variant="h6" >
-              First choose your forcefield:
+          <Grid item xs={1}></Grid>
+          <Grid item xs={10}>
+            <Typography variant="subtitle1" >
+              (More forcefield will be available, in the next release)
             </Typography>
-
           </Grid>
+          <Grid item xs={1}></Grid>
 
-          <Grid item xs={1}>
 
-          </Grid>
 
-          <Grid item xs={3}>
-            {Object.keys(this.props.dataForceFieldMolecule).length === 0 ? (
-              <CircularProgress />
-            ) :
-              (
-                <FormControl fullWidth={true} >
-                  <SimpleSelect
-                    //formControlClass={this.props.classes.ff_select}
-                    required
-                    label="forcefield : "
-                    variant="standard"
-                    values={Object.keys(this.props.dataForceFieldMolecule).map(e => ({ id: e, name: e }))}
-                    id="ff"
-                    value={this.state.forcefield}
-                    onChange={v => {
-                      this.props.setForcefield(v);
-                      this.setState({ forcefield: v });
-                    }} />
-                </FormControl>
-              )}
-          </Grid>
-
-          <Marger size="2rem" />
+          {/* // <FormControl fullWidth={true} >
+          //   <SimpleSelect
+          //     //formControlClass={this.props.classes.ff_select}
+          //     required
+          //     label="forcefield : "
+          //     variant="standard"
+          //     values={Object.keys(this.props.dataForceFieldMolecule).map(e => ({ id: e, name: e }))}
+          //     id="ff"
+          //     value="martini3001"
+          //     onChange={v => {
+          //       this.props.setForcefield(v);
+          //       this.setState({forcefield: v });
+          //     }} />
+          // </FormControl> */}
+          <Marger size="1rem" />
+          <Grid item xs={1}></Grid>
           <Grid item xs={6}>
             <Typography variant="h6" >
               Design your own itp link file:
@@ -303,10 +300,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
 
           </Grid>
 
-          <Grid item xs={1}>
-
-          </Grid>
-
+          <Grid item xs={1}></Grid>
 
           <Grid item xs={3}>
 
@@ -314,6 +308,8 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
               Create
             </Button>
           </Grid>
+
+          <Grid item xs={1}></Grid>
 
 
           <Marger size="2rem" />
@@ -337,73 +333,86 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
             </Grid>
             </>
           } */}
-          {(forcefield !== '') &&
-            <>
-              <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center' }}>
 
-                <Typography variant="h6" >
-                  Add my own molecule:
-                </Typography>
-              </Grid>
+          <Grid item xs={1}></Grid>
+          <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center' }}>
 
-              <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center' }}>
-                <Input
+            <Typography variant="h6" >
+              Add my own molecule:
+            </Typography>
+          </Grid>
 
-                  color="primary"
-                  onChange={(e: any) => this.handleUpload(e.target.files)}
-                  type="file"
-                />
-              </Grid>
+          <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center' }}>
+            <Input
 
-              <Grid item xs={11} style={{ textAlign: 'left', alignItems: 'center' }}>
+              color="primary"
+              onChange={(e: any) => this.handleUpload(e.target.files)}
+              type="file"
+            />
+          </Grid>
+          <Grid item xs={1}></Grid>
+          <Grid item xs={1}></Grid>
+          <Grid item xs={10} style={{ textAlign: 'left', alignItems: 'center' }}>
 
-                <Typography component={'div'}>
-                  <ul>
-                    <li>Your previous polymer (.json)</li>
-                    <li>Fasta protein sequence (.fasta)</li>
-                    <li>Topology of a polymer/molecule (.itp)</li>
-                  </ul>
-                </Typography>
-              </Grid>
-              <Marger size="1rem" />
+            <Typography component={'div'}>
+              <ul>
+                <li>Your previous polymer (.json)</li>
+                <li>Fasta protein sequence (.fasta)</li>
+                <li>Topology of a polymer/molecule (.itp)</li>
+              </ul>
+            </Typography>
+          </Grid>
+          <Grid item xs={1}></Grid>
+          <Marger size="1rem" />
 
-              <Grid item xs={10} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
-                <Typography variant="h6" >Add from database or history: </Typography>
-              </Grid>
+          <Grid item xs={1}></Grid>
+          <Grid item xs={10} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
+            <Typography variant="h6" >Add from database or history: </Typography>
+          </Grid>
+          <Grid item xs={1}></Grid>
 
-              <Grid item xs={4} style={{ textAlign: 'left', alignItems: 'center' }}>
-                <Button variant="outlined" color="primary" onClick={() => this.setState({ database_modal_chooser: true })}>
-                  (BETA) Load from database
-                  <Badge color="secondary" >
-                    <Icon className={"fas fa-" + "upload"} />
-                  </Badge>
-                </Button>
-              </Grid>
-
-
-              <Grid item xs={1}>
-
-              </Grid>
-
-              <Grid item xs={4} style={{ textAlign: 'left', alignItems: 'center' }}>
-                <Button variant="outlined" color="primary" onClick={() => this.setState({ history_modal_chooser: true })}>
-                  Load from history
-                  <Badge color="secondary" >
-                    <Icon className={"fas fa-" + "upload"} />
-                  </Badge>
-                </Button>
-              </Grid>
+          <Grid item xs={1}></Grid>
+          <Grid item xs={4} style={{ textAlign: 'left', alignItems: 'center' }}>
+            <Button variant="outlined" color="primary" onClick={() => this.setState({ database_modal_chooser: true })}>
+              (BETA) Load from database
+              <Badge color="secondary" >
+                <Icon className={"fas fa-" + "upload"} />
+              </Badge>
+            </Button>
+          </Grid>
 
 
-              <Marger size="1rem" />
+          <Grid item xs={1}>
+
+          </Grid>
+
+          <Grid item xs={4} style={{ textAlign: 'left', alignItems: 'center' }}>
+            <Button variant="outlined" color="primary" onClick={() => this.setState({ history_modal_chooser: true })}>
+              Load from history
+              <Badge color="secondary" >
+                <Icon className={"fas fa-" + "upload"} />
+              </Badge>
+            </Button>
+          </Grid>
+
+          <Grid item xs={1}></Grid>
+
+          <Marger size="1rem" />
 
 
-              <Grid item xs={10} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }}>
-                <Typography variant="h6" align="left">
-                  Add your molecule (in chain):
-                </Typography>
-              </Grid>
+          <Grid item xs={1}></Grid>
 
+          <Grid item xs={10} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }}>
+            <Typography variant="h6" align="left">
+              Add your molecule (in chain):
+            </Typography>
+          </Grid>
+          <Grid item xs={1}></Grid>
+
+          <Grid item xs={1}></Grid>
+
+          {(this.props.dataForceFieldMolecule[this.state.forcefield] !== undefined) ?
+            (<>
               <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
 
                 <SimpleSelect
@@ -411,110 +420,125 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
                   required
                   label="Molecule"
                   variant="standard"
-                  values={this.GetMolFField(this.props.dataForceFieldMolecule, forcefield).map(e => ({ id: e, name: e }))}
+                  // values={this.GetMolFField(this.props.dataForceFieldMolecule, forcefield).map(e => ({ id: e, name: e }))}
+                  // @ts-ignore
+                  values={this.props.dataForceFieldMolecule[this.state.forcefield].map(e => ({ id: e, name: e }))}
                   id="ff"
                   value={this.state.moleculeToAdd}
                   onChange={v => this.setState({ moleculeToAdd: v })} />
               </Grid>
-
-              <Grid item xs={2} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
-
-                <TextField
-                  label="numberToAdd"
-                  type="number"
-                  InputProps={{ inputProps: { min: 1, max: 100 } }}
-                  value={this.state.numberToAdd}
-                  onChange={v => this.setState({ numberToAdd: Number(v.target.value) })}
-                  variant="standard" />
+            </>) : (<>
+              <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
+                <CircularProgress></CircularProgress>
               </Grid>
-
-              <Grid item xs={3} style={{ textAlign: 'right', alignItems: 'center', justifyContent: 'center', }} >
-                <Button
-                  endIcon={<Grain />}
-                  id="addmol"
-                  variant="outlined"
-                  onClick={() => {this.setState({ want_go_back: false   });this.CheckNewMolecule()}}>
-                  add
-
-                  <Badge color="secondary" >
-                    <Icon className={"fas fa-" + "plus"} />
-                  </Badge>
-                </Button>
-              </Grid>
+            </>)}
 
 
+          <Grid item xs={2} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
 
-              <Marger size="1rem" />
+            <TextField
+              label="numberToAdd"
+              type="number"
+              InputProps={{ inputProps: { min: 1, max: 100 } }}
+              value={this.state.numberToAdd}
+              onChange={v => this.setState({ numberToAdd: Number(v.target.value) })}
+              variant="standard" />
+          </Grid>
+
+          <Grid item xs={3} style={{ textAlign: 'right', alignItems: 'center', justifyContent: 'center', }} >
+            <Button
+              endIcon={<Grain />}
+              id="addmol"
+              variant="outlined"
+              onClick={() => { this.setState({ want_go_back: false }); this.CheckNewMolecule() }}>
+              add
+
+              <Badge color="secondary" >
+                <Icon className={"fas fa-" + "plus"} />
+              </Badge>
+            </Button>
+          </Grid>
+          <Grid item xs={1}></Grid>
 
 
-              <Grid item xs={10} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
-                <Typography variant="h6" >Add a new link: </Typography>
-              </Grid>
 
-
-              <Grid item xs={3} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
-                <TextField
-                  label="id1"
-                  type="number"
-                  InputProps={{ inputProps: { min: 0, max: 100 } }}
-                  value={this.state.id1}
-                  onChange={v => this.setState({ id1: v.target.value })}
-                  variant="standard" />
-              </Grid>
-
-              <Grid item xs={1} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} > </Grid>
-
-
-              <Grid item xs={3} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
-                <TextField
-                  label="id2"
-                  type="number"
-                  InputProps={{ inputProps: { min: 0, max: 100 } }}
-                  value={this.state.id2}
-                  onChange={v => this.setState({ id2: v.target.value })}
-                  variant="standard" />
-              </Grid>
-
-              <Grid item xs={3} style={{ textAlign: 'right', alignItems: 'center', justifyContent: 'center', }} >
-                <Button
-                  id="addlink"
-                  variant="contained"
-                  onClick={() => {this.setState({ want_go_back: false   }); this.CheckNewLink(this.state.id1, this.state.id2)}}>
-                  Add link
-                  <Badge color="secondary" >
-                    <Icon className={"fas fa-" + "link"} />
-                  </Badge>
-                </Button>
-
-              </Grid>
-
-              <Marger size="2rem" />
-
-              <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }}>
-                <Button id="send" variant="contained" color="success" endIcon={<AutoFixHigh />} onClick={() => this.props.send()}>
-                  Polyply That!
-                  <Badge color="secondary" >
-                    <Icon className={"fas fa-" + "magic"} />
-                  </Badge>
-                </Button>
-              </Grid>
-            </>}
-
-          {
-            ((forcefield !== '') && (this.props.errorlink.length !== 0)) &&
-            <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }}>
-              <Button id="send" variant="contained" color="error" endIcon={<AutoFixHigh />} onClick={() => this.props.fixlinkcomponentappear()}>
-                Fix link
-                <Badge color="secondary" >
-                  <Icon className={"fas fa-" + "pen"} />
-                </Badge>
-              </Button>
-            </Grid>
-          }
           <Marger size="1rem" />
 
-        </Grid >
-      </div >
+          <Grid item xs={1}></Grid>
+          <Grid item xs={10} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
+            <Typography variant="h6" >Add a new link: </Typography>
+          </Grid>
+          <Grid item xs={1}></Grid>
+
+          <Grid item xs={1}></Grid>
+          <Grid item xs={2} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
+            <TextField
+              label="id1"
+              type="number"
+              InputProps={{ inputProps: { min: 0, max: 100 } }}
+              value={this.state.id1}
+              onChange={v => this.setState({ id1: v.target.value })}
+              variant="standard" />
+          </Grid>
+          <Grid item xs={1}></Grid>
+          <Grid item xs={2} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
+            <TextField
+              label="id2"
+              type="number"
+              InputProps={{ inputProps: { min: 0, max: 100 } }}
+              value={this.state.id2}
+              onChange={v => this.setState({ id2: v.target.value })}
+              variant="standard" />
+          </Grid>
+          <Grid item xs={1}></Grid>
+          <Grid item xs={3} style={{ textAlign: 'right', alignItems: 'center', justifyContent: 'center', }} >
+            <Button
+              id="addlink"
+              variant="contained"
+              onClick={() => { this.setState({ want_go_back: false }); this.CheckNewLink(this.state.id1, this.state.id2) }}>
+              Add link
+              <Badge color="secondary" >
+                <Icon className={"fas fa-" + "link"} />
+              </Badge>
+            </Button>
+
+          </Grid>
+          <Grid item xs={2}></Grid>
+
+          <Marger size="1rem" />
+
+          {
+            ((forcefield !== '') && (this.props.errorlink.length !== 0)) ?
+              (
+                <><Grid item xs={3}></Grid>
+                  <Grid item xs={5 } style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }}>
+                    <Button id="send" variant="contained" color="error" endIcon={<AutoFixHigh />} onClick={() => this.props.fixlinkcomponentappear()}>
+                      Fix link
+                      <Badge color="secondary" >
+                        <Icon className={"fas fa-" + "pen"} />
+                      </Badge>
+                    </Button>
+                  </Grid></>) :
+              (
+                <><Grid item xs={3}></Grid>
+                  <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }}>
+                    <Button id="send" variant="contained" color="success" endIcon={<AutoFixHigh />} onClick={() => this.props.send()}>
+                      Polyply That!
+                      <Badge color="secondary" >
+                        <Icon className={"fas fa-" + "magic"} />
+                      </Badge>
+                    </Button>
+                  </Grid>
+                </>
+
+              )
+          }
+
+
+        </Grid>
+        <Marger size="1rem" />
+
+      </div>
     )
   };
 }

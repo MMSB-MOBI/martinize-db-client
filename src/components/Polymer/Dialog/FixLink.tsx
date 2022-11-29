@@ -54,7 +54,7 @@ export default class FixLink extends React.Component<props, state> {
         let itpFIX = splititp[0] + "[ bonds ]\n"
 
         for (const fix of this.props.fixing_error) {
-            itpFIX = itpFIX + `${fix["start"]} ${fix["end"]} 1 ${fix["angle"]} ${fix["force"]}\n`
+            itpFIX = itpFIX + `${fix["start"]} ${fix["end"]} 1 ${fix["distance"]} ${fix["force"]}\n`
         }
 
         itpFIX = itpFIX + splititp[1]
@@ -62,9 +62,6 @@ export default class FixLink extends React.Component<props, state> {
         this.props.send(itpFIX)
         this.props.close()
     }
-
-
-
 
     handlechangeBead = (beadtruc: string, position: string) => {
         let copy = this.props.fixing_error
@@ -151,7 +148,7 @@ export default class FixLink extends React.Component<props, state> {
                             <Grid item xs={5} style={{ textAlign: 'right', alignItems: 'right', justifyContent: 'center', }}>
                                 <TextField
                                     id="outlined-number"
-                                    label="angle"
+                                    label="distance"
                                     type="number"
                                     inputProps={{ step: "0.1" }}
                                     defaultValue="0.336"
@@ -196,7 +193,7 @@ export default class FixLink extends React.Component<props, state> {
 
                     {(this.props.fixing_error.map((e: any) => { return e.is_fixed }).includes(false)) ?
                         <>  </> :
-                        <Button color='success' onClick={() => { this.ApplyFix() }}>Apply</Button>
+                        <Button color='success' onClick={() => { this.ApplyFix() }}>SUBMIT</Button>
                     }
 
                 </DialogActions>
