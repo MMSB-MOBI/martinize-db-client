@@ -94,9 +94,16 @@ export function errorToText(error: [any, APIError] | APIError | number | undef
       return 'History was not found'
     case 327:
       return 'History files not found'
-
     case 401:
       return "Martinize program failed with an exit code.";
+    case 402: 
+      return "Martinize hadn't produce outputs"
+    case 403:
+      return "Contact map program failed"
+    case 404:
+      return "GO sites computation failed"
+    case 405:
+      return "Elastic network computation failed"
     case 501:
       return 'Error with Job Manager'
     case 502:
