@@ -16,6 +16,7 @@ import { Marger } from "../../helpers";
 import { SERVER_ROOT } from '../../constants';
 import FixLink from "./Dialog/FixLink";
 import Settings from "../../Settings";
+import { Theme, withStyles, withTheme } from '@material-ui/core'
 import { boolean } from "@mmsb/ngl/declarations/utils";
 
 // Pour plus tard
@@ -43,6 +44,11 @@ interface StateSimulation {
   errorfix: any
 }
 
+interface GMProps {
+  classes: Record<string, string>;
+  theme: Theme;
+}
+
 
 let currentAvaibleID = -1;
 export let generateID = (): string => {
@@ -60,7 +66,9 @@ export let decreaseID = (clear = false): void => {
 
 
 
-export default class GeneratorManager extends React.Component {
+class GeneratorManager extends React.Component<GMProps, StateSimulation>{
+  protected root = React.createRef<HTMLDivElement>();
+
   createTheme(hint: 'light' | 'dark') {
     const bgclr = hint === 'dark' ? '#303030' : '#fafafa';
 
@@ -940,8 +948,17 @@ export default class GeneratorManager extends React.Component {
   }
 
   render() {
+    const classes = this.props.classes;
+    if(this.root.current){
+      console.log("pouet", this.root.current.clientHeight, this.root.current.clientWidth)
+    }
     return (
-      <Grid container component="main" >
+      <Grid
+          container
+          component="main"
+          className={classes.root}
+          //style={{ backgroundColor: this.state.theme.palette.background.default }}
+        >
         <Warning
           reponse={undefined}
           message={this.state.Warningmessage}
@@ -1013,7 +1030,9 @@ export default class GeneratorManager extends React.Component {
 
 
         </Grid>
-        <Grid item xs={7} >
+        <Grid item xs={7} 
+        ref={this.root}
+        >
           <PolymerViewer
             modification={this.new_modification}
             change_current_position_fixlink={this.change_current_position_fixlink}
@@ -1030,3 +1049,32 @@ export default class GeneratorManager extends React.Component {
     );
   }
 }
+
+export default withStyles(theme => ({
+  root: {
+    height: '100vh',
+  },
+  paper: {
+    margin: theme.spacing(8, 4),
+    marginTop: 0,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+  },
+  header: {
+    marginTop: '2rem',
+    width: '100%',
+  },
+  form: {
+    width: '100%', // Fix IE 11 issue.
+    marginTop: theme.spacing(1),
+  },
+  submit: {
+    margin: theme.spacing(3, 0, 2),
+  },
+  side: {
+    zIndex: 3,
+    overflow: 'auto',
+    maxHeight: '100vh',
+  },
+}))(withTheme(GeneratorManager));

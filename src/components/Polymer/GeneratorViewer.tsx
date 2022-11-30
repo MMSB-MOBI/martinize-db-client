@@ -29,7 +29,7 @@ let zoomValue = 1
 
 
 export default class GeneratorViewer extends React.Component<propsviewer, statecustommenu> {
-
+  protected root = React.createRef<HTMLDivElement>();
   state: statecustommenu = {
     x: 0,
     y: 0,
@@ -68,8 +68,8 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
     //Draw svg frame
     d3.select(this.ref)
       .attr("style", "outline: thin solid grey;")
-      .attr("width", this.taille)
-      .attr("height", this.taille)
+      //.attr("width", this.taille)
+      //.attr("height", this.taille)
 
     console.log("InitSVG");
 
@@ -352,6 +352,9 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
         })
       }
     }
+    
+
+    //console.log("root", this.root)
 
     return (
       <div className="svg"
