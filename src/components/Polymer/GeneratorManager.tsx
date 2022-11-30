@@ -1,4 +1,4 @@
-import { Grid, Paper } from "@mui/material";
+import { CircularProgress, Grid, Paper } from "@mui/material";
 import * as React from "react";
 import GeneratorMenu from './GeneratorMenu';
 import PolymerViewer from './GeneratorViewer';
@@ -12,7 +12,7 @@ import ItpFile from 'itp-parser-forked'; import ApiHelper from "../../ApiHelper"
 import AppBar from '@material-ui/core/AppBar';
 import Typography from "@material-ui/core/Typography";
 import { blue } from "@material-ui/core/colors";
-import { Marger } from "../../helpers";
+import { Marger, setPageTitle } from "../../helpers";
 import { SERVER_ROOT } from '../../constants';
 import FixLink from "./Dialog/FixLink";
 import Settings from "../../Settings";
@@ -753,8 +753,9 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
 
 
   componentDidMount() {
+    setPageTitle("Polymer Generator");
     this.socket.emit("get_polyply_data",)
-
+    
     this.socket.on("polyply_data", (data: any) => {
       console.log("les data sont la !!!")
       this.setState({ dataForForm: data })
@@ -949,16 +950,16 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
 
   render() {
     const classes = this.props.classes;
-    if(this.root.current){
+    if (this.root.current) {
       console.log("pouet", this.root.current.clientHeight, this.root.current.clientWidth)
     }
     return (
       <Grid
-          container
-          component="main"
-          className={classes.root}
-          //style={{ backgroundColor: this.state.theme.palette.background.default }}
-        >
+        container
+        component="main"
+        className={classes.root}
+      //style={{ backgroundColor: this.state.theme.palette.background.default }}
+      >
         <Warning
           reponse={undefined}
           message={this.state.Warningmessage}
@@ -966,18 +967,16 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
 
         </Warning>
 
-        <AppBar position="static">
-          <Grid container component="main" style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'left', }}>
+        {/* <AppBar position="static"  >
+          <div style={{ marginLeft: "5%", textAlign: 'justify', width: '100%' }}>
+            <Typography variant="h3" noWrap style={{ fontWeight: "bold", fontSize: '300%' }}>
+              Polymer Generator
+            </Typography>
+          </div>
+          <Marger size="1rem" />
 
-            <Grid item xs={1}></Grid>
-            <Grid item xs={11}>
-              <Marger size="1rem" />
-              <Typography variant="h2"  > Polymer Generator  </Typography>
-              <Marger size="1rem" />
-            </Grid>
-          </Grid>
 
-        </AppBar>
+        </AppBar> */}
 
         {this.state.loading ? (
           <RunPolyplyDialog
@@ -1030,18 +1029,31 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
 
 
         </Grid>
-        <Grid item xs={7} 
-        ref={this.root}
-        >
-          <PolymerViewer
-            modification={this.new_modification}
-            change_current_position_fixlink={this.change_current_position_fixlink}
-            warningfunction={this.warningfunction}
-            forcefield={this.currentForceField}
-            getSimulation={(SimulationFromViewer: d3.Simulation<SimulationNode, SimulationLink>) => { this.setState({ Simulation: SimulationFromViewer }) }}
-            newNodes={this.state.nodesToAdd}
-            newLinks={this.state.linksToAdd}
-          />
+
+
+        <Grid item md={8} ref={this.root} style={{ textAlign: 'center', alignItems: 'center', justifyContent: 'center', }}>
+
+          {(this.root.current) ?
+            (
+              <PolymerViewer
+                modification={this.new_modification}
+                change_current_position_fixlink={this.change_current_position_fixlink}
+                warningfunction={this.warningfunction}
+                forcefield={this.currentForceField}
+                getSimulation={(SimulationFromViewer: d3.Simulation<SimulationNode, SimulationLink>) => { this.setState({ Simulation: SimulationFromViewer }) }}
+                newNodes={this.state.nodesToAdd}
+                newLinks={this.state.linksToAdd}
+                height={this.root.current!.clientHeight}
+                width={this.root.current!.clientWidth}
+              />
+            ) :
+            (
+              <CircularProgress></CircularProgress>
+            )
+          }
+
+
+
         </Grid>
 
 

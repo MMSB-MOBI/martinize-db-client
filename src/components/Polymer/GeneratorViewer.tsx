@@ -14,6 +14,8 @@ interface propsviewer {
   getSimulation: (arg: any) => void;
   change_current_position_fixlink: (arg: any) => void;
   modification: () => void;
+  height : number;
+  width : number;
 }
 
 interface statecustommenu {
@@ -44,8 +46,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
   // Ajouter un point d'exclamation veut dire qu'on est sur que la valeur n'est pas nul
   ref!: SVGSVGElement;
   frame!: HTMLDivElement;
-  taille = 800;
-  nodeSize = 50;
+  nodeSize = (this.props.height / 20) ;
   mouseX = 0;
   mouseY = 0;
   prevPropsNewnode: any = null;
@@ -68,14 +69,14 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
     //Draw svg frame
     d3.select(this.ref)
       .attr("style", "outline: thin solid grey;")
-      //.attr("width", this.taille)
-      //.attr("height", this.taille)
+      .attr("width", this.props.width)
+      .attr("height", this.props.height)
 
     console.log("InitSVG");
 
 
     // Init simulation 
-    setsizeSVG(this.taille)
+    setsizeSVG(this.props.height , this.props.width)
     this.simulation = initSimulation(this.nodeSize);
 
     //Define brush behaviour

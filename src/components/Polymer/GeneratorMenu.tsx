@@ -14,6 +14,7 @@ import { Link as RouterLink } from 'react-router-dom';
 import { ModalMoleculeSelector, MoleculeWithFiles } from "../Builder/MembraneBuilder/MoleculeChooser";
 import { Molecule } from "../../types/entities";
 import { ModalHistorySelector } from "../MyHistory/MyHistory";
+import Switch from '@mui/material/Switch';
 
 
 
@@ -42,6 +43,7 @@ interface GeneratorMenuState extends FormState {
   history_modal_chooser: boolean;
   builder_mode: string;
   want_go_back: boolean
+  Menuplus: boolean
 }
 
 export default class GeneratorMenu extends React.Component<propsmenu, GeneratorMenuState> {
@@ -58,6 +60,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
     history_modal_chooser: false,
     builder_mode: "classic",
     want_go_back: false,
+    Menuplus: false
   }
 
 
@@ -66,6 +69,10 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
   closeCreate(): void {
     console.log(this.state)
     // this.setState( {createLink : false})
+  }
+
+  showMenuPlus(x: boolean): void {
+    this.setState({ Menuplus: x })
   }
 
   CheckNewMolecule(): void {
@@ -201,10 +208,9 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
     )
   }
 
-
   render() {
     let forcefield = this.state.forcefield;
-
+    console.log("menuPlus", this.state.Menuplus)
     return (
       <div  >
         {this.renderModalBackToDatabase()}
@@ -232,7 +238,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
 
         <Marger size="2rem" />
         <Typography component="h1" variant="h3" align="center" style={{ fontWeight: 700, fontSize: '2.5rem', marginBottom: '1rem' }}>
-          Design your own polymer:
+          Polymer Generator
         </Typography>
 
         <Marger size="1rem" />
@@ -275,6 +281,9 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
           </Grid>
           <Grid item xs={1}></Grid>
 
+          <Marger size="1rem" />
+
+
 
 
           {/* // <FormControl fullWidth={true} >
@@ -292,47 +301,6 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
           //     }} />
           // </FormControl> */}
           <Marger size="1rem" />
-          <Grid item xs={1}></Grid>
-          <Grid item xs={6}>
-            <Typography variant="h6" >
-              Design your own itp link file:
-            </Typography>
-
-          </Grid>
-
-          <Grid item xs={1}></Grid>
-
-          <Grid item xs={3}>
-
-            <Button id="Create" variant="contained" endIcon={<AutoFixHigh />} onClick={() => this.setState({ createLink: true })}>
-              Create
-            </Button>
-          </Grid>
-
-          <Grid item xs={1}></Grid>
-
-
-          <Marger size="2rem" />
-
-          {/* 
-          {(forcefield !== '') &&
-            <><Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center' }}>
-
-              <Typography variant="h6" >
-                Upload a polymer:
-              </Typography>
-            </Grid>
-           
-            <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center' }}>
-              <Input
-
-                color="primary"
-                onChange={(e: any) => this.handleUpload(e.target.files)}
-                type="file"
-              />
-            </Grid>
-            </>
-          } */}
 
           <Grid item xs={1}></Grid>
           <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center' }}>
@@ -366,37 +334,74 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
           <Marger size="1rem" />
 
           <Grid item xs={1}></Grid>
-          <Grid item xs={10} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
-            <Typography variant="h6" >Add from database or history: </Typography>
+          <Grid item xs={5}>
+            <Typography variant="h6" > Show advanced menu : </Typography>
+          </Grid>
+          <Grid item xs={5}>
+            <Switch
+              checked={this.state.Menuplus}
+              onChange={(t, checked) => this.showMenuPlus(checked)}
+              inputProps={{ 'aria-label': 'controlled' }}
+            />
           </Grid>
           <Grid item xs={1}></Grid>
 
-          <Grid item xs={1}></Grid>
-          <Grid item xs={4} style={{ textAlign: 'left', alignItems: 'center' }}>
-            <Button variant="outlined" color="primary" onClick={() => this.setState({ database_modal_chooser: true })}>
-              (BETA) Load from database
-              <Badge color="secondary" >
-                <Icon className={"fas fa-" + "upload"} />
-              </Badge>
-            </Button>
-          </Grid>
+          {(this.state.Menuplus) &&
+            <>
 
 
-          <Grid item xs={1}>
+              <Grid item xs={2}></Grid>
+              <Grid item xs={9} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
+                <Typography variant="h6" >Add from database or history: </Typography>
+              </Grid>
+              <Grid item xs={1}></Grid>
 
-          </Grid>
+              <Grid item xs={2}></Grid>
+              <Grid item xs={4} style={{ textAlign: 'left', alignItems: 'center' }}>
+                <Button variant="outlined" color="primary" onClick={() => this.setState({ database_modal_chooser: true })}>
+                  ̶F̶̶̶r̶̶̶o̶̶̶m̶̶̶ ̶̶̶d̶̶̶a̶̶̶t̶̶̶a̶̶̶b̶̶̶a̶̶̶s̶̶̶e̶̶̶
+                  <Badge color="secondary" >
+                    <Icon className={"fas fa-" + "upload"} />
+                  </Badge>
+                </Button>
+              </Grid>
 
-          <Grid item xs={4} style={{ textAlign: 'left', alignItems: 'center' }}>
-            <Button variant="outlined" color="primary" onClick={() => this.setState({ history_modal_chooser: true })}>
-              Load from history
-              <Badge color="secondary" >
-                <Icon className={"fas fa-" + "upload"} />
-              </Badge>
-            </Button>
-          </Grid>
+              <Grid item xs={1}>
 
-          <Grid item xs={1}></Grid>
+              </Grid>
 
+              <Grid item xs={4} style={{ textAlign: 'left', alignItems: 'center' }}>
+                <Button variant="outlined" color="primary" onClick={() => this.setState({ history_modal_chooser: true })}>
+                  From history
+                  <Badge color="secondary" >
+                    <Icon className={"fas fa-" + "upload"} />
+                  </Badge>
+                </Button>
+              </Grid>
+ 
+              <Grid item xs={1}></Grid>
+
+              <Marger size="1rem" />
+
+              <Grid item xs={2}></Grid>
+              <Grid item xs={5}>
+                <Typography variant="h6" >
+                  Design your own itp link file:
+                </Typography>
+
+              </Grid>
+
+              <Grid item xs={1}></Grid>
+
+              <Grid item xs={3}>
+
+                <Button id="Create" variant="contained" endIcon={<AutoFixHigh />} onClick={() => this.setState({ createLink: true })}>
+                  Create
+                </Button>
+              </Grid>
+
+              <Grid item xs={1}></Grid>
+            </>}
           <Marger size="1rem" />
 
 
@@ -511,7 +516,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
             ((forcefield !== '') && (this.props.errorlink.length !== 0)) ?
               (
                 <><Grid item xs={3}></Grid>
-                  <Grid item xs={5 } style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }}>
+                  <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }}>
                     <Button id="send" variant="contained" color="error" endIcon={<AutoFixHigh />} onClick={() => this.props.fixlinkcomponentappear()}>
                       Fix link
                       <Badge color="secondary" >

@@ -13,17 +13,19 @@ export function setnodeSize(newnodeSize: number) {
     nodeSize = newnodeSize;
 }
 
-let sizeSVG: number;
-export function setsizeSVG(newsizeSVG: number) {
-    sizeSVG = newsizeSVG;
+let heightSVG: number;
+let widthtSVG: number;
+export function setsizeSVG(height: number, width: number) {
+    heightSVG = height;
+    widthtSVG = width
 }
 
 //Define simulation forcefield 
 export function initSimulation(sizeNodenodeSize: number): d3.Simulation<SimulationNode, SimulationLink> {
     const simulation = d3.forceSimulation<SimulationNode, SimulationLink>()
         .force("charge", d3.forceManyBody().strength(-sizeNodenodeSize * 3))
-        .force("x", d3.forceX(sizeSVG / 2).strength(0.2))
-        .force("y", d3.forceY(sizeSVG / 2).strength(0.2))
+        .force("x", d3.forceX(widthtSVG / 2).strength(0.2))
+        .force("y", d3.forceY(heightSVG / 2).strength(0.2))
         .force("link", d3.forceLink().distance((sizeNodenodeSize / 4)).strength(0.5))
     return simulation
 }
@@ -162,8 +164,8 @@ export function addNodeToSVG(newnodes: SimulationNode[], simulation: any, update
             .append("path")
             .attr("class", "nodes")
             .attr("zoom", zoomValue)
-            .attr("x", sizeSVG / 4)
-            .attr("y", sizeSVG / 4)
+            .attr("x", heightSVG / 4)
+            .attr("y", widthtSVG / 4)
             .attr("d", d3.symbol().type(get_d3shape(node.resname)).size(nodeSize * 2))
             .attr("fill", donne_la_color(node.resname))
             .attr('stroke', "grey")
@@ -286,7 +288,7 @@ export function checkLink(node1: SimulationNode, node2: SimulationNode) {
 }
 
 export function linkcorrected(idnode1: string, idnode2: string) {
-     
+
     d3.select(Mysvg)
         .selectAll<SVGElement, SimulationLink>("line")
         .filter((d: SimulationLink) => ((d.source.id === idnode1) && (d.target.id === idnode2) || (d.target.id === idnode1) && (d.source.id === idnode2)))

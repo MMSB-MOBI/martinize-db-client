@@ -120,8 +120,6 @@ export class ModalHistorySelector extends React.Component<{ open: boolean; onCho
     if (Settings.logged === LoginStatus.None) {
       return;
     }
-    setPageTitle("My history");
-
 
 
   }
