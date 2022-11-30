@@ -75,7 +75,7 @@ export default class GeneratorManager extends React.Component {
     };
   }
 
-  //myViewerRef = React.createRef();
+  myViewerRef = React.createRef();
 
   state: StateSimulation = {
     Simulation: undefined,
@@ -99,7 +99,7 @@ export default class GeneratorManager extends React.Component {
 
   socket = SocketIo.connect(SERVER_ROOT);
 
-  currentForceField = '';
+  currentForceField = 'martini3';
 
   add_to_history = () => {
     console.log(this.state)
@@ -582,8 +582,8 @@ export default class GeneratorManager extends React.Component {
 
   addnode = (toadd: FormState): void => {
     //Check forcefield 
-    if (toadd.numberToAdd > 500) {
-      this.setState({ Warningmessage: "Are you crazy !!! This is too many molecules ! (limit 500)" })
+    if (toadd.numberToAdd > 200) {
+      this.setState({ Warningmessage: "Are you crazy !!! This is too many molecules ! (limit 200)" })
     }
     else if ((this.currentForceField === '') || (this.currentForceField === toadd.forcefield)) {
       this.currentForceField = toadd.forcefield;
@@ -748,11 +748,42 @@ export default class GeneratorManager extends React.Component {
     this.socket.emit("get_polyply_data",)
 
     this.socket.on("polyply_data", (data: any) => {
-      console.log( "les data sont la !!!")
+      console.log("les data sont la !!!")
       this.setState({ dataForForm: data })
     }
     )
 
+    this.socket.on("error_itp", (error: string) => {
+      this.setState({
+        Warningmessage: error,
+        dialogWarning: "",
+        loading: false,
+        stepsubmit: undefined,
+        top: "",
+        itp: "",
+        gro: "",
+        pdb: "",
+        current_position_fixlink: undefined,
+        errorfix: undefined,
+        data_for_computation: {}
+      })
+    })
+
+    this.socket.on("error_gro", (error: string) => {
+      this.setState({
+        Warningmessage: error,
+        dialogWarning: "",
+        loading: false,
+        stepsubmit: undefined,
+        top: "",
+        itp: "",
+        gro: "",
+        pdb: "",
+        current_position_fixlink: undefined,
+        errorfix: undefined,
+        data_for_computation: {}
+      })
+    })
 
     //Ecoute sur le socket 
     this.socket.on("itp", (res: string) => {
@@ -846,7 +877,7 @@ export default class GeneratorManager extends React.Component {
             end: endbead,
             startresname: startresname,
             endresname: endresname,
-            angle: "0.336",
+            distance: "0.336",
             force: "1200",
             startchoice: bead_list_start,
             endchoice: bead_list_end,
@@ -910,9 +941,7 @@ export default class GeneratorManager extends React.Component {
 
   render() {
     return (
-      <Grid
-        container
-        component="main" >
+      <Grid container component="main" >
         <Warning
           reponse={undefined}
           message={this.state.Warningmessage}
@@ -921,9 +950,16 @@ export default class GeneratorManager extends React.Component {
         </Warning>
 
         <AppBar position="static">
-          <Marger size="1rem" />
-          <Typography variant="h2" >Polymer Generator  </Typography>
-          <Marger size="1rem" />
+          <Grid container component="main" style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'left', }}>
+
+            <Grid item xs={1}></Grid>
+            <Grid item xs={11}>
+              <Marger size="1rem" />
+              <Typography variant="h2"  > Polymer Generator  </Typography>
+              <Marger size="1rem" />
+            </Grid>
+          </Grid>
+
         </AppBar>
 
         {this.state.loading ? (
@@ -956,7 +992,7 @@ export default class GeneratorManager extends React.Component {
 
 
 
-        <Grid item md={4} component={Paper} elevation={6} square>
+        <Grid md={4} component={Paper} elevation={6} square>
 
           <GeneratorMenu
             clear={this.clear}
@@ -972,11 +1008,12 @@ export default class GeneratorManager extends React.Component {
             warningfunction={this.warningfunction}
             addNEwMolFromITP={this.addNEwMolFromITP}
             addNEwCustomLink={(name: string, itpstring: string) => { let dictionary: { [name: string]: string; } = this.state.customITP; dictionary[name] = itpstring; this.setState({ customITP: dictionary }); }}
-            fixlinkcomponentappear={this.fixlinkcomponentappear} />
+            fixlinkcomponentappear={this.fixlinkcomponentappear}
+          />
 
 
         </Grid>
-        <Grid item xs={7} style={{ height: "100vw" }}>
+        <Grid item xs={7} >
           <PolymerViewer
             modification={this.new_modification}
             change_current_position_fixlink={this.change_current_position_fixlink}
