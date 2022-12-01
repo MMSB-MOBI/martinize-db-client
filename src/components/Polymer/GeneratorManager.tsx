@@ -8,16 +8,13 @@ import { simulationToJson } from './generateJson';
 import { alarmBadLinks, linkcorrected } from './ViewerFunction';
 import SocketIo from 'socket.io-client';
 import RunPolyplyDialog from "./Dialog/RunPolyplyDialog";
-import ItpFile from 'itp-parser-forked'; import ApiHelper from "../../ApiHelper";
-import AppBar from '@material-ui/core/AppBar';
-import Typography from "@material-ui/core/Typography";
+import ItpFile from 'itp-parser-forked';
 import { blue } from "@material-ui/core/colors";
 import { Marger, setPageTitle } from "../../helpers";
 import { SERVER_ROOT } from '../../constants';
 import FixLink from "./Dialog/FixLink";
 import Settings from "../../Settings";
 import { Theme, withStyles, withTheme } from '@material-ui/core'
-import { boolean } from "@mmsb/ngl/declarations/utils";
 
 // Pour plus tard
 //https://github.com/korydondzila/React-TypeScript-D3/tree/master/src/components
@@ -41,7 +38,9 @@ interface StateSimulation {
   top: string,
   errorLink: string[][],
   current_position_fixlink: number | undefined,
-  errorfix: any
+  errorfix: any,
+  height: number | undefined,
+  width: number | undefined,
 }
 
 interface GMProps {
@@ -102,10 +101,20 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     errorLink: [],
     current_position_fixlink: undefined,
     errorfix: undefined,
-    data_for_computation: {}
+    data_for_computation: {},
+    height: undefined,
+    width: undefined,
   }
 
   socket = SocketIo.connect(SERVER_ROOT);
+
+  //@ts-ignore
+  
+ 
+  handleResize = () => {
+    console.log("resizing", this.root.current!.clientHeight ,   this.root.current!.clientWidth )
+    this.setState( { height:  this.root.current!.clientHeight ,  width: this.root.current!.clientWidth})
+  }
 
   currentForceField = 'martini3';
 
@@ -115,8 +124,8 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     this.socket.emit("add_to_history", this.state.data_for_computation)
 
     this.socket.on("add_to_history_answer", async (response: boolean) => {
-      if (response) this.warningfunction("Your polymer has been add to your history!")
-      else this.warningfunction("Fail ! We cannot add this polymer to your history!")
+      if (response) this.warningfunction("The polymer has been added to your history!")
+      else this.warningfunction("Fail! We cannot add this polymer to your history!")
     })
     this.closeDialog()
   }
@@ -719,7 +728,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
       console.log("Not connexe !")
       //Get the first 
       console.log(connexe1)
-      this.warningfunction("Your polymer is composed by different parts. Please add link betwen every parts.")
+      this.warningfunction("Your polymer is composed of different parts. Please add link between every part.")
 
     }
     else {
@@ -755,9 +764,12 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
   componentDidMount() {
     setPageTitle("Polymer Generator");
     this.socket.emit("get_polyply_data",)
-    
+    this.setState( { height:  this.root.current!.clientHeight ,  width: this.root.current!.clientWidth})
+    window.addEventListener('resize', this.handleResize)
+
+
     this.socket.on("polyply_data", (data: any) => {
-      console.log("les data sont la !!!")
+      console.log("les data sont la !!!", data)
       this.setState({ dataForForm: data })
     }
     )
@@ -869,7 +881,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
           listerror.push([i[1].toString(), i[3].toString()])
           alarmBadLinks(i[1].toString(), i[3].toString())
         }
-        this.warningfunction("Fail ! Wrong links : " + dicoError.errorlinks + ". You can correct this mistake with \"click right\" -> \"Remove bad links\" or with \"fixlink\" button in red")
+        this.warningfunction("Fail! Wrong links : " + dicoError.errorlinks + ". You can correct this mistake with \"click right\" -> \"Remove bad links\" or with the \"fix link\" button in red")
 
         this.setState({ itp: dicoError.itp })
         let generate_error_fixing_state = Array.from({ length: listerror.length }, (_, i) => {
@@ -904,7 +916,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
 
       else {
         // (dicoError.disjoint === true) 
-        this.setState({ Warningmessage: "Fail ! Your molecule consists of disjoint parts.Perhaps links were not applied correctly." })
+        this.setState({ Warningmessage: "Fail! Your molecule consists of disjoint parts.Perhaps links were not applied correctly." })
       }
 
     })
@@ -926,7 +938,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
   }
 
   clear = () => {
-    console.log("clear !")
+    console.log("clear!")
     currentAvaibleID = -1
     this.setState({
       Simulation: undefined,
@@ -950,9 +962,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
 
   render() {
     const classes = this.props.classes;
-    if (this.root.current) {
-      console.log("pouet", this.root.current.clientHeight, this.root.current.clientWidth)
-    }
+    
     return (
       <Grid
         container
@@ -1043,8 +1053,8 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
                 getSimulation={(SimulationFromViewer: d3.Simulation<SimulationNode, SimulationLink>) => { this.setState({ Simulation: SimulationFromViewer }) }}
                 newNodes={this.state.nodesToAdd}
                 newLinks={this.state.linksToAdd}
-                height={this.root.current!.clientHeight}
-                width={this.root.current!.clientWidth}
+                height={this.state.height ?  this.state.height : this.root.current!.clientHeight  }
+                width={this.state.width ?  this.state.width : this.root.current!.clientWidth  }
               />
             ) :
             (

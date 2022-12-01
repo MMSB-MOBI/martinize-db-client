@@ -212,11 +212,12 @@ export function addNodeToSVG(newnodes: SimulationNode[], simulation: any, update
             console.log("Shift key is pressed/ skipping dragged!");
             return;
         }
-        const sizeSVG = d3.select(Mysvg).attr("height");
+        const heightSVG = d3.select(Mysvg).attr("height")
+        const widthSVG = d3.select(Mysvg).attr("width");
         // secret trick 
-        const sizeSVGNumber: number = +sizeSVG;
-        d.fx = clamp(event.x, 0, sizeSVGNumber);
-        d.fy = clamp(event.y, 0, sizeSVGNumber);
+
+        d.fx = clamp(event.x, 0, +heightSVG);
+        d.fy = clamp(event.y, 0, +widthSVG);
 
         simulation
             .velocityDecay(0.8)

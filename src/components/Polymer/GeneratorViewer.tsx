@@ -14,8 +14,8 @@ interface propsviewer {
   getSimulation: (arg: any) => void;
   change_current_position_fixlink: (arg: any) => void;
   modification: () => void;
-  height : number;
-  width : number;
+  height: number;
+  width: number;
 }
 
 interface statecustommenu {
@@ -46,7 +46,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
   // Ajouter un point d'exclamation veut dire qu'on est sur que la valeur n'est pas nul
   ref!: SVGSVGElement;
   frame!: HTMLDivElement;
-  nodeSize = (this.props.height / 20) ;
+  nodeSize = (this.props.height / 10);
   mouseX = 0;
   mouseY = 0;
   prevPropsNewnode: any = null;
@@ -61,7 +61,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
       .selectAll<SVGElement, SimulationLink>("line.error")
       .attr("class", "links")
       .attr("stroke", "grey")
-    console.log( "polymer_is_modified")
+    console.log("polymer_is_modified")
   }
 
 
@@ -72,11 +72,11 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
       .attr("width", this.props.width)
       .attr("height", this.props.height)
 
-    console.log("InitSVG");
+    console.log("InitSVG", this.props.height, this.props.width);
 
 
     // Init simulation 
-    setsizeSVG(this.props.height , this.props.width)
+    setsizeSVG(this.props.height, this.props.width)
     this.simulation = initSimulation(this.nodeSize);
 
     //Define brush behaviour
@@ -115,7 +115,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
         //On recupere la valeur de zoom 
         zoomValue = event.transform.k;
         //On modifie le rayon en fonction du zoom  
-        console.log("zoom value", zoomValue);
+        console.log("zoom");
 
         d3.select(this.ref)
           .selectAll<SVGCircleElement, SimulationNode>("path")
@@ -124,14 +124,14 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
             return this.getAttribute("transform") + ` scale(${zoomValue})`;
           });
 
-        console.log("distance", (this.nodeSize / 4) * zoomValue)
+        //console.log("distance", (this.nodeSize / 4) * zoomValue)
 
         //Change simulation property
         this.simulation
           .force("link", d3.forceLink().distance((this.nodeSize / 4) * (zoomValue * zoomValue)).strength(0.9))
           .force("charge", d3.forceManyBody().strength(-this.nodeSize * 3 * (zoomValue * zoomValue)))
 
-        console.log(zoomValue, (this.nodeSize / 4) * (zoomValue * zoomValue))
+        //console.log(zoomValue, (this.nodeSize / 4) * (zoomValue * zoomValue))
 
         this.UpdateSVG()
       }
@@ -146,6 +146,39 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
     if ((prevProps.newNodes !== this.props.newNodes) || (prevProps.newLinks !== this.props.newLinks)) {
       this.UpdateSVG()
     }
+
+
+    if (prevProps.width !== this.props.width) {
+      d3.select(this.ref)
+        .attr("width", this.props.width)
+
+      setsizeSVG(this.props.height, this.props.width)
+      console.log("Change width");
+
+      this.simulation
+        .force("x", d3.forceX(this.props.width / 2).strength(0.2))
+
+      this.UpdateSVG()
+    }
+
+    //Change la taille du svg ?????????????????????
+    if (prevProps.height !== this.props.height) {
+      d3.select(this.ref)
+        .attr("height", this.props.height)
+
+      setsizeSVG(this.props.height, this.props.width)
+      console.log("Change height");
+      this.simulation
+        .force("y", d3.forceY(this.props.height / 2).strength(0.2))
+
+      this.UpdateSVG()
+    }
+
+
+
+
+    // Init simulation 
+
   }
 
 
@@ -353,7 +386,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
         })
       }
     }
-    
+
 
     //console.log("root", this.root)
 

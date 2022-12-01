@@ -102,7 +102,7 @@ export default class RunPolyplyDialog extends React.Component<props, state> {
             show ? (
                 <Dialog maxWidth="sm" fullWidth open={true} >
 
-                    <DialogTitle>Send to polyply !</DialogTitle>
+                    <DialogTitle>Send to polyply!</DialogTitle>
 
                     <DialogContent>
                         <Stepper activeStep={this.props.currentStep!} orientation="vertical" >

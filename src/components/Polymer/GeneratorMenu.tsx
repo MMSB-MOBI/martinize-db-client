@@ -210,7 +210,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
 
   render() {
     let forcefield = this.state.forcefield;
-    console.log("menuPlus", this.state.Menuplus)
+    //console.log("menuPlus", this.state.Menuplus)
     return (
       <div  >
         {this.renderModalBackToDatabase()}
@@ -276,7 +276,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
           <Grid item xs={1}></Grid>
           <Grid item xs={10}>
             <Typography variant="subtitle1" >
-              (More forcefield will be available, in the next release)
+              (More forcefields will be available in future updates)
             </Typography>
           </Grid>
           <Grid item xs={1}></Grid>
@@ -306,7 +306,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
           <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center' }}>
 
             <Typography variant="h6" >
-              Add my own molecule:
+              Upload your file:
             </Typography>
           </Grid>
 
@@ -324,9 +324,9 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
 
             <Typography component={'div'}>
               <ul>
-                <li>Your previous polymer (.json)</li>
-                <li>Fasta protein sequence (.fasta)</li>
-                <li>Topology of a polymer/molecule (.itp)</li>
+                <li>Polymer (.json)</li>
+                <li>Protein sequence (.fasta)</li>
+                <li>Topology file (.itp)</li>
               </ul>
             </Typography>
           </Grid>
@@ -348,11 +348,11 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
 
           {(this.state.Menuplus) &&
             <>
-
+              <Marger size="1rem" />
 
               <Grid item xs={2}></Grid>
               <Grid item xs={9} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
-                <Typography variant="h6" >Add from database or history: </Typography>
+                <Typography variant="button" >Add from database or history: </Typography>
               </Grid>
               <Grid item xs={1}></Grid>
 
@@ -378,14 +378,14 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
                   </Badge>
                 </Button>
               </Grid>
- 
+
               <Grid item xs={1}></Grid>
 
               <Marger size="1rem" />
 
               <Grid item xs={2}></Grid>
               <Grid item xs={5}>
-                <Typography variant="h6" >
+                <Typography variant="button" >
                   Design your own itp link file:
                 </Typography>
 
@@ -409,7 +409,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
 
           <Grid item xs={10} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }}>
             <Typography variant="h6" align="left">
-              Add your molecule (in chain):
+              Add a molecule or chain of molecules:
             </Typography>
           </Grid>
           <Grid item xs={1}></Grid>
@@ -442,7 +442,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
           <Grid item xs={2} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
 
             <TextField
-              label="numberToAdd"
+              label="Number"
               type="number"
               InputProps={{ inputProps: { min: 1, max: 100 } }}
               value={this.state.numberToAdd}
@@ -456,11 +456,21 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
               id="addmol"
               variant="outlined"
               onClick={() => { this.setState({ want_go_back: false }); this.CheckNewMolecule() }}>
-              add
+              <Grid container component="main" style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'left', }}>
 
-              <Badge color="secondary" >
-                <Icon className={"fas fa-" + "plus"} />
-              </Badge>
+                <Grid item xs={10}>
+                  <Typography variant="body2" align="left">
+                    Add
+                  </Typography>
+                </Grid>
+                <Grid item xs={2}>
+                  <Badge color="secondary" >
+                    <Icon className={"fas fa-" + "plus"} />
+                  </Badge>
+                </Grid>
+
+              </Grid>
+
             </Button>
           </Grid>
           <Grid item xs={1}></Grid>
@@ -471,14 +481,14 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
 
           <Grid item xs={1}></Grid>
           <Grid item xs={10} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
-            <Typography variant="h6" >Add a new link: </Typography>
+            <Typography variant="h6" >Create a new link: </Typography>
           </Grid>
           <Grid item xs={1}></Grid>
 
           <Grid item xs={1}></Grid>
           <Grid item xs={2} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
             <TextField
-              label="id1"
+              label="resid 1"
               type="number"
               InputProps={{ inputProps: { min: 0, max: 100 } }}
               value={this.state.id1}
@@ -488,7 +498,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
           <Grid item xs={1}></Grid>
           <Grid item xs={2} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
             <TextField
-              label="id2"
+              label="resid 2"
               type="number"
               InputProps={{ inputProps: { min: 0, max: 100 } }}
               value={this.state.id2}
@@ -501,39 +511,64 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
               id="addlink"
               variant="contained"
               onClick={() => { this.setState({ want_go_back: false }); this.CheckNewLink(this.state.id1, this.state.id2) }}>
-              Add link
-              <Badge color="secondary" >
-                <Icon className={"fas fa-" + "link"} />
-              </Badge>
-            </Button>
+              <Grid container component="main" style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'left', }}>
 
+                <Grid item xs={10}>
+                  <Typography variant="body2" align="left">
+                    Create
+                  </Typography>
+                </Grid>
+                <Grid item xs={2}>
+                  <Badge color="secondary" >
+                    <Icon className={"fas fa-" + "link"} />
+                  </Badge>
+                </Grid>
+
+              </Grid>
+            </Button>
           </Grid>
           <Grid item xs={2}></Grid>
 
-          <Marger size="1rem" />
+          <Marger size="2rem" />
 
           {
             ((forcefield !== '') && (this.props.errorlink.length !== 0)) ?
               (
-                <><Grid item xs={3}></Grid>
+                <><Grid item xs={4}></Grid>
                   <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }}>
                     <Button id="send" variant="contained" color="error" endIcon={<AutoFixHigh />} onClick={() => this.props.fixlinkcomponentappear()}>
-                      Fix link
+                      <Typography variant="body2" align="left">
+                        Fix link
+                      </Typography>
+
                       <Badge color="secondary" >
                         <Icon className={"fas fa-" + "pen"} />
                       </Badge>
                     </Button>
-                  </Grid></>) :
+                  </Grid>
+                  <Grid item xs={3}></Grid></>) :
               (
-                <><Grid item xs={3}></Grid>
+                <><Grid item xs={4}></Grid>
                   <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }}>
                     <Button id="send" variant="contained" color="success" endIcon={<AutoFixHigh />} onClick={() => this.props.send()}>
-                      Polyply That!
-                      <Badge color="secondary" >
-                        <Icon className={"fas fa-" + "magic"} />
-                      </Badge>
+                      <Grid container component="main" style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'left', }}>
+                        <Grid item xs={10}>
+                          <Typography variant="body2" align="left">
+                            Send to polyply!
+                          </Typography>
+                        </Grid>
+                        <Grid item xs={2}>
+                          <Badge color="secondary" >
+                            <Icon className={"fas fa-" + "magic"} />
+                          </Badge>
+                        </Grid>
+
+                      </Grid>
                     </Button>
+
+
                   </Grid>
+                  <Grid item xs={1}></Grid>
                 </>
 
               )
