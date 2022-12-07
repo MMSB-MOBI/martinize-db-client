@@ -33,7 +33,7 @@
     "localforage": "^1.7.3",
     "node-sass": "^4.14.1",
     "notistack": "^0.9.16",
-    "qs": "^6.9.4",
+    "qs": "^6.9.7",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-router": "^5.2.0",
