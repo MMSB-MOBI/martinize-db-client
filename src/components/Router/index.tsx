@@ -64,7 +64,7 @@ const RouterCmpt = () => {
 
 function LoadPolymerGenerator(props: RouteComponentProps) {
   return (
-    <WaitForLoginFinish {...props} component={GeneratorManager} wait={[Settings.login_promise, Settings.martinize_variables_promise]} />
+    <WaitForAdminLogged {...props} component={GeneratorManager} wait={[Settings.login_promise, Settings.martinize_variables_promise]} />
   );
 }
 

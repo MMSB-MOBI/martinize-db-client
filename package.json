@@ -17,6 +17,7 @@
     "Math": "^0.0.1-security",
     "node-sass": "^7.0.1",
     "notistack": "^2.0.5",
+    "parse-pdb": "^1.0.0",
     "path": "^0.12.7",
     "qs": "^6.10.5",
     "react": "^17.0.0",

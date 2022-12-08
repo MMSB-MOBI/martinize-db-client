@@ -15,24 +15,26 @@ import { ModalMoleculeSelector, MoleculeWithFiles } from "../Builder/MembraneBui
 import { Molecule } from "../../types/entities";
 import { ModalHistorySelector } from "../MyHistory/MyHistory";
 import Switch from '@mui/material/Switch';
-
+import { ImportProtein } from "./Dialog/importProtein";
 
 
 interface propsmenu {
   customITPS: { [name: string]: string };
   warningfunction: (arg: any) => void;
-  setForcefield: (ff: string) => void,
-  addNEwMolFromITP: (itp: string) => void,
-  addnodeFromJson: (jsondata: JSON) => void,
-  addnode: (arg0: FormState) => void,
-  addlink: (arg1: any, arg2: any) => void,
-  addprotsequence: (arg0: string) => void,
-  send: () => void,
-  addNEwCustomLink: (arg0: string, arg1: string) => void,
-  dataForceFieldMolecule: { [forcefield: string]: string[] },
-  errorlink: any[],
+  setForcefield: (ff: string) => void;
+  addNEwMolFromITP: (itp: string) => void;
+  addnodeFromJson: (jsondata: JSON) => void;
+  addnode: (arg0: FormState) => void;
+  addlink: (arg1: any, arg2: any) => void;
+  addprotsequence: (arg0: string) => void;
+  addprotcoord: (arg0: string) => void;
+  send: () => void;
+  addCustomitp: (arg0: string, arg1: string) => void;
+  dataForceFieldMolecule: { [forcefield: string]: string[] };
+  errorlink: any[];
   fixlinkcomponentappear: () => void;
   clear: () => void;
+
 }
 
 interface GeneratorMenuState extends FormState {
@@ -43,7 +45,8 @@ interface GeneratorMenuState extends FormState {
   history_modal_chooser: boolean;
   builder_mode: string;
   want_go_back: boolean
-  Menuplus: boolean
+  Menuplus: boolean;
+  proteinImport: boolean;
 }
 
 export default class GeneratorMenu extends React.Component<propsmenu, GeneratorMenuState> {
@@ -60,7 +63,8 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
     history_modal_chooser: false,
     builder_mode: "classic",
     want_go_back: false,
-    Menuplus: false
+    Menuplus: false,
+    proteinImport: false,
   }
 
 
@@ -133,16 +137,22 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
       }
       else if (ext === 'itp') {
         let file = selectorFiles[0]
-        const ext = file.name.split('.').slice(-1)[0]
-        if (ext === 'itp') {
-          let reader = new FileReader();
-          reader.onload = (event: any) => {
-            this.props.addNEwMolFromITP(event.target.result)
-          }
-          reader.readAsText(file);
+        let reader = new FileReader();
+        reader.onload = (event: any) => {
+          this.props.addNEwMolFromITP(event.target.result)
         }
-
+        reader.readAsText(file);
       }
+
+
+      // else if (ext === 'pdb') {
+      //   let reader = new FileReader();
+      //   reader.onload = (event: any) => {
+      //     const pdbContent = event.target.result;
+      //     this.props.addNEwMolFromPDB(pdbContent)
+      //   }
+      //   reader.readAsText(file);
+      // }
       else if (ext === 'ff') {
         let reader = new FileReader();
         reader.onload = (event: any) => {
@@ -218,7 +228,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
         <CreateLink
           customITPS={this.props.customITPS}
           close={() => { this.setState({ createLink: false }) }}
-          addthisRule={(name: string, content: string) => this.props.addNEwCustomLink(name, content)}
+          addthisRule={(name: string, content: string) => this.props.addCustomitp(name, content)}
           showCreate={this.state.createLink}
         >
         </CreateLink>
@@ -233,6 +243,15 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
           open={this.state.history_modal_chooser}
           onChoose={this.itpfromhistory}
           onCancel={() => this.setState({ history_modal_chooser: false })}
+        />
+
+        <ImportProtein
+          open={this.state.proteinImport}
+          close={() => this.setState({ proteinImport: false })}
+          addprotcoord={this.props.addprotcoord}
+          addNEwMolFromITP={this.props.addNEwMolFromITP}
+          addCustomitp={this.props.addCustomitp}
+
         />
 
 
@@ -312,7 +331,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
 
           <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center' }}>
             <Input
-
+              inputProps={{ accept: ".itp,.json,.fasta" }}
               color="primary"
               onChange={(e: any) => this.handleUpload(e.target.files)}
               type="file"
@@ -331,13 +350,34 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
             </Typography>
           </Grid>
           <Grid item xs={1}></Grid>
+
           <Marger size="1rem" />
 
           <Grid item xs={1}></Grid>
-          <Grid item xs={5}>
+          <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center' }}>
+
+            <Typography variant="h6" >
+              Modify a protein:
+            </Typography>
+          </Grid>
+
+          <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center' }}>
+            <Button variant="outlined" color="primary"
+              onClick={() => this.setState({ proteinImport: true })}
+            >
+              Load
+            </Button>
+          </Grid>
+          <Grid item xs={1}></Grid>
+
+
+          <Marger size="1rem" />
+
+          <Grid item xs={1}></Grid>
+          <Grid item xs={6}>
             <Typography variant="h6" > Show advanced menu : </Typography>
           </Grid>
-          <Grid item xs={5}>
+          <Grid item xs={4}>
             <Switch
               checked={this.state.Menuplus}
               onChange={(t, checked) => this.showMenuPlus(checked)}
@@ -421,6 +461,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
               <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
 
                 <SimpleSelect
+
                   //formControlClass={this.props.classes.ff_select}
                   required
                   label="Molecule"
@@ -441,13 +482,16 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
 
           <Grid item xs={2} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
 
-            <TextField
-              label="Number"
-              type="number"
-              InputProps={{ inputProps: { min: 1, max: 100 } }}
-              value={this.state.numberToAdd}
-              onChange={v => this.setState({ numberToAdd: Number(v.target.value) })}
-              variant="standard" />
+            <FormControl >
+              <TextField
+                label="Number"
+                type="number"
+                InputProps={{ inputProps: { min: 1, max: 100 } }}
+                value={this.state.numberToAdd}
+                onChange={v => this.setState({ numberToAdd: Number(v.target.value) })}
+                variant="standard" />
+            </FormControl>
+
           </Grid>
 
           <Grid item xs={3} style={{ textAlign: 'right', alignItems: 'center', justifyContent: 'center', }} >

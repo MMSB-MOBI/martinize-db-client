@@ -140,7 +140,7 @@ function DrawerElements(props: RouteComponentProps) {
         link: true,
         icon: 'draw-polygon',
         text: 'Polymer Generator',
-        //condition: !!Settings.logged,
+        condition: Settings.logged === LoginStatus.Admin,
         font : "bold"
       }
     ],

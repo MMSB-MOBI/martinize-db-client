@@ -153,7 +153,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
         .attr("width", this.props.width)
 
       setsizeSVG(this.props.height, this.props.width)
-      console.log("Change width");
+      //console.log("Change width");
 
       this.simulation
         .force("x", d3.forceX(this.props.width / 2).strength(0.2))
@@ -167,7 +167,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
         .attr("height", this.props.height)
 
       setsizeSVG(this.props.height, this.props.width)
-      console.log("Change height");
+      //console.log("Change height");
       this.simulation
         .force("y", d3.forceY(this.props.height / 2).strength(0.2))
 

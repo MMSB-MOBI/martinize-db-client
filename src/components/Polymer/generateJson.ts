@@ -111,7 +111,7 @@ export function simulationToJson(simulation: d3.Simulation<SimulationNode, Simul
 
     }
 
-    console.log("simulationToJson", "nodes", nodes,   "links", myLinks)
+    //console.log("simulationToJson", "nodes", nodes,   "links", myLinks)
     return {
         "forcefield": ff,
         "directed": false,

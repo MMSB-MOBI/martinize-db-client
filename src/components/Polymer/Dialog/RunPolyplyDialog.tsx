@@ -16,7 +16,7 @@ import ResultViewer from './ResultViewer';
 import Stepper from '@mui/material/Stepper';
 import Step from '@mui/material/Step';
 import StepLabel from '@mui/material/StepLabel';
-import { LinearProgress } from '@mui/material';
+import { Grid, LinearProgress } from '@mui/material';
 
 interface props {
     send: (arg1: string, arg2: string, number: string) => void;
@@ -67,11 +67,12 @@ export default class RunPolyplyDialog extends React.Component<props, state> {
         a.remove();
     }
 
-    async dlzip(itp: string, gro: string, filename: string) {
+    async dlzip(itp: string, gro: string, pdb: string, filename: string) {
 
         const zip = new JSZip();
 
         zip.file("out.itp", itp);
+        zip.file("out.pdb", pdb);
         zip.file("out.gro", gro);
 
         const blob = zip.generateAsync({
@@ -101,7 +102,6 @@ export default class RunPolyplyDialog extends React.Component<props, state> {
         return (
             show ? (
                 <Dialog maxWidth="sm" fullWidth open={true} >
-
                     <DialogTitle>Send to polyply!</DialogTitle>
 
                     <DialogContent>
@@ -162,28 +162,36 @@ export default class RunPolyplyDialog extends React.Component<props, state> {
                         }
 
                     </DialogContent>
-                    {this.props.itp ? (<>
 
-                        <Button onClick={() => { this.dl(this.props.itp, "out.itp"); }}> <Icon className={"fas fa-download"} /> Download .itp</Button>
-                    </>
-                    ) : (<></>)}
+                    <Grid container component="main" style={{ textAlign: 'center', alignItems: 'center', justifyContent: 'left', }}>
+                        <Grid item xs={4}>
+                            {this.props.itp &&
+                                <Button onClick={() => { this.dl(this.props.itp, "out.itp"); }}> <Icon className={"fas fa-download"} /> Download .itp</Button>
+                            }
+                        </Grid>
 
-                    {this.props.gro ? (<>
+                        <Grid item xs={4}>
+                            {this.props.gro &&
+                                <Button onClick={() => { this.dl(this.props.gro, "out.gro"); }}> <Icon className={"fas fa-download"} /> Download .gro</Button>
+                            }
+                        </Grid>
 
-                        <Button onClick={() => { this.dl(this.props.gro, "out.gro"); }}> <Icon className={"fas fa-download"} /> Download .gro</Button>
+                        <Grid item xs={4}>
+                            {this.props.pdb &&
+                                <Button onClick={() => { this.dl(this.props.pdb, "out.pdb"); }}> <Icon className={"fas fa-download"} /> Download .pdb</Button>
+                            }
+                        </Grid>
+
+                    </Grid>
+
+                    {(this.props.gro && this.props.itp && this.props.pdb) ? (<>
+
+                        <Button onClick={() => { this.dlzip(this.props.itp, this.props.gro, this.props.pdb, "out.zip"); }}> <Icon className={"fas fa-download"} /> Download all</Button>
                     </>) : (<></>)}
 
-
-                    {(this.props.gro && this.props.itp) ? (<>
-
-                        <Button onClick={() => { this.dlzip(this.props.itp, this.props.gro, "out.zip"); }}> <Icon className={"fas fa-download"} /> Download all</Button>
-                    </>) : (<></>)}
-
-                    {this.props.pdb ? (<>
-                        <div>
-                            <ResultViewer top={this.props.top} pdb={this.props.pdb} itp={this.props.itp} ff="martini3001" />
-                        </div>
-                    </>) : (<></>)}
+                    {this.props.pdb &&
+                        <ResultViewer top={this.props.top} pdb={this.props.pdb} itp={this.props.itp} ff="martini3001" />
+                    }
 
                     {((this.props.currentStep! === 0) || (this.props.currentStep! === 4)) ? (<>
                         <DialogActions >

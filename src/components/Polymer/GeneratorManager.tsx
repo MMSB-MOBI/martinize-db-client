@@ -15,6 +15,9 @@ import { SERVER_ROOT } from '../../constants';
 import FixLink from "./Dialog/FixLink";
 import Settings from "../../Settings";
 import { Theme, withStyles, withTheme } from '@material-ui/core'
+const parsePdb = require('parse-pdb');
+
+
 
 // Pour plus tard
 //https://github.com/korydondzila/React-TypeScript-D3/tree/master/src/components
@@ -36,11 +39,13 @@ interface StateSimulation {
   gro: string,
   pdb: string,
   top: string,
+  protein_coord: string,
   errorLink: string[][],
   current_position_fixlink: number | undefined,
   errorfix: any,
   height: number | undefined,
   width: number | undefined,
+  inputpdb: undefined | string
 }
 
 interface GMProps {
@@ -98,22 +103,24 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     itp: "",
     gro: "",
     pdb: "",
+    protein_coord: "",
     errorLink: [],
     current_position_fixlink: undefined,
     errorfix: undefined,
     data_for_computation: {},
     height: undefined,
     width: undefined,
+    inputpdb: undefined,
   }
 
   socket = SocketIo.connect(SERVER_ROOT);
 
   //@ts-ignore
-  
- 
+
+
   handleResize = () => {
-    console.log("resizing", this.root.current!.clientHeight ,   this.root.current!.clientWidth )
-    this.setState( { height:  this.root.current!.clientHeight ,  width: this.root.current!.clientWidth})
+    // console.log("resizing", this.root.current!.clientHeight, this.root.current!.clientWidth)
+    this.setState({ height: this.root.current!.clientHeight, width: this.root.current!.clientWidth })
   }
 
   currentForceField = 'martini3';
@@ -282,13 +289,88 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     this.new_modification()
   }
 
+  // addNEwMolFromPDB = (pdbstring: string) => {
+
+  //   const parsed = parsePdb(pdbstring);
+  //   console.log(parsed)
+
+  //   // alter si la plusieur chaine !!!!!!
+  //   if (parsed.chains.size > 1) {
+  //     console.log(parsed.chains.size)
+  //     console.log("erreur chain")
+  //     this.setState({ Warningmessage: "Your protein is composed of " + parsed.chains.size.toString() + " parts. You can only give one chain." })
+  //     return
+  //   }
+
+
+  //   console.log(parsed)
+  //   const newMolecules: SimulationNode[] = [];
+  //   let newlinks = []
+  //   let resid = 0
+
+  //   let dico: { [id: number]: number; } = {};
+  //   for (let res of parsed.atoms) {
+  //     dico[res.serial] = res.resSeq
+  //     if (resid !== res.resSeq) {
+  //       let mol = {
+  //         "resname": res.resName,
+  //         "seqid": 0,
+  //         "id": generateID(),
+  //         "from_itp": "je_suis_le_pdb",
+  //       };
+  //       newMolecules.push(mol)
+  //       resid = res.resSeq
+  //     }
+  //   }
+
+  //   const connect_list = pdbstring.split("\n").filter(x => x.startsWith("CONECT"));
+  //   if (connect_list.length === 0) this.setState({ Warningmessage: 'No connection found bewteen atom in your pdb. Please add "CONECT".' })
+
+  //   console.log(dico)
+  //   for (let l of connect_list) {
+  //     const truc = l.split(" ").filter(splitElmt => splitElmt !== '')
+  //     const idlink1 = dico[parseInt(truc[1])]
+  //     const idlink2 = dico[parseInt(truc[2])]
+  //     if (idlink1 !== idlink2) {
+  //       console.log(newMolecules, idlink1 - 1)
+  //       newlinks.push({
+  //         "source": newMolecules[idlink1 - 1],
+  //         "target": newMolecules[idlink2 - 1]
+  //       });
+
+  //       if (newMolecules[idlink1 - 1].links) newMolecules[idlink1 - 1].links!.push(newMolecules[idlink2 - 1]);
+  //       else newMolecules[idlink1 - 1].links = [newMolecules[idlink2 - 1]];
+
+  //       if (newMolecules[idlink2 - 1].links) newMolecules[idlink2 - 1].links!.push(newMolecules[idlink1 - 1]);
+  //       else newMolecules[idlink2 - 1].links = [newMolecules[idlink1 - 1]];
+
+  //     }
+  //   }
+
+  // let avant = newMolecules[0]
+  // for (let i of newMolecules) {
+  //   if (i === avant) {
+  //     continue
+  //   }
+  //   else {
+  //     newlinks.push({
+  //       "source": avant,
+  //       "target": i
+  //     });
+  //     avant = i
+  //   }
+
+  //   this.setState({ nodesToAdd: newMolecules, linksToAdd: newlinks });
+  //   this.new_modification()
+  //   this.setState( { inputpdb : pdbstring} )
+  // }
+
   addNEwMolFromITP = (itpstring: string) => {
     // Besoin de traiter different l'information 
     // Ajouter un -seqf
     // json avevc champs supp 
     // "from_itp":"nom de la molecule"
     // "id": 0...1
-
 
     const itp = ItpFile.readFromString(itpstring);
 
@@ -469,81 +551,81 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
   //   }
   // }
 
-  returnITPinfo = (itpstring: string) => {
-    const itp = ItpFile.readFromString(itpstring);
-    const atoms = itp.getField('atoms')
-    const links = itp.getField('bonds')
-    let good = true
-    // 1st generer une liste de noeuds
+  // returnITPinfo = (itpstring: string) => {
+  //   const itp = ItpFile.readFromString(itpstring);
+  //   const atoms = itp.getField('atoms')
+  //   const links = itp.getField('bonds')
+  //   let good = true
+  //   // 1st generer une liste de noeuds
 
-    console.log("atoms", atoms.length)
-    console.log("links", links.length)
-    const newMolecules: SimulationNode[] = [];
+  //   console.log("atoms", atoms.length)
+  //   console.log("links", links.length)
+  //   const newMolecules: SimulationNode[] = [];
 
-    // convert to node object et injecte dans la list
-    //Voila la forme du bordel
-    // 1 P5    1 POPE NH3  1  0.0
-    //Super pratique 
-    //Garder en memoire l'id d'avant sur l'itp 
-    let oldid = 0
+  //   // convert to node object et injecte dans la list
+  //   //Voila la forme du bordel
+  //   // 1 P5    1 POPE NH3  1  0.0
+  //   //Super pratique 
+  //   //Garder en memoire l'id d'avant sur l'itp 
+  //   let oldid = 0
 
-    let id = 0
-    for (let nodestr of atoms) {
-      const nodelist = nodestr.split(' ').filter((e) => { return e !== "" })
-      // 2nd check s'ils sont inside le forcefield 
-      if (!(this.state.dataForForm[this.currentForceField].includes(nodelist[3]))) {
-        this.setState({ Warningmessage: nodelist[3] + " not in " + this.currentForceField })
-        console.log(nodelist[3] + " not in " + this.currentForceField)
-        good = false
-        break
-      }
-      else if (nodelist[2] !== oldid.toString()) {
-        let mol = {
-          "resname": nodelist[3],
-          "seqid": 0,
-          "id": id.toString()
-        };
+  //   let id = 0
+  //   for (let nodestr of atoms) {
+  //     const nodelist = nodestr.split(' ').filter((e) => { return e !== "" })
+  //     // 2nd check s'ils sont inside le forcefield 
+  //     if (!(this.state.dataForForm[this.currentForceField].includes(nodelist[3]))) {
+  //       this.setState({ Warningmessage: nodelist[3] + " not in " + this.currentForceField })
+  //       console.log(nodelist[3] + " not in " + this.currentForceField)
+  //       good = false
+  //       break
+  //     }
+  //     else if (nodelist[2] !== oldid.toString()) {
+  //       let mol = {
+  //         "resname": nodelist[3],
+  //         "seqid": 0,
+  //         "id": id.toString()
+  //       };
 
-        newMolecules.push(mol)
-        oldid = parseInt(nodelist[2])
-        id++
-      }
-    }
+  //       newMolecules.push(mol)
+  //       oldid = parseInt(nodelist[2])
+  //       id++
+  //     }
+  //   }
 
-    if (good) {
+  //   if (good) {
 
-      let newlinks = []
-      // 3rd faire la liste des liens
-      for (let linkstr of links) {
-        if (linkstr.startsWith(";")) continue
-        else if (linkstr.startsWith("#")) continue
-        else {
-          const link = linkstr.split(' ').filter((e) => { return e !== "" })
+  //     let newlinks = []
+  //     // 3rd faire la liste des liens
+  //     for (let linkstr of links) {
+  //       if (linkstr.startsWith(";")) continue
+  //       else if (linkstr.startsWith("#")) continue
+  //       else {
+  //         const link = linkstr.split(' ').filter((e) => { return e !== "" })
 
-          let idlink1 = parseInt(atoms[parseInt(link[0]) - 1].split(' ').filter((e) => { return e !== "" })[2])
-          let idlink2 = parseInt(atoms[parseInt(link[1]) - 1].split(' ').filter((e) => { return e !== "" })[2])
+  //         let idlink1 = parseInt(atoms[parseInt(link[0]) - 1].split(' ').filter((e) => { return e !== "" })[2])
+  //         let idlink2 = parseInt(atoms[parseInt(link[1]) - 1].split(' ').filter((e) => { return e !== "" })[2])
 
-          let node1 = newMolecules[idlink1 - 1]
-          let node2 = newMolecules[idlink2 - 1]
+  //         let node1 = newMolecules[idlink1 - 1]
+  //         let node2 = newMolecules[idlink2 - 1]
 
-          if (idlink1 !== idlink2) {
-            newlinks.push({
-              "source": newMolecules[idlink1 - 1],
-              "target": newMolecules[idlink2 - 1]
-            });
+  //         if (idlink1 !== idlink2) {
+  //           newlinks.push({
+  //             "source": newMolecules[idlink1 - 1],
+  //             "target": newMolecules[idlink2 - 1]
+  //           });
 
-            if (node1.links) node1.links.push(node2);
-            else node1.links = [node2];
+  //           if (node1.links) node1.links.push(node2);
+  //           else node1.links = [node2];
 
-            if (node2.links) node2.links.push(node1);
-            else node2.links = [node1];
+  //           if (node2.links) node2.links.push(node1);
+  //           else node2.links = [node1];
 
-          }
-        }
-      }
-      return [newMolecules, newlinks]
-    }
-  }
+  //         }
+  //       }
+  //     }
+  //     return [newMolecules, newlinks]
+  //   }
+  // }
 
   setForcefield = (ff: string): void => {
     if ((this.currentForceField === '') || (this.currentForceField === ff)) {
@@ -713,8 +795,8 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
 
     const atoms = itp.getField('atoms', true)
     const listparseditp = itplineToDico(atoms)
-    console.log(listparseditp)
-    console.log(idresmodif)
+    // console.log(listparseditp)
+    // console.log(idresmodif)
     return listparseditp.filter((e: any) => (parseInt(e.idres) === idresmodif))
   }
 
@@ -733,30 +815,26 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     }
     else {
       const jsonpolymer = simulationToJson(this.state.Simulation!, this.currentForceField)
-      let data = {}
-      if (Object.keys(this.state.customITP).length === 0) {
-        data = {
-          polymer: jsonpolymer,
-          box: box,
-          name: name,
-          number: number
-        }
+      let data: { [x: string]: any; } = {}
+
+      data = {
+        'polymer': jsonpolymer,
+        'box': box,
+        'name': name,
+        'number': number
       }
-      else {
-        data = {
-          polymer: jsonpolymer,
-          box: box,
-          name: name,
-          number: number,
-          customITP: this.state.customITP
-        }
+
+      data['customITP'] = this.state.customITP
+      data['proteinGRO'] = this.state.protein_coord
+
+      if (this.state.inputpdb) {
+        data['inputpdb'] = this.state.inputpdb
       }
 
       this.setState({ stepsubmit: 1, data_for_computation: data })
       console.log("socket.emit('run_itp_generation')")
       this.socket.emit('run_itp_generation', data)
     }
-
   }
 
 
@@ -764,7 +842,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
   componentDidMount() {
     setPageTitle("Polymer Generator");
     this.socket.emit("get_polyply_data",)
-    this.setState( { height:  this.root.current!.clientHeight ,  width: this.root.current!.clientWidth})
+    this.setState({ height: this.root.current!.clientHeight, width: this.root.current!.clientWidth })
     window.addEventListener('resize', this.handleResize)
 
 
@@ -791,6 +869,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     })
 
     this.socket.on("error_gro", (error: string) => {
+      console.log("error gro")
       this.setState({
         Warningmessage: error,
         dialogWarning: "",
@@ -873,6 +952,17 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
 
       //Si il y a des erreur, on affiche un warning 
 
+
+      //   interface ErrorToClient {
+      //     boxerror: boolean;
+      //     ok: boolean,
+      //     disjoint: boolean,
+      //     errorlinks: any[],
+      //     message: string[],
+      //     itp? : string,
+      // }
+
+
       //check 
       if (dicoError.errorlinks.length > 0) {
         let listerror: any[][] = []
@@ -887,7 +977,6 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
         let generate_error_fixing_state = Array.from({ length: listerror.length }, (_, i) => {
           const bead_list_start = this.getbeadslist(listerror[i][0])
           const bead_list_end = this.getbeadslist(listerror[i][1])
-
           const startbead = bead_list_start[0]["idbead"]
           const endbead = bead_list_end[0]["idbead"]
           const startresname = bead_list_start[0]["resname"]
@@ -902,12 +991,18 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
             force: "1200",
             startchoice: bead_list_start,
             endchoice: bead_list_end,
-            is_fixed: false
+            is_fixed: false,
+            change_bead_1: undefined,
+            change_bead_2: undefined
           };
         })
         this.setState({ errorLink: listerror, errorfix: generate_error_fixing_state })
         //socket.emit("continue",)
 
+      }
+      else if (dicoError.boxerror) {
+
+        this.setState({ Warningmessage: "Box is too small. Please increase the value." })
       }
       else if (dicoError.message.length) {
 
@@ -945,6 +1040,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
       customITP: {},
       nodesToAdd: [],
       linksToAdd: [],
+      dataForForm: {},
       Warningmessage: "",
       dialogWarning: "",
       loading: false,
@@ -953,16 +1049,18 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
       itp: "",
       gro: "",
       pdb: "",
+      protein_coord: "",
       errorLink: [],
       current_position_fixlink: undefined,
       errorfix: undefined,
-      data_for_computation: {}
+      data_for_computation: {},
+      inputpdb: undefined,
     })
   }
 
   render() {
     const classes = this.props.classes;
-    
+
     return (
       <Grid
         container
@@ -976,17 +1074,6 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
           close={() => { this.setState({ Warningmessage: "" }) }}>
 
         </Warning>
-
-        {/* <AppBar position="static"  >
-          <div style={{ marginLeft: "5%", textAlign: 'justify', width: '100%' }}>
-            <Typography variant="h3" noWrap style={{ fontWeight: "bold", fontSize: '300%' }}>
-              Polymer Generator
-            </Typography>
-          </div>
-          <Marger size="1rem" />
-
-
-        </AppBar> */}
 
         {this.state.loading ? (
           <RunPolyplyDialog
@@ -1016,10 +1103,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
         ) : (<></>)
         }
 
-
-
         <Grid md={4} component={Paper} elevation={6} square>
-
           <GeneratorMenu
             clear={this.clear}
             errorlink={this.state.errorLink}
@@ -1033,11 +1117,10 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
             dataForceFieldMolecule={this.state.dataForForm}
             warningfunction={this.warningfunction}
             addNEwMolFromITP={this.addNEwMolFromITP}
-            addNEwCustomLink={(name: string, itpstring: string) => { let dictionary: { [name: string]: string; } = this.state.customITP; dictionary[name] = itpstring; this.setState({ customITP: dictionary }); }}
+            addCustomitp={(name: string, itpstring: string) => { let dictionary: { [name: string]: string; } = this.state.customITP; dictionary[name] = itpstring; this.setState({ customITP: dictionary }); }}
             fixlinkcomponentappear={this.fixlinkcomponentappear}
+            addprotcoord={(gro: string) => { this.setState({ protein_coord: gro }) }}
           />
-
-
         </Grid>
 
 
@@ -1053,20 +1136,15 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
                 getSimulation={(SimulationFromViewer: d3.Simulation<SimulationNode, SimulationLink>) => { this.setState({ Simulation: SimulationFromViewer }) }}
                 newNodes={this.state.nodesToAdd}
                 newLinks={this.state.linksToAdd}
-                height={this.state.height ?  this.state.height : this.root.current!.clientHeight  }
-                width={this.state.width ?  this.state.width : this.root.current!.clientWidth  }
+                height={this.state.height ? this.state.height : this.root.current!.clientHeight}
+                width={this.state.width ? this.state.width : this.root.current!.clientWidth}
               />
             ) :
             (
               <CircularProgress></CircularProgress>
             )
           }
-
-
-
         </Grid>
-
-
       </Grid >
     );
   }
