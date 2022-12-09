@@ -26,17 +26,23 @@ const useStyles = makeStyles(theme => ({
       textDecoration: 'underline',
     }
   },
+  moleculeAccepted : {
+    color : 'green',
+    fontWeight: 'bold'
+  },
+  moleculeReview : {
+    color : 'DarkOrange',
+    fontWeight: 'bold'
+  }
 }));
 
 interface Column {
-  id: 'name' | 'alias' | 'category' | 'created_at' | 'version';
+  id: 'name' | 'alias' | 'category' | 'created_at' | 'version' | 'from_stashed' | 'owner';
   label: string;
   minWidth?: number;
   align?: 'right';
   format?: (value: any) => string;
 }
-
-
 
 export default function MoleculeTable(props: {
   loading?: boolean,
@@ -48,6 +54,7 @@ export default function MoleculeTable(props: {
   onMoleculeDelete?: (id: string) => void,
   moderation?: boolean,
   withVersion?: boolean,
+  submission?: boolean; 
   }) {
     
   const classes = useStyles();
@@ -64,21 +71,42 @@ export default function MoleculeTable(props: {
       label: 'Category',
       minWidth: 170,
       align: 'right',
-      format: (value: string[]) => value.map(val => findInCategoryTree(categories, val)).join(', '),
+      format: (value: string[]) => value.map(val => findInCategoryTree(categories, val)).join(', ')
     },
     {
       id: 'created_at',
       label: 'Created at',
       minWidth: 170,
       align: 'right',
-      format: (value: string) => dateFormatter("Y-m-d H:i", new Date(value)),
-    },
+      format: (value: string) => dateFormatter("Y-m-d H:i", new Date(value))
+    }
   ];
+
 
   if (props.withVersion) {
     const version_column: Column = { id: 'version', label: 'Version' };
 
     columns = [...columns.slice(0, 2), version_column, ...columns.slice(2)];
+  }
+
+  if (props.submission) {
+    const status_column : Column = {
+      id : "from_stashed",
+      label: 'Status',
+      align: 'right',
+      format: (value: string) => value ? "Under review" : "Accepted"
+      
+    }
+    columns.push(status_column)
+  }
+
+  if (props.moderation) {
+    const submitter_column : Column = {
+      id : "owner",
+      label : 'Submitted by', 
+      align: "right"
+    }
+    columns.push(submitter_column)
   }
   
   const deleteMolecule = () => {
@@ -118,7 +146,7 @@ export default function MoleculeTable(props: {
                     size="medium"
                   >
                     {column.label}
-                  </TableCell>
+                  </TableCell> 
                 ))}
               </TableRow>
             </TableHead>
@@ -144,7 +172,7 @@ export default function MoleculeTable(props: {
                     </TableCell>*/}
 
                     {columns.map(column => {
-                      const value = row[column.id];
+                      const value = row[column.id]
                       const link = props.moderation ? "/stashed/" + row.id : "/molecule/" + row.alias + "?version=" + row.id;
 
                       return (
@@ -152,16 +180,16 @@ export default function MoleculeTable(props: {
                           key={column.id} 
                           align={column.align} 
                         >
-                          {column.id === 'name' || column.id === 'alias' ?
+                          {(column.id === 'name' || column.id === 'alias') && (!row.from_stashed) ?
                             <Link 
                               className={classes.moleculeLink} 
                               to={link}
                             >
                               {column.format ? column.format(value) : value}
-                            </Link> :
-                            <React.Fragment>
+                            </Link> : 
+                            <div className={column.id === "from_stashed" ? row.from_stashed ? classes.moleculeReview : classes.moleculeAccepted : ''}>
                               {column.format ? column.format(value) : value}
-                            </React.Fragment>
+                            </div>
                           }
                         </TableCell>
                       );

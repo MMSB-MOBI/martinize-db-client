@@ -171,6 +171,7 @@ export class MySubmissions extends React.Component<RouteComponentProps, MySubmis
     // Filter by my molecules, and show all version (do not collapse)
     to_send.owner = Settings.user?.id;
     to_send.combine = false;
+    to_send.from_stashed = true; 
 
     // Make the request
     ApiHelper.request('molecule/list', { parameters: to_send, latency: 500 })
@@ -232,6 +233,7 @@ export class MySubmissions extends React.Component<RouteComponentProps, MySubmis
           rowsPerPage={this.state.rowsPerPage}
           onChangePage={page => this.makeRequest(page)}
           withVersion
+          submission={true}
         />
       </Container>
     );
