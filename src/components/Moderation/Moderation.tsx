@@ -114,7 +114,7 @@ export class Moderation extends React.Component<RouteComponentProps, ModerationS
             toast("Molecule has been deleted.", "success");
             this.makeRequest();
           }}
-          moderation
+          moderation={true}
         />
       </Container>
     );
