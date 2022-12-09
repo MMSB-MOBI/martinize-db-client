@@ -432,7 +432,7 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
         compressionOptions: { level: 6 },
       });
 
-      downloadBlob(blob, "membrane.zip");
+      downloadBlob(blob, "system_CG.zip");
     } catch (e) {
       toast("Unable to generate files.");
     } finally {
@@ -593,6 +593,7 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
             this.setState({ph_upp: value});
             this.setState({ph_low: value});
           }}
+          force_field={this.state.ff}
         />
       </React.Fragment>
     );
