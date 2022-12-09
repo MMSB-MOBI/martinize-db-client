@@ -38,6 +38,8 @@ export interface BaseMolecule {
   /** Author (if fetched). */
   author?: string;
   builder_mode ?: string; 
+  alternative_alias?: string[]; 
+  from_stashed? : boolean; 
 }
 
 export interface ModelMolecule {

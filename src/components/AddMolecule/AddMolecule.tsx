@@ -13,6 +13,7 @@ import { SERVER_ROOT } from '../../constants';
 import { SettingsJson } from '../../types/settings';
 import TopCreator from './TopCreator';
 import { MultipleSelect } from '../Explore/ExploreFilters';
+import { TagsInput } from '../SharedComponents/TagsInput'; 
 
 interface AddMoleculeProps {
   /**
@@ -61,6 +62,7 @@ interface AddMoleculeState {
   current_ff_versions : Molecule[]
   parent_version: string; 
   parent: string; 
+  alternative_alias : string[]
 }
 
 class AddMolecule extends React.Component<AddMoleculeProps, AddMoleculeState> {
@@ -89,7 +91,8 @@ class AddMolecule extends React.Component<AddMoleculeProps, AddMoleculeState> {
       complete: false,
       current_ff_versions: props.parent ? this.chargeVersions(props.parent.force_field) : [],
       parent_version: "",
-      parent : props.parent?.id ?? ""
+      parent : props.parent?.id ?? "",
+      alternative_alias : []
     };
   }
 
@@ -223,7 +226,7 @@ class AddMolecule extends React.Component<AddMoleculeProps, AddMoleculeState> {
   };
 
   sendMolecule() {
-    const { files, name, alias, category, create_way, version, force_field, command_line, comments, validation, citation, smiles, parent } = this.state;
+    const { files, name, alias, category, create_way, version, force_field, command_line, comments, validation, citation, smiles, parent, alternative_alias } = this.state;
 
     let partial_molecule: Partial<Molecule> & { itp?: File[], pdb?: File, top?: File, map?: File[], fromVersion?:boolean } = {
       name,
@@ -237,7 +240,8 @@ class AddMolecule extends React.Component<AddMoleculeProps, AddMoleculeState> {
       force_field,
       validation,
       citation,
-      parent
+      parent,
+      alternative_alias
     };
 
     if(this.props.model){
@@ -502,7 +506,7 @@ class AddMolecule extends React.Component<AddMoleculeProps, AddMoleculeState> {
                   variant="outlined"
                   disabled={this.is_disabled}
                   required
-                />
+                />                 
   
                 <TextField
                   label="SMILES formula" 
@@ -521,6 +525,11 @@ class AddMolecule extends React.Component<AddMoleculeProps, AddMoleculeState> {
                   disabled={this.is_disabled}
                   required
                 />
+
+              <TagsInput 
+                  label="Alternative aliases"
+                  onUpdateTags={(tags) => this.setState({alternative_alias : tags})}/>
+
               </div>
   
               <Marger size="2rem" />

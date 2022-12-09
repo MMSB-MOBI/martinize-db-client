@@ -173,9 +173,12 @@ export default function MoleculeInfo<T extends StashedMolecule | Molecule>(props
             Name : {molecule.name}
           </Typography>
 
-          <Typography className={classes.alias}>
-            Alias : {molecule.alias}
+          <Typography className={classes.alias}>  Alias : {molecule.alias}
           </Typography>
+
+          {(molecule.alternative_alias && molecule.alternative_alias.length > 0) && <Typography className={classes.category}>
+            Alternative alias : {molecule.alternative_alias.join(" ; ")}
+            </Typography>}
 
           <Typography className={classes.category}>
             Categories : {category}
