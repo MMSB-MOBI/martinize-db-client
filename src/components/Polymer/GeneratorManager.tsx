@@ -407,7 +407,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
       const nodestrfix = nodestr.replaceAll('\t', ' ')
       const nodelist = nodestrfix.split(' ').filter((e) => { return e !== "" })
       //check si c'est une bead de l'ancien residu ou pas
-      console.log(nodestrfix, nodelist)
+
 
       if (resid === -1) {
         let mol = {
@@ -661,7 +661,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     else {
       //continue while list of linked node is not emphty 
       while (s.length !== 0) {
-        let firstNode = s.shift();
+        let firstNode : any = s.shift();
         //console.log(firstNode)
         if (firstNode !== undefined) {
           for (let connectedNodes of firstNode!.links!) {
@@ -686,33 +686,79 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     }
     else if ((this.currentForceField === '') || (this.currentForceField === toadd.forcefield)) {
       this.currentForceField = toadd.forcefield;
-      const newMolecule: SimulationNode[] = [];
+      let newMolecule: SimulationNode[] = [];
       let newlinks = [];
+      if (toadd.add_to_every_residue) {
+        const nodelist = this.state.Simulation!.nodes().filter((node: SimulationNode) => node.resname === toadd.add_to_every_residue)
+        const numbertoadd = toadd.numberToAdd * nodelist.length
+        for (let n of nodelist) {
+          console.log(n)
+          // convert to node object et injecte dans la list
+          const subnewMolecule: SimulationNode[] = [];
+          for (let i = 0; i < toadd.numberToAdd; i++) {
+            let mol = {
+              "resname": toadd.moleculeToAdd,
+              "seqid": 0,
+              "id": generateID(),
+            };
+            subnewMolecule.push(mol)
+            newMolecule.push(mol)
+            // If last molecule do not create link with the next mol
 
-      // convert to node object et injecte dans la list
-      for (let i = 0; i < toadd.numberToAdd; i++) {
-        let mol = {
-          "resname": toadd.moleculeToAdd,
-          "seqid": 0,
-          "id": generateID(),
-        };
-        newMolecule.push(mol)
+            if (i > 0) {
+              newlinks.push({
+                "source": subnewMolecule[i - 1],
+                "target": subnewMolecule[i]
+              });
+              if (subnewMolecule[i - 1].links) subnewMolecule[i - 1].links!.push(subnewMolecule[i]);
+              else subnewMolecule[i - 1].links = [subnewMolecule[i]];
 
-        // If last molecule do not create link with the next mol
-        if (i > 0) {
-          newlinks.push({
-            "source": newMolecule[i - 1],
-            "target": newMolecule[i]
-          });
-          if (newMolecule[i - 1].links) newMolecule[i - 1].links!.push(newMolecule[i]);
-          else newMolecule[i - 1].links = [newMolecule[i]];
+              if (subnewMolecule[i].links) subnewMolecule[i].links!.push(subnewMolecule[i - 1]);
+              else subnewMolecule[i].links = [subnewMolecule[i - 1]];
+              // add to state
+            }
+            if (i == 0) {
+              newlinks.push({
+                "source": n,
+                "target": subnewMolecule[0]
+              });
 
-          if (newMolecule[i].links) newMolecule[i].links!.push(newMolecule[i - 1]);
-          else newMolecule[i].links = [newMolecule[i - 1]];
-          // add to state
+              if (n.links) n.links!.push(subnewMolecule[0]);
+              else n.links = [subnewMolecule[0]];
+
+              if (subnewMolecule[0].links) subnewMolecule[0].links!.push(n);
+              else subnewMolecule[0].links = [n];
+
+            }
+          }
         }
-
       }
+      else {
+        // convert to node object et injecte dans la list
+        for (let i = 0; i < toadd.numberToAdd; i++) {
+          let mol = {
+            "resname": toadd.moleculeToAdd,
+            "seqid": 0,
+            "id": generateID(),
+          };
+          newMolecule.push(mol)
+
+          // If last molecule do not create link with the next mol
+          if (i > 0) {
+            newlinks.push({
+              "source": newMolecule[i - 1],
+              "target": newMolecule[i]
+            });
+            if (newMolecule[i - 1].links) newMolecule[i - 1].links!.push(newMolecule[i]);
+            else newMolecule[i - 1].links = [newMolecule[i]];
+
+            if (newMolecule[i].links) newMolecule[i].links!.push(newMolecule[i - 1]);
+            else newMolecule[i].links = [newMolecule[i - 1]];
+            // add to state
+          }
+        }
+      }
+
       this.setState({ linksToAdd: newlinks });
       this.setState({ nodesToAdd: newMolecule });
     }

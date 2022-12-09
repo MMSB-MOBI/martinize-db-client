@@ -7,7 +7,7 @@ import Typography from "@mui/material/Typography";
 import CreateLink from "./Dialog/CreateLink";
 import AutoFixHigh from "@mui/material/Icon/Icon";
 import { FaIcon, Marger } from "../../helpers";
-import { Badge, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Divider, FormControl, Grid, Icon, Input, Paper, } from '@material-ui/core';
+import { Badge, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Divider, FormControl, Grid, Icon, Input, InputLabel, MenuItem, Paper, Select, } from '@material-ui/core';
 import { SimpleSelect } from "../../Shared";
 import Link from "@mui/material/Link";
 import { Link as RouterLink } from 'react-router-dom';
@@ -16,6 +16,7 @@ import { Molecule } from "../../types/entities";
 import { ModalHistorySelector } from "../MyHistory/MyHistory";
 import Switch from '@mui/material/Switch';
 import { ImportProtein } from "./Dialog/importProtein";
+import { SelectChangeEvent } from "@mui/material";
 
 
 interface propsmenu {
@@ -47,6 +48,7 @@ interface GeneratorMenuState extends FormState {
   want_go_back: boolean
   Menuplus: boolean;
   proteinImport: boolean;
+  add_to_every_residue: string | undefined;
 }
 
 export default class GeneratorMenu extends React.Component<propsmenu, GeneratorMenuState> {
@@ -65,6 +67,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
     want_go_back: false,
     Menuplus: false,
     proteinImport: false,
+    add_to_every_residue: undefined,
   }
 
 
@@ -73,10 +76,6 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
   closeCreate(): void {
     console.log(this.state)
     // this.setState( {createLink : false})
-  }
-
-  showMenuPlus(x: boolean): void {
-    this.setState({ Menuplus: x })
   }
 
   CheckNewMolecule(): void {
@@ -380,7 +379,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
           <Grid item xs={4}>
             <Switch
               checked={this.state.Menuplus}
-              onChange={(t, checked) => this.showMenuPlus(checked)}
+              onChange={(t, checked) => this.setState({ Menuplus: checked })}
               inputProps={{ 'aria-label': 'controlled' }}
             />
           </Grid>
@@ -455,7 +454,6 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
           <Grid item xs={1}></Grid>
 
           <Grid item xs={1}></Grid>
-
           {(this.props.dataForceFieldMolecule[this.state.forcefield] !== undefined) ?
             (<>
               <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
@@ -519,6 +517,55 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
           </Grid>
           <Grid item xs={1}></Grid>
 
+          <Grid item xs={2}></Grid>
+          <Grid item xs={3}>
+            <Typography variant={'button'} > Link to all:</Typography>
+          </Grid>
+          <Grid item xs={4}>
+            {(this.props.dataForceFieldMolecule[this.state.forcefield] !== undefined) ?
+              (<>
+                <FormControl fullWidth>
+                  <InputLabel id="demo-simple-select-helper-label">resName</InputLabel>
+                  <Select
+                    labelId="demo-simple-select-helper-label"
+                    id="demo-simple-select-helper"
+                    value={this.state.add_to_every_residue}
+                    onChange={(event: any) => this.setState({ add_to_every_residue: event.target.value })}
+                  >
+                    <MenuItem value="">
+                      <em>None</em>
+                    </MenuItem>
+
+                    {this.props.dataForceFieldMolecule[this.state.forcefield]
+                      .map(e => <MenuItem key={e} value={e}> {e}</MenuItem>)}
+
+                  </Select>
+
+                </FormControl>
+
+
+                {/* 
+
+                  <SimpleSelect
+      //formControlClass={this.props.classes.ff_select}
+                    required
+                    label="Residue"
+                    variant="standard"
+                    // values={this.GetMolFField(this.props.dataForceFieldMolecule, forcefield).map(e => ({ id: e, name: e }))}
+                    // @ts-ignore
+                    values={ this.props.dataForceFieldMolecule[this.state.forcefield].map(e => ({ id: e, name: e }))}
+                    id="ff"
+                    
+                    value={this.state.moleculeToAdd}
+                    onChange={v => this.setState({ moleculeToAdd: v })} />
+                </Grid> */}
+              </>) : (<>
+                <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
+                  <CircularProgress></CircularProgress>
+                </Grid>
+              </>)}
+          </Grid>
+          <Grid item xs={3}></Grid>
 
 
           <Marger size="1rem" />
@@ -619,10 +666,10 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
           }
 
 
-        </Grid>
+        </Grid >
         <Marger size="1rem" />
 
-      </div>
+      </div >
     )
   };
 }

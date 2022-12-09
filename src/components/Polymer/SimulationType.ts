@@ -4,6 +4,7 @@ export interface FormState {
   forcefield: string;
   moleculeToAdd: string;
   numberToAdd: number;
+  add_to_every_residue : string|undefined;
 }
 
 export interface SimulationNode extends SimulationNodeDatum {
