@@ -5,7 +5,7 @@ import clsx from 'clsx';
 
 export const CenterComponent = (props: any) => {
   return (
-    <Grid container direction="column" justify="center" {...props} alignItems="center">
+    <Grid container direction="column"  style = {{justifyContent:'center'}} {...props} alignItems="center">
       {props.children}
     </Grid>
   );

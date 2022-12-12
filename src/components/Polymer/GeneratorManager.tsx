@@ -39,7 +39,7 @@ interface StateSimulation {
   gro: string,
   pdb: string,
   top: string,
-  protein_coord: string,
+  gro_coord: string,
   errorLink: string[][],
   current_position_fixlink: number | undefined,
   errorfix: any,
@@ -103,7 +103,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     itp: "",
     gro: "",
     pdb: "",
-    protein_coord: "",
+    gro_coord: "",
     errorLink: [],
     current_position_fixlink: undefined,
     errorfix: undefined,
@@ -154,6 +154,13 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
 
   warningfunction = (message: string): void => {
     this.setState({ Warningmessage: message })
+  }
+
+  handle_coord = (gro: string): void => {
+    if (this.state.gro_coord) {
+      this.setState({ Warningmessage: "Molecule coordinate already loaded ! You can only load one .gro file. The previous coordinate will be removed." })
+    }
+    this.setState({ gro_coord: gro })
   }
 
   ce_truc_est_fixed = (id: number): void => {
@@ -236,8 +243,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     // Warning !! 
     // Attention a l'id qui est different entre la nouvelle representation et l'ancien json 
     // besoin de faire une table de correspondance ancien et nouveau id
-
-    //Check forcefield !! 
+ 
     if (this.currentForceField === '') {
       console.log("this.currentForceField === ")
       this.currentForceField = jsonFile.forcefield
@@ -661,7 +667,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     else {
       //continue while list of linked node is not emphty 
       while (s.length !== 0) {
-        let firstNode : any = s.shift();
+        let firstNode: any = s.shift();
         //console.log(firstNode)
         if (firstNode !== undefined) {
           for (let connectedNodes of firstNode!.links!) {
@@ -805,6 +811,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
   }
 
 
+
   ClickToSend = (): void => {
     console.log("Go to server");
     this.setState({ stepsubmit: 0 })
@@ -848,6 +855,9 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
 
 
 
+
+
+
   Send = (box: string, name: string, number: string): void => {
     //Check if there is more than one polymer 
     const connexe1 = this.giveConnexeNode(this.state.Simulation!.nodes()[1])
@@ -871,7 +881,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
       }
 
       data['customITP'] = this.state.customITP
-      data['proteinGRO'] = this.state.protein_coord
+      data['proteinGRO'] = this.state.gro_coord
 
       if (this.state.inputpdb) {
         data['inputpdb'] = this.state.inputpdb
@@ -1095,7 +1105,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
       itp: "",
       gro: "",
       pdb: "",
-      protein_coord: "",
+      gro_coord: "",
       errorLink: [],
       current_position_fixlink: undefined,
       errorfix: undefined,
@@ -1165,7 +1175,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
             addNEwMolFromITP={this.addNEwMolFromITP}
             addCustomitp={(name: string, itpstring: string) => { let dictionary: { [name: string]: string; } = this.state.customITP; dictionary[name] = itpstring; this.setState({ customITP: dictionary }); }}
             fixlinkcomponentappear={this.fixlinkcomponentappear}
-            addprotcoord={(gro: string) => { this.setState({ protein_coord: gro }) }}
+            addmoleculecoord={this.handle_coord}
           />
         </Grid>
 

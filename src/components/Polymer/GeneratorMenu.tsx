@@ -17,6 +17,7 @@ import { ModalHistorySelector } from "../MyHistory/MyHistory";
 import Switch from '@mui/material/Switch';
 import { ImportProtein } from "./Dialog/importProtein";
 import { SelectChangeEvent } from "@mui/material";
+import { execPath } from "process";
 
 
 interface propsmenu {
@@ -28,7 +29,7 @@ interface propsmenu {
   addnode: (arg0: FormState) => void;
   addlink: (arg1: any, arg2: any) => void;
   addprotsequence: (arg0: string) => void;
-  addprotcoord: (arg0: string) => void;
+  addmoleculecoord: (arg0: string) => void;
   send: () => void;
   addCustomitp: (arg0: string, arg1: string) => void;
   dataForceFieldMolecule: { [forcefield: string]: string[] };
@@ -67,7 +68,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
     want_go_back: false,
     Menuplus: false,
     proteinImport: false,
-    add_to_every_residue: undefined,
+    add_to_every_residue: "",
   }
 
 
@@ -109,6 +110,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
     this.go_back_btn.current.click();
   };
 
+
   handleUpload = (selectorFiles: FileList) => {
     this.setState({ want_go_back: false });
     if (selectorFiles.length === 1) {
@@ -117,8 +119,20 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
       if (ext === 'json') {
         let reader = new FileReader();
         reader.onload = (event: any) => {
-          let obj = JSON.parse(event.target.result);
-          this.props.addnodeFromJson(obj);
+          //check if json file is well json formatted?
+
+          if (/^[\],:{}\s]*$/.test(event.target.result.replace(/\\["\\\/bfnrtu]/g, '@').
+            replace(/"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g, ']').
+            replace(/(?:^|:|,)(?:\s*\[)+/g, ''))) {
+
+            let obj = JSON.parse(event.target.result);
+            this.props.addnodeFromJson(obj);
+
+          } else {
+            this.props.warningfunction("Not good json format.")
+          }
+
+
         }
         reader.readAsText(file);
       }
@@ -128,9 +142,16 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
           const fastaContent = event.target.result;
           let seq = ''
           for (let line of fastaContent.split('\n')) {
-            if (!line.startsWith('>')) seq = seq + line
+            if (!line.startsWith('>')) {
+              seq = seq + line
+            }
           }
-          this.props.addprotsequence(seq)
+          if (/^[a-zA-Z]+$/.test(seq)) {
+            this.props.addprotsequence(seq)
+          }
+          else {
+            this.props.warningfunction("Not good fasta format.")
+          }
         }
         reader.readAsText(file);
       }
@@ -177,9 +198,11 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
     console.log(molecule)
   };
 
-  itpfromhistory = (molecule: any) => {
+  moleculefromhistory = (molecule: any) => {
+    console.log(molecule)
     this.setState({ want_go_back: false });
-    this.props.addNEwMolFromITP(molecule)
+    this.props.addmoleculecoord(molecule.gro.content)
+    this.props.addNEwMolFromITP(molecule.itp)
     this.setState({ history_modal_chooser: false })
   };
 
@@ -240,14 +263,14 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
 
         <ModalHistorySelector
           open={this.state.history_modal_chooser}
-          onChoose={this.itpfromhistory}
+          onChoose={this.moleculefromhistory}
           onCancel={() => this.setState({ history_modal_chooser: false })}
         />
 
         <ImportProtein
           open={this.state.proteinImport}
           close={() => this.setState({ proteinImport: false })}
-          addprotcoord={this.props.addprotcoord}
+          addprotcoord={this.props.addmoleculecoord}
           addNEwMolFromITP={this.props.addNEwMolFromITP}
           addCustomitp={this.props.addCustomitp}
 
@@ -284,7 +307,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
         <Grid container component="main" style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'left', }}>
           <Grid item xs={1}></Grid>
           <Grid item xs={5}>
-            <Typography variant="h6" > Current forcefield : </Typography>
+            <Typography variant="h6" > Current forcefield: </Typography>
           </Grid>
           <Grid item xs={5}>
             <Typography variant="h6" sx={{ fontWeight: 'bold' }}>{this.state.forcefield}</Typography>
@@ -374,7 +397,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
 
           <Grid item xs={1}></Grid>
           <Grid item xs={6}>
-            <Typography variant="h6" > Show advanced menu : </Typography>
+            <Typography variant="h6" > Show advanced menu: </Typography>
           </Grid>
           <Grid item xs={4}>
             <Switch
@@ -410,7 +433,8 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
               </Grid>
 
               <Grid item xs={4} style={{ textAlign: 'left', alignItems: 'center' }}>
-                <Button variant="outlined" color="primary" onClick={() => this.setState({ history_modal_chooser: true })}>
+                <Button variant="outlined" color="primary"
+                  onClick={() => this.setState({ history_modal_chooser: true })}>
                   From history
                   <Badge color="secondary" >
                     <Icon className={"fas fa-" + "upload"} />

@@ -80,7 +80,7 @@ export class ImportProtein extends React.Component<props, state> {
     }
 
     load = () => {
-        if ((this.state.gro === "")  || (this.state.itp === "")) {
+        if ((this.state.gro === "") || (this.state.itp === "")) {
             this.setState({ give2files: true })
         }
         else {
@@ -121,6 +121,7 @@ export class ImportProtein extends React.Component<props, state> {
                             <Alert severity="error">Missing one file. Please provide an itp file and a gro file.</Alert>
                         }
 
+                        <Marger size="1rem" />
                         <Grid container component="main" style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'left', }}>
                             <Grid item xs={5}>
                                 <Typography variant='button' >
