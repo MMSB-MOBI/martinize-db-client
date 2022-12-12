@@ -526,12 +526,18 @@ class AddMolecule extends React.Component<AddMoleculeProps, AddMoleculeState> {
                   required
                 />
 
+              
+
+              </div>
+
+              <Marger size="1rem" />
+
+              <div className={classes.commandLineAndVersionBlock}>
               <TagsInput 
                   label="Alternative aliases"
                   onUpdateTags={(tags) => this.setState({alternative_alias : tags})}/>
-
               </div>
-  
+
               <Marger size="2rem" />
               <Typography variant="h6">
                   About this version
@@ -796,6 +802,7 @@ export default withStyles(theme => ({
   commentInput: {
     width: '100%',
   },
+
 }))(AddMolecule);
 
 function WaiterModal(props: { open: boolean, title: string, content: string, onClose?: () => void }) {

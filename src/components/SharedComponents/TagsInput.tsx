@@ -45,11 +45,10 @@ export class TagsInput extends React.Component<TagsInputProps, TagsInputStates> 
                 "& .MuiInputBase-input": {
                     '&::placeholder' : {
                         fontSize : '12px'
-                    }
+                    },
+                    
                 },
-                '& .MuiTextField-root' : {
-                    flexWrap : 'wrap'
-                }
+                flexWrap : 'wrap' 
             }}
             label={this.props.label} 
             placeholder = {"Write your alias(es) and press enter to validate each"}
