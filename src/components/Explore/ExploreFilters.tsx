@@ -202,7 +202,7 @@ export default function MoleculeFilters(props: {
           />
 
           <TextField 
-            label="Alias" 
+            label="Alias or alternative alias" 
             value={props.alias || ""}
             onChange={v => {
               const filters = getAllFilters();
