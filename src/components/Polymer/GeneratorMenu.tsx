@@ -16,8 +16,9 @@ import { Molecule } from "../../types/entities";
 import { ModalHistorySelector } from "../MyHistory/MyHistory";
 import Switch from '@mui/material/Switch';
 import { ImportProtein } from "./Dialog/importProtein";
-import { SelectChangeEvent } from "@mui/material";
-import { execPath } from "process";
+import { IconButton, SelectChangeEvent } from "@mui/material";
+import { SERVER_ROOT } from "../../constants";
+import JSZip from "jszip";
 
 
 interface propsmenu {
@@ -191,10 +192,10 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
 
   }
 
-  nextFromMolecule = (molecule: Molecule | MoleculeWithFiles) => {
+  nextFromMolecule = async (molecule: Molecule | MoleculeWithFiles) => {
     this.setState({ want_go_back: false });
     this.setState({ database_modal_chooser: false });
-    //@ts-ignore
+    console.log("API en attente")
     console.log(molecule)
   };
 
@@ -688,8 +689,6 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
 
               )
           }
-
-
         </Grid >
         <Marger size="1rem" />
 

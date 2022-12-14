@@ -46,7 +46,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
   // Ajouter un point d'exclamation veut dire qu'on est sur que la valeur n'est pas nul
   ref!: SVGSVGElement;
   frame!: HTMLDivElement;
-  nodeSize = (this.props.height / 10);
+  nodeSize = (this.props.height / 8);
   mouseX = 0;
   mouseY = 0;
   prevPropsNewnode: any = null;
@@ -65,7 +65,10 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
   }
 
 
+
+
   componentDidMount() {
+    //console.log(this.ref )
     //Draw svg frame
     d3.select(this.ref)
       .attr("style", "outline: thin solid grey;")

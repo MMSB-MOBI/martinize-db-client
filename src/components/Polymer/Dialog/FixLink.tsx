@@ -295,7 +295,7 @@ export default class FixLink extends React.Component<props, state> {
                                                     if ((copy[parseInt(i)]['startresname'] === this.props.fixing_error[this.state.numeroLink]['startresname']) && (copy[parseInt(i)]['endresname'] === this.props.fixing_error[this.state.numeroLink]['endresname'])) {
                                                         {
                                                             //Need to find the position inside startchoice
-                                                            console.log(copy[parseInt(i)]["startchoice"].filter((b: { [x: string]: any; }) => b["bead"] === startbead)[0]["idbead"])
+                                                            //console.log(copy[parseInt(i)]["startchoice"].filter((b: { [x: string]: any; }) => b["bead"] === startbead)[0]["idbead"])
 
                                                             copy[parseInt(i)]["start"] = copy[parseInt(i)]["startchoice"].filter((b: { [x: string]: any; }) => b["bead"] === startbead)[0]["idbead"]
 
@@ -311,7 +311,7 @@ export default class FixLink extends React.Component<props, state> {
                                                             this.props.is_fixed(parseInt(i))
                                                         }
                                                     }
-                                                    console.log("I'm crying");
+                                                     
                                                 }
                                                 this.props.update_error(copy)
                                             }}

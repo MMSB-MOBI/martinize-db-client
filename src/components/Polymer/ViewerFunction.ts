@@ -164,8 +164,8 @@ export function addNodeToSVG(newnodes: SimulationNode[], simulation: any, update
             .append("path")
             .attr("class", "nodes")
             .attr("zoom", zoomValue)
-            .attr("x", heightSVG / 4)
-            .attr("y", widthtSVG / 4)
+            .attr("x", widthtSVG  / 4)
+            .attr("y", heightSVG / 4)
             .attr("d", d3.symbol().type(get_d3shape(node.resname)).size(nodeSize * 2))
             .attr("fill", donne_la_color(node.resname))
             .attr('stroke', "grey")
@@ -212,12 +212,14 @@ export function addNodeToSVG(newnodes: SimulationNode[], simulation: any, update
             console.log("Shift key is pressed/ skipping dragged!");
             return;
         }
+
+        console.log(d3.select(Mysvg).attr("height"), d3.select(Mysvg).attr("width"))
         const heightSVG = d3.select(Mysvg).attr("height")
         const widthSVG = d3.select(Mysvg).attr("width");
         // secret trick 
 
-        d.fx = clamp(event.x, 0, +heightSVG);
-        d.fy = clamp(event.y, 0, +widthSVG);
+        d.fx = clamp(event.x, 0, parseInt(widthSVG));
+        d.fy = clamp(event.y, 0, parseInt(heightSVG));
 
         simulation
             .velocityDecay(0.8)
@@ -305,7 +307,7 @@ export function addLinkToSVG(newLink: SimulationLink[]): void {
     link.append("line")
         .attr("class", "links")
         .attr("stroke", "grey")
-        .attr("stroke-width", nodeSize / 10)
+        .attr("stroke-width", nodeSize / 20)
         .attr("opacity", 0.5)
         .attr("stroke-linecap", "round")
         .attr("source", function (d: any) { return d.source.id })

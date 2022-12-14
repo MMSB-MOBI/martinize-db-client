@@ -16,7 +16,7 @@ import ResultViewer from './ResultViewer';
 import Stepper from '@mui/material/Stepper';
 import Step from '@mui/material/Step';
 import StepLabel from '@mui/material/StepLabel';
-import { Grid, LinearProgress } from '@mui/material';
+import { Grid, LinearProgress, Link } from '@mui/material';
 
 interface props {
     send: (arg1: string, arg2: string, number: string) => void;
@@ -28,12 +28,14 @@ interface props {
     warning: string,
     close: () => void;
     add_to_history: () => void;
+    jobid: string | undefined
 }
 
 interface state {
     box: string,
     name: string,
     numberpolymer: string
+    jobid: string,
 }
 
 export default class RunPolyplyDialog extends React.Component<props, state> {
@@ -46,7 +48,8 @@ export default class RunPolyplyDialog extends React.Component<props, state> {
         this.state = {
             box: "10",
             name: "polymol",
-            numberpolymer: "1"
+            numberpolymer: "1",
+            jobid: ""
         }
     }
 
@@ -66,6 +69,17 @@ export default class RunPolyplyDialog extends React.Component<props, state> {
         a.dispatchEvent(clickEvt);
         a.remove();
     }
+
+    handlehistory = async () => {
+        this.props.add_to_history()
+        this.props.close()
+    }
+
+    handlehistoryandgoaway = () => {
+        this.props.add_to_history()
+        window.location.assign("/builder/" + this.props.jobid);
+    }
+
 
     async dlzip(itp: string, gro: string, pdb: string, filename: string) {
 
@@ -193,22 +207,44 @@ export default class RunPolyplyDialog extends React.Component<props, state> {
                         <ResultViewer top={this.props.top} pdb={this.props.pdb} itp={this.props.itp} ff="martini3001" />
                     }
 
+
                     {((this.props.currentStep! === 0) || (this.props.currentStep! === 4)) ? (<>
-                        <DialogActions >
-                            <Button color='warning' onClick={() => { this.props.close() }}>Close</Button>
-                        </DialogActions>
+
+                        <Grid container component="main" style={{ textAlign: 'center', alignItems: 'center', justifyContent: 'center', }}>
+                            <Grid item xs={3} >
+                                <DialogActions >
+                                    <Button color='warning' onClick={() => { this.props.close() }}>Close</Button>
+                                </DialogActions>
+                            </Grid>
+
+
+                            {(this.props.currentStep! === 4) &&
+                                <>
+                                    <Grid item xs={9} >
+                                        <DialogActions >
+                                            <Button color='success' onClick={this.handlehistory}>Add to history</Button>
+                                        </DialogActions>
+                                    </Grid>
+                                    <Grid item xs={12} >
+                                        <DialogActions >
+
+                                            <Button onClick={this.handlehistoryandgoaway}>
+                                                Save and Go to molecule viewer
+                                            </Button>
+
+                                        </DialogActions>
+                                    </Grid>
+
+                                </>
+                            }
+                        </Grid>
                     </>) : (<>
                         <Marger size="1rem" />
                         <LinearProgress />
                     </>)}
 
-                    {(this.props.currentStep! === 4) ? (<>
-                        <DialogActions >
-                            <Button color='success' onClick={() => { this.props.add_to_history() }}>Add to history</Button>
-                        </DialogActions>
-                    </>) : (<>
 
-                    </>)}
+
 
 
                 </Dialog >

@@ -28,7 +28,7 @@ interface StateSimulation {
   data_for_computation: any;
   Simulation: d3.Simulation<SimulationNode, SimulationLink> | undefined,
   Warningmessage: string;
-  customITP: { [name: string]: string };
+  customITP: { [name: string]: string },
   dialogWarning: string;
   nodesToAdd: SimulationNode[],
   linksToAdd: SimulationLink[],
@@ -45,7 +45,8 @@ interface StateSimulation {
   errorfix: any,
   height: number | undefined,
   width: number | undefined,
-  inputpdb: undefined | string
+  inputpdb: undefined | string,
+  jobfinish: undefined | string,
 }
 
 interface GMProps {
@@ -111,6 +112,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     height: undefined,
     width: undefined,
     inputpdb: undefined,
+    jobfinish: undefined
   }
 
   socket = SocketIo.connect(SERVER_ROOT);
@@ -119,7 +121,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
 
 
   handleResize = () => {
-    // console.log("resizing", this.root.current!.clientHeight, this.root.current!.clientWidth)
+    console.log("resizing", this.root.current!.clientHeight, this.root.current!.clientWidth)
     this.setState({ height: this.root.current!.clientHeight, width: this.root.current!.clientWidth })
   }
 
@@ -129,12 +131,13 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     console.log(this.state)
     this.state.data_for_computation['userId'] = Settings.user?.id
     this.socket.emit("add_to_history", this.state.data_for_computation)
-
-    this.socket.on("add_to_history_answer", async (response: boolean) => {
-      if (response) this.warningfunction("The polymer has been added to your history!")
-      else this.warningfunction("Fail! We cannot add this polymer to your history!")
+    this.socket.on("add_to_history_answer", async (res: string) => {
+      if (res) {
+        this.setState({ jobfinish: res })
+        this.warningfunction("The polymer has been added to your history!");
+      }
+      else this.warningfunction("Fail! We cannot add this polymer to your history!");
     })
-    this.closeDialog()
   }
 
   change_current_position_fixlink = (linktofix: SimulationLink): void => {
@@ -243,7 +246,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     // Warning !! 
     // Attention a l'id qui est different entre la nouvelle representation et l'ancien json 
     // besoin de faire une table de correspondance ancien et nouveau id
- 
+
     if (this.currentForceField === '') {
       console.log("this.currentForceField === ")
       this.currentForceField = jsonFile.forcefield
@@ -1140,6 +1143,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
             pdb={this.state.pdb}
             close={this.closeDialog}
             add_to_history={this.add_to_history}
+            jobid= {this.state.jobfinish}
             top={this.state.top}
             warning={this.state.dialogWarning}> </RunPolyplyDialog>
         ) : (<></>)
