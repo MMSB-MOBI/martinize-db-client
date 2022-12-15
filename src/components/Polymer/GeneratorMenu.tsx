@@ -19,6 +19,7 @@ import { ImportProtein } from "./Dialog/importProtein";
 import { IconButton, SelectChangeEvent } from "@mui/material";
 import { SERVER_ROOT } from "../../constants";
 import JSZip from "jszip";
+import ApiHelper from "../../ApiHelper";
 
 
 interface propsmenu {
@@ -189,7 +190,6 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
       this.props.warningfunction("Only one files should be upload")
       console.log(selectorFiles)
     }
-
   }
 
   nextFromMolecule = async (molecule: Molecule | MoleculeWithFiles) => {
@@ -197,6 +197,14 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
     this.setState({ database_modal_chooser: false });
     console.log("API en attente")
     console.log(molecule)
+    ApiHelper.request("/api/molecule/get/" + molecule.id + ".itp/martini3001")
+      .then(answer => {
+        console.log(answer)
+      })
+      .catch(e => {
+        console.error(e)
+        this.props.warningfunction( molecule.id+" Not found")
+      })
   };
 
   moleculefromhistory = (molecule: any) => {

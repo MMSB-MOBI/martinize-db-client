@@ -15,7 +15,8 @@ export interface MoleculeWithFiles {
   top: File;
   itps: File[];
   force_field: string;
-  builder_mode?: string; 
+  builder_mode?: string;
+  id?: string; 
 }
 
 interface MCProps {
