@@ -3,7 +3,7 @@ import { Route, Switch, RouteComponentProps, Redirect, BrowserRouter } from 'rea
 import Explore from '../Explore/Explore';
 import NotFound, { InnerNotFound } from '../pages/NotFound/NotFound';
 import ApplicationDrawer from '../ApplicationBar/ApplicationBar';
-import { WaitForLoginFinish, WaitForLogged, WaitForAdminLogged } from '../LoginWaiter/LoginWaiter';
+import { WaitForLoginFinish, WaitForLogged, WaitForAdminLogged, WaitForDevLogged } from '../LoginWaiter/LoginWaiter';
 import Settings from '../../Settings';
 import Login from '../pages/Login/Login';
 import MoleculePage from '../Molecule/Molecule';
@@ -63,8 +63,9 @@ const RouterCmpt = () => {
 };
 
 function LoadPolymerGenerator(props: RouteComponentProps) {
+  console.log(Settings )
   return (
-    <WaitForAdminLogged {...props} component={GeneratorManager} wait={[Settings.login_promise, Settings.martinize_variables_promise]} />
+    <WaitForDevLogged {...props} component={GeneratorManager} wait={[Settings.login_promise, Settings.martinize_variables_promise]} />
   );
 }
 

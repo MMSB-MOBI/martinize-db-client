@@ -87,7 +87,7 @@ export default function Login() {
       .then(({ user, token }: { user: User, token: string }) => {
         Settings.user = user;
         Settings.token = token;
-
+        console.log( "hellog" , user)
         window.location.pathname = "/";
       })
       .catch(e => {

@@ -4,7 +4,7 @@ import { SettingsJson } from "./types/settings";
 import { toast } from "./components/Toaster";
 
 export enum LoginStatus {
-  None, Pending, Curator, Admin,
+  None, Pending, Curator, Admin, Dev
 };
 
 export const Settings = new class Settings {
@@ -35,7 +35,7 @@ export const Settings = new class Settings {
 
   set token(v: string | undefined) {
     this._token = v;
-    if (!v) 
+    if (!v)
       localStorage.removeItem('token');
     else
       localStorage.setItem('token', v);
@@ -47,7 +47,7 @@ export const Settings = new class Settings {
 
   set user(v: User | undefined) {
     this._user = v;
-    if (!v) 
+    if (!v)
       localStorage.removeItem('user');
     else
       localStorage.setItem('user', JSON.stringify(v));
@@ -70,11 +70,11 @@ export const Settings = new class Settings {
   get login_promise() {
     return this._login_promise;
   }
-  
-  get martinize_variables() : SettingsJson {
+
+  get martinize_variables(): SettingsJson {
     return this._settings ?? {
       force_fields: [],
-      force_fields_info: {}, 
+      force_fields_info: {},
       create_way: {},
       category_tree: {}
     };
@@ -108,7 +108,9 @@ export const Settings = new class Settings {
       try {
         const user: User = await ApiHelper.request('user/validate');
         this.user = user;
-        this._logged = user.role === "admin" ? LoginStatus.Admin : LoginStatus.Curator;
+        if (user.role === "admin") this._logged = LoginStatus.Admin
+        if (user.role === "curator") this._logged = LoginStatus.Curator
+        if (user.role === "dev") this._logged = LoginStatus.Dev
         return true;
       }
       catch (e) {
@@ -131,7 +133,10 @@ export const Settings = new class Settings {
       .then(({ token, user }: { token: string, user: User }) => {
         this.token = token;
         this.user = user;
-        this._logged = user.role === "admin" ? LoginStatus.Admin : LoginStatus.Curator;
+        console.log(user)
+        if (user.role === "admin") this._logged = LoginStatus.Admin
+        else if (user.role == "dev") this._logged = LoginStatus.Dev
+        else this._logged = LoginStatus.Curator;
         this._login_promise = Promise.resolve(true);
       });
   }

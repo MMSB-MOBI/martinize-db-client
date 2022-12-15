@@ -140,7 +140,7 @@ function DrawerElements(props: RouteComponentProps) {
         link: true,
         icon: 'draw-polygon',
         text: 'Polymer Generator',
-        condition: Settings.logged === LoginStatus.Admin,
+        condition: Settings.logged === LoginStatus.Admin ||  Settings.logged === LoginStatus.Dev ,
         font : "bold"
       }
     ],
@@ -274,7 +274,8 @@ export default function ApplicationDrawer(props: RouteComponentProps) {
             <PersonIcon />
           </Avatar>
         </ListItemAvatar>
-        <ListItemText primary={Settings.user.name} secondary={Settings.user.role === "admin" ? "Administrator" : "Curator"} />
+        {/* FAIRE UNE ONE LIGNE DEGEUE AVEC PLUSIEUR IF JUSTE POUR AFFICHER UNE MAJUSCULE !! J'ADORE MON TTRAVAIL !! Ca va prendre 2h pour rien */}
+        <ListItemText primary={Settings.user.name} secondary={ Settings.user.role  } />
       </ListItem>}
 
       <DrawerElements {...props} />

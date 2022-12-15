@@ -85,7 +85,7 @@ export interface Token {
   created_at: string;
 }
 
-export type UserRole = "admin" | "curator";
+export type UserRole = "admin" | "curator" | "dev";
 
 interface JobDoc extends CouchDoc {
   id: string; 

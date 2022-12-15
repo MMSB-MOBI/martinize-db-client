@@ -4,13 +4,13 @@ import { FullError } from '../Errors/Errors';
 import { BigPreloader } from '../../Shared';
 import { Link, Button } from '@material-ui/core';
 
-export type AllowedLoginState = "none" | "progress" | "curator" | "admin" | "error" | "done";
-export type RegisterableLoginState = "none" | "curator" | "admin" | "done";
+export type AllowedLoginState = "none" | "progress" | "dev" | "curator" | "admin" | "error" | "done";
+export type RegisterableLoginState = "none" | "curator" | "admin" | "done" | "dev";
 
-type LWProps = { 
+type LWProps = {
   component: React.ComponentType;
   renderWhen: RegisterableLoginState | RegisterableLoginState[];
-  wait: Promise<any> | Promise<any>[];
+  wait: Promise<any> | Promise<any>[];
 
   onNotAllowed?: JSX.Element | React.ComponentType<{ state: AllowedLoginState }>;
   onWaiting?: JSX.Element | React.ComponentType;
@@ -41,6 +41,9 @@ export default class LoginWaiter extends React.Component<LWProps, LWState> {
         else if (Settings.logged === LoginStatus.Curator) {
           logged = "curator";
         }
+        else if (Settings.logged === LoginStatus.Dev) {
+          logged = "dev";
+        }
         else {
           // None
           logged = "none";
@@ -60,7 +63,7 @@ export default class LoginWaiter extends React.Component<LWProps, LWState> {
   get allowed() {
     const r_w = this.props.renderWhen as RegisterableLoginState | RegisterableLoginState[];
 
-    if (typeof r_w=== 'string')
+    if (typeof r_w === 'string')
       return [r_w];
     return r_w;
   }
@@ -78,16 +81,16 @@ export default class LoginWaiter extends React.Component<LWProps, LWState> {
     }
 
     //Adapt error message
-    let error_text:string = "You can't access this page" 
-    switch(this.state.logged){
-      case "none" : error_text = error_text + " as simple user. You may login or make request for an account.";
-        break; 
-      case "curator" : error_text = error_text + " as curator."
-        break; 
-      case "admin" : error_text = error_text + " as admin."
-        break; 
+    let error_text: string = "You can't access this page"
+    switch (this.state.logged) {
+      case "none": error_text = error_text + " as simple user. You may login or make request for an account.";
+        break;
+      case "curator": error_text = error_text + " as curator."
+        break;
+      case "admin": error_text = error_text + " as admin."
+        break;
     }
-    
+
 
     return <FullError
       text={error_text}
@@ -108,7 +111,7 @@ export default class LoginWaiter extends React.Component<LWProps, LWState> {
         return <Cmnt />;
       }
     }
-    
+
     return (
       <BigPreloader style={{ height: '100vh' }} />
     );
@@ -160,14 +163,18 @@ export default class LoginWaiter extends React.Component<LWProps, LWState> {
   }
 }
 
-export function WaitForLoginFinish<T extends { component: React.ComponentType<any>, wait: Promise<any> | Promise<any>[] }>(props: T) {
+export function WaitForLoginFinish<T extends { component: React.ComponentType<any>, wait: Promise<any> | Promise<any>[] }>(props: T) {
   return <LoginWaiter {...props} renderWhen="done" />
 };
 
-export function WaitForLogged<T extends { component: React.ComponentType<any>, wait: Promise<any> | Promise<any>[] }>(props: T) {
+export function WaitForLogged<T extends { component: React.ComponentType<any>, wait: Promise<any> | Promise<any>[] }>(props: T) {
   return <LoginWaiter {...props} renderWhen={["admin", "curator"]} />
 };
 
-export function WaitForAdminLogged<T extends { component: React.ComponentType<any>, wait: Promise<any> | Promise<any>[] }>(props: T) {
+export function WaitForAdminLogged<T extends { component: React.ComponentType<any>, wait: Promise<any> | Promise<any>[] }>(props: T) {
   return <LoginWaiter {...props} renderWhen="admin" />
+};
+
+export function WaitForDevLogged<T extends { component: React.ComponentType<any>, wait: Promise<any> | Promise<any>[] }>(props: T) {
+  return <LoginWaiter {...props} renderWhen={["admin", "dev"]} />
 };
