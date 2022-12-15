@@ -20,6 +20,8 @@ import { IconButton, SelectChangeEvent } from "@mui/material";
 import { SERVER_ROOT } from "../../constants";
 import JSZip from "jszip";
 import ApiHelper from "../../ApiHelper";
+import { LocalConvenienceStoreOutlined } from "@material-ui/icons";
+import { stringify } from "querystring";
 
 
 interface propsmenu {
@@ -192,18 +194,24 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
     }
   }
 
-  nextFromMolecule = async (molecule: Molecule | MoleculeWithFiles) => {
+  nextFromMolecule = async (molecule: any) => {
     this.setState({ want_go_back: false });
     this.setState({ database_modal_chooser: false });
-    console.log("API en attente")
+
     console.log(molecule)
-    ApiHelper.request("/api/molecule/get/" + molecule.id + ".itp/martini3001")
-      .then(answer => {
-        console.log(answer)
+    if (molecule.force_field !== "martini3001") {
+      this.props.warningfunction("Wrong forcefield : " + molecule.force_field)
+      return
+    }
+    const req = "molecule/get/martini3001/" + molecule.alias + ".itp"
+    console.log(req)
+    ApiHelper.request(req, { mode: "text" })
+      .then((itp: string) => {
+        this.props.addNEwMolFromITP(itp)
       })
       .catch(e => {
         console.error(e)
-        this.props.warningfunction( molecule.id+" Not found")
+        this.props.warningfunction(molecule.alias + " Not found")
       })
   };
 
