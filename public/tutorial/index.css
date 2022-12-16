@@ -270,3 +270,17 @@ span.command {
     width:80%;
     padding : 2em;
 }
+
+.schematics {
+    border: solid 1px darkgrey;
+    padding: 1em 2em 1em 2em;
+    border-radius: 15px 15px 15px 15px;
+    margin-bottom: 80px;
+    display: inline-block;
+}
+
+.comments {
+    margin-top: 2em;
+    max-width: 650px;
+    padding : 2em;
+}
