@@ -6,7 +6,7 @@ import Typography from '@mui/material/Typography';
 import * as d3 from "d3";
 import { SimulationNode, SimulationLink, SimulationGroup } from '../SimulationType';
 import { DownloadJson } from '../generateJson';
-import { addLinkToSVG, addNodeToSVG,  removeNode } from "../ViewerFunction";
+import { addLinkToSVG, addNodeToSVG, removeNode } from "../ViewerFunction";
 import { decreaseID } from '../GeneratorManager'
 
 
@@ -31,8 +31,9 @@ export default class CustomContextMenu extends React.Component<props> {
         let boo = false
         this.props.svg.selectAll<SVGPathElement, SimulationLink>("line.error")
             .each((l: SimulationLink) => {
-                if (l === link) { 
-                    boo = true}
+                if (l === link) {
+                    boo = true
+                }
             })
         return boo
     }
@@ -152,14 +153,14 @@ export default class CustomContextMenu extends React.Component<props> {
 
     }
 
-    removeSelectedNodes = (nodes: d3.Selection<SVGCircleElement, SimulationNode, SVGSVGElement, unknown>) => {
+    removeSelectedNodes = (nodes: d3.Selection<SVGPathElement, SimulationNode, SVGSVGElement, unknown>) => {
         nodes.each((node: SimulationNode) => {
             console.log(node)
             removeNode(node, this.props.handleUpdate, decreaseID);
         })
     }
 
-    removeLinksSelected = (nodes: d3.Selection<SVGCircleElement, SimulationNode, SVGSVGElement, unknown>) => {
+    removeLinksSelected = (nodes: d3.Selection<SVGPathElement, SimulationNode, SVGSVGElement, unknown>) => {
         let listnodes: SimulationNode[] = []
         nodes.each((node: SimulationNode) => {
             listnodes.push(node);
@@ -195,10 +196,10 @@ export default class CustomContextMenu extends React.Component<props> {
 
 
     //list d3 qui forme le polygon autour de cette liste
-    groupPolymer = (listNodesD3: d3.Selection<SVGCircleElement, SimulationNode, SVGSVGElement, unknown>) => {
+    groupPolymer = (listNodesD3: d3.Selection<SVGPathElement, SimulationNode, SVGSVGElement, unknown>) => {
         //clean the previous selected nodes
         this.props.svg
-            .selectAll<SVGCircleElement, SimulationNode>('path.onfocus')
+            .selectAll<SVGPathElement, SimulationNode>('path.onfocus')
             .attr("class", "nodes");
 
         let idCreatedPolygoneNode: SimulationNode[] = [];
@@ -246,6 +247,7 @@ export default class CustomContextMenu extends React.Component<props> {
                         .attr("stroke-linejoin", "round")
                         .style("opacity", 0.2)
                         .on('click', function () {
+                            //@ts-ignore
                             self.colapse({ id: id, nodesD3: connexe, color: color })
                             this.remove()
                             self.props.handleUpdate();
@@ -294,7 +296,7 @@ export default class CustomContextMenu extends React.Component<props> {
         }
         // Return a selection of one connexe graph 
         // Maybe juste one node
-        return this.props.svg.selectAll<SVGCircleElement, SimulationNode>('path.nodes').filter((d: SimulationNode) => connexeNodesId.has(d.id))
+        return this.props.svg.selectAll<SVGPathElement, SimulationNode>('path.nodes').filter((d: SimulationNode) => connexeNodesId.has(d.id))
     }
 
 
@@ -321,7 +323,12 @@ export default class CustomContextMenu extends React.Component<props> {
             .filter(function (d: SimulationGroup): boolean {
                 return (this.getAttribute("group") === dataNodes.id.toString())
             })
-            .attr("display", '')
+        //.attr("display", '')
+
+
+        this.groupPolymer(this.props.svg
+            .selectAll<SVGPathElement, SimulationNode>('path.nodes')
+            .filter((d: SimulationNode) => d.group === dataNodes.id ))
         this.props.handleUpdate()
     }
 
@@ -331,7 +338,7 @@ export default class CustomContextMenu extends React.Component<props> {
 
         console.log("Colapse ", group.id)
         //Remove nodes from the svg 
-        this.props.svg.selectAll<SVGCircleElement, SimulationNode>("path.nodes")
+        this.props.svg.selectAll<SVGPathElement, SimulationNode>("path.nodes")
             .filter((n: SimulationNode) => (n.group === group.id))
             .remove()
 
@@ -351,6 +358,7 @@ export default class CustomContextMenu extends React.Component<props> {
             .append("path")
             .attr("group", group.id)
             .attr('class', "group_node")
+            .attr("zoom", this.props.zoom)
             .attr("d", d3.symbol().type(d3.symbolCircle).size(1000 * Math.sqrt(group.nodesD3!.data().length)))
             .attr("fill", group.color!)
             .style("opacity", 0.7)
@@ -367,7 +375,7 @@ export default class CustomContextMenu extends React.Component<props> {
 
     render() {
 
-        const selectedNodes = this.props.svg.selectAll<SVGCircleElement, SimulationNode>('.onfocus')
+        const selectedNodes = this.props.svg.selectAll<SVGPathElement, SimulationNode>('.onfocus')
 
 
         return (
