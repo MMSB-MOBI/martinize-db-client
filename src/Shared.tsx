@@ -84,7 +84,7 @@ export const TutorialShow = () => {
 
 export const Citation = () => {
   return <div
-    style={{ display: 'flex', alignItems: 'center', marginBottom: '0.5rem', padding: '0.5rem', flexDirection: 'column', fontSize: '12px', border : "2px solid", borderColor: 'lightgray', marginRight: '5px'}}>
+    style={{ display: 'flex', alignItems: 'center', padding: '0.5rem', flexDirection: 'column', fontSize: '12px', border : "2px solid", borderColor: 'lightgray'}}>
     <span style={{ marginBottom : '5px'}}> If you use this website, please cite : </span>
     <span style={{ fontSize : '14px'}}> Facilitating CG simulations with MAD: the MArtini Database Server </span>
     <span>Cécile Hilpert, Louis Beranger, Paulo C.T. Souza, Petteri A. Vainikka, Vincent Nieto, Siewert J. Marrink, Luca Monticelli, Guillaume Launay </span>

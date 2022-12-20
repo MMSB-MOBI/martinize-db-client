@@ -334,7 +334,6 @@ export default function ApplicationDrawer(props: RouteComponentProps) {
         <div className={classes.toolbar} />
         <TutorialShow />
         <DrawerContentRouter {...props} />
-        <Citation />
       </main>
     </div>
   );

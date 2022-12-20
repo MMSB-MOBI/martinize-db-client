@@ -12,6 +12,7 @@ import AddMolecule from '../AddMolecule/AddMolecule';
 import { Link, Icon, Container, Typography } from '@material-ui/core';
 import clsx from 'clsx';
 import Settings from '../../Settings';
+import { Citation } from '../../Shared';
 // Icon <Icon className="fas fa-camera" />
 
 function getRealFilters(filters: Filters) {
@@ -262,6 +263,11 @@ export class Explore extends React.Component<RouteComponentProps, ExploreState> 
             this.setState({ add_open: false });
           }}
         />
+
+      <Marger size={14} />
+
+      <Citation />
+
 
       </div> } 
       
