@@ -119,6 +119,7 @@ export interface ReadedJobFiles {
   itp_files : FileFromHttp[][]; 
   top_file : FileFromHttp; 
   warnings: FileFromHttp; 
+  gro?: FileFromHttp; 
 }
 
 export interface RawJobFiles { 

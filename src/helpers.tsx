@@ -320,6 +320,7 @@ export async function loadMartinizeFiles(job: ReadedJobDoc) : Promise<MartinizeF
     pdb : {name : files.coarse_grained.name, type : files.coarse_grained.type, content : new File([files.coarse_grained.content], files.coarse_grained.name)},
     itps, 
     top : {name : files.top_file.name, type : files.top_file.type, content : new File([files.top_file.content], files.top_file.name)},
+    gro : files.gro ? {name : files.gro.name, type : files.gro.type, content : new File([files.gro.content], files.gro.name)} : undefined
 
   }
 }
