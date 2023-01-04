@@ -38,6 +38,8 @@ export interface BaseMolecule {
   /** Author (if fetched). */
   author?: string;
   builder_mode ?: string; 
+  alternative_alias?: string[]; 
+  from_stashed? : boolean; 
 }
 
 export interface ModelMolecule {
@@ -117,6 +119,7 @@ export interface ReadedJobFiles {
   itp_files : FileFromHttp[][]; 
   top_file : FileFromHttp; 
   warnings: FileFromHttp; 
+  gro?: FileFromHttp; 
 }
 
 export interface RawJobFiles { 

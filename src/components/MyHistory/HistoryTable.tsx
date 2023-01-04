@@ -260,6 +260,7 @@ export default function HistoryTable(props : {
     const downloadJob = async (jobId: string) => {
         try {
             const job : ReadedJobDoc = await ApiHelper.request(`history/get?jobId=${jobId}`)
+            console.log("job", job)
             const martinizeFiles = await loadMartinizeFiles(job)
             const zip = new JSZip()
             zip.file(martinizeFiles.pdb.name, martinizeFiles.pdb.content)
@@ -267,6 +268,8 @@ export default function HistoryTable(props : {
             for (const itp of martinizeFiles.itps.flat()){
                 zip.file(itp.name, itp.content)
             }
+            if(martinizeFiles.gro) zip.file(martinizeFiles.gro.name, martinizeFiles.gro.content)
+
             const generated = await zip.generateAsync({
                 type: 'blob',
                 compression: 'DEFLATE',
@@ -275,8 +278,8 @@ export default function HistoryTable(props : {
                 }
               });
             
-            const pdbName = job.files.all_atom.name
-            const zipName = pdbName.slice(0, pdbName.indexOf('.pdb')) + '-CG'
+            const jobName = job.name.split(".")[0]
+            const zipName = jobName + '-CG'
             
             downloadBlob(generated, zipName + '.zip');
             

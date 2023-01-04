@@ -54,6 +54,7 @@ export interface MartinizeFiles {
   go?: BaseBondsHelper;
   elastic_bonds?: BondsRepresentation;
   warnings?: File;
+  gro? : MartinizeFile
 }
 
 interface AtomRadius {
@@ -117,6 +118,8 @@ export interface MBState {
   bead_radius_factor: number;
 
   polymer_number: number;
+
+  results_prefix: string; 
 
 }
 
@@ -200,7 +203,8 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       nTer: job.settings.nter,
       cTer: job.settings.cter,
       sc_fix: job.settings.sc_fix.toString(),
-      cystein_bridge: job.settings.cystein_bridge
+      cystein_bridge: job.settings.cystein_bridge,
+      results_prefix : job.name.split(".")[0]
     })
   }
 
@@ -255,7 +259,8 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       martinize_step: '',
       send_mail: "false",
       bead_radius_factor: 0.2,
-      polymer_number: 0
+      polymer_number: 0,
+      results_prefix : 'output'
     };
   }
 
@@ -437,7 +442,8 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     this.setState({
       all_atom_ngl: component,
       all_atom_pdb: file,
-      polymer_number: repr.polymerNumber
+      polymer_number: repr.polymerNumber,
+      results_prefix : file.name.split(".")[0]
     });
   }
 
@@ -786,6 +792,14 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
               type,
             };
             break;
+          }
+          case 'chemical/x-gro' : {
+            files.gro = {
+              name, 
+              content : new File([file], name, { type }), 
+              type
+            }; 
+            break
           }
           case 'chemical/x-topology': {
             // TOP file
@@ -1382,6 +1396,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     const files = this.state.files
     zip.file(files.pdb.name, files.pdb.content);
     zip.file(files.top.name, files.top.content);
+    if(files.gro) zip.file(files.gro.name, files.gro.content)
     for (const itp of files.itps) {
       zip.file(itp.name, itp.content);
     }
@@ -1394,16 +1409,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       }
     });
 
-    let name = ""
-    if ( this.state.all_atom_pdb ){
-      const original_name = this.state.all_atom_pdb!.name
-      name = original_name.slice(0, original_name.indexOf('.pdb')) + '-CG'
-    }
-    else{
-      name = "TRUC"
-    }
-
-    downloadBlob(generated, name + '.zip');
+    downloadBlob(generated, this.state.results_prefix + '-CG.zip');
   }
 
   /* RENDERING */

@@ -20,7 +20,7 @@ import PersonIcon from '@material-ui/icons/Person';
 import ApiHelper from '../../ApiHelper';
 import { toast } from '../Toaster';
 import { errorToText } from '../../helpers';
-import { TutorialShow } from '../../Shared'; 
+import { Citation, TutorialShow } from '../../Shared';
 
 
 //import { WarnBeta } from '../WarnBeta';
@@ -69,40 +69,40 @@ interface DrawerElement {
   icon?: string;
   text?: string;
   condition?: boolean;
-  count?: Countable; 
-  font?: number | "-moz-initial" | "inherit" | "initial" | "revert" | "unset" | "normal" | "bold" | "bolder" | "lighter" ; 
+  count?: Countable;
+  font?: number | "-moz-initial" | "inherit" | "initial" | "revert" | "unset" | "normal" | "bold" | "bolder" | "lighter";
   render?: () => JSX.Element;
 }
 
-type Countable = "molecules" | "users" 
+type Countable = "molecules" | "users"
 
 function BadgedIcon(props: {
-  icon:string | undefined, 
-  toCount:Countable
-}){    
-    const [count, setCount] = React.useState(0); 
+  icon: string | undefined,
+  toCount: Countable
+}) {
+  const [count, setCount] = React.useState(0);
 
 
-    React.useEffect(() => {
-      const request_url = props.toCount === "molecules" ? 'moderation/list' : 'user/list/waiting'
-      ApiHelper.request(request_url)
-        .then(answer => {
-          setCount(answer.length)
-        })
-        .catch(e => {
-          console.error(e)
-          toast(errorToText(e));
-          })
-    }, [])
+  React.useEffect(() => {
+    const request_url = props.toCount === "molecules" ? 'moderation/list' : 'user/list/waiting'
+    ApiHelper.request(request_url)
+      .then(answer => {
+        setCount(answer.length)
+      })
+      .catch(e => {
+        console.error(e)
+        toast(errorToText(e));
+      })
+  }, [])
 
-    return(
+  return (
     <Badge badgeContent={count} color="secondary" >
-      <Icon className={"fas fa-" + props.icon}/>
+      <Icon className={"fas fa-" + props.icon} />
     </Badge>)
 }
 
 function DrawerElements(props: RouteComponentProps) {
-  
+
   const elements: DrawerElement[][] = [
     [
       {
@@ -110,7 +110,7 @@ function DrawerElements(props: RouteComponentProps) {
         link: true,
         icon: "compass",
         text: "Explore",
-        font : "bold"
+        font: "bold"
       },
       {
         path: '/builder',
@@ -118,7 +118,7 @@ function DrawerElements(props: RouteComponentProps) {
         icon: 'atom',
         text: 'Molecule builder',
         //condition: !!Settings.logged,
-        font : "bold"
+        font: "bold"
       },
       {
         path: '/membrane_builder',
@@ -126,7 +126,7 @@ function DrawerElements(props: RouteComponentProps) {
         icon: 'virus',
         text: 'System builder',
         //condition: !!Settings.logged,
-        font : "bold"
+        font: "bold"
       },
       {
         path: '/force_fields',
@@ -140,8 +140,8 @@ function DrawerElements(props: RouteComponentProps) {
         link: true,
         icon: 'draw-polygon',
         text: 'Polymer Generator',
-        condition: Settings.logged === LoginStatus.Admin ||  Settings.logged === LoginStatus.Dev ,
-        font : "bold"
+        condition: Settings.logged === LoginStatus.Admin || Settings.logged === LoginStatus.Dev,
+        font: "bold"
       }
     ],
     [
@@ -153,12 +153,12 @@ function DrawerElements(props: RouteComponentProps) {
         condition: !!Settings.logged,
       },
       {
-        path: '/history', 
-        link: true, 
-        icon : "history", 
-        text: "My builder history", 
+        path: '/history',
+        link: true,
+        icon: "history",
+        text: "My builder history",
         condition: !!Settings.logged
-      }, 
+      },
       {
         path: '/settings',
         link: true,
@@ -195,7 +195,7 @@ function DrawerElements(props: RouteComponentProps) {
         text: "Login",
         condition: !Settings.logged,
       },
-    ], 
+    ],
     [
       {
         path: '/contact',
@@ -203,7 +203,7 @@ function DrawerElements(props: RouteComponentProps) {
         icon: "envelope",
         text: "Contact"
       },
-    ], 
+    ],
   ];
 
   let compiled: JSX.Element[] = [];
@@ -212,7 +212,7 @@ function DrawerElements(props: RouteComponentProps) {
     const list_elements: JSX.Element[] = [];
 
     for (const e of list) {
-      if (typeof e.condition === "boolean" && !e.condition) 
+      if (typeof e.condition === "boolean" && !e.condition)
         continue;
 
       if (e.render) {
@@ -222,22 +222,22 @@ function DrawerElements(props: RouteComponentProps) {
       }
 
       list_elements.push(
-        <ListItem 
-          button 
-          key={i} 
-          component={e.link ? Link : "div"} 
+        <ListItem
+          button
+          key={i}
+          component={e.link ? Link : "div"}
           to={e.path}
           selected={props.location.pathname === e.path}
-          style={{fontWeight : 600}}
-          
+          style={{ fontWeight: 600 }}
+
         >
           <ListItemIcon>
-            {e.count ? 
-              <BadgedIcon icon={e.icon} toCount={e.count}/> :
-              <Icon className={"fas fa-" + e.icon} style={{color: e.font ? 'black' : ''}}/>
+            {e.count ?
+              <BadgedIcon icon={e.icon} toCount={e.count} /> :
+              <Icon className={"fas fa-" + e.icon} style={{ color: e.font ? 'black' : '' }} />
             }
           </ListItemIcon>
-          <ListItemText primary={<Typography style={{ fontWeight: e.font ? e.font : 'normal' }}>{e.text}</Typography>}/>
+          <ListItemText primary={<Typography style={{ fontWeight: e.font ? e.font : 'normal' }}>{e.text}</Typography>} />
         </ListItem>
       );
       i++;
@@ -275,7 +275,7 @@ export default function ApplicationDrawer(props: RouteComponentProps) {
           </Avatar>
         </ListItemAvatar>
         {/* FAIRE UNE ONE LIGNE DEGEUE AVEC PLUSIEUR IF JUSTE POUR AFFICHER UNE MAJUSCULE !! J'ADORE MON TTRAVAIL !! Ca va prendre 2h pour rien */}
-        <ListItemText primary={Settings.user.name} secondary={ Settings.user.role  } />
+        <ListItemText primary={Settings.user.name} secondary={Settings.user.role} />
       </ListItem>}
 
       <DrawerElements {...props} />
@@ -332,7 +332,7 @@ export default function ApplicationDrawer(props: RouteComponentProps) {
       {/* Main content */}
       <main className={classes.content}>
         <div className={classes.toolbar} />
-        <TutorialShow/>
+        <TutorialShow />
         <DrawerContentRouter {...props} />
       </main>
     </div>
@@ -345,12 +345,12 @@ function AppBarContent() {
   function onTitleChange(e: CustomEvent<string>) {
     setTitle(e.detail);
   }
-  
+
   React.useEffect(() => {
     // @ts-ignore
     window.addEventListener('app-bar.title-change', onTitleChange);
 
-    return function() {
+    return function () {
       // @ts-ignore
       window.removeEventListener('app-bar.title-change', onTitleChange);
     };

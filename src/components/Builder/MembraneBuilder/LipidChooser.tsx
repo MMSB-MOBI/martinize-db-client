@@ -27,6 +27,7 @@ interface LCProps {
   phUppChange(_: any, value: number | number[]) : any;
   phLowChange(_: any, value: number | number[]) : any;
   phLipidsChange(_: any, value: number | number[]) : any;
+  force_field: string; 
 }
 
 interface LCState {
@@ -232,7 +233,7 @@ class LipidChooser extends React.Component<LCProps, LCState> {
 
           {this.state.upper_separated && <React.Fragment>
             <Typography align="center" variant="h6">
-              Upper membrane leaflet
+              Upper membrane leaflet lipids (force field {this.props.force_field})
             </Typography>
             
             <LipidSelectGroup 
@@ -260,7 +261,7 @@ class LipidChooser extends React.Component<LCProps, LCState> {
           </React.Fragment>}
 
           <Typography align="center" variant="h6">
-            {!this.state.upper_separated ? "Lipids" : "Lower membrane leaflet"}
+            {!this.state.upper_separated ? `Lipids (force field ${this.props.force_field})` : `Lower membrane leaflet lipids (force field ${this.props.force_field})`}
           </Typography>
 
           <LipidSelectGroup 

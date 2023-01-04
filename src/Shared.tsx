@@ -5,7 +5,7 @@ import clsx from 'clsx';
 
 export const CenterComponent = (props: any) => {
   return (
-    <Grid container direction="column"  style = {{justifyContent:'center'}} {...props} alignItems="center">
+    <Grid container direction="column" style={{ justifyContent: 'center' }} {...props} alignItems="center">
       {props.children}
     </Grid>
   );
@@ -27,12 +27,12 @@ export function LoadFader(props: React.PropsWithChildren<{ when?: boolean }>) {
   );
 }
 
-export function SimpleSelect(props: { 
-  label: string, 
-  value: string, 
-  onChange: (v: string) => void, id: string, 
-  values: { id: string, name: string }[], 
-  disabled?: boolean, 
+export function SimpleSelect(props: {
+  label: string,
+  value: string,
+  onChange: (v: string) => void, id: string,
+  values: { id: string, name: string }[],
+  disabled?: boolean,
   formControlClass?: string,
   variant?: "outlined" | "standard" | "filled",
   noMinWidth?: boolean,
@@ -65,19 +65,30 @@ export function SimpleSelect(props: {
 }
 
 export const BetaWarning = () => {
-  return <Alert severity="warning" style = {{justifyContent:'center', alignItems: 'center'}}>
+  return <Alert severity="warning" style={{ justifyContent: 'center', alignItems: 'center' }}>
     <div>
-     <div>This is a beta version of MAD service. If you have any suggestions or problems, please contact us at mad-support@ibcp.fr or use contact page. </div>
-     <div> New accounts for using beta versions of Molecule Builder and System Builder will be available starting September 1st 2021. </div>
+      <div>This is a beta version of MAD service. If you have any suggestions or problems, please contact us at mad-support@ibcp.fr or use contact page. </div>
+      <div> New accounts for using beta versions of Molecule Builder and System Builder will be available starting September 1st 2021. </div>
     </div>
   </Alert>
-} 
+}
 
 
 
 export const TutorialShow = () => {
-  return <Alert severity="info" 
-    style = {{justifyContent:'center', alignItems: 'center'}}>
+  return <Alert severity="info"
+    style={{ justifyContent: 'center', alignItems: 'center' }}>
     New to MAD? Try our <a href="tutorial">tutorial!</a>
   </Alert>
+}
+
+export const Citation = () => {
+  return <div
+    style={{ display: 'flex', alignItems: 'center', padding: '0.5rem', flexDirection: 'column', fontSize: '12px', border : "2px solid", borderColor: 'lightgray'}}>
+    <span style={{ marginBottom : '5px'}}> If you use this website, please cite : </span>
+    <span style={{ fontSize : '14px'}}> Facilitating CG simulations with MAD: the MArtini Database Server </span>
+    <span>Cécile Hilpert, Louis Beranger, Paulo C.T. Souza, Petteri A. Vainikka, Vincent Nieto, Siewert J. Marrink, Luca Monticelli, Guillaume Launay </span>
+    <span>bioRxiv 2022.08.03.502585; doi: https://doi.org/10.1101/2022.08.03.502585 </span>
+
+  </div>
 }
