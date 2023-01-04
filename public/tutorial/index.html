@@ -1,101 +1,114 @@
- <!DOCTYPE html>
- <html>
+<!DOCTYPE html>
+<html>
+
 <head>
-    <!-- Compiled and minified CSS -->
-<link rel="stylesheet" href="/assets/materialize.min.css">
-<link rel="stylesheet" href="index.css">
-<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-<!-- Compiled and minified JavaScript -->
-<link href="all.css" rel="stylesheet">
-<script src="/assets/materialize.min.js" type="text/javascript"></script>
+  <!-- Compiled and minified CSS -->
+  <link rel="stylesheet" href="/assets/materialize.min.css">
+  <link rel="stylesheet" href="index.css">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <!-- Compiled and minified JavaScript -->
+  <link href="all.css" rel="stylesheet">
+  <script src="/assets/materialize.min.js" type="text/javascript"></script>
 </head>
 
- <nav>
-    <div class="nav-wrapper">
-      <a href="#" class="brand-logo center">MAD Tutorial</a>
-      <ul id="nav-mobile" class="left hide-on-med-and-down">
-        <li> <a style="display:flex; gap:1em" href="/"> <i class="small material-icons inline-icon"> arrow_back </i> <span> Go back to MAD server </span> </a></li>
-        <li><a href="database.html">Database</a></li>
-        <li><a href="molecule.html">Molecule Builder</a></li>
-        <li><a href="system.html">System Builder</a></li>
-      </ul>
-    </div>
-  </nav>
+<nav>
+  <div class="nav-wrapper">
+    <!-- <a href="#" class="brand-logo center">MAD Tutorial</a> -->
+    <ul id="nav-mobile" class="left hide-on-med-and-down">
+      <li> <a style="display:flex; gap:1em" href="/"> <i class="small material-icons inline-icon"> arrow_back </i>
+          <span> Go back to MAD server </span> </a></li>
+      <li><a href="database.html">Database</a></li>
+      <li><a href="molecule.html">Molecule Builder</a></li>
+      <li><a href="system.html">System Builder</a></li>
+      <li><a href="polymer.html">Polymer generator</a></li>
+      <li><a href="api.html">API</a></li>
+    </ul>
+  </div>
+</nav>
 
 <body style="padding:5px; margin-bottom: 5em;">
-<div style="text-align: center;">
-<h1> Welcome to the MAD Tutorial </h1>
-</div>
+  <div style="text-align: center;">
+    <h1> Welcome to the MAD Tutorial </h1>
+  </div>
 
 
-<div class="welcome">
-  <h4> What is MAD ?</h2>
-The Martini Database (MAD) is a web server dedicated to (a) sharing structures and topologies of 
-molecules parameterized with the Martini coarse-grained (CG) force field [<a href="#references">1-3</a>]; (b) converting atomistic 
-structures into CG structures; (c) preparing complex systems (including proteins, nucleic acids, lipids etc.) 
-for molecular dynamics (MD) simulations at the CG level. 
-Specifically, the MAD server currently includes tools to: (a) submit or retrieve CG representations of a 
-wide range of molecules (lipids, sugars, nanoparticles, etc.); (b) transform all-atom protein structures into 
-CG structures and topologies, with fine control on the process; (c) assemble biomolecules into large systems and 
-deliver all files necessary to start molecular dynamics simulations. 
-</div>
+  <div class="welcome">
+    <h4> What is MAD ?</h2>
+      The Martini Database (MAD) is a web server dedicated to (a) sharing structures and topologies of
+      molecules parameterized with the Martini coarse-grained (CG) force field [<a href="#references">1-3</a>]; (b)
+      converting atomistic
+      structures into CG structures; (c) preparing complex systems (including proteins, nucleic acids, lipids etc.)
+      for molecular dynamics (MD) simulations at the CG level.
+      Specifically, the MAD server currently includes tools to: (a) submit or retrieve CG representations of a
+      wide range of molecules (lipids, sugars, nanoparticles, etc.); (b) transform all-atom protein structures into
+      CG structures and topologies, with fine control on the process; (c) assemble biomolecules into large systems and
+      deliver all files necessary to start molecular dynamics simulations.
+  </div>
 
   <h6>
     We will guide you during your first tour on the MAD server through the three following sections:
   </h6>
   </br>
-  
+
   <div style="display:flex; flex-direction: column; gap:2em">
-    <div class="cartouche"
-      onclick="location.href='/tutorial/database.html';"
-    >
+    <div class="cartouche" onclick="location.href='/tutorial/database.html';">
       <b>MAD:Database</b> where you access/retrieve or submit to our database of compounds
-    </div>  
- 
-  <div class="cartouche"
-  onclick="location.href='/tutorial/molecule.html';"
-  >
-    <b>MAD:Molecule Builder</b> where you coarse grain all atom PDB structure into their Martini versions
-  </div>  
-  
-  <div class="cartouche"
-    onclick="location.href='/tutorial/system.html';">
-    <b>MAD:System Builder</b> which combines your coarse grained protein structure with lipid component from MAD database to create large system
-  </div> 
-  
-  <div class="disclaimer" style="display:flex;width:50%; margin-left: 1em;">
-    <div> 
-      <i class="fa fa-exclamation-triangle"></i>
     </div>
-    <div>
-      A registration is required in order to use the <b>MAD:Molecule Builder</b> and the <b>MAD:System Builder</b>
-    </div> 
-  </div>
 
-  <div class="todo" style="display:flex ;width:50%; margin-left: 1em;">
-    <div> 
-      <i class="fa fa-user-plus"></i>
+    <div class="cartouche" onclick="location.href='/tutorial/molecule.html';">
+      <b>MAD:Molecule Builder</b> where you coarse grain all atom PDB structure into their Martini versions
     </div>
-    <div>
-      Account access and registration are available <a href="/login">here</a>
-    </div>
-  </div>
 
-  <div style="font-size: 1.em;" id="references">
-    <h4>References</h4>
+    <div class="cartouche" onclick="location.href='/tutorial/system.html';">
+      <b>MAD:System Builder</b> which combines your coarse grained protein structure with lipid component from MAD
+      database to create large system
+    </div>
+
+    <div class="cartouche" onclick="location.href='/tutorial/polymer.html';">
+      <b>MAD:Polymer generator</b> where you design or transform molecules. Powered by polyply.
+    </div>
+
+    <div class="cartouche" onclick="location.href='/tutorial/api.html';">
+      <b>MAD:API</b> Download molecules in different formats. 
+    </div>
+
+
+    <div class="disclaimer" style="display:flex;width:50%; margin-left: 1em;">
+      <div>
+        <i class="fa fa-exclamation-triangle"></i>
+      </div>
+      <div>
+        A registration is required in order to use the <b>MAD:Molecule Builder</b>, <b>MAD:Polymer generator</b> and the <b>MAD:System Builder</b>
+      </div>
+    </div>
+
+    <div class="todo" style="display:flex ;width:50%; margin-left: 1em;">
+      <div>
+        <i class="fa fa-user-plus"></i>
+      </div>
+      <div>
+        Account access and registration are available <a href="/login">here</a>
+      </div>
+    </div>
+
+    <div style="font-size: 1.em;" id="references">
+      <h4>References</h4>
       <ol>
         <li>
-          SJ Marrink, HJ Risselada, S Yefimov, DP Tieleman, AH De Vries. The MARTINI force field: coarse grained model for biomolecular simulations. J Phys Chem B (2007) 111, 7812-7824. Doi: 10.1021/jp071097f 
+          SJ Marrink, HJ Risselada, S Yefimov, DP Tieleman, AH De Vries. The MARTINI force field: coarse grained model
+          for biomolecular simulations. J Phys Chem B (2007) 111, 7812-7824. Doi: 10.1021/jp071097f
         </li>
         <li>
-            L Monticelli, SK Kandasamy, X Periole, RG Larson, DP Tieleman, SJ Marrink. The MARTINI coarse-grained force field: extension to proteins. J Chem Theory Comput (2008) 4, 819-834. Doi: 10.1021/ct700324x
+          L Monticelli, SK Kandasamy, X Periole, RG Larson, DP Tieleman, SJ Marrink. The MARTINI coarse-grained force
+          field: extension to proteins. J Chem Theory Comput (2008) 4, 819-834. Doi: 10.1021/ct700324x
         </li>
         <li>
-            Souza, P.C.T., Alessandri, R., Barnoud, J. et al. Martini 3: a general-purpose force field for coarse-grained molecular dynamics. Nat Methods (2021) 18, 382–388. Doi : 10.1038/s41592-021-01098-3
+          Souza, P.C.T., Alessandri, R., Barnoud, J. et al. Martini 3: a general-purpose force field for coarse-grained
+          molecular dynamics. Nat Methods (2021) 18, 382–388. Doi : 10.1038/s41592-021-01098-3
         </li>
       </ol>
+    </div>
   </div>
-</div>
 </body>
- </html>
- 
+
+</html>

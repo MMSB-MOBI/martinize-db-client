@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <!-- Compiled and minified CSS -->
+    <link rel="stylesheet" href="/assets/materialize.min.css">
+    <link rel="stylesheet" href="index.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="all.css" rel="stylesheet">
+    <!-- Compiled and minified JavaScript -->
+    <script src="/assets/materialize.min.js" type="text/javascript"></script>
+</head>
+<div class="navbar-fixed">
+    <nav>
+        <div class="nav-wrapper">
+            <a href="/tutorial" class="brand-logo center">MAD Tutorial</a>
+            <ul id="nav-mobile" class="left hide-on-med-and-down">
+                <li><a href="database.html">Database</a></li>
+                <li><a href="molecule.html">Molecule Builder</a></li>
+                <li><a href="system.html">System Builder</a></li>
+                <li class="active"><a href="polymer.html">Polymer generator</a></li>
+                <li><a href="api.html">API</a></li>
+            </ul>
+        </div>
+    </nav>
+</div>
+
+<div class="container">
+    <h1>Polymer generator</h1>
+    <div id="header">
+        This new MAD feature allows you to generate new molecules (example: polysacharide, Battery polymer) or to modify
+        existing molecules (example: Protein PEGylation, Glycosylation). This feature is powered by Polyply, this
+        program is a python suite designed to facilitate the generation of file and coordinate for molecular dynamic
+        simulation. You can generate a molecule using some of the molecular compounds provided by Polyply by using the
+        Martini3 force field, or you can load your own molecule (from the MAD database, MAD history or upload file
+        directly).
+    </div>
+
+    <div id="summary">
+        <p>
+            The following example will guide you through the multiple use of <span class="MAD_logo">MAD:Polymer
+                generator</span>.
+        </p>
+        <h6> <a href="#simple_peptide"> 1. Create a simple peptide </a> </h6>
+        <h6> <a href="#pegylation"> 2. Pegylate a protein </a> </h6>
+        <h6> <a href="#load">3. Load a molecule from the history and modify it </a> </h6>
+        <h6><a href="#Limitation">4. Limitation </a></h6>
+    </div>
+
+    <div class="disclaimer" style="width: 75%;margin-bottom: 2em">
+        <div><i class="medium material-icons inline-icon">person_add</i></div>
+        <div>
+            Because the service makes use of our computational resources, it is required for you to <a
+                href="/login">sign
+                in</a> order to have access to the <span class="MAD_logo">MAD:System Builder</span>
+        </div>
+    </div>
+
+    <div id="simple_peptide">
+        <h4>Create a simple peptide</h4>
+        <div class="flex-container">
+            <div class="comment">
+
+                <div>
+                    In this part, we generate a small peptide of 5 amino acids composed by 3 GLU and 2 ASP.
+                </div>
+
+                <div class="main_comment">
+                    <ul class="show">
+                        <li>
+                            <span class="li_supt">1st Step :</span> Select the good amino acid
+                        </li>
+                        <li>
+                            <span class="li_supt">2st Step :</span> Choose the number and add
+                        </li>
+                        <li>
+                            <span class="li_supt">3st Step :</span> Add an other amino acid chain and link then (you can
+                            drap and drop to create a link, use the menu, or clikc right and use "magic link")
+                        </li>
+                        <li>
+                            <span class="li_supt">4st Step :</span> Send to computaion, you can change the size of the
+                            box for coordinate gneration, change the number of molecule that you want in this box and
+                            choose a name.
+                        </li>
+
+                        <li>
+                            <span class="li_supt">4st Step :</span> Send to computaion, you can change the size of the
+                            box for coordinate gneration, change the number of molecule that you want in this box and
+                            choose a name.
+                        </li>
+
+                        
+                    </ul>
+                </div>
+
+                <div class="info">
+                    <i class="material-icons inline-icon">info_outline</i>
+                    Information ??? Explanation
+                </div>
+
+
+            </div>
+            <div>
+                <img src="images/polymer/peptide.gif" style="width: 850px;" />
+            </div>
+        </div>
+
+    </div>
+
+    <div id="pegylation">
+        <h4>Pegylate a protein</h4>
+
+
+    </div>
+
+    <div id="Limitation">
+        <h4>Limitation</h4>
+
+
+    </div>
+
+
+    <div id="references">
+        <h4>References</h4>
+        <ol>
+            <li>
+                Grünewald, F., Alessandri, R., Kroon, P.C. et al. Polyply; a python suite for facilitating simulations
+                of
+                macromolecules and nanomaterials. Nat Commun 13, 68 (2022). https://doi.org/10.1038/s41467-021-27627-4
+            </li>
+        </ol>
+    </div>
+
+</div>
+
+</html>

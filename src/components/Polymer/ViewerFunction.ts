@@ -45,7 +45,6 @@ export function reloadSimulation(simulation: d3.Simulation<SimulationNode, Simul
 
                 d3.select(Mysvg).selectAll("path.group_path")
                     .filter(function () {
-                        console.log(" hello consolelog", group.id)
                         return d3.select(this).attr("group") === group.id.toString(); // filter by single attribute
                     })
                     .data([hull])
@@ -88,9 +87,6 @@ export function reloadSimulation(simulation: d3.Simulation<SimulationNode, Simul
     d3.select(Mysvg).selectAll("path.group_path").each((d: any) => group_node.push(d))
     d3.select(Mysvg).selectAll("path:not(.group_path)").each((d: any) => simulationnodes.push(d))
 
-
-    console.log(d3.select(Mysvg).selectAll("path.group_node"))
-    console.log(d3.select(Mysvg).selectAll("path:not(.group_path)"))
 
     simulation.nodes(simulationnodes)
         .force<d3.ForceLink<SimulationNode, SimulationLink>>("link")?.links(slinks);

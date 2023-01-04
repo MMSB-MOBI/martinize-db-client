@@ -1,422 +1,446 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <!-- Compiled and minified CSS -->
-<link rel="stylesheet" href="/assets/materialize.min.css">
-<link rel="stylesheet" href="index.css">
-<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-<link href="all.css" rel="stylesheet">
-<!-- Compiled and minified JavaScript -->
-<script src="/assets/materialize.min.js" type="text/javascript"></script>
+
+<head>
+  <!-- Compiled and minified CSS -->
+  <link rel="stylesheet" href="/assets/materialize.min.css">
+  <link rel="stylesheet" href="index.css">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link href="all.css" rel="stylesheet">
+  <!-- Compiled and minified JavaScript -->
+  <script src="/assets/materialize.min.js" type="text/javascript"></script>
 </head>
 <div class="navbar-fixed">
-<nav>
-   <div class="nav-wrapper">
-     <a href="/tutorial" class="brand-logo center">MAD Tutorial</a>
-     <ul id="nav-mobile" class="left hide-on-med-and-down">
-       <li><a href="database.html">Database</a></li>
-       <li class="active"><a href="molecule.html">Molecule Builder</a></li>
-       <li><a href="system.html">System Builder</a></li>
-     </ul>
-   </div>
- </nav>
+  <nav>
+    <div class="nav-wrapper">
+      <a href="/tutorial" class="brand-logo center">MAD Tutorial</a>
+      <ul id="nav-mobile" class="left hide-on-med-and-down">
+        <li><a href="database.html">Database</a></li>
+        <li class="active"><a href="molecule.html">Molecule Builder</a></li>
+        <li><a href="system.html">System Builder</a></li>
+        <li><a href="polymer.html">Polymer generator</a></li>
+        <li><a href="api.html">API</a></li>
+      </ul>
+    </div>
+  </nav>
 </div>
 
 <div class="container">
   <h1>Molecule Builder</h1>
   <div id="header">
-    The Molecule Builder section of MAD is the main entry point to obtain the coarse grained 
+    The Molecule Builder section of MAD is the main entry point to obtain the coarse grained
     representation of your molecule of interest.
     Its most basic feature, is a wrapper around the <a href="https://github.com/marrink-lab/vermouth-martinize">
       vermouth-martinize</a>[<a href="#references">1</a>] software.
-    In practice, the <span class="MAD_logo">MAD:Molecule Builder</span> introduces many powerful features, 
-    such as interactive edition of distance constraints, 
+    In practice, the <span class="MAD_logo">MAD:Molecule Builder</span> introduces many powerful features,
+    such as interactive edition of distance constraints,
     that facilitate and add controls to the coarse graining process.
   </div>
 
-<div id="summary">
+  <div id="summary">
 
-  <p>
-  The following topics will be covered in order to guide you through your first use 
-  of the <span class="MAD_logo">MAD:Molecule Builder</span>.
-  </p>
-  <h6> <a href="#classic"> 1. Classic mode with a single chain molecule </a> </h6>
-  <h6> <a href="#elastic"> 2. Protein with elastic network </a> </h6>
-  <h6> <a href="#go">3. Protein with GO model </a> </h6>
-  <h6><a href="#history">4. Browse my builds through history </a></h6>
-</div>
-
-<div class="disclaimer" style="width: 75%;margin-bottom: 2em">
-  <div><i class="medium material-icons inline-icon">person_add</i></div>
-  <div>
-  Because the <span class="MAD_logo">MAD:Molecule Builder</span> makes use of 
-  our computational resources, it is required 
-  that you <a href="/login">sign in</a> in order to have access it. 
-  </div>
-</div>
-<div id="classic">
-
-  <h4>Classic mode with a single chain protein</h4>
-
-  <div class="classic-container">
-    <div style="grid-column: 1 / 3";>
-      Upon authentication to the MAD website, 
-      the <i class="fas fa-lg fa-atom"></i> <span style="font-weight: bold;">Molecule Builder</span> option 
-      should toggle to black, marking it as accessible. 
-      Click on it to access to the  <span class="MAD_logo">MAD:Molecule Builder</span> welcome page. 
-      Here you will be invited to upload a coordinate file.
-      <div class="todo" style="margin-bottom: 2em;margin-top: 2em">
-        <div><i class="medium material-icons inline-icon">launch</i></div>
-        <div>
-          The <span class="MAD_logo">MAD:Molecule Builder</span> requires a single PDB file as input. 
-          We will use as example, the Neisserial surface protein A (NspA) from the bacterium Neisseria 
-          meningitidis, which forms a transmembrane beta barrel. 
-          It is a single chain membrane protein. 
-          Its atomistic structure can be downloaded from the PDB web 
-          site  <a href=" https://files.rcsb.org/download/1P4T.pdb">under the code 1P4T</a>. 
-        </div>
-      </div>
-    </div>
-   
-    <div style="grid-column: 1 / 3";>
-      <img src="images/molecule/martinize_all_atoms.png" style="width:90%"/>
-    </div>
-    <div style="grid-column: 1 / 3";>
-      Once loaded, the all atom structure is displayed and the interface displays 
-      several options to configure the coarse-graining process of the structure.
-    </div>
-    <div>
-      <ul class="show show_tab">
-        <li>
-          <span class="li_supt">Force field:</span> choose the version of MARTINI that you plan to use during your molecular dynamics simulation.
-        </li>
-        <li>
-          <span class="li_supt">Position restraints:</span> generally useful during the equilibration simulation of the molecule, in order to 
-          maintain the structure of the backbone.
-        </li>
-        <li>
-          <span class="li_supt">Mode:</span> Search for molecule within the selected biochemical category
-        </li>
-      </ul>
-    </div>
-    <div>
-      <ul class="show show_tab">
-        <li>
-          <span class="li_supt">termini and fixes:</span> patches molecular beads to improve representations of functional groups charges and geometries.
-        </li>
-        <li>
-          <span class="li_supt">Cystein bridges:</span> detect and apply covalent bonds between cysteine side-chains based on distances.
-        </li>
-        <li>
-          <span class="li_supt">Email:</span> In case of a long running computation, email can be sent upon completion. The email will enclose a link to access and visualize your data. 
-          Your data are privately stored on the server for a period of 15 days.
-        </li>
-     </ul>
-    </div>
-    <div style="grid-column: 1/3";>
-      <div class="todo" style="width:100%; margin-top:1em;">
-        <div>
-          <i class="small material-icons inline-icon">launch</i>
-        </div>  
-        <div>
-          Set the force field parameter to the 3.0.0.1 version of Martini.
-          We will use the classic mode, alternative modes will be explored later on.
-          All remaining options will be left in default state: neutral termini, no side-chain fix, and no cysteine bridge.
-          Then proceed to the submission of the protein.
-        </div>
-      </div>
-    </div>
-    <div style="grid-column: 1 / 3";>
-      The <span class="MAD_logo">MAD:Molecule Builder</span> should take a few seconds to generate a MARTINI model of NspA.
-    </div>
-    <div style="grid-column: 1 / 3";>
-      <img src="images/molecule/martinize_cg.png" style="width:90%"/>
-    </div>
-  
- 
-    <div>
-      Feel free to explore the several representation options provided to visualize the newly coarse-grained protein. 
-      <ul class="show show_tab">
-        <li>
-          Change the beads radius by a factor
-        </li>
-        <li>
-          Select other representations such as surface.
-        </li>
-        <li>
-          Modify all atoms and coarse grain representation opacities.
-        </li>
-        <li>
-          Set Bead radius scaled according to Martini 3 definitions.
-        </li>
-      </ul>
-    </div>
-    <div class="info">
-        <i class="material-icons inline-icon">info_outline</i>
-      Martini 3 force field has 3 bead sizes which are mainly defined by the number 
-      of non-hydrogen atoms represented by the bead: 
-      regular (<b>R</b>) size for 4 atoms mapped by 1 bead (or 4-1), 
-      small (<b>S</b>) size for 3-1 and tiny size(<b>T</b>) for 2-1 mappings.  
-      The unscaled radius of the R, S and T beads in Martini 3 corresponds to 0.264, 0.230 and 0.191 nm, respectively.
-    </div>
-    <div style="grid-column: 1 / 3";>
-      Color scale goes from cyan to white to orange to show hydrophobicity of beads. 
-      Cyan beads have low hydrophobicity value and orange beads have high hydrophobicity value. 
-    </div>
-    <div style="grid-column: 1 / 3";>
-      <img src="images/molecule/martinize_cg_color.png" style="width:100%"/>
-    </div>
-
-  <div class="info" style="grid-column: 1 / 3";>
-    <i class="material-icons inline-icon">info_outline</i>
-      The Martini3 model features 3 main chemical classes of neutral beads: <b>C</b> for apolar/ hydrophobic, 
-      <b>N</b> for intermediate and  <b>P</b> for polar/hydrophilic. 
-      Each class has 6 beads with a number as suffix. This number represents the degree of hydrophobicity of 
-      the bead: ranging from 1 (more hydrophobic) to 6 (less hydrophobic).
-      The color scale represents the hydrophobicity. As a rule of thumb, C beads will be represented by 
-      orange hues, N by white and P by cyan.
-  </div>
-  <div class="info" style="grid-column: 1 / 3";>
-      <i class="material-icons inline-icon">info_outline</i>
-      There are 2 classes of charged beads in MARTINI 3: <b>Q</b> beads for monovalent +1/-1 charged 
-      molecules and <b>D</b> beads for divalent charged molecules. 
-      While Q beads also have five degrees of hydrophobicity, 
-      the color code for charged beads in MAD will only account for the sign of the charge.
-      Positively charged beads are blue and negatively charged beads are red.       
+    <p>
+      The following topics will be covered in order to guide you through your first use
+      of the <span class="MAD_logo">MAD:Molecule Builder</span>.
+    </p>
+    <h6> <a href="#classic"> 1. Classic mode with a single chain molecule </a> </h6>
+    <h6> <a href="#elastic"> 2. Protein with elastic network </a> </h6>
+    <h6> <a href="#go">3. Protein with GO model </a> </h6>
+    <h6><a href="#history">4. Browse my builds through history </a></h6>
   </div>
 
-</div>
+  <div class="disclaimer" style="width: 75%;margin-bottom: 2em">
+    <div><i class="medium material-icons inline-icon">person_add</i></div>
+    <div>
+      Because the <span class="MAD_logo">MAD:Molecule Builder</span> makes use of
+      our computational resources, it is required
+      that you <a href="/login">sign in</a> in order to have access it.
+    </div>
+  </div>
+  <div id="classic">
 
-<div id="elastic">
+    <h4>Classic mode with a single chain protein</h4>
 
-  <h4>Protein with elastic network </h4>
-
-  <div class="elastic-container">
-    <div style="grid-column:  1/5;">
-      The elastic network approach consist of a set of harmonic potentials added on top of 
-      the Martini model to conserve the tertiary structure of proteins. 
-      The network is fully dependent of the pdb structure used as reference, with 
-      the number of bonds defined by the upper and lower distance cutoff. 
-      The rigidity of the protein model is defined by the number of elastic bonds and by the force constant used. 
-      Optimal parameters for the elastic network depend of the protein system in study. 
-      It is recommended to use experimental or atomistic simulations data to calibrate the parameters of your elastic network.
-      To illustrate the interests of the elastic network tool in <span class="MAD_logo">MAD:Molecule Builder</span> 
-      we will use the T4 Lysozyme protein from the bacteriophage T4. 
-      <div class="todo" style="margin-bottom: 2em;margin-top: 2em">
-        <div><i class="small material-icons inline-icon">launch</i></div>
-        <div>
-          Download the corresponding <a href="https://files.rcsb.org/download/181L.pdb">PDB structure</a>.
-          Then, go back to the <span class="MAD_logo">MAD:Molecule Builder</span> welcome screen and load this file.
+    <div class="classic-container">
+      <div style="grid-column: 1 / 3" ;>
+        Upon authentication to the MAD website,
+        the <i class="fas fa-lg fa-atom"></i> <span style="font-weight: bold;">Molecule Builder</span> option
+        should toggle to black, marking it as accessible.
+        Click on it to access to the <span class="MAD_logo">MAD:Molecule Builder</span> welcome page.
+        Here you will be invited to upload a coordinate file.
+        <div class="todo" style="margin-bottom: 2em;margin-top: 2em">
+          <div><i class="medium material-icons inline-icon">launch</i></div>
+          <div>
+            The <span class="MAD_logo">MAD:Molecule Builder</span> requires a single PDB file as input.
+            We will use as example, the Neisserial surface protein A (NspA) from the bacterium Neisseria
+            meningitidis, which forms a transmembrane beta barrel.
+            It is a single chain membrane protein.
+            Its atomistic structure can be downloaded from the PDB web
+            site <a href=" https://files.rcsb.org/download/1P4T.pdb">under the code 1P4T</a>.
+          </div>
         </div>
       </div>
-    </div>
-    
-     <div>
-       <p style="margin-bottom: 2em;">
-       For T4 Lysozyme in MARTINI 3, after setting <i>Force field</i> to "martini3001" and <i>Mode</i> to "Elastic", we recommend the following parameters:
-      </p>
-       <ul class="show show_tab">
-        <li>
-        A force constant of 700 kJ/(mol.nm2)
-        </li>
-        <li>
-          Lower and upper cutoff of 0.5 and 0.9 nm respectively
-        </li>
-        <li>
-          Use neutral termini, side-chain fix, and auto assignment of cysteine bridges
-        </li>
-        <li>
-         Activate the side chain fix
-        </li>
-       </ul>
-       
-    </div>
 
-    <div style="grid-column:  2/5;">
-      <img src="images/molecule/martinize_elastic.png" width=100%/>
-    </div>
-    <div class="info" style="grid-column:  1/5;">
-      <i class="material-icons inline-icon">info_outline</i>
-      Additional improvements of the protein stability and reliability of its structures and dynamics are achieved by applying the side chain fix option, which adds dihedral angles between SC1-BB-BB-SC1 beads, leading to an improvement of the overall side chain orientations.
-    </div>
-    <div class="todo" style="grid-column: 1/5;margin-top: 2em">
-      <div><i class="small material-icons inline-icon">launch</i></div>
+      <div style="grid-column: 1 / 3" ;>
+        <img src="images/molecule/martinize_all_atoms.png" style="width:90%" />
+      </div>
+      <div style="grid-column: 1 / 3" ;>
+        Once loaded, the all atom structure is displayed and the interface displays
+        several options to configure the coarse-graining process of the structure.
+      </div>
       <div>
-        The protein is ready to be coarse grained. Click on the <b>SUBMIT</b> and wait for the processing to finish. 
+        <ul class="show show_tab">
+          <li>
+            <span class="li_supt">Force field:</span> choose the version of MARTINI that you plan to use during your
+            molecular dynamics simulation.
+          </li>
+          <li>
+            <span class="li_supt">Position restraints:</span> generally useful during the equilibration simulation of
+            the molecule, in order to
+            maintain the structure of the backbone.
+          </li>
+          <li>
+            <span class="li_supt">Mode:</span> Search for molecule within the selected biochemical category
+          </li>
+        </ul>
       </div>
-    </div>
-    <div style="grid-column:  1/5;margin-top: 2em;">
-      <h6>You should have access to a viewer of the coarse grained protein 
-      with its elastic network represented by green links between beads.
-    </h6>
-    </div>
-    <div>
-      <p style="margin-bottom: 2em;">
-        The <span class="MAD_logo">MAD:Molecule Builder</span> provides two edition modes of the elastic network.      
-     </p>
-      <ul class="show show_tab">
-        <li>
-          <b>Manual edition:</b> click on a single bead to remove all its elastic bonds, or add a new bond by clicking on another bead. A direct click on a bond allows to delete it.       
-        </li>
-        <li>
-          <b> Group selection:</b> select a group of beads and linking them all together, or select two groups to add elastic bonds between each other beads.
-        </li>
-      </ul>
-      All modifications done to the elastic network in your current session are logged in the <span style="display:inline-block"><i class="fas fa-history"></i> <b>History</b></span> section.
-      
-   </div>
-   
-    <div style="grid-column: 2/5">
-      <img src="images/molecule/martinize_elastic2.png" width=100%/>
-    </div>
-    <div class="info" style="grid-column: 1 / 5";>
-      <i class="material-icons inline-icon">info_outline</i>
-        The group selection tool implements a simple query language. For example, selecting “05-10:A” as group 1 and “145-158:A” as group 2, will toggle links between the two groups.
-    </div>
-
-  <div style="grid-column: 1/3">
-    
-    <div class="surround-container">
-      <div class="todo" style="margin-top: 1em;margin-bottom: 2em;">
-        <div><i class="small material-icons inline-icon">launch</i></div>
-        <div>
-          Click on the <i class="fas fa-pen"></i> <b>EDIT</b> button to experiment with the edition modes as depicted in the pictures around
-        </div>
-      </div>
-
-      <div class="surround-item1">
-        <b>Single atom click</b> <i class="fas fa-arrow-circle-right" style="font-size:2em"></i> 
-      </div>
-      <div class="surround-item2">
-        <b>Direct bond click</b>
-        <i class="fas fa-arrow-circle-right fa-rotate-45" style="font-size:2em"></i> 
-      </div>
-      <div class="surround-item3">
-        <i class="fas fa-arrow-circle-down" style="font-size:2em"></i> 
-        <b>Group links edition</b>
-      </div>
-    </div>
-  </div>
-
-    <div style="grid-column: 3/5; justify-self: center;">
-      <img src="images/molecule/martinize_elastic_select1.png" width=500px/>
-    </div>
-    <div style="grid-column: 1/3;justify-self: center;">
-      <img src="images/molecule/martinize_elastic_bond.png" width=500px/>
-    </div>
-    <div style="grid-column: 3/5;justify-self: center;">
-      <img src="images/molecule/martinize_elastic_groups.png" width=500px>
-    </div>
-    <div style="grid-column: 1/5;">
-      <div class="info" style="grid-column: 1 / 5";>
-        <i class="material-icons inline-icon">info_outline</i>
-      Once your modifications are done, the <span class="MAD_logo">MAD:Molecule Builder</span> will ask for a confirmation before writing them to your history. Should you accept, the previous elastic model will be erased. 
-      Nothing prevents you from relaunching a Molecule Builder with the same file if you want to have different network states for the same molecule.
-      </div>
-    </div>
-  </div>
-</div>
-
-<div id="elastic">
-
-  <h4>Protein with GO model</h4>
-  <div class="go-container">
-    <div style="grid-column: 1/5;">
-      The same way as for Elastic network, you can generate martinize protein with Go bonds. 
-      The Go model approach implemented in Martini protein models have two main differences 
-      in relation to elastic network approaches: the type of potential function used and 
-      how the contact map is defined. 
-      For the potential function, instead of the harmonic potentials used in elastic approaches, 
-      the approach is based on a dissociative Lennard-Jones potential, which is placed on virtual 
-      sites built based on the position of the backbone beads (see the GROMAC manual for more 
-      <a href=" https://manual.gromacs.org/documentation/"> details on virtual sites</a>). 
-      The contact map in Go models are not necessarly only defined by distances cutoff between backbone
-      beads and more sophisticated criterion can be employed. The implementation of Go models 
-      used with Martini is based on a contact map formed by the combination of the atomic overlap 
-      criterion (OV), a variant of the contact of structure units (CSU)[<a href ="#references">1</a>] and 
-      a geometrical occlusion method. 
-      Independent of the contact map approach used, calibration of dissociation energies and cutoff 
-      based on experimental and/or atomistic simulation data are recommended.  
-    </div>
-    <div style="grid-column: 1/3;justify-self:center">
-      <div class="todo" style="margin-top: 1em;margin-bottom: 2em;">
-        <div><i class="small material-icons inline-icon">launch</i></div>
-        <div>
-          Go back to the MAD:Molecule Builder welcome screen and load T4 Lysozyme protein file again.
-          Select <b>Virtual Go sites</b> option, other options remaining as default.
-        </div>
-      </div>
-    </div>
-    <div style="grid-column: 3/5; justify-self:center">
-      <img src="images/molecule/martinize_go.png" width=550px>
-    </div>
-    <div style="grid-column: 1/5;">
-      <h6>The representation of GO bonds is similar to elastic bonds. 
-      You can interact with bonds the same way by clicking to select one bond, one bead or an entiere group.
-      </h6> 
-    </div>
-    <div style="grid-column: 1/5;justify-self:center">
-      <div class="todo" style="margin-top: 2em;margin-bottom: 0.5em;">
-        <div><i class="small material-icons inline-icon">launch</i></div>
-        <div>
-          We can select <b>group 21-22</b> and <b>group 141-142</b> to remove all bonds between them.
-        </div>
-      </div>
-    </div>
-
-    <div style="grid-column: 1/5;" class="go_delete_container">
-      <div style="grid-column: 1/3;">
-        <img src="images/molecule/martinize_go_2.png" width=100%>
-      </div>
-      <div style="font-size: 2em; padding: 4px;align-self:center">
-        <span class="fa-stack fa-2x">
-          <i class="fa fa-circle fa-stack-2x icon-background"></i>
-          <i class="fa fa-arrow-right fa-stack-1x icon-foreground"></i>
-        </span>
-      </div>
-      <div style="grid-column: 4/6;">
-        <img src="images/molecule/martinize_go_3.png" width=100%>
-      </div>
-    </div>
-  </div>
-</div>
-
-</div>
-
-
-<div id="history">
-    
-  <h4>Browsing my molecular builds through history</h4>
-  <div class="history-container">
-    <div>
-      Click on <i class="fa fa-history"></i> <b>My builder history</b> in the left-end menu, 
-      to access to all your previous builds made with the <span class="MAD_logo">MAD:Molecule Builder</span>. 
-      Access an individual model to reload it for further editing or to download the result files.
-      A detailed description of each build can be displayed by clicking on the down arrow.
-    </div>
-    <div style="grid-column: 1/5;">
-      <img src="images/molecule/history.png" width=100%>
-    </div>
-    <div class="info" style="grid-column: 1/5; display: flex; gap:1.5em">
       <div>
-        <i class="material-icons inline-icon">info_outline</i>
+        <ul class="show show_tab">
+          <li>
+            <span class="li_supt">termini and fixes:</span> patches molecular beads to improve representations of
+            functional groups charges and geometries.
+          </li>
+          <li>
+            <span class="li_supt">Cystein bridges:</span> detect and apply covalent bonds between cysteine side-chains
+            based on distances.
+          </li>
+          <li>
+            <span class="li_supt">Email:</span> In case of a long running computation, email can be sent upon
+            completion. The email will enclose a link to access and visualize your data.
+            Your data are privately stored on the server for a period of 15 days.
+          </li>
+        </ul>
+      </div>
+      <div style="grid-column: 1/3" ;>
+        <div class="todo" style="width:100%; margin-top:1em;">
+          <div>
+            <i class="small material-icons inline-icon">launch</i>
+          </div>
+          <div>
+            Set the force field parameter to the 3.0.0.1 version of Martini.
+            We will use the classic mode, alternative modes will be explored later on.
+            All remaining options will be left in default state: neutral termini, no side-chain fix, and no cysteine
+            bridge.
+            Then proceed to the submission of the protein.
+          </div>
         </div>
+      </div>
+      <div style="grid-column: 1 / 3" ;>
+        The <span class="MAD_logo">MAD:Molecule Builder</span> should take a few seconds to generate a MARTINI model of
+        NspA.
+      </div>
+      <div style="grid-column: 1 / 3" ;>
+        <img src="images/molecule/martinize_cg.png" style="width:90%" />
+      </div>
+
+
       <div>
-        As any element of your history, the molecule will also be available 
-        into <span class="MAD_logo">MAD:System Builder</span> for its integration into larger system.
+        Feel free to explore the several representation options provided to visualize the newly coarse-grained protein.
+        <ul class="show show_tab">
+          <li>
+            Change the beads radius by a factor
+          </li>
+          <li>
+            Select other representations such as surface.
+          </li>
+          <li>
+            Modify all atoms and coarse grain representation opacities.
+          </li>
+          <li>
+            Set Bead radius scaled according to Martini 3 definitions.
+          </li>
+        </ul>
+      </div>
+      <div class="info">
+        <i class="material-icons inline-icon">info_outline</i>
+        Martini 3 force field has 3 bead sizes which are mainly defined by the number
+        of non-hydrogen atoms represented by the bead:
+        regular (<b>R</b>) size for 4 atoms mapped by 1 bead (or 4-1),
+        small (<b>S</b>) size for 3-1 and tiny size(<b>T</b>) for 2-1 mappings.
+        The unscaled radius of the R, S and T beads in Martini 3 corresponds to 0.264, 0.230 and 0.191 nm, respectively.
+      </div>
+      <div style="grid-column: 1 / 3" ;>
+        Color scale goes from cyan to white to orange to show hydrophobicity of beads.
+        Cyan beads have low hydrophobicity value and orange beads have high hydrophobicity value.
+      </div>
+      <div style="grid-column: 1 / 3" ;>
+        <img src="images/molecule/martinize_cg_color.png" style="width:100%" />
+      </div>
+
+      <div class="info" style="grid-column: 1 / 3" ;>
+        <i class="material-icons inline-icon">info_outline</i>
+        The Martini3 model features 3 main chemical classes of neutral beads: <b>C</b> for apolar/ hydrophobic,
+        <b>N</b> for intermediate and <b>P</b> for polar/hydrophilic.
+        Each class has 6 beads with a number as suffix. This number represents the degree of hydrophobicity of
+        the bead: ranging from 1 (more hydrophobic) to 6 (less hydrophobic).
+        The color scale represents the hydrophobicity. As a rule of thumb, C beads will be represented by
+        orange hues, N by white and P by cyan.
+      </div>
+      <div class="info" style="grid-column: 1 / 3" ;>
+        <i class="material-icons inline-icon">info_outline</i>
+        There are 2 classes of charged beads in MARTINI 3: <b>Q</b> beads for monovalent +1/-1 charged
+        molecules and <b>D</b> beads for divalent charged molecules.
+        While Q beads also have five degrees of hydrophobicity,
+        the color code for charged beads in MAD will only account for the sign of the charge.
+        Positively charged beads are blue and negatively charged beads are red.
+      </div>
+
+    </div>
+
+    <div id="elastic">
+
+      <h4>Protein with elastic network </h4>
+
+      <div class="elastic-container">
+        <div style="grid-column:  1/5;">
+          The elastic network approach consist of a set of harmonic potentials added on top of
+          the Martini model to conserve the tertiary structure of proteins.
+          The network is fully dependent of the pdb structure used as reference, with
+          the number of bonds defined by the upper and lower distance cutoff.
+          The rigidity of the protein model is defined by the number of elastic bonds and by the force constant used.
+          Optimal parameters for the elastic network depend of the protein system in study.
+          It is recommended to use experimental or atomistic simulations data to calibrate the parameters of your
+          elastic network.
+          To illustrate the interests of the elastic network tool in <span class="MAD_logo">MAD:Molecule Builder</span>
+          we will use the T4 Lysozyme protein from the bacteriophage T4.
+          <div class="todo" style="margin-bottom: 2em;margin-top: 2em">
+            <div><i class="small material-icons inline-icon">launch</i></div>
+            <div>
+              Download the corresponding <a href="https://files.rcsb.org/download/181L.pdb">PDB structure</a>.
+              Then, go back to the <span class="MAD_logo">MAD:Molecule Builder</span> welcome screen and load this file.
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <p style="margin-bottom: 2em;">
+            For T4 Lysozyme in MARTINI 3, after setting <i>Force field</i> to "martini3001" and <i>Mode</i> to
+            "Elastic", we recommend the following parameters:
+          </p>
+          <ul class="show show_tab">
+            <li>
+              A force constant of 700 kJ/(mol.nm2)
+            </li>
+            <li>
+              Lower and upper cutoff of 0.5 and 0.9 nm respectively
+            </li>
+            <li>
+              Use neutral termini, side-chain fix, and auto assignment of cysteine bridges
+            </li>
+            <li>
+              Activate the side chain fix
+            </li>
+          </ul>
+
+        </div>
+
+        <div style="grid-column:  2/5;">
+          <img src="images/molecule/martinize_elastic.png" width=100% />
+        </div>
+        <div class="info" style="grid-column:  1/5;">
+          <i class="material-icons inline-icon">info_outline</i>
+          Additional improvements of the protein stability and reliability of its structures and dynamics are achieved
+          by applying the side chain fix option, which adds dihedral angles between SC1-BB-BB-SC1 beads, leading to an
+          improvement of the overall side chain orientations.
+        </div>
+        <div class="todo" style="grid-column: 1/5;margin-top: 2em">
+          <div><i class="small material-icons inline-icon">launch</i></div>
+          <div>
+            The protein is ready to be coarse grained. Click on the <b>SUBMIT</b> and wait for the processing to finish.
+          </div>
+        </div>
+        <div style="grid-column:  1/5;margin-top: 2em;">
+          <h6>You should have access to a viewer of the coarse grained protein
+            with its elastic network represented by green links between beads.
+          </h6>
+        </div>
+        <div>
+          <p style="margin-bottom: 2em;">
+            The <span class="MAD_logo">MAD:Molecule Builder</span> provides two edition modes of the elastic network.
+          </p>
+          <ul class="show show_tab">
+            <li>
+              <b>Manual edition:</b> click on a single bead to remove all its elastic bonds, or add a new bond by
+              clicking on another bead. A direct click on a bond allows to delete it.
+            </li>
+            <li>
+              <b> Group selection:</b> select a group of beads and linking them all together, or select two groups to
+              add elastic bonds between each other beads.
+            </li>
+          </ul>
+          All modifications done to the elastic network in your current session are logged in the <span
+            style="display:inline-block"><i class="fas fa-history"></i> <b>History</b></span> section.
+
+        </div>
+
+        <div style="grid-column: 2/5">
+          <img src="images/molecule/martinize_elastic2.png" width=100% />
+        </div>
+        <div class="info" style="grid-column: 1 / 5" ;>
+          <i class="material-icons inline-icon">info_outline</i>
+          The group selection tool implements a simple query language. For example, selecting “05-10:A” as group 1 and
+          “145-158:A” as group 2, will toggle links between the two groups.
+        </div>
+
+        <div style="grid-column: 1/3">
+
+          <div class="surround-container">
+            <div class="todo" style="margin-top: 1em;margin-bottom: 2em;">
+              <div><i class="small material-icons inline-icon">launch</i></div>
+              <div>
+                Click on the <i class="fas fa-pen"></i> <b>EDIT</b> button to experiment with the edition modes as
+                depicted in the pictures around
+              </div>
+            </div>
+
+            <div class="surround-item1">
+              <b>Single atom click</b> <i class="fas fa-arrow-circle-right" style="font-size:2em"></i>
+            </div>
+            <div class="surround-item2">
+              <b>Direct bond click</b>
+              <i class="fas fa-arrow-circle-right fa-rotate-45" style="font-size:2em"></i>
+            </div>
+            <div class="surround-item3">
+              <i class="fas fa-arrow-circle-down" style="font-size:2em"></i>
+              <b>Group links edition</b>
+            </div>
+          </div>
+        </div>
+
+        <div style="grid-column: 3/5; justify-self: center;">
+          <img src="images/molecule/martinize_elastic_select1.png" width=500px />
+        </div>
+        <div style="grid-column: 1/3;justify-self: center;">
+          <img src="images/molecule/martinize_elastic_bond.png" width=500px />
+        </div>
+        <div style="grid-column: 3/5;justify-self: center;">
+          <img src="images/molecule/martinize_elastic_groups.png" width=500px>
+        </div>
+        <div style="grid-column: 1/5;">
+          <div class="info" style="grid-column: 1 / 5" ;>
+            <i class="material-icons inline-icon">info_outline</i>
+            Once your modifications are done, the <span class="MAD_logo">MAD:Molecule Builder</span> will ask for a
+            confirmation before writing them to your history. Should you accept, the previous elastic model will be
+            erased.
+            Nothing prevents you from relaunching a Molecule Builder with the same file if you want to have different
+            network states for the same molecule.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="elastic">
+
+      <h4>Protein with GO model</h4>
+      <div class="go-container">
+        <div style="grid-column: 1/5;">
+          The same way as for Elastic network, you can generate martinize protein with Go bonds.
+          The Go model approach implemented in Martini protein models have two main differences
+          in relation to elastic network approaches: the type of potential function used and
+          how the contact map is defined.
+          For the potential function, instead of the harmonic potentials used in elastic approaches,
+          the approach is based on a dissociative Lennard-Jones potential, which is placed on virtual
+          sites built based on the position of the backbone beads (see the GROMAC manual for more
+          <a href=" https://manual.gromacs.org/documentation/"> details on virtual sites</a>).
+          The contact map in Go models are not necessarly only defined by distances cutoff between backbone
+          beads and more sophisticated criterion can be employed. The implementation of Go models
+          used with Martini is based on a contact map formed by the combination of the atomic overlap
+          criterion (OV), a variant of the contact of structure units (CSU)[<a href="#references">1</a>] and
+          a geometrical occlusion method.
+          Independent of the contact map approach used, calibration of dissociation energies and cutoff
+          based on experimental and/or atomistic simulation data are recommended.
+        </div>
+        <div style="grid-column: 1/3;justify-self:center">
+          <div class="todo" style="margin-top: 1em;margin-bottom: 2em;">
+            <div><i class="small material-icons inline-icon">launch</i></div>
+            <div>
+              Go back to the MAD:Molecule Builder welcome screen and load T4 Lysozyme protein file again.
+              Select <b>Virtual Go sites</b> option, other options remaining as default.
+            </div>
+          </div>
+        </div>
+        <div style="grid-column: 3/5; justify-self:center">
+          <img src="images/molecule/martinize_go.png" width=550px>
+        </div>
+        <div style="grid-column: 1/5;">
+          <h6>The representation of GO bonds is similar to elastic bonds.
+            You can interact with bonds the same way by clicking to select one bond, one bead or an entiere group.
+          </h6>
+        </div>
+        <div style="grid-column: 1/5;justify-self:center">
+          <div class="todo" style="margin-top: 2em;margin-bottom: 0.5em;">
+            <div><i class="small material-icons inline-icon">launch</i></div>
+            <div>
+              We can select <b>group 21-22</b> and <b>group 141-142</b> to remove all bonds between them.
+            </div>
+          </div>
+        </div>
+
+        <div style="grid-column: 1/5;" class="go_delete_container">
+          <div style="grid-column: 1/3;">
+            <img src="images/molecule/martinize_go_2.png" width=100%>
+          </div>
+          <div style="font-size: 2em; padding: 4px;align-self:center">
+            <span class="fa-stack fa-2x">
+              <i class="fa fa-circle fa-stack-2x icon-background"></i>
+              <i class="fa fa-arrow-right fa-stack-1x icon-foreground"></i>
+            </span>
+          </div>
+          <div style="grid-column: 4/6;">
+            <img src="images/molecule/martinize_go_3.png" width=100%>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+
+  <div id="history">
+
+    <h4>Browsing my molecular builds through history</h4>
+    <div class="history-container">
+      <div>
+        Click on <i class="fa fa-history"></i> <b>My builder history</b> in the left-end menu,
+        to access to all your previous builds made with the <span class="MAD_logo">MAD:Molecule Builder</span>.
+        Access an individual model to reload it for further editing or to download the result files.
+        A detailed description of each build can be displayed by clicking on the down arrow.
+      </div>
+      <div style="grid-column: 1/5;">
+        <img src="images/molecule/history.png" width=100%>
+      </div>
+      <div class="info" style="grid-column: 1/5; display: flex; gap:1.5em">
+        <div>
+          <i class="material-icons inline-icon">info_outline</i>
+        </div>
+        <div>
+          As any element of your history, the molecule will also be available
+          into <span class="MAD_logo">MAD:System Builder</span> for its integration into larger system.
+        </div>
       </div>
     </div>
   </div>
-</div>
-<div style="font-size: 1.25em;" id="references">
-  <h4>References</h4>
+  <div style="font-size: 1.25em;" id="references">
+    <h4>References</h4>
     <ol>
       <li>
-      Poma, A. B., Cieplak, M. & Theodorakis, P. E. Combining the MARTINI and structure-based coarse-grained approaches for the molecular dynamics studies of conformational transitions in proteins. J. Chem. Theory Comput. 13, 1366–1374 (2017)
+        Poma, A. B., Cieplak, M. & Theodorakis, P. E. Combining the MARTINI and structure-based coarse-grained
+        approaches for the molecular dynamics studies of conformational transitions in proteins. J. Chem. Theory Comput.
+        13, 1366–1374 (2017)
       </li>
     </ol>
-</div>
+  </div>
 
 
- 
+
 </html>

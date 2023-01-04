@@ -217,6 +217,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
         svgPath.push(this);
       });
 
+    console.log("svgPath" ,svgPath)
     if (svgPath.length !== 0) {
       for (let i = 1; i <= svgPath.length; i++) {
         let selectedNodes: SimulationNode[] = [];

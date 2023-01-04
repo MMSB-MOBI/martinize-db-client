@@ -326,15 +326,50 @@ export default class CustomContextMenu extends React.Component<props> {
         //.attr("display", '')
 
 
+        //Remettre le hull autour
+
+        console.log("truc", bignode, dataNodes)
+        let selectedNodesCoords: [number, number][] = [];
+        const id: string = bignode.getAttribute("group")!
+
+        dataNodes.nodesD3!.data()!.map((d: SimulationNode) => selectedNodesCoords.push([d.x!, d.y!]))
+
+        console.log(id)
+        const color = d3.interpolateTurbo(parseInt(id) / 12);
+        let hull = d3.polygonHull(selectedNodesCoords);
+        //stupid hack 
+        let self = this
+
+        console.log("Create hull number :", id)
+        this.props.svg
+            .selectAll("group_path")
+            .data([hull])
+            .enter()
+            .append("path")
+            .attr("group", id)
+            .attr("class", "group_path")
+            .attr("d", (d) => "M" + d!.join("L") + "Z")
+            .attr("fill", color)
+            .attr("stroke", color)
+            .attr("stroke-width", "20")
+            .attr("stroke-location", "outside")
+            .attr("stroke-linejoin", "round")
+            .style("opacity", 0.2)
+            .on('click', function () {
+                //@ts-ignore
+                self.colapse({ id: id, nodesD3: dataNodes.nodesD3, color: color })
+                this.remove()
+                self.props.handleUpdate();
+            });
+
         this.groupPolymer(this.props.svg
             .selectAll<SVGPathElement, SimulationNode>('path.nodes')
-            .filter((d: SimulationNode) => d.group === dataNodes.id ))
+            .filter((d: SimulationNode) => d.group === dataNodes.id))
         this.props.handleUpdate()
     }
 
     colapse = (group: SimulationGroup): void => {
         //Create SimulationGroup object 
-
 
         console.log("Colapse ", group.id)
         //Remove nodes from the svg 
