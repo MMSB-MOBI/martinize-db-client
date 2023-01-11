@@ -381,6 +381,13 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     // "from_itp":"nom de la molecule"
     // "id": 0...1
 
+    // Need to do a function to check format itp
+    // if (!this.isWellFormattedITP(itpstring)) {
+    //   console.log(this.isWellFormattedITP(itpstring))
+    //   this.setState({ Warningmessage: "ITP file is not well formated." })
+    //   return
+    // }
+
     const itp = ItpFile.readFromString(itpstring);
 
     let molname = ""
@@ -891,7 +898,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
       }
 
       this.setState({ stepsubmit: 1, data_for_computation: data })
-      console.log("socket.emit('run_itp_generation')")
+      console.log("socket.emit('run_itp_generation')",data )
       this.socket.emit('run_itp_generation', data)
     }
   }
@@ -1143,7 +1150,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
             pdb={this.state.pdb}
             close={this.closeDialog}
             add_to_history={this.add_to_history}
-            jobid= {this.state.jobfinish}
+            jobid={this.state.jobfinish}
             top={this.state.top}
             warning={this.state.dialogWarning}> </RunPolyplyDialog>
         ) : (<></>)

@@ -109,7 +109,7 @@ export class ImportProtein extends React.Component<props, state> {
                     onClose={this.props.close}
                     aria-describedby="alert-dialog-slide-description"
                     open={this.props.open} >
-                    <DialogTitle>Protein import</DialogTitle>
+                    <DialogTitle>Molecule import</DialogTitle>
 
                     <DialogContent>
 

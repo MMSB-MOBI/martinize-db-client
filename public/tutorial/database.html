@@ -1,202 +1,213 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-    <!-- Compiled and minified CSS -->
-<link rel="stylesheet" href="/assets/materialize.min.css">
-<link rel="stylesheet" href="index.css">
-<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-<link href="all.css" rel="stylesheet">
-<!-- Compiled and minified JavaScript -->
-<script src="/assets/materialize.min.js" type="text/javascript"></script>
+  <!-- Compiled and minified CSS -->
+  <link rel="stylesheet" href="/assets/materialize.min.css">
+  <link rel="stylesheet" href="index.css">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link href="all.css" rel="stylesheet">
+  <!-- Compiled and minified JavaScript -->
+  <script src="/assets/materialize.min.js" type="text/javascript"></script>
 </head>
 
 
 <nav>
-   <div class="nav-wrapper">
-     <a href="/tutorial" class="brand-logo center">MAD Tutorial</a>
-     <ul id="nav-mobile" class="left hide-on-med-and-down">
-       <li class="active"><a href="database.html">Database</a></li>
-       <li><a href="molecule.html">Molecule Builder</a></li>
-       <li><a href="system.html">System Builder</a></li>
-	<li><a href="architecture.html">Architecture</a></li>
-     </ul>
-   </div>
- </nav>
+  <div class="nav-wrapper">
+    <a href="/tutorial" class="brand-logo center">MAD Tutorial</a>
+    <ul id="nav-mobile" class="left hide-on-med-and-down">
+      <li class="active"><a href="database.html">Database</a></li>
+      <li><a href="molecule.html">Molecule Builder</a></li>
+      <li><a href="system.html">System Builder</a></li>
+      <li><a href="polymer.html">Polymer generator</a></li>
+      <li><a href="api.html">API</a></li>
+      <li><a href="architecture.html">Architecture</a></li>
+    </ul>
+  </div>
+</nav>
 
- <div class="container">
-     <h1>Database</h1>
-     <div id="header">
-      The central part of the MAD ecosystem is a database molecular compounds available for coarse grain
-      molecular dynamics with the (MARTINI)[<a href="#references">1,2,3</a>] force field.
-      The molecules available in the <span class="MAD_logo">MAD:Database</span> cover a variety of biochemical
-      natures across different versions of the MARTINI force field. The database curation process emphasis the qualitative 
-      descriptions of the force field version and parameters used during the coarse graining process that 
-      generated the molecules.
+<div class="container">
+  <h1>Database</h1>
+  <div id="header">
+    The central part of the MAD ecosystem is a database molecular compounds available for coarse grain
+    molecular dynamics with the (MARTINI)[<a href="#references">1,2,3</a>] force field.
+    The molecules available in the <span class="MAD_logo">MAD:Database</span> cover a variety of biochemical
+    natures across different versions of the MARTINI force field. The database curation process emphasis the qualitative
+    descriptions of the force field version and parameters used during the coarse graining process that
+    generated the molecules.
+  </div>
+  <div id="summary">
+    <p>
+      In this tutorial you will learn about:
+    </p>
+    <h6> <a href="#db_access"> 1. Accessing the database</a> </h6>
+    <h6> <a href="#db_search"> 2. Searching the database for molecules</a> </h6>
+    <h6> <a href="#search_interactions"> 3. Interactions in search results </a> </h6>
+    <h6> <a href="#molecular_card">4. The content of the molecule card </a> </h6>
+    <h6><a href="#how_to_contribute">5. Contributing to the database</a></h6>
+  </div>
+  <div class="todo" style="width: 75%;margin-bottom: 2em">
+    <div><i class="medium material-icons inline-icon">beenhere</i></div>
+    <div>
+      No registration is required to access, search or download content from the <span
+        class="MAD_logo">MAD:Database</span>
     </div>
-    <div id="summary">
-        <p>
-          In this tutorial you will learn about:
-        </p>
-          <h6> <a href="#db_access"> 1. Accessing the database</a> </h6>
-          <h6> <a href="#db_search"> 2. Searching the database for molecules</a> </h6>
-          <h6> <a href="#search_interactions"> 3. Interactions in search results </a> </h6>
-          <h6> <a href="#molecular_card">4. The content of the molecule card </a> </h6>
-          <h6><a href="#how_to_contribute">5. Contributing to the database</a></h6>
-    </div>
-    <div class="todo" style="width: 75%;margin-bottom: 2em">
-        <div><i class="medium material-icons inline-icon">beenhere</i></div>
-        <div>
-        No registration is required to access, search or download content from the <span class="MAD_logo">MAD:Database</span>
+  </div>
+  <div id="db_access">
+    <h4>Access the databases</h4>
+
+    <div class="flex-container">
+      <div class="comment">
+        <div class="main_comment">
+          By default, the database can be consulted by anyone.
+          The access is located on the left-hand side panel of your browser window.
         </div>
-    </div>
-    <div id="db_access">
-      <h4>Access the databases</h4>
-          
-      <div class="flex-container">
-        <div class="comment">            
-          <div class="main_comment">
-            By default, the database can be consulted by anyone. 
-            The access is located on the left-hand side panel of your browser window. 
-          </div>
 
-          <div class="todo" style="width:75%">
+        <div class="todo" style="width:75%">
+          <div>
+            <i class="small material-icons inline-icon">launch</i>
+          </div>
+          <div>
+            Just click on the <span style="font-weight: bolder;"><i class="far fa-compass"></i> Explore</span> link
+          </div>
+        </div>
+      </div>
+      <div>
+        <img src="images/database/menu_simple.png" style="height: 350px;" />
+      </div>
+    </div>
+  </div>
+  <div id="db_search">
+    <h4>Search the database for molecules</h4>
+    The top side of the database welcome screen is dedicated to search parameters.
+    <div class="grid-container">
+      <div class="comment">
+
+        <h6> Select-like search criteria</h6>
+        <ul class="show show_tab">
+          <li>
+            <span class="li_supt">Force field</span> Search for molecules with at least one coarse grain representation
+            matching selected force field
+          </li>
+          <li>
+            <span class="li_supt">Creation way:</span> Search for molecules with at least one coarse grain
+            representation generated by the selected tool/procedure
+          </li>
+          <li>
+            <span class="li_supt">Categories:</span> Search for molecule within the selected biochemical category
+          </li>
+        </ul>
+      </div>
+      <div class="comment">
+        <h6> Free text search criteria</h6>
+        <ul class="show show_tab">
+          <li>
+            <span class="li_supt">Name</span> Search for molecules with matching name field.
+          </li>
+          <li>
+            <span class="li_supt">History:</span> Search for molecules with matching alias field.
+          </li>
+          <li>
+            <span class="li_supt">Upload:</span> Search for molecules with matching author description.
+          </li>
+        </ul>
+      </div>
+    </div>
+    <div>
+      <img src="images/database/database_search.png" style="width: 100%;" />
+    </div>
+    <div class="todo" style="width:75%; margin-top:1em; margin-left:15%">
+      <div>
+        <i class="small material-icons inline-icon">launch</i>
+      </div>
+      <div>
+        Enter DPG in the Alias search field
+      </div>
+    </div>
+  </div>
+  <div id="search_interactions">
+    <h4>Interactions in search results</h4>
+    As you are completing the search section, the table of molecule in the lower-half of the screen is refreshing
+    to display the rows of molecules matching you search.
+    <div class="grid-container">
+
+    </div>
+    <div class="todo" style="width:75%; margin-top:1em; margin-left:15%">
+      <div>
+        <i class="small material-icons inline-icon">launch</i>
+      </div>
+      <div>
+        Click on the molecule named "<b>DPG3</b>"
+      </div>
+    </div>
+  </div>
+  <div id="molecular_card">
+
+    <h4>The content of the molecule card</h4>
+    <h6> By default the <b>HEAD</b> version of a molecule is displayed.
+      Most of the time, this corresponds to the latest deposited coarse grained representation of the molecule.
+      The visualization screen of the molecular entry is divided into two parts.
+      </br> </br>
+      <i class="material-icons inline-icon tiny">keyboard_arrow_right</i>
+
+      The top level part displays the name and alias of the molecule along with the comments section
+      of the molecule <i>itp</i> file.
+      An interactive viewer featuring the same color code as the <span class="MAD_logo">MAD:Molecule Builder</span>
+      allows for the visual inspection of the composition and configuration of the molecule.
+      <div class="mol_card_container">
+        <div style="grid-column: 1/6;justify-self: center"><img src="images/database/mol_card_1.png" /></div>
+
+        <div style="grid-column: 1/6;justify-self: center">
+          <h6><i class="material-icons inline-icon tiny">keyboard_arrow_right</i>
+            The lower part of the screen mentions publication details,
+            the version tree and gives access to the download section.</h6>
+        </div>
+        <div style="grid-column: 1/6;"><img src="images/database/mol_card_2.png" /></div>
+        <div style="grid-column: 1/6; margin-bottom: 2em;">
+          <div class="info" style="display:flex;gap:1em">
             <div>
-              <i class="small material-icons inline-icon">launch</i>
-            </div>  
+              <i class="material-icons inline-icon small">info_outline</i>
+            </div>
             <div>
-              Just click on the <span style="font-weight: bolder;"><i class="far fa-compass"></i> Explore</span> link
+              You can navigate in the version tree and access to all molecular card of its elements.
+              Each element is a version of the same molecule with alternative an set of parameters or another
+              force-field version.
+              You can visit all our in store versions until you find the one matching you needs.
             </div>
           </div>
         </div>
-        <div>
-            <img src="images/database/menu_simple.png" style="height: 350px;"/>  
-          </div>              
       </div>
-    </div>
-    <div id="db_search">
-      <h4>Search the database for molecules</h4>
-      The top side of the database welcome screen is dedicated to search parameters.
-      <div class="grid-container">              
-        <div class="comment">        
-        
-          <h6> Select-like search criteria</h6>
-            <ul class="show show_tab">
-              <li>
-                <span class="li_supt">Force field</span> Search for molecules with at least one coarse grain representation matching selected force field
-              </li>
-              <li>
-                <span class="li_supt">Creation way:</span> Search for molecules with at least one coarse grain representation generated by the selected tool/procedure
-              </li>
-              <li>
-                <span class="li_supt">Categories:</span> Search for molecule within the selected biochemical category
-              </li>
-            </ul>
-        </div>
-        <div class="comment">                  
-          <h6> Free text search criteria</h6>
-            <ul class="show show_tab">
-              <li>
-                <span class="li_supt">Name</span> Search for molecules with matching name field.
-              </li>
-              <li>
-                <span class="li_supt">History:</span> Search for molecules with matching alias field.
-              </li>
-              <li>
-                <span class="li_supt">Upload:</span> Search for molecules with matching author description.
-              </li>
-            </ul>
-          </div>
-      </div>
-      <div>
-        <img src="images/database/database_search.png" style="width: 100%;"/>  
-      </div>        
-      <div class="todo" style="width:75%; margin-top:1em; margin-left:15%">
-        <div>
-          <i class="small material-icons inline-icon">launch</i>
-        </div>  
-        <div>
-          Enter DPG in the Alias search field
-        </div>
-      </div>
-    </div>  
-    <div id="search_interactions">
-      <h4>Interactions in search results</h4>
-      As you are completing the search section, the table of molecule in the lower-half of the screen is refreshing 
-      to display the rows of molecules matching you search.
-      <div class="grid-container">              
-                  
-      </div>
-      <div class="todo" style="width:75%; margin-top:1em; margin-left:15%">
-        <div>
-          <i class="small material-icons inline-icon">launch</i>
-        </div>  
-        <div>
-          Click on the molecule named "<b>DPG3</b>"
-        </div>
-      </div>
-    </div>  
-    <div id="molecular_card">
-
-      <h4>The content of the molecule card</h4>
-      <h6> By default the <b>HEAD</b> version of a molecule is displayed.
-      Most of the time, this corresponds to the latest deposited coarse grained representation of the molecule.
-      The visualization screen of the molecular entry is divided into two parts.
-      </br> </br> 
-      <i class="material-icons inline-icon tiny">keyboard_arrow_right</i>  
-      
-      The top level part displays the name and alias of the molecule along with the comments section 
-      of the molecule <i>itp</i> file.
-      An interactive viewer featuring the same color code as the <span class="MAD_logo">MAD:Molecule Builder</span> 
-      allows for the visual inspection of the composition and configuration of the molecule.
-      <div class="mol_card_container">   
-        <div style="grid-column: 1/6;justify-self: center"><img src="images/database/mol_card_1.png" /></div>
-        
-        <div style="grid-column: 1/6;justify-self: center">
-          <h6><i class="material-icons inline-icon tiny">keyboard_arrow_right</i>  
-            The lower part of the screen mentions publication details, 
-            the version tree and gives access to the download section.</h6>  
-        </div>  
-      <div style="grid-column: 1/6;"><img src="images/database/mol_card_2.png"/></div>
-      <div style="grid-column: 1/6; margin-bottom: 2em;">
+      <div id="how_to_contribute">
+        <h4>Contributing to the database</h4>
         <div class="info" style="display:flex;gap:1em">
           <div>
-          <i class="material-icons inline-icon small">info_outline</i>       
+            <i class="material-icons inline-icon small">file_upload</i>
           </div>
           <div>
-            You can navigate in the version tree and access to all molecular card of its elements. 
-            Each element is a version of the same molecule with alternative an set of parameters or another force-field version. 
-            You can visit all our in store versions until you find the one matching you needs.
+            You don't find your favorite molecule? Add it to the database! Contributions are welcome, we just ask you
+            to register and you will be able to curate and upload the molecule of your choice.
+            Your submission will be validated by our moderators prior to its addition to the database.
           </div>
-        </div>  
+        </div>
       </div>
-    </div>
-    <div id="how_to_contribute">
-      <h4>Contributing to the database</h4>
-      <div class="info" style="display:flex;gap:1em">
-        <div>
-        <i class="material-icons inline-icon small">file_upload</i>       
-        </div>
-        <div>
-          You don't find your favorite molecule? Add it to the database! Contributions are welcome, we just ask you 
-          to register and you will be able to curate and upload the molecule of your choice. 
-          Your submission will be validated by our moderators prior to its addition to the database.
-        </div>
-      </div>    
-    </div>
-    <div id="references">
-      <h4>References</h4>
-      <ol>
-        <li>
-          SJ Marrink, HJ Risselada, S Yefimov, DP Tieleman, AH De Vries. The MARTINI force field: coarse grained model for biomolecular simulations. J Phys Chem B (2007) 111, 7812-7824. Doi: 10.1021/jp071097f 
-        </li>
-        <li>
-          L Monticelli, SK Kandasamy, X Periole, RG Larson, DP Tieleman, SJ Marrink. The MARTINI coarse-grained force field: extension to proteins. J Chem Theory Comput (2008) 4, 819-834. Doi: 10.1021/ct700324x
-        </li>
-        <li>
-        Souza, P.C.T., Alessandri, R., Barnoud, J. et al. Martini 3: a general-purpose force field for coarse-grained molecular dynamics. Nat Methods (2021) 18, 382–388. Doi : 10.1038/s41592-021-01098-3
-        </li>
-      </ol>
-    </div>
+      <div id="references">
+        <h4>References</h4>
+        <ol>
+          <li>
+            SJ Marrink, HJ Risselada, S Yefimov, DP Tieleman, AH De Vries. The MARTINI force field: coarse grained model
+            for biomolecular simulations. J Phys Chem B (2007) 111, 7812-7824. Doi: 10.1021/jp071097f
+          </li>
+          <li>
+            L Monticelli, SK Kandasamy, X Periole, RG Larson, DP Tieleman, SJ Marrink. The MARTINI coarse-grained force
+            field: extension to proteins. J Chem Theory Comput (2008) 4, 819-834. Doi: 10.1021/ct700324x
+          </li>
+          <li>
+            Souza, P.C.T., Alessandri, R., Barnoud, J. et al. Martini 3: a general-purpose force field for
+            coarse-grained molecular dynamics. Nat Methods (2021) 18, 382–388. Doi : 10.1038/s41592-021-01098-3
+          </li>
+        </ol>
+      </div>
 
   </div>
+
 </html>

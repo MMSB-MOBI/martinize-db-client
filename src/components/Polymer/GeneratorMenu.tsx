@@ -12,16 +12,13 @@ import { SimpleSelect } from "../../Shared";
 import Link from "@mui/material/Link";
 import { Link as RouterLink } from 'react-router-dom';
 import { ModalMoleculeSelector, MoleculeWithFiles } from "../Builder/MembraneBuilder/MoleculeChooser";
-import { Molecule } from "../../types/entities";
+ 
 import { ModalHistorySelector } from "../MyHistory/MyHistory";
 import Switch from '@mui/material/Switch';
 import { ImportProtein } from "./Dialog/importProtein";
-import { IconButton, SelectChangeEvent } from "@mui/material";
-import { SERVER_ROOT } from "../../constants";
-import JSZip from "jszip";
+ 
 import ApiHelper from "../../ApiHelper";
-import { LocalConvenienceStoreOutlined } from "@material-ui/icons";
-import { stringify } from "querystring";
+ 
 
 
 interface propsmenu {
@@ -327,37 +324,31 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
             <Typography variant="h6" > Current forcefield: </Typography>
           </Grid>
           <Grid item xs={5}>
-            <Typography variant="h6" sx={{ fontWeight: 'bold' }}>{this.state.forcefield}</Typography>
+            <FormControl >
+              <SimpleSelect
+                //formControlClass={this.props.classes.ff_select}
+                required
+                label="forcefield : "
+                variant="standard"
+                values={Object.keys(this.props.dataForceFieldMolecule).map(e => ({ id: e, name: e }))}
+                id="ff"
+                value={this.state.forcefield}
+                onChange={v => {
+                  this.props.setForcefield(v);
+                  this.setState({ forcefield: v });
+                }} />
+            </FormControl>
+
+            {/* <Typography variant="h6" sx={{ fontWeight: 'bold' }}>{this.state.forcefield}</Typography> */}
           </Grid>
           <Grid item xs={1}></Grid>
 
-          <Grid item xs={1}></Grid>
-          <Grid item xs={10}>
-            <Typography variant="subtitle1" >
-              (More forcefields will be available in future updates)
-            </Typography>
-          </Grid>
-          <Grid item xs={1}></Grid>
+
 
           <Marger size="1rem" />
 
 
 
-
-          {/* // <FormControl fullWidth={true} >
-          //   <SimpleSelect
-          //     //formControlClass={this.props.classes.ff_select}
-          //     required
-          //     label="forcefield : "
-          //     variant="standard"
-          //     values={Object.keys(this.props.dataForceFieldMolecule).map(e => ({ id: e, name: e }))}
-          //     id="ff"
-          //     value="martini3001"
-          //     onChange={v => {
-          //       this.props.setForcefield(v);
-          //       this.setState({forcefield: v });
-          //     }} />
-          // </FormControl> */}
           <Marger size="1rem" />
 
           <Grid item xs={1}></Grid>
@@ -396,7 +387,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
           <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center' }}>
 
             <Typography variant="h6" >
-              Modify a protein:
+              Modify a molecule:
             </Typography>
           </Grid>
 
@@ -438,7 +429,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
               <Grid item xs={2}></Grid>
               <Grid item xs={4} style={{ textAlign: 'left', alignItems: 'center' }}>
                 <Button variant="outlined" color="primary" onClick={() => this.setState({ database_modal_chooser: true })}>
-                  ̶F̶̶̶r̶̶̶o̶̶̶m̶̶̶ ̶̶̶d̶̶̶a̶̶̶t̶̶̶a̶̶̶b̶̶̶a̶̶̶s̶̶̶e̶̶̶
+                  From database
                   <Badge color="secondary" >
                     <Icon className={"fas fa-" + "upload"} />
                   </Badge>
