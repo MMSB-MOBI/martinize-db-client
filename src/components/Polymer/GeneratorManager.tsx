@@ -131,13 +131,35 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     console.log(this.state)
     this.state.data_for_computation['userId'] = Settings.user?.id
     this.socket.emit("add_to_history", this.state.data_for_computation)
+
     this.socket.on("add_to_history_answer", async (res: string) => {
       if (res) {
         this.setState({ jobfinish: res })
         this.warningfunction("The polymer has been added to your history!");
+
       }
-      else this.warningfunction("Fail! We cannot add this polymer to your history!");
+      else {
+        this.warningfunction("Fail! We cannot add this polymer to your history!")
+      };
     })
+
+  }
+
+  add_to_history_and_redirect = async (): Promise<void> => {
+    console.log(this.state)
+    this.state.data_for_computation['userId'] = Settings.user?.id
+    this.socket.emit("add_to_history", this.state.data_for_computation)
+
+    this.socket.on("add_to_history_answer", async (res: string) => {
+      if (res) {
+        this.setState({ jobfinish: res })
+        window.location.assign("/builder/" + res);
+      }
+      else {
+        this.warningfunction("Fail! We cannot add this polymer to your history!")
+      };
+    })
+
   }
 
   change_current_position_fixlink = (linktofix: SimulationLink): void => {
@@ -898,7 +920,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
       }
 
       this.setState({ stepsubmit: 1, data_for_computation: data })
-      console.log("socket.emit('run_itp_generation')",data )
+      console.log("socket.emit('run_itp_generation')", data)
       this.socket.emit('run_itp_generation', data)
     }
   }
@@ -1150,6 +1172,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
             pdb={this.state.pdb}
             close={this.closeDialog}
             add_to_history={this.add_to_history}
+            add_to_history_redirect={this.add_to_history_and_redirect}
             jobid={this.state.jobfinish}
             top={this.state.top}
             warning={this.state.dialogWarning}> </RunPolyplyDialog>

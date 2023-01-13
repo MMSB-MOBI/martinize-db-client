@@ -28,6 +28,7 @@ interface props {
     warning: string,
     close: () => void;
     add_to_history: () => void;
+    add_to_history_redirect : () => void;
     jobid: string | undefined
 }
 
@@ -75,9 +76,9 @@ export default class RunPolyplyDialog extends React.Component<props, state> {
         this.props.close()
     }
 
-    handlehistoryandgoaway = () => {
-        this.props.add_to_history()
-        window.location.assign("/builder/" + this.props.jobid);
+    handlehistoryandredirect = async () => {
+        this.props.add_to_history_redirect()
+        this.props.close()
     }
 
 
@@ -228,7 +229,7 @@ export default class RunPolyplyDialog extends React.Component<props, state> {
                                     <Grid item xs={12} >
                                         <DialogActions >
 
-                                            <Button onClick={this.handlehistoryandgoaway}>
+                                            <Button onClick={this.handlehistoryandredirect}>
                                                 Save and Go to molecule viewer
                                             </Button>
 
