@@ -22,6 +22,7 @@ import ForceField from '../ForceField/ForceField';
 import MyHistory from '../MyHistory/MyHistory'; 
 import Tutorial from '../Tutorial/Tutorial'
 import GeneratorManager from '../Polymer/GeneratorManager';
+import CitationPage from '../Citation/Citation';
 
 function LoadAppDrawer(props: RouteComponentProps) {
   return <ApplicationDrawer {...props} />;
@@ -51,6 +52,8 @@ const RouterCmpt = () => {
         <Route path="/settings" component={LoadDrawer} />
         <Route path="/users" component={LoadDrawer} />
         <Route path="/contact" component={LoadDrawer} />
+        <Route path="/citation" component={LoadDrawer} />
+
         <Route path="/force_fields" component={LoadDrawer} />
         <Route path="/builder/:id" exact component={LoadMartinizeBuilder} />
         
@@ -139,6 +142,7 @@ export const DrawerContentRouter = (props: RouteComponentProps) => {
       <Route path="/submissions" component={MySubmissions} />
       <Route path="/history" component={MyHistory} />
       <Route path="/contact" component={ContactPage} />
+      <Route path="/citation" component={CitationPage} />
       <Route path="/settings" component={LoadSettingsDrawer} />
       <Route path="/users" component={LoadUsersDrawer} />
       <Route path="/moderation" component={LoadModerationDrawer} />

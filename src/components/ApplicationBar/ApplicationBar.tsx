@@ -203,6 +203,12 @@ function DrawerElements(props: RouteComponentProps) {
         icon: "envelope",
         text: "Contact"
       },
+      {
+        path: '/citation',
+        link: true,
+        icon: "book",
+        text: "Citation"
+      },
     ],
   ];
 
