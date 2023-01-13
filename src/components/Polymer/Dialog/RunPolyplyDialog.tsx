@@ -28,8 +28,9 @@ interface props {
     warning: string,
     close: () => void;
     add_to_history: () => void;
-    add_to_history_redirect : () => void;
+    add_to_history_redirect: () => void;
     jobid: string | undefined
+    forcefield: string
 }
 
 interface state {
@@ -205,7 +206,7 @@ export default class RunPolyplyDialog extends React.Component<props, state> {
                     </>) : (<></>)}
 
                     {this.props.pdb &&
-                        <ResultViewer top={this.props.top} pdb={this.props.pdb} itp={this.props.itp} ff="martini3001" />
+                        <ResultViewer top={this.props.top} pdb={this.props.pdb} itp={this.props.itp} currentforcefield={this.props.forcefield} />
                     }
 
 

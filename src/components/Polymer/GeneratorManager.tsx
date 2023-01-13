@@ -1175,6 +1175,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
             add_to_history_redirect={this.add_to_history_and_redirect}
             jobid={this.state.jobfinish}
             top={this.state.top}
+            forcefield={this.currentForceField}
             warning={this.state.dialogWarning}> </RunPolyplyDialog>
         ) : (<></>)
         }

@@ -8,12 +8,13 @@ import { Settings } from '../../../Settings'
 
 
 // Component types
-type MVProps = { 
-    pdb: string, 
-    ff: AvailableForceFields, 
-    itp:string,  
-    theme: Theme , 
-    top : string};
+type MVProps = {
+    currentforcefield: string,
+    pdb: string,
+    itp: string,
+    theme: Theme,
+    top: string
+};
 
 
 type MVState = {
@@ -58,7 +59,7 @@ class ResultViewer extends React.Component<MVProps, MVState> {
         return "molecule_view_";
     }
 
-     
+
     protected async initStage() {
         this.setState({ loading: true });
         this.ngl.stage.removeAllComponents();
@@ -66,16 +67,18 @@ class ResultViewer extends React.Component<MVProps, MVState> {
 
         // Apply the radius to NGL
         //applyUserRadius(radius);
-        const myff = "martini3001"
+         
+        const myff = (this.props.currentforcefield === "martini2") ? "martini22" : "martini3001"
+         
+
         const polarizableFF = Settings.martinize_variables.force_fields_info[myff].polarizable
         const beads = await itpBeads(this.props.top, [this.props.itp], polarizableFF);
 
         // Load the PDB into NGL
-
-        this.ngl.load(new Blob([this.props.pdb]), { ext: 'pdb', name: "out.pdb" , coarse_grained: true})
+        this.ngl.load(new Blob([this.props.pdb]), { ext: 'pdb', name: "out.pdb", coarse_grained: true })
             .then((component) => {
                 //component.add<BallAndStickRepresentation>("ball+stick")
-                component.add<BallAndStickRepresentation>('ball+stick', undefined, { radius: true, color: true, beads , ff: myff, radiusFactor: 0.2 })
+                component.add<BallAndStickRepresentation>('ball+stick', undefined, { radius: true, color: true, beads, ff: myff, radiusFactor: 0.2 })
                 component.center()
                 this.setState({ component });
             })
@@ -88,7 +91,7 @@ class ResultViewer extends React.Component<MVProps, MVState> {
                 id={this.viewport_id}
                 style={{ width: '100%', height: '100%', minHeight: '300px', borderRadius: '8px', border: '1px #82828278 dashed', position: 'relative' }}
             >
-                 
+
             </div>
         );
     }
