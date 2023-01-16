@@ -80,12 +80,12 @@ export default function CitationPage() {
                 <li>
                     <Typography variant="h5">
                         If you are using polymer builder:</Typography>
-                    <Typography variant="body1">
+                    <Typography variant="body2">
 
                         Grünewald, F., Alessandri, R., Kroon, P.C. et al. Polyply; a python suite for facilitating simulations of macromolecules and nanomaterials. Nat Commun 13, 68 (2022).
                     </Typography>
-                    <Typography variant="body1">future
-                        reference from Romuald.</Typography>
+                    <Typography variant="body2">
+                        future reference from Romuald.</Typography>
                 </li>
                 <Marger size="1rem" />
 
@@ -181,7 +181,7 @@ export default function CitationPage() {
 
                             <ul>
                                 <li>
-                                    <Typography variant="body1">
+                                    <Typography variant="body2">
                                         look the reference in the page of the molecule or their itp files.</Typography>
 
                                 </li>
@@ -253,10 +253,9 @@ export default function CitationPage() {
                             <li>
                                 <Typography variant="h5">
                                     If you are using other Martini 2 models from the database:</Typography>
-                                <Typography variant="body1">	-
-                                    look the reference in the page of the molecule or their itp files.</Typography><Typography variant="body1"><br />
+                                <Typography variant="body2">
+                                    Look the reference in the page of the molecule or their itp files.</Typography>
 
-                                </Typography>
                             </li>
 
                         </li>
@@ -264,7 +263,7 @@ export default function CitationPage() {
 
                     </ul >
                 </li>
-            </ul>
+            </ul >
 
         </Container >
     );
