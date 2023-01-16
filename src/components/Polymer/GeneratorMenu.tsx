@@ -12,13 +12,13 @@ import { SimpleSelect } from "../../Shared";
 import Link from "@mui/material/Link";
 import { Link as RouterLink } from 'react-router-dom';
 import { ModalMoleculeSelector, MoleculeWithFiles } from "../Builder/MembraneBuilder/MoleculeChooser";
- 
+
 import { ModalHistorySelector } from "../MyHistory/MyHistory";
 import Switch from '@mui/material/Switch';
 import { ImportProtein } from "./Dialog/importProtein";
- 
+
 import ApiHelper from "../../ApiHelper";
- 
+
 
 
 interface propsmenu {
@@ -196,23 +196,38 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
     this.setState({ database_modal_chooser: false });
 
     console.log(molecule)
-    if (molecule.force_field !== "martini3001") {
+    if ((molecule.force_field !== "martini3001") && (this.state.forcefield === "martini3")) {
       this.props.warningfunction("Wrong forcefield : " + molecule.force_field)
       return
     }
-    const req = "molecule/get/martini3001/" + molecule.alias + ".itp"
-    console.log(req)
-    ApiHelper.request(req, { mode: "text" })
-      .then((itp: string) => {
-        this.props.addNEwMolFromITP(itp)
-      })
-      .catch(e => {
-        console.error(e)
-        this.props.warningfunction(molecule.alias + " Not found")
-      })
+    else if ((molecule.force_field !== "martini22") && (this.state.forcefield === "martini2")) {
+      this.props.warningfunction("Wrong forcefield : " + molecule.force_field)
+      return
+    }
+    else {
+      const req = "molecule/get/" + molecule.force_field + "/" + molecule.alias + ".itp"
+      console.log(req)
+      ApiHelper.request(req, { mode: "text" })
+        .then((itp: string) => {
+          this.props.addNEwMolFromITP(itp)
+        })
+        .catch(e => {
+          console.error(e)
+          this.props.warningfunction(molecule.alias + " Not found")
+        })
+    }
+
   };
 
-  moleculefromhistory = (molecule: any) => {
+  moleculefromhistory = (ff: string, molecule: any) => {
+    if ((ff !== "martini3001") && (this.state.forcefield === "martini3")) {
+      this.props.warningfunction("Wrong forcefield : " + ff)
+      return
+    }
+    else if ((ff !== "martini22") && (this.state.forcefield === "martini2")) {
+      this.props.warningfunction("Wrong forcefield : " + ff)
+      return
+    }
     console.log(molecule)
     this.setState({ want_go_back: false });
     this.props.addmoleculecoord(molecule.gro.content)

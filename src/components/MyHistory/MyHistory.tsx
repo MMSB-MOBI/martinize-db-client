@@ -102,7 +102,7 @@ export default MyHistory;
 
 
 
-export class ModalHistorySelector extends React.Component<{ open: boolean; onChoose(molecule: Molecule): any; onCancel(): any; }, any> {
+export class ModalHistorySelector extends React.Component<{ open: boolean; onChoose(ff : string , molecule: Molecule): any; onCancel(): any; }, any> {
   timeout: NodeJS.Timeout | undefined;
 
   state: any = {
@@ -124,7 +124,7 @@ export class ModalHistorySelector extends React.Component<{ open: boolean; onCho
 
   }
 
-  componentDidUpdate(prevProps: Readonly<{ open: boolean; onChoose(molecule: Molecule): any; onCancel(): any; }>, prevState: Readonly<any>, snapshot?: any): void {
+  componentDidUpdate(prevProps: Readonly<{ open: boolean; onChoose(ff : string , molecule: Molecule): any; onCancel(): any; }>, prevState: Readonly<any>, snapshot?: any): void {
     if (this.props.open && ( prevProps.open !== true)) {
 
       if (Settings.logged === LoginStatus.None) {
@@ -140,9 +140,10 @@ export class ModalHistorySelector extends React.Component<{ open: boolean; onCho
   }
 
   async molecule_to_itp(obj: any) {
+    const forcefield = obj["settings"]["ff"]
     try {
       const res: any = await ApiHelper.request(`history/itp/${obj.id}`)
-      this.props.onChoose(res)
+      this.props.onChoose( forcefield , res)
     } catch (e) {
       console.log("Error while loading molecules.", e);
     }
