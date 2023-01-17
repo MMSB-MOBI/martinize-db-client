@@ -32,10 +32,10 @@ export default function CitationPage() {
     return (
         <Container style={{ paddingTop: 14 }}>
             <Typography variant="h3" className="page-title">
-                Citation
+                Citations
             </Typography>
 
-            <Typography align="center">
+            <Typography  variant="h4" align="center">
                 How to cite MAD feature.
             </Typography>
 

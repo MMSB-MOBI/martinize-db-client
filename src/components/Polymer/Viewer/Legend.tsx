@@ -56,8 +56,8 @@ const supportedd3Symbol = ["symbolCircle", "symbolTriangle", "symbolDiamond", "s
 
 export const donne_la_color = (residue: string) => {
     if (Object.keys(legend).includes(residue)) return legend[residue]["color"]
-    //return hashStringToColor(residue)
-    return "#585858"
+    return hashStringToColor(residue)
+    //return "#585858"
 }
 
 export const get_d3shape = (residue: string): any => {

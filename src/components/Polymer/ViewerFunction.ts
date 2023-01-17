@@ -1,7 +1,8 @@
 import { SimulationNode, SimulationLink, SimulationGroup } from './SimulationType';
 import * as d3 from "d3";
 import { donne_la_color, get_d3shape } from './Viewer/Legend'
-
+//@ts-ignore
+import forceBoundary from "d3-force-boundary";
 
 let Mysvg: SVGElement;
 export function setSVG(svgref: SVGElement) {
@@ -27,6 +28,7 @@ export function initSimulation(sizeNodenodeSize: number): d3.Simulation<Simulati
         .force("x", d3.forceX(widthtSVG / 2).strength(0.2))
         .force("y", d3.forceY(heightSVG / 2).strength(0.2))
         .force("link", d3.forceLink().distance((sizeNodenodeSize / 4)).strength(0.5))
+        .force("boundary", forceBoundary( 10, 10, (widthtSVG - 10), (heightSVG - 10)))
     return simulation
 }
 

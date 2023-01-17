@@ -12,6 +12,7 @@
     "@mui/material": "^5.8.4",
     "clsx": "^1.1.1",
     "d3": "^7.4.4",
+    "d3-force-boundary": "^0.0.3",
     "itp-parser-forked": "^2.3.2",
     "jszip": "^3.10.0",
     "Math": "^0.0.1-security",
