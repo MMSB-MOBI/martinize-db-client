@@ -308,7 +308,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
 
         <Marger size="2rem" />
         <Typography component="h1" variant="h3" align="center" style={{ fontWeight: 700, fontSize: '2.5rem', marginBottom: '1rem' }}>
-          Polymer Generator
+          Molecule Editor
         </Typography>
 
         <Marger size="1rem" />
