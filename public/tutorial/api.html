@@ -13,8 +13,11 @@
 <div class="navbar-fixed">
   <nav>
     <div class="nav-wrapper">
-      <a href="/tutorial" class="brand-logo center">MAD Tutorial</a>
+ 
       <ul id="nav-mobile" class="left hide-on-med-and-down">
+        <li> <a style="display:flex; gap:1em" href="/"> <i class="small material-icons inline-icon"> arrow_back </i>
+          <span> Go back to MAD server </span> </a></li>
+          <li > <a href="/tutorial"><div><i class="medium material-icons inline-icon">house</i></div></a> </li>
         <li><a href="database.html">Database</a></li>
         <li><a href="molecule.html">Molecule Builder</a></li>
         <li><a href="system.html">System Builder</a></li>
@@ -28,16 +31,37 @@
 
 <div class="container">
   <h1>API</h1>
-  <div id="header">
-    The MAD API enables programmatic access to MAD in unique and advanced ways. Our website produces an API to download
-    molecule representation.
-
+   
+    The MAD API enables programmatic access to MAD in unique and advanced ways. We design a REST API that allows users to
+    access structures and topologies of molecules parameterized with the Martini coarse-grained force field. This API
+    allows users to download files and retrieve information from the database, making it easy to access and work
+    with the data.
     <br>
+    The advantages of having this API include:
+    <ul>
+      <li>
+        - Easy access to the Martini Database's data and resources
+      </li>
+      <li>
+        - Flexibility and convenience in accessing and working with the data
+      </li>
+      <li>
+        - Ability to automate tasks and integration with other tools and systems
+      </li>
+      <li>
+        - Enabling third-party developers to build new applications using the data and functionality of the Martini
+        Database.
+      </li>
+    </ul>
+    <br>
+   
+    <h4>Techical part</h4>
 
+    In our case, we only prodivide the GET method to download molecule files or have forcefield information.
     This is the format of the route :
     <br>
 
-    https://mad.ibcp.fr/api/molecule/get/[forcefield]/[molecule_name][.extention]
+    https://mad.ibcp.fr/api/molecule/get/[forcefield]/[molecule_name][.extention]/[version]
     <br>
 
     <div class="table sectionedit4">
@@ -55,14 +79,14 @@
           <td class="col0">Forcefield</td>
           <td class="col1">string</td>
           <td class="col2">None</td>
-          <td class="col3">... (exemple : martini22, martini3001)</td>
+          <td class="col3">Which forcefield do you want (exemple : martini22, martini3001)</td>
 
         </tr>
         <tr class="row2">
           <td class="col0">Molecule name</td>
           <td class="col1">string</td>
           <td class="col2">None</td>
-          <td class="col4">... (example : POPE)</td>
+          <td class="col4">Name (Alias) of your molecule (example : POPE)</td>
 
         </tr>
         <tr class="row3">
@@ -70,16 +94,32 @@
           <td class="col1">string</td>
           <td class="col2">.zip</td>
           <td class="col3">You can ask for a specific type of file ('.itp', '.gro', '.pdb') or you can download
-            everything in zip format in this case adds'' or '.zip'.
-            zip)
+            everything in zip format, in this case adds '.zip' or nothing).</td>
+        </tr>
+        <tr class="row3">
+          <td class="col0">Version</td>
+          <td class="col1">string</td>
+          <td class="col2">1.0</td>
+          <td class="col3">(Optional) If your molecule has several version you can ask for a specific version.
           </td>
+        </tr>
 
       </table>
     </div>
+  
+    <br>
+    <h4>Exemple</h4>
+    <ul>
+      <li>
+        <span class="li_supt">Forcefield information :</span> https://mad.ibcp.fr/api/molecule/get/martini3001 
+      </li>
+      <li>
+        <span class="li_supt">Get pdb file :</span> https://mad.ibcp.fr/api/molecule/get/martini3001/TEST.pdb
+      </li>
+      <li>
+        <span class="li_supt">Get all files for a specific version :</span> https://mad.ibcp.fr/api/molecule/get/martini3001/TEST.zip/2.0
+      </li>
 
-
-
-    In the future, we gonna provide a route to have information about forcefield.
   </div>
 
 
