@@ -196,6 +196,7 @@ interface ModalState {
   molecules: Molecule[];
   load_more: boolean;
   content: string;
+  oups : boolean
 }
 
 export class ModalMoleculeSelector extends React.Component<{ open: boolean; onChoose(molecule: Molecule): any; onCancel(): any; }, ModalState> {
@@ -207,6 +208,7 @@ export class ModalMoleculeSelector extends React.Component<{ open: boolean; onCh
     molecules: [],
     load_more: false,
     content: "",
+    oups : false
   };
 
   onInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -232,6 +234,7 @@ export class ModalMoleculeSelector extends React.Component<{ open: boolean; onCh
         molecules: [],
         load_more: false,
         loading: false,
+        oups : false
       });
     }
   };
@@ -253,6 +256,7 @@ export class ModalMoleculeSelector extends React.Component<{ open: boolean; onCh
         this.setState({ molecules, load_more: molecules.length < length, content });
     } catch (e) {
       toast("Error while loading molecules.", "error");
+      this.setState({ oups: true });
     } finally {
       this.setState({ loading: false });
     }

@@ -102,7 +102,7 @@ export default MyHistory;
 
 
 
-export class ModalHistorySelector extends React.Component<{ open: boolean; onChoose(ff : string , molecule: Molecule): any; onCancel(): any; }, any> {
+export class ModalHistorySelector extends React.Component<{ open: boolean; onChoose(ff: string, molecule: Molecule): any; onCancel(): any; }, any> {
   timeout: NodeJS.Timeout | undefined;
 
   state: any = {
@@ -124,8 +124,8 @@ export class ModalHistorySelector extends React.Component<{ open: boolean; onCho
 
   }
 
-  componentDidUpdate(prevProps: Readonly<{ open: boolean; onChoose(ff : string , molecule: Molecule): any; onCancel(): any; }>, prevState: Readonly<any>, snapshot?: any): void {
-    if (this.props.open && ( prevProps.open !== true)) {
+  componentDidUpdate(prevProps: Readonly<{ open: boolean; onChoose(ff: string, molecule: Molecule): any; onCancel(): any; }>, prevState: Readonly<any>, snapshot?: any): void {
+    if (this.props.open && (prevProps.open !== true)) {
 
       if (Settings.logged === LoginStatus.None) {
         return;
@@ -143,8 +143,9 @@ export class ModalHistorySelector extends React.Component<{ open: boolean; onCho
     const forcefield = obj["settings"]["ff"]
     try {
       const res: any = await ApiHelper.request(`history/itp/${obj.id}`)
-      this.props.onChoose( forcefield , res)
+      this.props.onChoose(forcefield, res)
     } catch (e) {
+      this.setState({ oups: true })
       console.log("Error while loading molecules.", e);
     }
   }
@@ -172,6 +173,7 @@ export class ModalHistorySelector extends React.Component<{ open: boolean; onCho
         molecules: [],
         load_more: false,
         loading: false,
+        oups: false
       });
     }
   };
@@ -189,7 +191,9 @@ export class ModalHistorySelector extends React.Component<{ open: boolean; onCho
         <DialogTitle>
           Find a molecule in your history
         </DialogTitle>
-
+        {this.state.oups &&
+          <Alert severity="warning">Error while loading molecules.</Alert>
+        }
         <DialogContent>
           <div>
             <TextField
