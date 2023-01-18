@@ -135,7 +135,10 @@ export class ModalHistorySelector extends React.Component<{ open: boolean; onCho
         .then(jobs => {
           this.setState({ jobs, loaded: true })
         })
-        .catch(err => console.log(err))
+        .catch(err => {
+          console.log(err)
+          this.setState({ oups: false });
+        })
     }
   }
 
@@ -153,7 +156,7 @@ export class ModalHistorySelector extends React.Component<{ open: boolean; onCho
   onInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     e.preventDefault();
 
-    this.setState({ search: e.target.value });
+    this.setState({ search: e.target.value, oups: false });
 
     if (this.timeout) {
       clearTimeout(this.timeout);
