@@ -399,16 +399,21 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
               <Grid item xs={1}></Grid>
 
               <Marger size="1rem" />
+              <Grid item xs={1}></Grid>
+              <Grid item xs={10}>
+                <Typography variant="h6"> Modify a molecule (with coordinate): </Typography>
+              </Grid>
+              <Grid item xs={1}></Grid>
 
               <Grid item xs={1}></Grid>
-              <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center' }}>
+              <Grid item xs={7} style={{ textAlign: 'left', alignItems: 'center' }}>
 
-                <Typography variant="h6" >
-                  Modify a molecule:
+                <Typography variant="button" >
+                  Upload your own molecule:
                 </Typography>
               </Grid>
 
-              <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center' }}>
+              <Grid item xs={3} style={{ textAlign: 'left', alignItems: 'center' }}>
                 <Button variant="outlined" color="primary"
                   onClick={() => this.setState({ proteinImport: true })}
                 >
@@ -419,7 +424,38 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
 
 
               <Marger size="1rem" />
+              <Grid item xs={1}></Grid>
+              <Grid item xs={3} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
+                <Typography variant="button" >Add from MAD: </Typography>
+              </Grid>
+            
+              <Grid item xs={3} style={{ textAlign: 'left', alignItems: 'center' }}>
+                <Button variant="outlined" color="primary" onClick={() => this.setState({ database_modal_chooser: true })}>
+                  Database
+                  <Badge color="secondary" >
+                    <Icon className={"fas fa-" + "upload"} />
+                  </Badge>
+                </Button>
+              </Grid>
 
+              <Grid item xs={1}>
+
+              </Grid>
+
+              <Grid item xs={3} style={{ textAlign: 'left', alignItems: 'center' }}>
+                <Button variant="outlined" color="primary"
+                  onClick={() => this.setState({ history_modal_chooser: true })}>
+                  History
+                  <Badge color="secondary" >
+                    <Icon className={"fas fa-" + "upload"} />
+                  </Badge>
+                </Button>
+              </Grid>
+
+              <Grid item xs={1}></Grid>
+
+              <Marger size="1rem" />
+              <Marger size="1rem" />
               <Grid item xs={1}></Grid>
               <Grid item xs={6}>
                 <Typography variant="h6" > Show advanced menu: </Typography>
@@ -433,41 +469,11 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
               </Grid>
               <Grid item xs={1}></Grid>
 
+
+
               {(this.state.Menuplus) &&
                 <>
-                  <Marger size="1rem" />
 
-                  <Grid item xs={2}></Grid>
-                  <Grid item xs={9} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
-                    <Typography variant="button" >Add from database or history: </Typography>
-                  </Grid>
-                  <Grid item xs={1}></Grid>
-
-                  <Grid item xs={2}></Grid>
-                  <Grid item xs={4} style={{ textAlign: 'left', alignItems: 'center' }}>
-                    <Button variant="outlined" color="primary" onClick={() => this.setState({ database_modal_chooser: true })}>
-                      From database
-                      <Badge color="secondary" >
-                        <Icon className={"fas fa-" + "upload"} />
-                      </Badge>
-                    </Button>
-                  </Grid>
-
-                  <Grid item xs={1}>
-
-                  </Grid>
-
-                  <Grid item xs={4} style={{ textAlign: 'left', alignItems: 'center' }}>
-                    <Button variant="outlined" color="primary"
-                      onClick={() => this.setState({ history_modal_chooser: true })}>
-                      From history
-                      <Badge color="secondary" >
-                        <Icon className={"fas fa-" + "upload"} />
-                      </Badge>
-                    </Button>
-                  </Grid>
-
-                  <Grid item xs={1}></Grid>
 
                   <Marger size="1rem" />
 

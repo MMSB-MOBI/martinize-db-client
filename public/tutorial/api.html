@@ -13,11 +13,13 @@
 <div class="navbar-fixed">
   <nav>
     <div class="nav-wrapper">
- 
+
       <ul id="nav-mobile" class="left hide-on-med-and-down">
         <li> <a style="display:flex; gap:1em" href="/"> <i class="small material-icons inline-icon"> arrow_back </i>
-          <span> Go back to MAD server </span> </a></li>
-          <li > <a href="/tutorial"><div><i class="medium material-icons inline-icon">house</i></div></a> </li>
+            <span> Go back to MAD server </span> </a></li>
+        <li> <a href="/tutorial">
+            <div><i class="medium material-icons inline-icon">house</i></div>
+          </a> </li>
         <li><a href="database.html">Database</a></li>
         <li><a href="molecule.html">Molecule Builder</a></li>
         <li><a href="system.html">System Builder</a></li>
@@ -31,96 +33,234 @@
 
 <div class="container">
   <h1>API</h1>
-   
-    The MAD API enables programmatic access to MAD in unique and advanced ways. We design a REST API that allows users to
-    access structures and topologies of molecules parameterized with the Martini coarse-grained force field. This API
-    allows users to download files and retrieve information from the database, making it easy to access and work
-    with the data.
-    <br>
-    The advantages of having this API include:
-    <ul>
-      <li>
-        - Easy access to the Martini Database's data and resources
-      </li>
-      <li>
-        - Flexibility and convenience in accessing and working with the data
-      </li>
-      <li>
-        - Ability to automate tasks and integration with other tools and systems
-      </li>
-      <li>
-        - Enabling third-party developers to build new applications using the data and functionality of the Martini
-        Database.
-      </li>
-    </ul>
-    <br>
-   
-    <h4>Techical part</h4>
 
-    In our case, we only prodivide the GET method to download molecule files or have forcefield information.
-    This is the format of the route :
-    <br>
+  The MAD API enables programmatic access to MAD in unique and advanced ways. We design a REST API that allows users to
+  access structures and topologies of molecules parameterized with the Martini coarse-grained force field. This API
+  allows users to download files and retrieve information from the database, making it easy to access and work
+  with the data.
+  <br>
+  The advantages of having this API include:
+  <ul>
+    <li>
+      - Easy access to the Martini Database's data and resources
+    </li>
+    <li>
+      - Flexibility and convenience in accessing and working with the data
+    </li>
+    <li>
+      - Ability to automate tasks and integration with other tools and systems
+    </li>
+    <li>
+      - Enabling third-party developers to build new applications using the data and functionality of the Martini
+      Database.
+    </li>
+  </ul>
+  <br>
 
-    https://mad.ibcp.fr/api/molecule/get/[forcefield]/[molecule_name][.extention]/[version]
-    <br>
+  <h4>Techical part</h4>
 
-    <div class="table sectionedit4">
-      <table class="inline">
-        <thead>
-          <tr class="row0">
-            <th class="col0">Parameter</th>
-            <th class="col1">Type</th>
-            <th class="col2">Default</th>
-            <th class="col3">Description</th>
-          </tr>
-        </thead>
+  In our case, we only prodivide the GET method to download molecule files or have forcefield information.
+  This is the format of the route :
+  <br>
 
-        <tr class="row1">
-          <td class="col0">Forcefield</td>
-          <td class="col1">string</td>
-          <td class="col2">None</td>
-          <td class="col3">Which forcefield do you want (exemple : martini22, martini3001)</td>
+  https://mad.ibcp.fr/api/molecule/get/[forcefield]/[molecule_name][.extention]/[version]
+  <br>
 
+  <div class="table sectionedit4">
+    <table class="inline">
+      <thead>
+        <tr class="row0">
+          <th class="col0">Parameter</th>
+          <th class="col1">Type</th>
+          <th class="col2">Default</th>
+          <th class="col3">Description</th>
         </tr>
-        <tr class="row2">
-          <td class="col0">Molecule name</td>
-          <td class="col1">string</td>
-          <td class="col2">None</td>
-          <td class="col4">Name (Alias) of your molecule (example : POPE)</td>
+      </thead>
 
-        </tr>
-        <tr class="row3">
-          <td class="col0">File type</td>
-          <td class="col1">string</td>
-          <td class="col2">.zip</td>
-          <td class="col3">You can ask for a specific type of file ('.itp', '.gro', '.pdb') or you can download
-            everything in zip format, in this case adds '.zip' or nothing).</td>
-        </tr>
-        <tr class="row3">
-          <td class="col0">Version</td>
-          <td class="col1">string</td>
-          <td class="col2">1.0</td>
-          <td class="col3">(Optional) If your molecule has several version you can ask for a specific version.
-          </td>
-        </tr>
+      <tr class="row1">
+        <td class="col0">Forcefield</td>
+        <td class="col1">string</td>
+        <td class="col2">None</td>
+        <td class="col3">Which forcefield do you want (exemple : martini22, martini3001)</td>
 
-      </table>
-    </div>
-  
-    <br>
-    <h4>Exemple</h4>
-    <ul>
-      <li>
-        <span class="li_supt">Forcefield information :</span> https://mad.ibcp.fr/api/molecule/get/martini3001 
-      </li>
-      <li>
-        <span class="li_supt">Get pdb file :</span> https://mad.ibcp.fr/api/molecule/get/martini3001/TEST.pdb
-      </li>
-      <li>
-        <span class="li_supt">Get all files for a specific version :</span> https://mad.ibcp.fr/api/molecule/get/martini3001/TEST.zip/2.0
-      </li>
+      </tr>
+      <tr class="row2">
+        <td class="col0">Molecule name</td>
+        <td class="col1">string</td>
+        <td class="col2">None</td>
+        <td class="col4">Name (Alias) of your molecule (example : POPE)</td>
 
+      </tr>
+      <tr class="row3">
+        <td class="col0">File type</td>
+        <td class="col1">string</td>
+        <td class="col2">.zip</td>
+        <td class="col3">You can ask for a specific type of file ('.itp', '.gro', '.pdb') or you can download
+          everything in zip format, in this case adds '.zip' or nothing).</td>
+      </tr>
+      <tr class="row3">
+        <td class="col0">Version</td>
+        <td class="col1">string</td>
+        <td class="col2">1.0</td>
+        <td class="col3">(Optional) If your molecule has several version you can ask for a specific version.
+        </td>
+      </tr>
+
+    </table>
   </div>
+
+  <br>
+  <h4>Exemple</h4>
+  <ul>
+    <li>
+      <span class="li_supt">Forcefield information :</span>
+      <br>
+      https://mad.ibcp.fr/api/molecule/get/martini3001
+      <br>
+      Output exemple :
+      <pre>
+        <code>
+          {
+            "0": {
+              "alias": "DAPA",
+              "name": "di-C20:4-C22:5 PA (DAPA)",
+              "citation": "Souza, P.C.T.; Alessandri, R.; Barnoud, J.; Thallmair, S.; Faustino, I.; Grünewald, F.; Patmanidis,
+              I.; Abdizadeh, H.; Bruininks, B.M.H.;\nWassenaar, T.A.; Kroon, P.C.; Melcr, J.; Nieto, V.; Corradi, V.; Khan,
+              H.M.; Domański, J.; Javanainen, M.; Martinez-Seara, H.;\nReuter, N.; Best, R.B.; Vattulainen, I.; Monticelli, L.;
+              Periole, X.; Tieleman, D.P.; de Vries, A.H.; Marrink, S.J.; Nature Methods\n2021; 10.1038/s41592-021-01098-3",
+              "category": "Lipids",
+              "version": [ "1.0" ]
+              },
+            "1": {
+              "alias": "DAPC",
+              "name": "di-C20:4-C22:5 PC (DAPC)",
+              "citation": "Souza, P.C.T.; Alessandri, R.; Barnoud, J.; Thallmair, S.; Faustino, I.; Grünewald, F.; Patmanidis,
+              I.; Abdizadeh, H.; Bruininks, B.M.H.;\nWassenaar, T.A.; Kroon, P.C.; Melcr, J.; Nieto, V.; Corradi, V.; Khan,
+              H.M.; Domański, J.; Javanainen, M.; Martinez-Seara, H.;\nReuter, N.; Best, R.B.; Vattulainen, I.; Monticelli, L.;
+              Periole, X.; Tieleman, D.P.; de Vries, A.H.; Marrink, S.J.; Nature Methods\n2021; 10.1038/s41592-021-01098-3",
+              "category": "Lipids",
+              "version": [ "1.0" ]
+              }, 
+            ...
+          }
+        </code>
+      </pre>
+
+
+
+    </li>
+    <li>
+      <span class="li_supt">Get pdb file :</span>
+      <br>
+      https://mad.ibcp.fr/api/molecule/get/martini3001/DAPA.itp
+      <br>
+      Output exemple : 
+      <pre>
+        <code>
+          ;;;;;; Martini lipid topology for di-C20:4-C22:5 PA (DAPA)
+          ;
+          ; Description:
+          ;   A general model phosphatidic acid (PA) lipid corresponding to atomistic e.g. C20:4(5c,8c,11c,14c) di-arachidonic acid (AA), 
+          ;   - C22:5(4c,7c,10c,13c,16c) docosapentaenoic acid tails.
+          ; Parameterization:
+          ;   This topology follows the standard Martini 3 lipid definitions for building blocks.  Further optimization in the bonded parameters are currently on development.
+          ;
+          ; Reference(s):
+          ; Souza, P.C.T.; Alessandri, R.; Barnoud, J.; Thallmair, S.; Faustino, I.; Grünewald, F.; Patmanidis, I.; Abdizadeh, H.; Bruininks, B.M.H.; 
+          ; Wassenaar, T.A.; Kroon, P.C.; Melcr, J.; Nieto, V.; Corradi, V.; Khan, H.M.; Domański, J.; Javanainen, M.; Martinez-Seara, H.; 
+          ; Reuter, N.; Best, R.B.; Vattulainen, I.; Monticelli, L.; Periole, X.; Tieleman, D.P.; de Vries, A.H.; Marrink, S.J.;  Nature Methods 
+          ; 2021; 10.1038/s41592-021-01098-3
+          ;
+          ;@INSANE alhead=O, allink=G G, altail=DDDDC DDDDC, alname=DAPA, charge=-1.0
+          ;@RESNTEST DAP==DAPA if: atoms[0]==PO4
+          ;@BEADS PO4 GL1 GL2 D1A D2A D3A D4A C4A D1B D2B D3B D4B C4B 
+          ;@BONDS PO4-GL1 GL1-GL2 GL1-D1A D1A-D2A D2A-D3A D3A-D4A D4A-C4A GL2-D1B D1B-D2B D2B-D3B D3B-D4B D4B-C4B 
+          ;
+          
+          ; Command line
+          ;	-o martini_v3.0_DAPA.itp -alname DAPA -alhead O -allink G G -altail DDDDC DDDDC
+          ;
+          
+          
+          ; Category
+          ;	lipids
+          ;
+          ; Name
+          ;	 di-C20:4-C22:5 PA (DAPA)
+          ;
+          ; Alias
+          ;	DAPA
+          ;
+          ; Force field
+          ;	martini3001
+          ;
+          ; Version
+          ;	1.0
+          ;
+          
+          [moleculetype]
+          ; molname      nrexcl
+            DAPA          1
+          
+          [atoms]
+          ; id 	type 	resnr 	residu 	atom 	cgnr 	charge
+             1 	Q5 	 1 	DAPA 	PO4 	 1 	-1.0 	
+             2 	SN4a	 1 	DAPA 	GL1 	 2 	0 	
+             3 	N4a	 1 	DAPA 	GL2 	 3 	0 	
+             4 	C4h	 1 	DAPA 	D1A 	 4 	0 	
+             5 	C4h	 1 	DAPA 	D2A 	 5 	0 	
+             6 	C4h	 1 	DAPA 	D3A 	 6 	0 	
+             7 	C4h	 1 	DAPA 	D4A 	 7 	0 	
+             8 	C1 	 1 	DAPA 	C4A 	 8 	0 	
+             9 	C4h	 1 	DAPA 	D1B 	 9 	0 	
+            10 	C4h	 1 	DAPA 	D2B 	10 	0 	
+            11 	C4h	 1 	DAPA 	D3B 	11 	0 	
+            12 	C4h	 1 	DAPA 	D4B 	12 	0 	
+            13 	C1 	 1 	DAPA 	C4B 	13 	0 	
+          
+          [bonds]
+          ;  i  j 	funct 	length 	force.c.
+             1  2 	1 	0.42 	1350 	
+             2  3 	1 	0.312	2500 	
+             2  4 	1 	0.47 	5000 	
+             4  5 	1 	0.47 	3800 	
+             5  6 	1 	0.47 	3800 	
+             6  7 	1 	0.47 	3800 	
+             7  8 	1 	0.47 	3800 	
+             3  9 	1 	0.47 	3600 	
+             9 10 	1 	0.47 	3800 	
+            10 11 	1 	0.47 	3800 	
+            11 12 	1 	0.47 	3800 	
+            12 13 	1 	0.47 	3800 	
+          
+          [angles]
+          ;  i  j  k 	funct 	angle 	force.c.
+             1  2  3 	2 	108.0 	21.5 	
+             1  2  4 	2 	139.1   31.2 	
+             2  4  5 	2 	100.0 	10.0 	
+             4  5  6 	2 	100.0 	10.0 	
+             5  6  7 	2 	100.0 	10.0 	
+             6  7  8 	2 	120.0 	35.0 	
+             3  9 10 	2 	100.0 	10.0 	
+             9 10 11 	2 	100.0 	10.0 	
+            10 11 12 	2 	100.0 	10.0 	
+            11 12 13 	2 	120.0 	35.0 	
+          
+           </code>
+      </pre>
+
+    </li>
+    <li>
+      <span class="li_supt">Get all files for a specific version :</span>
+      <br>
+      https://mad.ibcp.fr/api/molecule/get/martini3001/TEST.zip/2.0
+      <br>
+      Open an widnows to download file.
+      <br>
+      or do wget https://mad.ibcp.fr/api/molecule/get/martini3001/TEST.zip/2.0
+    </li>
+
+</div>
 
 
 
