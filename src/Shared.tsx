@@ -1,5 +1,5 @@
 import React from 'react';
-import { Grid, CircularProgress, FormControl, InputLabel, Select, MenuItem } from "@material-ui/core";
+import { Grid, CircularProgress, FormControl, InputLabel, Select, MenuItem, Link } from "@material-ui/core";
 import { Alert } from '@material-ui/lab';
 import clsx from 'clsx';
 
@@ -76,9 +76,10 @@ export const BetaWarning = () => {
 
 
 export const TutorialShow = () => {
+  const baseUrl = window.location.origin.toString()
   return <Alert severity="info"
     style={{ justifyContent: 'center', alignItems: 'center' }}>
-    New to MAD? Try our <a href="tutorial">tutorial!</a>
+    New to MAD? Try our <Link href={baseUrl + "/tutorial"}>tutorial!</Link>
   </Alert>
 }
 
