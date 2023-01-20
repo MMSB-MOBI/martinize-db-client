@@ -238,7 +238,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
   onWantGoBack = (e: React.MouseEvent) => {
     // Don't go to #!
     e.preventDefault();
-    this.props.clear()
+    //this.props.clear()
     this.setState({
       want_go_back: true
     });
