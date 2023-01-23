@@ -205,16 +205,28 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
       return
     }
     else {
-      const req = "molecule/get/" + molecule.force_field + "/" + molecule.alias + ".itp"
-      console.log(req)
-      ApiHelper.request(req, { mode: "text" })
-        .then((itp: string) => {
-          this.props.addNEwMolFromITP(itp)
+      const req_itp = "molecule/get/" + molecule.force_field + "/" + molecule.alias + ".itp"
+      const req_gro = "molecule/get/" + molecule.force_field + "/" + molecule.alias + ".gro"
+
+      ApiHelper.request(req_itp, { mode: "text" })
+        .then((rep: string) => {
+          this.props.addNEwMolFromITP(rep)
         })
         .catch(e => {
           console.error(e)
-          this.props.warningfunction(molecule.alias + " Not found")
+          this.props.warningfunction(molecule.alias + ": Topology file not found")
         })
+
+      ApiHelper.request(req_gro, { mode: "text" })
+        .then((rep: string) => {
+          this.props.addmoleculecoord(rep)
+        })
+        .catch(e => {
+          console.error(e)
+          this.props.warningfunction(molecule.alias + ": Coordinate file not found")
+        })
+
+
     }
 
   };
@@ -428,7 +440,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
               <Grid item xs={3} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
                 <Typography variant="button" >Add from MAD: </Typography>
               </Grid>
-            
+
               <Grid item xs={3} style={{ textAlign: 'left', alignItems: 'center' }}>
                 <Button variant="outlined" color="primary" onClick={() => this.setState({ database_modal_chooser: true })}>
                   Database

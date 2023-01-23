@@ -185,7 +185,13 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     if (this.state.gro_coord) {
       this.setState({ Warningmessage: "Molecule coordinate already loaded ! You can only load one .gro file. The previous coordinate will be removed." })
     }
-    this.setState({ gro_coord: gro })
+    else if (gro.includes("nan")) {
+      this.setState({ Warningmessage: "Missing some coordinates in gromacs file. Impossible to load coordinates of this molecule." })
+    }
+    else {
+      this.setState({ gro_coord: gro })
+    }
+
   }
 
   ce_truc_est_fixed = (id: number): void => {
