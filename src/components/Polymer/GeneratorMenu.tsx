@@ -182,7 +182,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
         reader.readAsText(file);
       }
       else {
-        this.props.warningfunction("File extension unkown")
+        this.props.warningfunction("File extension unknown")
       }
     }
     else {
@@ -269,7 +269,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
 
         <DialogContent>
           <DialogContentText>
-            You will definitively loose your beautiful polymer.
+            You will definitely loose your beautiful polymer.
           </DialogContentText>
         </DialogContent>
 
