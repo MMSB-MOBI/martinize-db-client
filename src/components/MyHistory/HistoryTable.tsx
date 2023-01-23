@@ -260,7 +260,7 @@ export default function HistoryTable(props : {
     const downloadJob = async (jobId: string) => {
         try {
             const job : ReadedJobDoc = await ApiHelper.request(`history/get?jobId=${jobId}`)
-            console.log("job", job)
+            //console.log("job", job)
             const martinizeFiles = await loadMartinizeFiles(job)
             const zip = new JSZip()
             zip.file(martinizeFiles.pdb.name, martinizeFiles.pdb.content)

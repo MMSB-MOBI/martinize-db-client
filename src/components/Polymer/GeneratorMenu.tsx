@@ -76,7 +76,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
   protected go_back_btn = React.createRef<any>();
 
   closeCreate(): void {
-    console.log(this.state)
+    //console.log(this.state)
     // this.setState( {createLink : false})
   }
 
@@ -106,7 +106,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
   }
 
   onGoBack = () => {
-    console.log(this.go_back_btn)
+    //console.log(this.go_back_btn)
     // Click on the hidden link
     this.go_back_btn.current.click();
   };
@@ -187,7 +187,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
     }
     else {
       this.props.warningfunction("Only one files should be upload")
-      console.log(selectorFiles)
+      //console.log(selectorFiles)
     }
   }
 
@@ -195,7 +195,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
     this.setState({ want_go_back: false });
     this.setState({ database_modal_chooser: false });
 
-    console.log(molecule)
+    //console.log(molecule)
     if ((molecule.force_field !== "martini3001") && (this.state.forcefield === "martini3")) {
       this.props.warningfunction("Wrong forcefield : " + molecule.force_field)
       return
@@ -240,7 +240,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
       this.props.warningfunction("Wrong forcefield : " + ff)
       return
     }
-    console.log(molecule)
+    //console.log(molecule)
     this.setState({ want_go_back: false });
     this.props.addmoleculecoord(molecule.gro.content)
     this.props.addNEwMolFromITP(molecule.itp)

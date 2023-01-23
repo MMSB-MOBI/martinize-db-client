@@ -136,7 +136,7 @@ export class ModalHistorySelector extends React.Component<{ open: boolean; onCho
           this.setState({ jobs, loaded: true })
         })
         .catch(err => {
-          console.log(err)
+          console.log("OUPS")
           this.setState({ oups: false });
         })
     }
@@ -149,7 +149,7 @@ export class ModalHistorySelector extends React.Component<{ open: boolean; onCho
       this.props.onChoose(forcefield, res)
     } catch (e) {
       this.setState({ oups: true })
-      console.log("Error while loading molecules.", e);
+      console.log("Error while loading molecules." );
     }
   }
 

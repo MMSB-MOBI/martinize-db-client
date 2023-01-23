@@ -1297,7 +1297,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       go: this.state.files!.go!.clone(),
     };
 
-    console.log("saved vized params go", this.saved_viz_params.go)
+    //console.log("saved vized params go", this.saved_viz_params.go)
 
     // Apply custom params
     this.onRepresentationChange(undefined, ['ball+stick']);

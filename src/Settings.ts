@@ -133,7 +133,7 @@ export const Settings = new class Settings {
       .then(({ token, user }: { token: string, user: User }) => {
         this.token = token;
         this.user = user;
-        console.log(user)
+        //console.log(user)
         if (user.role === "admin") this._logged = LoginStatus.Admin
         else if (user.role == "dev") this._logged = LoginStatus.Dev
         else this._logged = LoginStatus.Curator;

@@ -64,7 +64,7 @@ export let generateID = (): string => {
 export let decreaseID = (clear = false): void => {
   if (clear) currentAvaibleID = -1
   else {
-    console.log("new currentAvaibleID", currentAvaibleID)
+    //console.log("new currentAvaibleID", currentAvaibleID)
     currentAvaibleID--;
   }
 }
@@ -121,14 +121,14 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
 
 
   handleResize = () => {
-    console.log("resizing", this.root.current!.clientHeight, this.root.current!.clientWidth)
+    //console.log("resizing", this.root.current!.clientHeight, this.root.current!.clientWidth)
     this.setState({ height: this.root.current!.clientHeight, width: this.root.current!.clientWidth })
   }
 
   currentForceField = 'martini3';
 
   add_to_history = () => {
-    console.log(this.state)
+    //console.log(this.state)
     this.state.data_for_computation['userId'] = Settings.user?.id
     this.socket.emit("add_to_history", this.state.data_for_computation)
 
@@ -146,7 +146,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
   }
 
   add_to_history_and_redirect = async (): Promise<void> => {
-    console.log(this.state)
+    //console.log(this.state)
     this.state.data_for_computation['userId'] = Settings.user?.id
     this.socket.emit("add_to_history", this.state.data_for_computation)
 
@@ -163,7 +163,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
   }
 
   change_current_position_fixlink = (linktofix: SimulationLink): void => {
-    console.log("change_current_position_fixlink")
+    //console.log("change_current_position_fixlink")
     let c = 0
 
     for (let bordel of this.state.errorLink) {
@@ -276,7 +276,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     // besoin de faire une table de correspondance ancien et nouveau id
 
     if (this.currentForceField === '') {
-      console.log("this.currentForceField === ")
+      //console.log("this.currentForceField === ")
       this.currentForceField = jsonFile.forcefield
     }
 
@@ -424,7 +424,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
         molname = l.split(" ")[0]
       }
     }
-    console.log("add this custom molecule  ", molname)
+    console.log("Adding this custom molecule  ", molname)
     const atoms = itp.getField('atoms', true)
     const links = itp.getField('bonds')
 
@@ -475,7 +475,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
       }
 
     }
-    console.log(newMolecules)
+  
 
     let newlinks = []
     // 3rd faire la liste des liens
@@ -736,7 +736,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
         const nodelist = this.state.Simulation!.nodes().filter((node: SimulationNode) => node.resname === toadd.add_to_every_residue)
         const numbertoadd = toadd.numberToAdd * nodelist.length
         for (let n of nodelist) {
-          console.log(n)
+ 
           // convert to node object et injecte dans la list
           const subnewMolecule: SimulationNode[] = [];
           for (let i = 0; i < toadd.numberToAdd; i++) {
@@ -901,9 +901,9 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     const connexe1 = this.giveConnexeNode(this.state.Simulation!.nodes()[1])
     const nodeNumber = this.state.Simulation?.nodes().length
     if (nodeNumber !== connexe1.size) {
-      console.log("Not connexe !")
+      console.log("Composed of different")
       //Get the first 
-      console.log(connexe1)
+ 
       this.warningfunction("Your polymer is composed of different parts. Please add link between every part.")
 
     }
@@ -941,7 +941,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
 
 
     this.socket.on("polyply_data", (data: any) => {
-      console.log("les data sont la !!!", data)
+      console.log("Data loaded." )
       this.setState({ dataForForm: data })
     }
     )
@@ -1021,7 +1021,6 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
 
 
     this.socket.on("gro_top", (datafromsocket: any) => {
-      console.log("gro et top !")
       this.setState({ gro: datafromsocket['gro'], top: datafromsocket['top'] })
       this.setState({ stepsubmit: 3 })
       //@ts-ignore
@@ -1029,7 +1028,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
       //@ts-ignore
       this.state.data_for_computation['top'] = datafromsocket['top']
       this.socket.emit("run_pdb_generation", this.state.data_for_computation)
-      console.log("on emit run_pdb_generation")
+      //console.log("on emit run_pdb_generation")
     })
 
     this.socket.on("pdb", (data: string) => {
@@ -1040,7 +1039,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     })
 
     this.socket.on("oups", async (dicoError: any) => {
-      console.log("oups")
+      console.log("Oups")
       this.setState({ stepsubmit: undefined })
       this.setState({ loading: false })
 

@@ -127,8 +127,7 @@ export function removeNode(nodeToRemove: SimulationNode, updateFunction: () => v
     d3.select(Mysvg).selectAll<SVGCircleElement, SimulationNode>("path:not(.group_path)").filter((d: SimulationNode) => (d.id === nodeToRemove.id)).remove();
     //and then remove link inside svg
     d3.select(Mysvg).selectAll("line").filter((link: any) => ((link.source.id === nodeToRemove.id) || (link.target.id === nodeToRemove.id))).remove();
-
-    console.log("le node a supprimé est : ", nodeToRemove)
+ 
     //Update new ID to fit with polyply 
     d3.select(Mysvg).selectAll<SVGCircleElement, SimulationNode>("path:not(.group_path)")
         .filter((d: SimulationNode) => ((Number(d.id) > (Number(nodeToRemove.id)))))
@@ -219,7 +218,7 @@ export function addNodeToSVG(newnodes: SimulationNode[], simulation: any, update
             return;
         }
 
-        console.log(d3.select(Mysvg).attr("height"), d3.select(Mysvg).attr("width"))
+        //console.log(d3.select(Mysvg).attr("height"), d3.select(Mysvg).attr("width"))
         const heightSVG = d3.select(Mysvg).attr("height")
         const widthSVG = d3.select(Mysvg).attr("width");
         // secret trick 
@@ -255,7 +254,7 @@ export function addNodeToSVG(newnodes: SimulationNode[], simulation: any, update
                 if (closest.links) closest.links.push(d);
                 else closest.links = [d];
 
-                console.log("newlink", newlink)
+                //console.log("newlink", newlink)
                 d3.select(Mysvg).selectAll("line")
                     .data([newlink], (d: any) => d.source.id + "-" + d.target.id)
                     .enter();

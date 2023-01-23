@@ -117,7 +117,7 @@ export class NglComponent {
       if(schemeParameters.color){
         params["color"] = this.martiniSchemes.getProteinColorScheme(schemeParameters.ff, schemeParameters.beads)
       }
-      console.log(params )
+      //console.log(params )
       repr.setParameters(params)
     }
 

@@ -22,7 +22,7 @@ export class TagsInput extends React.Component<TagsInputProps, TagsInputStates> 
 
     addChip = (key : React.KeyboardEvent) => {
         if (key.code === "Enter"){
-            console.log("enter")
+            //console.log("enter")
             console.log(this.state.written_value)
             if (!(this.state.chips.includes(this.state.written_value))){
                 this.setState({chips : [...this.state.chips, this.state.written_value]})

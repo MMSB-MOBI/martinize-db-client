@@ -107,18 +107,18 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
         })
         .on("end", (event: any) => {
           if (!event.selection) return;
-          console.log(event)
+          //console.log(event)
           brush.clear(gBrush)
         })
       );
 
     d3.select(this.ref).call(d3.zoom<SVGSVGElement, unknown>().scaleExtent([0.5, 1.5]).on("zoom", (event) => {
       if (zoomValue !== event.transform.k) {
-        console.log(event)
+        //console.log(event)
         //On recupere la valeur de zoom 
         zoomValue = event.transform.k;
         //On modifie le rayon en fonction du zoom  
-        console.log("zoom");
+        console.log("Zoom");
 
         d3.select(this.ref)
           .selectAll<SVGCircleElement, SimulationNode>("path")
@@ -216,8 +216,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
       .each(function () {
         svgPath.push(this);
       });
-
-    console.log("svgPath" ,svgPath)
+ 
     if (svgPath.length !== 0) {
       for (let i = 1; i <= svgPath.length; i++) {
         let selectedNodes: SimulationNode[] = [];
@@ -288,7 +287,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
     for (let node of oldNodes) {
       const oldid = node.id;
       const newid = idModification.filter((d: any) => (d.oldID === oldid))[0].newID
-      console.log(node, oldid, newid)
+ 
       let newNode: SimulationNode = {
         resname: node.resname,
         seqid: 0,
@@ -296,8 +295,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
       }
       newNodes.push(newNode)
     }
-
-    console.log("newNodes", newNodes)
+ 
 
     addNodeToSVG(newNodes, this.simulation, this.UpdateSVG, zoomValue)
     // and then addLink
@@ -335,7 +333,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
     console.log("Custom menu");
     event.preventDefault();
     const element = document.elementFromPoint(event.clientX, event.clientY);
-    console.log(element)
+ 
     if (element?.classList[0] === "nodes") {
       const nodeToRm: any = d3.select(element).data()[0]
       this.setState({ x: event.clientX, y: event.clientY, show: true, nodeClick: nodeToRm, });
@@ -346,7 +344,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
     else if (element?.tagName === "line") {
       const link: any = d3.select(element).data()[0]
       this.setState({ x: event.clientX, y: event.clientY, show: true, lineClick: link });
-      console.log(link)
+   
     }
     else {
       this.setState({ x: event.clientX, y: event.clientY, show: true });
