@@ -426,7 +426,7 @@ export default class CustomContextMenu extends React.Component<props> {
                         </Typography>
                         <Divider />
                         <MenuItem onClick={() => { this.removeLinksSelected(selectedNodes) }}>Remove links between </MenuItem>
-                        <MenuItem onClick={() => { this.groupPolymer(selectedNodes) }}> Group this polymer</MenuItem>
+                        <MenuItem onClick={() => { this.groupPolymer(selectedNodes) }}> <del>Group this polymer</del> </MenuItem>
                         <MenuItem onClick={() => { this.removeSelectedNodes(selectedNodes) }}> Remove {selectedNodes.size()} selected nodes</MenuItem>
                         <MenuItem onClick={() => { this.props.handlePaste(selectedNodes) }}> Paste {selectedNodes.size()} selected nodes</MenuItem>
                         <MenuItem onClick={() => { selectedNodes.attr("class", "nodes") }}>Unselected</MenuItem>
