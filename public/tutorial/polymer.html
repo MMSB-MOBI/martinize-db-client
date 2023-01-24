@@ -38,20 +38,17 @@
         Welcome to our new MAD feature! We are excited to offer you an easy way to generate new polymer (for example:
         polysaccharides, Battery polymer) or to modify existing molecules (for example Protein PEGylation,
         Glycosylation). This interface allows anyone with a free account to create new molecules in a user-friendly way,
-        without any
-        command line or computing skills. Our interface is fully automated, using <a
+        without any command line or computing skills. Our interface is fully automated, using <a
             href="https://github.com/marrink-lab/polyply_1.0">
             polyply</a>[<a href="#references">1</a>] program to generate the
         necessary files and coordinates for molecular dynamic simulations. Users can generate a molecule using some of
         the molecular compounds provided by Polyply by using the Martini3 forcefield or the Martini 2 forcefield, or you
-        can load your molecule
-        (from the MAD database, MAD history, or upload file directly).
+        can load your molecule (from the MAD database, MAD history, or upload file directly).
     </div>
 
     <div id="summary">
         <p>
-            The following example will guide you through the multiple uses of <span class="MAD_logo">MAD: Polymer
-                generator</span>.
+            The following example will guide you through the multiple uses of <span class="MAD_logo">MAD: Molecule Editor</span>.
         </p>
         <h6> <a href="#organization">1. How does it work? </a></h6>
         <h6> <a href="#simple_peptide"> 2. Create a simple peptide </a> </h6>
@@ -66,7 +63,7 @@
         <div>
             Because the service makes use of our computational resources, it is required for you to <a
                 href="/login">sign
-                in</a> order to have access to the <span class="MAD_logo">MAD:SMolecule Editor</span>
+                in</a> order to have access to the <span class="MAD_logo">MAD:Molecule Editor</span>
         </div>
     </div>
 
@@ -80,7 +77,7 @@
             The client interface is divided into two sections: the viewer and the menu.
             The viewer allows users to interact with their molecule through a custom right-click panel menu, which
             changes based on the location clicked (a molecule, a link, or nowhere) and provides a feature (remove
-            residue, select the whole polymer, remove the link, and more).
+            residue, select the whole molecule/polymer, remove the link, and more).
             The menu allows users to add new residues, load molecules, generate links, and, once the molecule is
             complete, send it to the server for file generation. The server then runs the Polyply program to generate
             the topology and coordinates. If there are any issues with the process, an error message is displayed to the
@@ -176,7 +173,7 @@
 
 
                             <ul style="padding-left: 5%;">
-                                <li><span class="li_supt">JSON file</span>, who contains a polymer description that you
+                                <li><span class="li_supt">JSON file</span>, who contains a molecule description that you
                                     have
                                     previoulsy download in JSON format or that you have allready created with polyply
                                     "gen-itp".This JSON should contain a list of nodes (molecules) and links between
@@ -191,7 +188,7 @@
                                     <span class="li_supt">ITP file</span>: A topology file for a molecule that is not
                                     already inside polyply database, in this case, be sure that your molecule is right
                                     coarse-grained in martini3. If your molecule is composed of molecules available in
-                                    polymer, it will be converted in several molecules with link. For example, if you
+                                    polyply database, it will be converted in several molecules with link. For example, if you
                                     load a protein, amino acids will be represented.
                                 </li>
                             </ul>
