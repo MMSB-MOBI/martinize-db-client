@@ -54,7 +54,7 @@ export interface MartinizeFiles {
   go?: BaseBondsHelper;
   elastic_bonds?: BondsRepresentation;
   warnings?: File;
-  gro? : MartinizeFile
+  gro?: MartinizeFile
 }
 
 interface AtomRadius {
@@ -119,7 +119,7 @@ export interface MBState {
 
   polymer_number: number;
 
-  results_prefix: string; 
+  results_prefix: string;
 
 }
 
@@ -185,8 +185,6 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     } catch (e) {
       this.setState({ load_error_message: errorToText(e as any), running: 'load_error' })
     }
-
-
   }
 
   reloadJobSettingsIntoState(job: ReadedJobDoc) {
@@ -204,7 +202,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       cTer: job.settings.cter,
       sc_fix: job.settings.sc_fix.toString(),
       cystein_bridge: job.settings.cystein_bridge,
-      results_prefix : job.name.split(".")[0]
+      results_prefix: job.name.split(".")[0]
     })
   }
 
@@ -260,7 +258,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       send_mail: "false",
       bead_radius_factor: 0.2,
       polymer_number: 0,
-      results_prefix : 'output'
+      results_prefix: 'output'
     };
   }
 
@@ -319,8 +317,10 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       const completeFiles = builder_mode === "go" || builder_mode === "elastic" ? await this.loadBonds(martinizeFiles, builder_mode) : martinizeFiles
       completeFiles.warnings = warnFile;
       // XXXXX
-      if (allAtomFile) this.initAllAtomPdb(allAtomFile);
-      
+      if (allAtomFile?.size !== 0) {
+        this.initAllAtomPdb(allAtomFile!);
+      }
+
       this.initCoarseGrainPdb({
         files: completeFiles,
         mode: builder_mode === "classic" ? undefined : builder_mode
@@ -444,7 +444,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       all_atom_ngl: component,
       all_atom_pdb: file,
       polymer_number: repr.polymerNumber,
-      results_prefix : file.name.split(".")[0]
+      results_prefix: file.name.split(".")[0]
     });
   }
 
@@ -794,12 +794,12 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
             };
             break;
           }
-          case 'chemical/x-gro' : {
+          case 'chemical/x-gro': {
             files.gro = {
-              name, 
-              content : new File([file], name, { type }), 
+              name,
+              content: new File([file], name, { type }),
               type
-            }; 
+            };
             break
           }
           case 'chemical/x-topology': {
@@ -954,6 +954,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       running: 'pdb_read'
     });
 
+    console.log(" 1 ", file)
     this.initAllAtomPdb(file)
       .then(() => {
         this.setState({
@@ -1399,7 +1400,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     const files = this.state.files
     zip.file(files.pdb.name, files.pdb.content);
     zip.file(files.top.name, files.top.content);
-    if(files.gro) zip.file(files.gro.name, files.gro.content)
+    if (files.gro) zip.file(files.gro.name, files.gro.content)
     for (const itp of files.itps) {
       zip.file(itp.name, itp.content);
     }
@@ -1626,7 +1627,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
                 martinizeWarnings={this.state.files?.warnings}
                 onReset={() => this.reset()}
                 theme={this.state.theme}
-                allAtomName={ this.state.all_atom_pdb ? this.state.all_atom_pdb!.name.split('.')[0] : "NOTHING" }
+                allAtomName={this.state.all_atom_pdb ? this.state.all_atom_pdb!.name.split('.')[0] : "NOTHING"}
                 onThemeChange={this.onThemeChange}
                 virtualLinks={this.state.builder_mode === 'classic' ? '' : this.state.builder_mode}
                 allAtomOpacity={this.state.all_atom_opacity}

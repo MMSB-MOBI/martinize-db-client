@@ -275,56 +275,60 @@ export default class MartinizeGenerated extends React.Component<MartinizeGenerat
           <Marger size="1rem" />
         </React.Fragment>}
 
-        <Typography variant="h6">
-          Representations
-        </Typography>
+        {(this.props.allAtomName !== "NOTHING") && <>
 
-        <Marger size=".5rem" />
 
-        <div>
-          {/* 'ball+stick' | 'ribbon' | 'surface' | 'hyperball' | 'line' */}
-          <ToggleButtonGroup
-            value={this.props.representations}
-            onChange={this.props.onRepresentationChange}
-          >
-            <ToggleButton value="ball+stick">
-              <Tooltip title="Ball + stick">
-                <span style={{ height: 24 }}>
-                  <FaIcon atom />
-                </span>
-              </Tooltip>
-            </ToggleButton>
-            <ToggleButton value="ribbon">
-              <Tooltip title="Ribbon">
-                <span style={{ height: 24 }}>
-                  <FaIcon ribbon />
-                </span>
-              </Tooltip>
-            </ToggleButton>
-            <ToggleButton value="surface">
-              <Tooltip title="Surface">
-                <span style={{ height: 24 }}>
-                  <FaIcon bullseye />
-                </span>
-              </Tooltip>
-            </ToggleButton>
-            <ToggleButton value="hyperball">
-              <Tooltip title="Hyperball">
-                <span style={{ height: 24 }}>
-                  <FaIcon expand-alt />
-                </span>
-              </Tooltip>
-            </ToggleButton>
-            <ToggleButton value="line">
-              <Tooltip title="Line">
-                <span style={{ height: 24 }}>
-                  <FaIcon project-diagram />
-                </span>
-              </Tooltip>
-            </ToggleButton>
-          </ToggleButtonGroup>
-        </div>
+          <Typography variant="h6">
+            Representations
+          </Typography>
 
+          <Marger size=".5rem" />
+
+          <div>
+            {/* 'ball+stick' | 'ribbon' | 'surface' | 'hyperball' | 'line' */}
+            <ToggleButtonGroup
+              value={this.props.representations}
+              onChange={this.props.onRepresentationChange}
+            >
+              <ToggleButton value="ball+stick">
+                <Tooltip title="Ball + stick">
+                  <span style={{ height: 24 }}>
+                    <FaIcon atom />
+                  </span>
+                </Tooltip>
+              </ToggleButton>
+              <ToggleButton value="ribbon">
+                <Tooltip title="Ribbon">
+                  <span style={{ height: 24 }}>
+                    <FaIcon ribbon />
+                  </span>
+                </Tooltip>
+              </ToggleButton>
+              <ToggleButton value="surface">
+                <Tooltip title="Surface">
+                  <span style={{ height: 24 }}>
+                    <FaIcon bullseye />
+                  </span>
+                </Tooltip>
+              </ToggleButton>
+              <ToggleButton value="hyperball">
+                <Tooltip title="Hyperball">
+                  <span style={{ height: 24 }}>
+                    <FaIcon expand-alt />
+                  </span>
+                </Tooltip>
+              </ToggleButton>
+              <ToggleButton value="line">
+                <Tooltip title="Line">
+                  <span style={{ height: 24 }}>
+                    <FaIcon project-diagram />
+                  </span>
+                </Tooltip>
+              </ToggleButton>
+            </ToggleButtonGroup>
+          </div>
+        </>
+        }
         <Marger size="1rem" />
 
         <Divider style={{ width: '100%' }} />
