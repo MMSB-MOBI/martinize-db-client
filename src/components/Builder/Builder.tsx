@@ -319,7 +319,8 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       const completeFiles = builder_mode === "go" || builder_mode === "elastic" ? await this.loadBonds(martinizeFiles, builder_mode) : martinizeFiles
       completeFiles.warnings = warnFile;
       // XXXXX
-      //if (allAtomFile) this.initAllAtomPdb(allAtomFile);
+      if (allAtomFile) this.initAllAtomPdb(allAtomFile);
+      
       this.initCoarseGrainPdb({
         files: completeFiles,
         mode: builder_mode === "classic" ? undefined : builder_mode
@@ -1268,6 +1269,8 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
   onValidateComment = async (new_project: boolean, comment: string) => {
     //this.restoreSettingsAfterGo(false);
     this.validateFirstStep();
+
+    await this.applyBondsToFiles();
 
     ApiHelper.request('history/update', {
       method: 'POST',
