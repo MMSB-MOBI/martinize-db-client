@@ -130,7 +130,7 @@ export default class BeadsLegend extends React.Component<BeadsLegendProps, Beads
             this.svg.selectAll("legend-text")
                 .data(beadsToPlot)
                 .enter().append("text")
-                .text((d: string) => {console.log(d); return d})
+                .text((d: string) => { return d})
                 .attr("y", (d:string) => 18 + linearScale(legendValues[d].hydrophobicity))
                 .attr("x", 50)
                 //.attr("transform", (d: string) => `rotate(65 ${linearScale(legendValues[d].hydrophobicity)} 65)`)

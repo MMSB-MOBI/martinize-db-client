@@ -58,9 +58,9 @@ class MoleculeViewer extends React.Component<MVProps, MVState> {
   }
 
   changeAutospin = () => {
-    console.log("autospin before", this.state.autospin)
+    //console.log("autospin before", this.state.autospin)
     const newValue = this.state.autospin ? false : true
-    console.log("autospin new value", newValue)
+    //console.log("autospin new value", newValue)
     this.setState({autospin: newValue})
     this.ngl.stage.setSpin(newValue)
   }
@@ -96,8 +96,8 @@ class MoleculeViewer extends React.Component<MVProps, MVState> {
       .then(async ({ radius, pdb, top, itps }) => {
         // Apply the radius to NGL
         applyUserRadius(radius);
-        console.log("FF", this.props.ff)
-        console.log(Settings.martinize_variables.force_fields_info)
+        //console.log("FF", this.props.ff)
+        //console.log(Settings.martinize_variables.force_fields_info)
         const polarizableFF = Settings.martinize_variables.force_fields_info[this.props.ff].polarizable
         const beads = await itpBeads(top, itps, polarizableFF); 
 

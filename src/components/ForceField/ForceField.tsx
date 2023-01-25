@@ -11,8 +11,7 @@ export default function ForceField() {
   React.useEffect(() => {
     ApiHelper.request('force_fields/list')
       .then(available => {
-        console.log("ff", available) 
-        console.log(Settings.martinize_variables.force_fields_info)
+        // console.log(Settings.martinize_variables.force_fields_info)
         const downloadable = available.filter((ff: string) => Settings.martinize_variables.force_fields_info[ff].type === "supported")
         setAvailable(downloadable)})
       .catch(notifyError)

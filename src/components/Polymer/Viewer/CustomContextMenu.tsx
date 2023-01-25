@@ -53,7 +53,7 @@ export default class CustomContextMenu extends React.Component<props> {
 
             })
 
-        console.log("nodetolink", nodetoLink)
+        //console.log("nodetolink", nodetoLink)
 
         if (nodetoLink.length !== 0) {
 
@@ -168,12 +168,12 @@ export default class CustomContextMenu extends React.Component<props> {
 
         console.log("Remove links between : ", listnodes)
         for (let node of listnodes) {
-            console.log("Start for le node numero ", node.id)
+            
             if (node.links !== undefined) {
                 for (let linkednode of node.links) {
-                    console.log(linkednode)
+                    
                     if (listnodes.includes(linkednode)) {
-                        console.log(linkednode.id, node.id)
+                        
                         // BUUUUUUUUG
 
                         node.links = node.links!.filter((nodeToRM: SimulationNode) => nodeToRM.id !== linkednode.id);
@@ -186,7 +186,7 @@ export default class CustomContextMenu extends React.Component<props> {
     }
 
     clear = () => {
-        console.log(this.props.svg.selectAll())
+        
         this.props.svg.selectAll("path").remove()
         this.props.svg.selectAll("line").remove()
         this.props.handleUpdate()
@@ -208,7 +208,7 @@ export default class CustomContextMenu extends React.Component<props> {
             if ((idCreatedPolygoneNode.includes(d) === false) && (d.group === undefined)) {
                 let connexe = this.giveConnexeNode(d);
                 if (connexe.size() < 4) {
-                    console.log("each node ", d.id, "Trop petit pour faire un group, hull needs 4 nodes")
+                    console.log("each node ", d.id, "Too small to group, hull needs 4 nodes")
                     return
                 }
                 // else if (deja fait donc il faut regarder si les noeuds id sont deja group ou si un des noeud est deja groupé)  ; 
@@ -231,7 +231,7 @@ export default class CustomContextMenu extends React.Component<props> {
                     //stupid hack 
                     let self = this
 
-                    console.log("Create hull number :", id)
+                    //console.log("Create hull number :", id)
                     this.props.svg
                         .selectAll("group_path")
                         .data([hull])
@@ -301,7 +301,7 @@ export default class CustomContextMenu extends React.Component<props> {
 
 
     expandgroup_node = (bignode: SVGPathElement, dataNodes: SimulationGroup): void => {
-        console.log("EXPAND BIG BANG  !", bignode, dataNodes)
+        //console.log("EXPAND BIG BANG  !", bignode, dataNodes)
         bignode.remove()
         const x = bignode.getAttribute("x")
         const y = bignode.getAttribute("y")
@@ -328,19 +328,19 @@ export default class CustomContextMenu extends React.Component<props> {
 
         //Remettre le hull autour
 
-        console.log("truc", bignode, dataNodes)
+        //console.log("truc", bignode, dataNodes)
         let selectedNodesCoords: [number, number][] = [];
         const id: string = bignode.getAttribute("group")!
 
         dataNodes.nodesD3!.data()!.map((d: SimulationNode) => selectedNodesCoords.push([d.x!, d.y!]))
 
-        console.log(id)
+        //console.log(id)
         const color = d3.interpolateTurbo(parseInt(id) / 12);
         let hull = d3.polygonHull(selectedNodesCoords);
         //stupid hack 
         let self = this
 
-        console.log("Create hull number :", id)
+        //console.log("Create hull number :", id)
         this.props.svg
             .selectAll("group_path")
             .data([hull])
@@ -371,7 +371,7 @@ export default class CustomContextMenu extends React.Component<props> {
     colapse = (group: SimulationGroup): void => {
         //Create SimulationGroup object 
 
-        console.log("Colapse ", group.id)
+        //console.log("Colapse ", group.id)
         //Remove nodes from the svg 
         this.props.svg.selectAll<SVGPathElement, SimulationNode>("path.nodes")
             .filter((n: SimulationNode) => (n.group === group.id))
@@ -426,7 +426,7 @@ export default class CustomContextMenu extends React.Component<props> {
                         </Typography>
                         <Divider />
                         <MenuItem onClick={() => { this.removeLinksSelected(selectedNodes) }}>Remove links between </MenuItem>
-                        <MenuItem onClick={() => { this.groupPolymer(selectedNodes) }}> Group this polymer</MenuItem>
+                        <MenuItem onClick={() => { this.groupPolymer(selectedNodes) }}> <del>Group this polymer</del> </MenuItem>
                         <MenuItem onClick={() => { this.removeSelectedNodes(selectedNodes) }}> Remove {selectedNodes.size()} selected nodes</MenuItem>
                         <MenuItem onClick={() => { this.props.handlePaste(selectedNodes) }}> Paste {selectedNodes.size()} selected nodes</MenuItem>
                         <MenuItem onClick={() => { selectedNodes.attr("class", "nodes") }}>Unselected</MenuItem>

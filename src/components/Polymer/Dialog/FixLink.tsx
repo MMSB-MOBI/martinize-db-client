@@ -106,13 +106,13 @@ export default class FixLink extends React.Component<props, state> {
         let copy = this.props.fixing_error
         copy[this.state.numeroLink]["change_bead_1"] = a
         this.props.update_error(copy)
-        console.log("change bead 1", this.state.numeroLink, a)
+        //console.log("change bead 1", this.state.numeroLink, a)
     }
     handlechangebead2 = (a: string) => {
         let copy = this.props.fixing_error
         copy[this.state.numeroLink]["change_bead_2"] = a
         this.props.update_error(copy)
-        console.log("change bead 2", this.state.numeroLink, a)
+        //console.log("change bead 2", this.state.numeroLink, a)
     }
 
     handleforce = (f: string) => {
