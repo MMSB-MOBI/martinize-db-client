@@ -133,7 +133,7 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
       ph_low: 7,
       addMolecule: "true",
       addLipids: true,
-      ff: Settings.martinize_variables.force_fields[Settings.martinize_variables.force_fields.length -1],
+      ff: 'martini3001',
     };
   }
 
@@ -516,7 +516,7 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
         {this.state.addMolecule === "false" && <SimpleSelect 
             label="Used force field"
             variant="standard"
-            values={Settings.martinize_variables.force_fields.map(e => ({ id: e, name: e }))}
+            values={Settings.martinize_variables.force_fields.filter(ff => Settings.martinize_variables.force_fields_info[ff].type === "supported").map(e  => ({ id: e, name: e }))}
             id="ff"
             value={this.state.ff}
             onChange={e => this.setState({ff: e})}
