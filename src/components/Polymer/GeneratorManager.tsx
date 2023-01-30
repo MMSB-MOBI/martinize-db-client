@@ -325,82 +325,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     }
     this.new_modification()
   }
-
-  // addNEwMolFromPDB = (pdbstring: string) => {
-
-  //   const parsed = parsePdb(pdbstring);
-  //   console.log(parsed)
-
-  //   // alter si la plusieur chaine !!!!!!
-  //   if (parsed.chains.size > 1) {
-  //     console.log(parsed.chains.size)
-  //     console.log("erreur chain")
-  //     this.setState({ Warningmessage: "Your protein is composed of " + parsed.chains.size.toString() + " parts. You can only give one chain." })
-  //     return
-  //   }
-
-
-  //   console.log(parsed)
-  //   const newMolecules: SimulationNode[] = [];
-  //   let newlinks = []
-  //   let resid = 0
-
-  //   let dico: { [id: number]: number; } = {};
-  //   for (let res of parsed.atoms) {
-  //     dico[res.serial] = res.resSeq
-  //     if (resid !== res.resSeq) {
-  //       let mol = {
-  //         "resname": res.resName,
-  //         "seqid": 0,
-  //         "id": generateID(),
-  //         "from_itp": "je_suis_le_pdb",
-  //       };
-  //       newMolecules.push(mol)
-  //       resid = res.resSeq
-  //     }
-  //   }
-
-  //   const connect_list = pdbstring.split("\n").filter(x => x.startsWith("CONECT"));
-  //   if (connect_list.length === 0) this.setState({ Warningmessage: 'No connection found bewteen atom in your pdb. Please add "CONECT".' })
-
-  //   console.log(dico)
-  //   for (let l of connect_list) {
-  //     const truc = l.split(" ").filter(splitElmt => splitElmt !== '')
-  //     const idlink1 = dico[parseInt(truc[1])]
-  //     const idlink2 = dico[parseInt(truc[2])]
-  //     if (idlink1 !== idlink2) {
-  //       console.log(newMolecules, idlink1 - 1)
-  //       newlinks.push({
-  //         "source": newMolecules[idlink1 - 1],
-  //         "target": newMolecules[idlink2 - 1]
-  //       });
-
-  //       if (newMolecules[idlink1 - 1].links) newMolecules[idlink1 - 1].links!.push(newMolecules[idlink2 - 1]);
-  //       else newMolecules[idlink1 - 1].links = [newMolecules[idlink2 - 1]];
-
-  //       if (newMolecules[idlink2 - 1].links) newMolecules[idlink2 - 1].links!.push(newMolecules[idlink1 - 1]);
-  //       else newMolecules[idlink2 - 1].links = [newMolecules[idlink1 - 1]];
-
-  //     }
-  //   }
-
-  // let avant = newMolecules[0]
-  // for (let i of newMolecules) {
-  //   if (i === avant) {
-  //     continue
-  //   }
-  //   else {
-  //     newlinks.push({
-  //       "source": avant,
-  //       "target": i
-  //     });
-  //     avant = i
-  //   }
-
-  //   this.setState({ nodesToAdd: newMolecules, linksToAdd: newlinks });
-  //   this.new_modification()
-  //   this.setState( { inputpdb : pdbstring} )
-  // }
+ 
 
   addNEwMolFromITP = (itpstring: string) => {
     // Besoin de traiter different l'information 
@@ -680,7 +605,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
       this.currentForceField = ff
     }
     else {
-      this.setState({ Warningmessage: "Change forcefield to " + this.currentForceField })
+      this.setState({ Warningmessage: "Impossible to change forcefield to " + this.currentForceField })
     }
   }
 

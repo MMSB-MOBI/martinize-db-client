@@ -5,6 +5,7 @@ import { SimulationNode, SimulationLink, SimulationGroup } from './SimulationTyp
 import { initSimulation, setsizeSVG, reloadSimulation, addNodeToSVG, addLinkToSVG, setSVG, setnodeSize, removeNode } from './ViewerFunction';
 import { decreaseID, generateID } from './GeneratorManager'
 import './GeneratorViewer.css';
+import { Warning } from "@material-ui/icons";
 
 interface propsviewer {
   forcefield: string,
@@ -199,7 +200,9 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
       this.polymer_is_modified()
     }
     // Si des news props apparaissent depuis manager on ajoute les noeuds !!!
+    
     if (this.prevPropsNewnode !== this.props.newNodes) {
+      if (this.props.newNodes.length > 150 ) this.props.warningfunction( "You want to add significant number of molecules, as the navigation system may become temporarily unresponsive during the procedure." )
       addNodeToSVG(this.props.newNodes, this.simulation, this.UpdateSVG, zoomValue)
       this.polymer_is_modified()
       //Keep the previous props in memory
