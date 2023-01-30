@@ -174,7 +174,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
         let file = selectorFiles[0]
         let reader = new FileReader();
         reader.onload = (event: any) => {
-          if (event.target.result.includes("[ moleculetype ]")) {
+          if (event.target.result.includes("moleculetype")) {
             console.log("Valid .itp file");
             this.props.addNEwMolFromITP(event.target.result)
           } else {

@@ -51,7 +51,7 @@ export class ImportProtein extends React.Component<props, state> {
                 let file = selectorFiles[0]
                 let reader = new FileReader();
                 reader.onload = (event: any) => {
-                    if (event.target.result.includes("[ moleculetype ]")) {
+                    if (event.target.result.includes("moleculetype")) {
                         console.log("Valid .itp file");
                         this.setState({ itp: event.target.result })
                     } else {
