@@ -22,7 +22,8 @@ interface props {
 interface state {
     itp: string,
     gro: string,
-    ok_gro: boolean
+    ok_gro: boolean,
+    ok_itp: boolean,
     give2files: boolean,
 }
 
@@ -37,6 +38,7 @@ export class ImportProtein extends React.Component<props, state> {
             itp: "",
             gro: "",
             ok_gro: false,
+            ok_itp: false,
             give2files: false
         }
     }
@@ -49,7 +51,14 @@ export class ImportProtein extends React.Component<props, state> {
                 let file = selectorFiles[0]
                 let reader = new FileReader();
                 reader.onload = (event: any) => {
-                    this.setState({ itp: event.target.result })
+                    if (event.target.result.includes("[ moleculetype ]")) {
+                        console.log("Valid .itp file");
+                        this.setState({ itp: event.target.result })
+                    } else {
+                        this.setState({ ok_itp: true })
+                        console.log("Invalid file. Not a well-formed .itp file");
+                    }
+
                 }
                 reader.readAsText(file);
             }
@@ -116,7 +125,9 @@ export class ImportProtein extends React.Component<props, state> {
                         {this.state.ok_gro &&
                             <Alert severity="warning">Missing some coordinates in your gromacs file!</Alert>
                         }
-
+                        {this.state.ok_itp &&
+                            <Alert severity="warning">Missing MoleculeType field. Impossible to load.</Alert>
+                        }
                         {this.state.give2files &&
                             <Alert severity="error">Missing one file. Please provide an itp file and a gro file.</Alert>
                         }

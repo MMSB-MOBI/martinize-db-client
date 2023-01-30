@@ -141,17 +141,31 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
         let reader = new FileReader();
         reader.onload = (event: any) => {
           const fastaContent = event.target.result;
+          let sequences = [];
           let seq = ''
           for (let line of fastaContent.split('\n')) {
-            if (!line.startsWith('>')) {
-              seq = seq + line
+            if (line.startsWith('>')) {
+              if (seq) sequences.push(seq);
+              seq = '';
+            } else {
+              seq = seq + line;
             }
           }
-          if (/^[a-zA-Z]+$/.test(seq)) {
-            this.props.addprotsequence(seq)
+          if (seq) sequences.push(seq); // add the last sequence
+        
+          let isValidFasta = true;
+          for (let i = 0; i < sequences.length; i++) {
+            if (!/^[a-zA-Z]+$/.test(sequences[i])) {
+              isValidFasta = false;
+              break;
+            }
           }
-          else {
-            this.props.warningfunction("Not good fasta format.")
+        
+          
+          if (isValidFasta) {
+            for (let s of sequences) this.props.addprotsequence(s);
+          } else {
+            this.props.warningfunction("Not a valid fasta format.");
           }
         }
         reader.readAsText(file);
@@ -160,8 +174,15 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
         let file = selectorFiles[0]
         let reader = new FileReader();
         reader.onload = (event: any) => {
-          this.props.addNEwMolFromITP(event.target.result)
-        }
+          if (event.target.result.includes("[ moleculetype ]")) {
+            console.log("Valid .itp file");
+            this.props.addNEwMolFromITP(event.target.result)
+          } else {
+            console.log("Invalid file. Not a well-formed .itp file");
+            this.props.warningfunction( "Invalid file. Field : [ moleculetype ] is not found in the file loaded. Not a well-formed .itp file")
+          }
+        };
+           
         reader.readAsText(file);
       }
 
