@@ -859,7 +859,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
 
 
   componentDidMount() {
-    setPageTitle("Molecule Editor");
+    setPageTitle("Polymer Editor");
     this.socket.emit("get_polyply_data",)
     this.setState({ height: this.root.current!.clientHeight, width: this.root.current!.clientWidth })
     window.addEventListener('resize', this.handleResize)

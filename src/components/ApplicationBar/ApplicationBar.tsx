@@ -139,7 +139,7 @@ function DrawerElements(props: RouteComponentProps) {
         path: '/polymer',
         link: true,
         icon: 'draw-polygon',
-        text: 'Molecule Editor',
+        text: 'Polymer Editor',
         condition: Settings.logged === LoginStatus.Admin || Settings.logged === LoginStatus.Dev,
         font: "bold"
       }
