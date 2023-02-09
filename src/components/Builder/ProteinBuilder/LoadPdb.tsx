@@ -32,8 +32,7 @@ export default function LoadPdb(props: LoadPdbProps) {
       <Marger size="1rem" />
 
       <Typography variant="body2">
-        Here, you can transform a all atom molecule, stored in a PDB file format, in a coarse-grained file.
-        You will have access to a generated PDB, with required ITP and TOP files in order to use the it in GROMACS.
+        Here, you can transform a all atom molecule, stored in a PDB file format, in a coarse-grained file. You will have access to a generated PDB, with required ITP and TOP files in order to use the it in GROMACS. For now, only peptides, proteins are implemented in MAD.
       </Typography>
 
       <Marger size="2rem" />
