@@ -506,7 +506,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
                     </>}
 
                   <Marger size="1rem" />
-                  
+
 
                 </>}
 
@@ -544,21 +544,23 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
                   </Grid>
                   <Grid item xs={1}></Grid>
 
+                  {(this.state.moleculeAdded) &&
+                    <>
 
-                  <Grid item xs={1}></Grid>
-                  <Grid item xs={6}>
-                    <Typography variant="h6" > Show advanced menu: </Typography>
-                  </Grid>
-                  <Grid item xs={4}>
-                    <Switch
-                      checked={this.state.Menuplus}
-                      onChange={(t, checked) => this.setState({ Menuplus: checked })}
-                      inputProps={{ 'aria-label': 'controlled' }}
-                    />
-                  </Grid>
-                  <Grid item xs={1}></Grid>
+                      <Grid item xs={1}></Grid>
+                      <Grid item xs={6}>
+                        <Typography variant="h6" > Show advanced menu: </Typography>
+                      </Grid>
+                      <Grid item xs={4}>
+                        <Switch
+                          checked={this.state.Menuplus}
+                          onChange={(t, checked) => this.setState({ Menuplus: checked })}
+                          inputProps={{ 'aria-label': 'controlled' }}
+                        />
+                      </Grid>
+                      <Grid item xs={1}></Grid>
 
-
+                    </>}
 
                   {(this.state.Menuplus) &&
                     <>
