@@ -436,9 +436,9 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
                   {(this.state.addMolecule === "true") &&
                     <>
 
-                      <Grid item xs={2}></Grid>
-                      <Grid item xs={9}>
-                        <Typography variant="h6"> Modify a molecule (with coordinate): </Typography>
+                      <Grid item xs={1}></Grid>
+                      <Grid item xs={10}>
+                        <Typography variant="subtitle1">Load a molecule (protein ?) with their coordinates in order to modify it with polymers: </Typography>
                       </Grid>
                       <Grid item xs={1}></Grid>
                       <Marger size="1rem" />
@@ -505,15 +505,40 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
                       <Grid item xs={1}></Grid>
                     </>}
 
-                  <Marger size="1rem" />
+
 
 
                 </>}
 
 
+              {(this.state.addMolecule == "false") &&
+                <>
+                  <Grid item xs={1}></Grid>
+                  <Grid item xs={10}>
+                    <Typography variant="subtitle1">Create and edit a polymer, you can load a previous polymer or load a molecule not present in polyply database, creating links between molecules. If a link is not provided by polyply a dialog window will help you to set up the links.
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={1}></Grid>
+                </>
+              }
+              {(this.state.moleculeAdded  && (this.state.addMolecule == "true")) &&
+
+                <>
+                  <Grid item xs={1}></Grid>
+                  <Grid item xs={10}>
+                    <Typography variant="subtitle1">Create and edit a polymer and modify the protein that have been loaded. You can load a previous polymer or load a molecule not present in polyply database, creating links between molecules. If a link is not provided by polyply a dialog window will help you to set up the links.
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={1}></Grid>
+                </>
+
+              }
+
               {(this.state.moleculeAdded || (this.state.addMolecule == "false")) &&
                 <>
 
+
+                  <Marger size="1rem" />
                   <Grid item xs={1}></Grid>
                   <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center' }}>
 
