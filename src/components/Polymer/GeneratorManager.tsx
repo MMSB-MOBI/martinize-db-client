@@ -1141,6 +1141,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
             addCustomitp={(name: string, itpstring: string) => { let dictionary: { [name: string]: string; } = this.state.customITP; dictionary[name] = itpstring; this.setState({ customITP: dictionary }); }}
             fixlinkcomponentappear={this.fixlinkcomponentappear}
             addmoleculecoord={this.handle_coord}
+             
           />
         </Grid>
 
