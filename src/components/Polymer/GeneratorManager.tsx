@@ -859,7 +859,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
 
 
   componentDidMount() {
-    setPageTitle("Molecule Editor");
+    setPageTitle("Polymer Editor");
     this.socket.emit("get_polyply_data",)
     this.setState({ height: this.root.current!.clientHeight, width: this.root.current!.clientWidth })
     window.addEventListener('resize', this.handleResize)
@@ -1141,6 +1141,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
             addCustomitp={(name: string, itpstring: string) => { let dictionary: { [name: string]: string; } = this.state.customITP; dictionary[name] = itpstring; this.setState({ customITP: dictionary }); }}
             fixlinkcomponentappear={this.fixlinkcomponentappear}
             addmoleculecoord={this.handle_coord}
+             
           />
         </Grid>
 

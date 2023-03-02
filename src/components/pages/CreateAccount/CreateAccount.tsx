@@ -147,7 +147,7 @@ export default function CreateAccount() {
                 margin="normal"
                 required
                 fullWidth
-                label="Affiliation"
+                label="Organization/University/Company"
                 //autoComplete="name"
                 type="text"
                 value={affiliation}
@@ -162,7 +162,7 @@ export default function CreateAccount() {
                 margin="normal"
                 required
                 fullWidth
-                label="Email"
+                label="Professional email"
                 autoComplete="email"
                 type="email"
                 value={email}
