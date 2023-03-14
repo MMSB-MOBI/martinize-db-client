@@ -5,7 +5,6 @@ import { SimulationNode, SimulationLink, SimulationGroup } from './SimulationTyp
 import { initSimulation, setsizeSVG, reloadSimulation, addNodeToSVG, addLinkToSVG, setSVG, setnodeSize, removeNode } from './ViewerFunction';
 import { decreaseID, generateID } from './GeneratorManager'
 import './GeneratorViewer.css';
-import { Warning } from "@material-ui/icons";
 
 interface propsviewer {
   forcefield: string,
@@ -64,8 +63,6 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
       .attr("stroke", "grey")
     console.log("polymer_is_modified")
   }
-
-
 
 
   componentDidMount() {
@@ -164,8 +161,6 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
 
       this.UpdateSVG()
     }
-
-    //Change la taille du svg ?????????????????????
     if (prevProps.height !== this.props.height) {
       d3.select(this.ref)
         .attr("height", this.props.height)
@@ -178,13 +173,9 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
       this.UpdateSVG()
     }
 
-
-
-
     // Init simulation 
 
   }
-
 
   // Define graph property
   UpdateSVG = () => {
@@ -200,9 +191,9 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
       this.polymer_is_modified()
     }
     // Si des news props apparaissent depuis manager on ajoute les noeuds !!!
-    
+
     if (this.prevPropsNewnode !== this.props.newNodes) {
-      if (this.props.newNodes.length > 150 ) this.props.warningfunction( "You want to add significant number of molecules, as the navigation system may become temporarily unresponsive during the procedure." )
+      if (this.props.newNodes.length > 150) this.props.warningfunction("The navigation system may become temporarily unresponsive during the procedure, as you want to add significant number of molecules." )
       addNodeToSVG(this.props.newNodes, this.simulation, this.UpdateSVG, zoomValue)
       this.polymer_is_modified()
       //Keep the previous props in memory
@@ -219,7 +210,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
       .each(function () {
         svgPath.push(this);
       });
- 
+
     if (svgPath.length !== 0) {
       for (let i = 1; i <= svgPath.length; i++) {
         let selectedNodes: SimulationNode[] = [];
@@ -282,15 +273,12 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
         });
     }
 
-    // console.log("listNodesToPaste", listNodesToPaste);
-    // console.log("oldNodes", oldNodes);
-    // console.log("idModification", idModification);
     //Create new node
     let newNodes = []
     for (let node of oldNodes) {
       const oldid = node.id;
       const newid = idModification.filter((d: any) => (d.oldID === oldid))[0].newID
- 
+
       let newNode: SimulationNode = {
         resname: node.resname,
         seqid: 0,
@@ -298,7 +286,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
       }
       newNodes.push(newNode)
     }
- 
+
 
     addNodeToSVG(newNodes, this.simulation, this.UpdateSVG, zoomValue)
     // and then addLink
@@ -309,17 +297,28 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
       const newnodesource = newNodes.filter((d: any) => (d.id === newid))[0]
       if (oldnode.links !== undefined) {
         for (let oldnodelink of oldnode.links) {
+          let add = true
           //parmis tous les liens de l'ancien noeud je parcours et j'en creer de nouveau 
           let newtarget = idModification.filter((d: any) => (d.oldID === oldnodelink.id))[0]
           if (newtarget) {
+
             const newnodetarget = newNodes.filter((d: any) => (d.id === newtarget.newID))[0]
             let newlink: SimulationLink = {
               source: newnodesource,
               target: newnodetarget
             }
-            //check if the link doesnt exist 
-            newlinks.push(newlink)
+
+            //check if the link doesnt already exist 
             // Link ajouté en double Il faut check si les source target ne sont pas identiques
+            console.log(newlinks)
+            for (let link of newlinks) {
+              if ((link.source.id === newnodetarget.id) && (link.target.id === newnodesource.id)  ){
+                add = false
+              }
+            }
+
+            if (add) newlinks.push(newlink)
+
             if (newnodesource.links === undefined) newnodesource.links = [newnodetarget]
             else newnodesource.links!.push(newnodetarget)
           }
@@ -336,7 +335,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
     console.log("Custom menu");
     event.preventDefault();
     const element = document.elementFromPoint(event.clientX, event.clientY);
- 
+
     if (element?.classList[0] === "nodes") {
       const nodeToRm: any = d3.select(element).data()[0]
       this.setState({ x: event.clientX, y: event.clientY, show: true, nodeClick: nodeToRm, });
@@ -347,7 +346,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
     else if (element?.tagName === "line") {
       const link: any = d3.select(element).data()[0]
       this.setState({ x: event.clientX, y: event.clientY, show: true, lineClick: link });
-   
+
     }
     else {
       this.setState({ x: event.clientX, y: event.clientY, show: true });
@@ -391,9 +390,6 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
         })
       }
     }
-
-
-    //console.log("root", this.root)
 
     return (
       <div className="svg"

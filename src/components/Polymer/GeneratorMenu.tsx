@@ -11,14 +11,11 @@ import { Badge, CircularProgress, Dialog, DialogActions, DialogContent, DialogCo
 import { SimpleSelect } from "../../Shared";
 import Link from "@mui/material/Link";
 import { Link as RouterLink } from 'react-router-dom';
-import { ModalMoleculeSelector, MoleculeWithFiles } from "../Builder/MembraneBuilder/MoleculeChooser";
-
+import { ModalMoleculeSelector } from "../Builder/MembraneBuilder/MoleculeChooser";
 import { ModalHistorySelector } from "../MyHistory/MyHistory";
 import Switch from '@mui/material/Switch';
 import { ImportProtein } from "./Dialog/importProtein";
-
 import ApiHelper from "../../ApiHelper";
-
 
 
 interface propsmenu {
@@ -37,8 +34,8 @@ interface propsmenu {
   errorlink: any[];
   fixlinkcomponentappear: () => void;
   clear: () => void;
-
-
+  version: string;
+  previous: () => void;
 }
 
 interface GeneratorMenuState extends FormState {
@@ -54,13 +51,14 @@ interface GeneratorMenuState extends FormState {
   add_to_every_residue: string | undefined;
   addMolecule: string;
   moleculeAdded: boolean;
+
 }
 
 export default class GeneratorMenu extends React.Component<propsmenu, GeneratorMenuState> {
 
   // Set the state directly. Use props if necessary.
   state = {
-    forcefield: "martini3",
+    forcefield: "",
     moleculeToAdd: "",
     numberToAdd: 1,
     id1: undefined,
@@ -73,7 +71,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
     Menuplus: false,
     proteinImport: false,
     add_to_every_residue: "",
-    addMolecule: "true",
+    addMolecule: "",
     moleculeAdded: false,
   }
 
@@ -113,6 +111,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
   onGoBack = () => {
     //console.log(this.go_back_btn)
     // Click on the hidden link
+    this.props.clear()
     this.go_back_btn.current.click();
   };
 
@@ -292,12 +291,12 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
     return (
       <Dialog open={!!this.state.want_go_back} onClose={this.onWantGoBackCancel}>
         <DialogTitle>
-          Get back to explore
+          Go back to the Explore page.
         </DialogTitle>
 
         <DialogContent>
           <DialogContentText>
-            You will definitely loose your beautiful polymer.
+            Your beautiful polymer will be lost.
           </DialogContentText>
         </DialogContent>
 
@@ -350,6 +349,9 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
         <Typography component="h1" variant="h3" align="center" style={{ fontWeight: 700, fontSize: '2.5rem', marginBottom: '1rem' }}>
           Polymer Editor
         </Typography>
+        <Typography variant="subtitle1" align="center" style={{ fontSize: '0.7rem', fontStyle: 'italic', marginBottom: '1rem' }}>
+          polyply version : {this.props.version}
+        </Typography>
 
         <Marger size="1rem" />
         <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
@@ -375,449 +377,502 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
 
         <Grid container component="main" style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'left', }}>
 
-          {(this.props.dataForceFieldMolecule[this.state.forcefield] !== undefined) ?
+          {/* Check if the data are avaible */}
+          {(Object.keys(this.props.dataForceFieldMolecule).length > 1) ?
             (<>
 
-              {((this.state.moleculeAdded == false) && (this.state.addMolecule === "true")) &&
+              {((this.state.forcefield === "")) ?
                 <>
 
-                  <Marger size="1rem" />
-
                   <Grid item xs={1}></Grid>
-                  <Grid item xs={10}>
-                    <Typography variant="h6" >Do you want to modify a molecule? </Typography>
+                  <Grid item xs={5}>
+                    <Typography variant="h6" > Please choose a forcefield: </Typography>
+                  </Grid>
+                  <Grid item xs={5}>
+
+                    <FormControl >
+                      <SimpleSelect
+                        //formControlClass={this.props.classes.ff_select}
+                        required
+                        label="forcefield : "
+                        variant="standard"
+                        values={Object.keys(this.props.dataForceFieldMolecule).map(e => ({ id: e, name: e }))}
+                        id="ff"
+                        value={this.state.forcefield}
+                        onChange={v => {
+                          this.props.setForcefield(v);
+                          this.setState({ forcefield: v });
+                        }} />
+                    </FormControl>
+
                   </Grid>
                   <Grid item xs={1}></Grid>
-                  <Grid item xs={2}></Grid>
-                  <Grid item xs={8} style={{ textAlign: 'center', alignItems: 'center', justifyContent: 'center', }} >
-                    <RadioGroup row name="scfix" value={this.state.addMolecule} onChange={e => this.setState({ addMolecule: e.target.value })}>
-                      <FormControlLabel value="false" control={<Radio />} label="no" />
-                      <FormControlLabel value="true" control={<Radio />} label="yes" />
-                    </RadioGroup>
+
+
+
+                </>
+                :
+                <>
+                  <Grid item xs={1}></Grid>
+                  <Grid item xs={5} style={{ textAlign: 'center', alignItems: 'center', justifyContent: 'center', }} >
+                    <Typography variant="h6" > Current forcefield: </Typography>
                   </Grid>
-                  <Grid item xs={2}></Grid>
+                  <Grid item xs={5} style={{ textAlign: 'center', alignItems: 'center', justifyContent: 'center', }} >
+                    <Typography variant="subtitle1" > {this.state.forcefield} </Typography>
+                  </Grid>
+
+                  <Grid item xs={1}>
+
+                  </Grid>
+
+                  {((this.state.moleculeAdded == false) && (this.state.addMolecule === "")) &&
+                    <>
+
+                      <Marger size="3rem" />
+
+                      <Grid item xs={2}></Grid>
+                      <Grid item xs={8}>
+                        <Typography variant="h6" >Do you want to import and modify a molecule? </Typography>
+                      </Grid>
+                      <Grid item xs={2}></Grid>
+                      <Grid item xs={4}></Grid>
+                      <Grid item xs={6} style={{ textAlign: 'center', alignItems: 'center', justifyContent: 'center', }} >
+                        <RadioGroup row name="scfix" value={this.state.addMolecule} onChange={e => this.setState({ addMolecule: e.target.value })}>
+                          <FormControlLabel value="false" control={<Radio />} label="no" />
+                          <FormControlLabel value="true" control={<Radio />} label="yes" />
+                        </RadioGroup>
+                      </Grid>
+                      <Grid item xs={2}></Grid>
+                      <Marger size="1rem" />
+
+                    </>}
+
+                  {(this.state.moleculeAdded == false) &&
+                    <>
+                      <Marger size="2rem" />
+
+                      {(this.state.addMolecule === "true") &&
+                        <>
+
+                          <Grid item xs={2}></Grid>
+                          <Grid item xs={8}>
+                            <Typography variant="subtitle2">Load a molecule (protein ?) with their coordinates in order to modify it with polymers: </Typography>
+                          </Grid>
+                          <Grid item xs={1}></Grid>
+                          <Marger size="2rem" />
+
+                          <Grid item xs={2}></Grid>
+                          <Grid item xs={6} style={{ textAlign: 'left', alignItems: 'center' }}>
+
+                            <Typography variant="button" >
+                              Upload your own molecule:
+                            </Typography>
+                          </Grid>
+
+
+                          <Grid item xs={3} style={{ textAlign: 'left', alignItems: 'center' }}>
+                            <Button variant="outlined" color="primary"
+                              onClick={() => this.setState({ proteinImport: true })}
+                            >
+                              Load
+                            </Button>
+                          </Grid>
+                          <Grid item xs={1}></Grid>
+
+
+                          <Marger size="1rem" />
+                          <Grid item xs={2}></Grid>
+                          <Grid item xs={8} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
+                            <Typography variant="button" >Load from MAD:database </Typography>
+                          </Grid>
+                          <Grid item xs={2}></Grid>
+
+
+                          <Marger size="1rem" />
+                          <Grid item xs={3}></Grid>
+                          <Grid item xs={6} style={{ textAlign: 'center', alignItems: 'center' }}>
+                            <Button variant="outlined" color="primary" onClick={() => this.setState({ database_modal_chooser: true })}>
+                              Search a molecule
+                              <Badge color="secondary" >
+                                <Icon className={"fas fa-" + "upload"} />
+                              </Badge>
+                            </Button>
+                          </Grid>
+
+                          <Grid item xs={3}> </Grid>
+                          <Marger size="1rem" />
+                          <Grid item xs={2}> </Grid>
+
+                          <Grid item xs={8} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
+                            <Typography variant="button" >Load from your history </Typography>
+                          </Grid>
+                          <Grid item xs={2}> </Grid>
+
+                          <Marger size="1rem" />
+                          <Grid item xs={3}> </Grid>
+                          <Grid item xs={6} style={{ textAlign: 'center', alignItems: 'center' }}>
+                            <Button variant="outlined" color="primary"
+                              onClick={() => this.setState({ history_modal_chooser: true })}>
+                              Search a molecule
+                              <Badge color="secondary" >
+                                <Icon className={"fas fa-" + "upload"} />
+                              </Badge>
+                            </Button>
+                          </Grid>
+
+                          <Grid item xs={1}></Grid>
+
+
+                        </>}
+                    </>}
+
                   <Marger size="1rem" />
 
-                </>}
+                  {(this.state.addMolecule == "false") &&
+                    <>
+                      <Grid item xs={1}></Grid>
+                      <Grid item xs={10}>
+                        <Typography align="justify" variant="subtitle2">Create and edit a polymer, you can load a previous polymer or load a molecule not present in polyply database, creating links between molecules. If a link is not provided by polyply a dialog window will help you to set up the links.
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={1}></Grid>
+                    </>
+                  }
+                  {(this.state.moleculeAdded && (this.state.addMolecule == "true")) &&
 
-              <Grid item xs={1}></Grid>
-              <Grid item xs={5}>
-                <Typography variant="h6" > Current forcefield: </Typography>
-              </Grid>
-              <Grid item xs={5}>
+                    <>
+                      <Grid item xs={1}></Grid>
+                      <Grid item xs={10}>
+                        <Typography align="justify" variant="subtitle2">Create and edit a polymer and modify the protein that have been loaded. You can load a previous polymer or load a molecule not present in polyply database, creating links between molecules. If a link is not provided by polyply a dialog window will help you to set up the links.
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={1}></Grid>
+                    </>
+
+                  }
+
+                  {(this.state.moleculeAdded || (this.state.addMolecule == "false")) &&
+                    <>
+
+                      {(this.state.moleculeAdded) &&
+                        <>
+
+                          <Grid item xs={1}></Grid>
+                          <Grid item xs={6}>
+                            <Typography variant="h6" > Show advanced menu: </Typography>
+                          </Grid>
+                          <Grid item xs={4}>
+                            <Switch
+                              checked={this.state.Menuplus}
+                              onChange={(t, checked) => this.setState({ Menuplus: checked })}
+                              inputProps={{ 'aria-label': 'controlled' }}
+                            />
+                          </Grid>
+                          <Grid item xs={1}></Grid>
+
+                        </>}
+
+                      <Marger size="1rem" />
+                      <Grid item xs={1}></Grid>
+                      <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center' }}>
+
+                        <Typography variant="h6" >
+                          Upload your file:
+                        </Typography>
+                      </Grid>
+
+                      <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center' }}>
+                        <Input
+                          inputProps={{ accept: ".itp,.json,.fasta" }}
+                          color="primary"
+                          onChange={(e: any) => this.handleUpload(e.target.files)}
+                          type="file"
+                        />
+                      </Grid>
+                      <Grid item xs={1}></Grid>
+                      <Grid item xs={1}></Grid>
+                      <Grid item xs={10} style={{ textAlign: 'left', alignItems: 'center' }}>
+
+                        <Typography component={'div'}>
+                          <ul>
+                            <li>Polymer (.json)</li>
+                            <li>Protein sequence (.fasta)</li>
+                            <li>Topology file (.itp)</li>
+                          </ul>
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={1}></Grid>
 
 
-                <FormControl >
-                  <SimpleSelect
-                    //formControlClass={this.props.classes.ff_select}
-                    required
-                    label="forcefield : "
-                    variant="standard"
-                    values={Object.keys(this.props.dataForceFieldMolecule).map(e => ({ id: e, name: e }))}
-                    id="ff"
-                    value={this.state.forcefield}
-                    onChange={v => {
-                      this.props.setForcefield(v);
-                      this.setState({ forcefield: v });
-                    }} />
-                </FormControl>
+                      {(this.state.Menuplus) &&
+                        <>
+                          <Marger size="1rem" />
 
-              </Grid>
-              <Grid item xs={1}></Grid>
+                          <Grid item xs={2}></Grid>
+                          <Grid item xs={5}>
+                            <Typography variant="button" >
+                              Design your own itp link file:
+                            </Typography>
 
+                          </Grid>
+
+                          <Grid item xs={1}></Grid>
+
+                          <Grid item xs={3}>
+
+                            <Button id="Create" variant="contained" endIcon={<AutoFixHigh />} onClick={() => this.setState({ createLink: true })}>
+                              Create
+                            </Button>
+                          </Grid>
+
+                          <Grid item xs={1}></Grid>
+                        </>}
+                      <Marger size="1rem" />
+
+
+                      <Grid item xs={1}></Grid>
+
+                      <Grid item xs={10} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }}>
+                        <Typography variant="h6" align="left">
+                          Add repeat units or chain of repeat units
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={1}></Grid>
+
+                      <Grid item xs={1}></Grid>
+
+                      <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
+
+                        <SimpleSelect
+
+                          //formControlClass={this.props.classes.ff_select}
+                          required
+                          label="Molecule"
+                          variant="standard"
+                          // values={this.GetMolFField(this.props.dataForceFieldMolecule, forcefield).map(e => ({ id: e, name: e }))}
+                          // @ts-ignore
+                          values={this.props.dataForceFieldMolecule[this.state.forcefield].map(e => ({ id: e, name: e }))}
+                          id="ff"
+                          value={this.state.moleculeToAdd}
+                          onChange={v => this.setState({ moleculeToAdd: v })} />
+                      </Grid>
+
+
+
+                      <Grid item xs={2} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
+
+                        <FormControl >
+                          <TextField
+                            label="Number"
+                            type="number"
+                            InputProps={{ inputProps: { min: 1, max: 100 } }}
+                            value={this.state.numberToAdd}
+                            onChange={v => this.setState({ numberToAdd: Number(v.target.value) })}
+                            variant="standard" />
+                        </FormControl>
+
+                      </Grid>
+
+                      <Grid item xs={3} style={{ textAlign: 'right', alignItems: 'center', justifyContent: 'center', }} >
+                        <Button
+                          endIcon={<Grain />}
+                          id="addmol"
+                          variant="outlined"
+                          onClick={() => { this.setState({ want_go_back: false }); this.CheckNewMolecule() }}>
+                          <Grid container component="main" style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'left', }}>
+
+                            <Grid item xs={10}>
+                              <Typography variant="body2" align="left">
+                                Add
+                              </Typography>
+                            </Grid>
+                            <Grid item xs={2}>
+                              <Badge color="secondary" >
+                                <Icon className={"fas fa-" + "plus"} />
+                              </Badge>
+                            </Grid>
+
+                          </Grid>
+
+                        </Button>
+                      </Grid>
+                      <Grid item xs={1}></Grid>
+
+                      <Marger size="1rem" />
+
+                      <Grid item xs={1}></Grid>
+                      <Grid item xs={5}>
+                        <Typography align="justify" variant={'subtitle2'} > Add a residue or a chain of residues to every residue of this type present in your current polymer:</Typography>
+                      </Grid>
+                      <Grid item xs={1}></Grid>
+                      <Grid item xs={3}>
+
+                        <FormControl fullWidth>
+                          <InputLabel id="demo-simple-select-helper-label">resName</InputLabel>
+                          <Select
+                            labelId="demo-simple-select-helper-label"
+                            id="demo-simple-select-helper"
+                            value={this.state.add_to_every_residue}
+                            onChange={(event: any) => this.setState({ add_to_every_residue: event.target.value })}
+                          >
+                            <MenuItem value="">
+                              <em>None</em>
+                            </MenuItem>
+
+                            {this.props.dataForceFieldMolecule[this.state.forcefield]
+                              .map(e => <MenuItem key={e} value={e}> {e}</MenuItem>)}
+
+                          </Select>
+                        </FormControl>
+
+                      </Grid>
+                      <Grid item xs={2}></Grid>
+
+
+                      <Marger size="1rem" />
+
+                      <Grid item xs={1}></Grid>
+                      <Grid item xs={10} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
+                        <Typography variant="h6" >Create a new link: </Typography>
+                      </Grid>
+                      <Grid item xs={1}></Grid>
+
+                      <Grid item xs={1}></Grid>
+                      <Grid item xs={2} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
+                        <TextField
+                          label="resid 1"
+                          type="number"
+                          InputProps={{ inputProps: { min: 0, max: 100 } }}
+                          value={this.state.id1}
+                          onChange={v => this.setState({ id1: v.target.value })}
+                          variant="standard" />
+                      </Grid>
+                      <Grid item xs={1}></Grid>
+                      <Grid item xs={2} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
+                        <TextField
+                          label="resid 2"
+                          type="number"
+                          InputProps={{ inputProps: { min: 0, max: 100 } }}
+                          value={this.state.id2}
+                          onChange={v => this.setState({ id2: v.target.value })}
+                          variant="standard" />
+                      </Grid>
+                      <Grid item xs={1}></Grid>
+                      <Grid item xs={3} style={{ textAlign: 'right', alignItems: 'center', justifyContent: 'center', }} >
+                        <Button
+                          id="addlink"
+                          variant="contained"
+                          onClick={() => { this.setState({ want_go_back: false }); this.CheckNewLink(this.state.id1, this.state.id2) }}>
+                          <Grid container component="main" style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'left', }}>
+
+                            <Grid item xs={10}>
+                              <Typography variant="body2" align="left">
+                                Create
+                              </Typography>
+                            </Grid>
+                            <Grid item xs={2}>
+                              <Badge color="secondary" >
+                                <Icon className={"fas fa-" + "link"} />
+                              </Badge>
+                            </Grid>
+
+                          </Grid>
+                        </Button>
+                      </Grid>
+                      <Grid item xs={2}></Grid>
+
+                      <Marger size="2rem" />
+
+
+                      <Grid item xs={1}></Grid>
+
+                      <Grid item xs={3} style={{ textAlign: 'right', alignItems: 'center', justifyContent: 'center', }} >
+                        <Button
+                          id="previous"
+                          variant="text"
+                          onClick={() => { this.props.previous() }}>
+                          <Grid container component="main" >
+
+                            <Grid item xs={10}>
+                              <Typography variant="body2" align="left">
+                                previous
+                              </Typography>
+                            </Grid>
+                            <Grid item xs={2}>
+                              <Badge color="secondary" >
+                                <Icon className={"fas fa-" + "arrow-left"} />
+                              </Badge>
+                            </Grid>
+
+                          </Grid>
+                        </Button>
+                      </Grid>
+                      <Grid item xs={1}></Grid>
+
+                      <Grid item xs={4} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }}>
+                        {
+                          ((forcefield !== '') && (this.props.errorlink.length !== 0)) ?
+                            (
+
+                              <Button id="send" variant="contained" color="error" endIcon={<AutoFixHigh />} onClick={() => this.props.fixlinkcomponentappear()}>
+                                <Typography variant="body2" align="left">
+                                  Fix link
+                                </Typography>
+
+                                <Badge color="secondary" >
+                                  <Icon className={"fas fa-" + "pen"} />
+                                </Badge>
+                              </Button>) :
+
+                            (
+                              <Button id="send" variant="contained" color="success" endIcon={<AutoFixHigh />} onClick={() => this.props.send()}>
+                                <Grid container component="main" style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'left', }}>
+                                  <Grid item xs={10}>
+                                    <Typography variant="body2" align="left">
+                                      Send to polyply!
+                                    </Typography>
+                                  </Grid>
+                                  <Grid item xs={2}>
+                                    <Badge color="secondary" >
+                                      <Icon className={"fas fa-" + "magic"} />
+                                    </Badge>
+                                  </Grid>
+
+                                </Grid>
+                              </Button>
+                            )}
+                      </Grid>
+                      <Grid item xs={3}></Grid>
+
+
+
+
+                    </>}
+
+
+                </>
+              }
 
 
               <Marger size="2rem" />
 
-              {(this.state.moleculeAdded == false) &&
-                <>
-                  <Marger size="1rem" />
 
-                  {(this.state.addMolecule === "true") &&
-                    <>
 
-                      <Grid item xs={1}></Grid>
-                      <Grid item xs={10}>
-                        <Typography variant="subtitle1">Load a molecule (protein ?) with their coordinates in order to modify it with polymers: </Typography>
-                      </Grid>
-                      <Grid item xs={1}></Grid>
-                      <Marger size="1rem" />
-
-                      <Grid item xs={2}></Grid>
-                      <Grid item xs={6} style={{ textAlign: 'left', alignItems: 'center' }}>
-
-                        <Typography variant="button" >
-                          Upload your own molecule:
-                        </Typography>
-                      </Grid>
-
-
-                      <Grid item xs={3} style={{ textAlign: 'left', alignItems: 'center' }}>
-                        <Button variant="outlined" color="primary"
-                          onClick={() => this.setState({ proteinImport: true })}
-                        >
-                          Load
-                        </Button>
-                      </Grid>
-                      <Grid item xs={1}></Grid>
-
-
-                      <Marger size="1rem" />
-                      <Grid item xs={2}></Grid>
-                      <Grid item xs={8} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
-                        <Typography variant="button" >Load from MAD:database </Typography>
-                      </Grid>
-                      <Grid item xs={2}></Grid>
-
-
-                      <Marger size="1rem" />
-                      <Grid item xs={3}></Grid>
-                      <Grid item xs={6} style={{ textAlign: 'center', alignItems: 'center' }}>
-                        <Button variant="outlined" color="primary" onClick={() => this.setState({ database_modal_chooser: true })}>
-                          Search a molecule
-                          <Badge color="secondary" >
-                            <Icon className={"fas fa-" + "upload"} />
-                          </Badge>
-                        </Button>
-                      </Grid>
-
-                      <Grid item xs={3}> </Grid>
-                      <Marger size="1rem" />
-                      <Grid item xs={2}> </Grid>
-
-                      <Grid item xs={8} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
-                        <Typography variant="button" >Load from your history </Typography>
-                      </Grid>
-                      <Grid item xs={2}> </Grid>
-
-                      <Marger size="1rem" />
-                      <Grid item xs={3}> </Grid>
-                      <Grid item xs={6} style={{ textAlign: 'center', alignItems: 'center' }}>
-                        <Button variant="outlined" color="primary"
-                          onClick={() => this.setState({ history_modal_chooser: true })}>
-                          Search a molecule
-                          <Badge color="secondary" >
-                            <Icon className={"fas fa-" + "upload"} />
-                          </Badge>
-                        </Button>
-                      </Grid>
-
-                      <Grid item xs={1}></Grid>
-                    </>}
-
-
-
-
-                </>}
-
-
-              {(this.state.addMolecule == "false") &&
-                <>
-                  <Grid item xs={1}></Grid>
-                  <Grid item xs={10}>
-                    <Typography variant="subtitle1">Create and edit a polymer, you can load a previous polymer or load a molecule not present in polyply database, creating links between molecules. If a link is not provided by polyply a dialog window will help you to set up the links.
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={1}></Grid>
-                </>
-              }
-              {(this.state.moleculeAdded  && (this.state.addMolecule == "true")) &&
-
-                <>
-                  <Grid item xs={1}></Grid>
-                  <Grid item xs={10}>
-                    <Typography variant="subtitle1">Create and edit a polymer and modify the protein that have been loaded. You can load a previous polymer or load a molecule not present in polyply database, creating links between molecules. If a link is not provided by polyply a dialog window will help you to set up the links.
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={1}></Grid>
-                </>
-
-              }
-
-              {(this.state.moleculeAdded || (this.state.addMolecule == "false")) &&
-                <>
-
-
-                  <Marger size="1rem" />
-                  <Grid item xs={1}></Grid>
-                  <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center' }}>
-
-                    <Typography variant="h6" >
-                      Upload your file:
-                    </Typography>
-                  </Grid>
-
-                  <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center' }}>
-                    <Input
-                      inputProps={{ accept: ".itp,.json,.fasta" }}
-                      color="primary"
-                      onChange={(e: any) => this.handleUpload(e.target.files)}
-                      type="file"
-                    />
-                  </Grid>
-                  <Grid item xs={1}></Grid>
-                  <Grid item xs={1}></Grid>
-                  <Grid item xs={10} style={{ textAlign: 'left', alignItems: 'center' }}>
-
-                    <Typography component={'div'}>
-                      <ul>
-                        <li>Polymer (.json)</li>
-                        <li>Protein sequence (.fasta)</li>
-                        <li>Topology file (.itp)</li>
-                      </ul>
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={1}></Grid>
-
-                  {(this.state.moleculeAdded) &&
-                    <>
-
-                      <Grid item xs={1}></Grid>
-                      <Grid item xs={6}>
-                        <Typography variant="h6" > Show advanced menu: </Typography>
-                      </Grid>
-                      <Grid item xs={4}>
-                        <Switch
-                          checked={this.state.Menuplus}
-                          onChange={(t, checked) => this.setState({ Menuplus: checked })}
-                          inputProps={{ 'aria-label': 'controlled' }}
-                        />
-                      </Grid>
-                      <Grid item xs={1}></Grid>
-
-                    </>}
-
-                  {(this.state.Menuplus) &&
-                    <>
-
-
-                      <Marger size="1rem" />
-
-                      <Grid item xs={2}></Grid>
-                      <Grid item xs={5}>
-                        <Typography variant="button" >
-                          Design your own itp link file:
-                        </Typography>
-
-                      </Grid>
-
-                      <Grid item xs={1}></Grid>
-
-                      <Grid item xs={3}>
-
-                        <Button id="Create" variant="contained" endIcon={<AutoFixHigh />} onClick={() => this.setState({ createLink: true })}>
-                          Create
-                        </Button>
-                      </Grid>
-
-                      <Grid item xs={1}></Grid>
-                    </>}
-                  <Marger size="1rem" />
-
-
-                  <Grid item xs={1}></Grid>
-
-                  <Grid item xs={10} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }}>
-                    <Typography variant="h6" align="left">
-                      Add a molecule or chain of molecules:
-                    </Typography>
-                  </Grid>
-                  <Grid item xs={1}></Grid>
-
-                  <Grid item xs={1}></Grid>
-
-                  <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
-
-                    <SimpleSelect
-
-                      //formControlClass={this.props.classes.ff_select}
-                      required
-                      label="Molecule"
-                      variant="standard"
-                      // values={this.GetMolFField(this.props.dataForceFieldMolecule, forcefield).map(e => ({ id: e, name: e }))}
-                      // @ts-ignore
-                      values={this.props.dataForceFieldMolecule[this.state.forcefield].map(e => ({ id: e, name: e }))}
-                      id="ff"
-                      value={this.state.moleculeToAdd}
-                      onChange={v => this.setState({ moleculeToAdd: v })} />
-                  </Grid>
-
-
-
-                  <Grid item xs={2} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
-
-                    <FormControl >
-                      <TextField
-                        label="Number"
-                        type="number"
-                        InputProps={{ inputProps: { min: 1, max: 100 } }}
-                        value={this.state.numberToAdd}
-                        onChange={v => this.setState({ numberToAdd: Number(v.target.value) })}
-                        variant="standard" />
-                    </FormControl>
-
-                  </Grid>
-
-                  <Grid item xs={3} style={{ textAlign: 'right', alignItems: 'center', justifyContent: 'center', }} >
-                    <Button
-                      endIcon={<Grain />}
-                      id="addmol"
-                      variant="outlined"
-                      onClick={() => { this.setState({ want_go_back: false }); this.CheckNewMolecule() }}>
-                      <Grid container component="main" style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'left', }}>
-
-                        <Grid item xs={10}>
-                          <Typography variant="body2" align="left">
-                            Add
-                          </Typography>
-                        </Grid>
-                        <Grid item xs={2}>
-                          <Badge color="secondary" >
-                            <Icon className={"fas fa-" + "plus"} />
-                          </Badge>
-                        </Grid>
-
-                      </Grid>
-
-                    </Button>
-                  </Grid>
-                  <Grid item xs={1}></Grid>
-
-                  <Grid item xs={2}></Grid>
-                  <Grid item xs={3}>
-                    <Typography variant={'button'} > Link to all:</Typography>
-                  </Grid>
-                  <Grid item xs={4}>
-
-                    <FormControl fullWidth>
-                      <InputLabel id="demo-simple-select-helper-label">resName</InputLabel>
-                      <Select
-                        labelId="demo-simple-select-helper-label"
-                        id="demo-simple-select-helper"
-                        value={this.state.add_to_every_residue}
-                        onChange={(event: any) => this.setState({ add_to_every_residue: event.target.value })}
-                      >
-                        <MenuItem value="">
-                          <em>None</em>
-                        </MenuItem>
-
-                        {this.props.dataForceFieldMolecule[this.state.forcefield]
-                          .map(e => <MenuItem key={e} value={e}> {e}</MenuItem>)}
-
-                      </Select>
-
-                    </FormControl>
-
-
-                  </Grid>
-                  <Grid item xs={3}></Grid>
-
-
-                  <Marger size="1rem" />
-
-                  <Grid item xs={1}></Grid>
-                  <Grid item xs={10} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
-                    <Typography variant="h6" >Create a new link: </Typography>
-                  </Grid>
-                  <Grid item xs={1}></Grid>
-
-                  <Grid item xs={1}></Grid>
-                  <Grid item xs={2} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
-                    <TextField
-                      label="resid 1"
-                      type="number"
-                      InputProps={{ inputProps: { min: 0, max: 100 } }}
-                      value={this.state.id1}
-                      onChange={v => this.setState({ id1: v.target.value })}
-                      variant="standard" />
-                  </Grid>
-                  <Grid item xs={1}></Grid>
-                  <Grid item xs={2} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
-                    <TextField
-                      label="resid 2"
-                      type="number"
-                      InputProps={{ inputProps: { min: 0, max: 100 } }}
-                      value={this.state.id2}
-                      onChange={v => this.setState({ id2: v.target.value })}
-                      variant="standard" />
-                  </Grid>
-                  <Grid item xs={1}></Grid>
-                  <Grid item xs={3} style={{ textAlign: 'right', alignItems: 'center', justifyContent: 'center', }} >
-                    <Button
-                      id="addlink"
-                      variant="contained"
-                      onClick={() => { this.setState({ want_go_back: false }); this.CheckNewLink(this.state.id1, this.state.id2) }}>
-                      <Grid container component="main" style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'left', }}>
-
-                        <Grid item xs={10}>
-                          <Typography variant="body2" align="left">
-                            Create
-                          </Typography>
-                        </Grid>
-                        <Grid item xs={2}>
-                          <Badge color="secondary" >
-                            <Icon className={"fas fa-" + "link"} />
-                          </Badge>
-                        </Grid>
-
-                      </Grid>
-                    </Button>
-                  </Grid>
-                  <Grid item xs={2}></Grid>
-
-                  <Marger size="2rem" />
-
-                  {
-                    ((forcefield !== '') && (this.props.errorlink.length !== 0)) ?
-                      (
-                        <><Grid item xs={4}></Grid>
-                          <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }}>
-                            <Button id="send" variant="contained" color="error" endIcon={<AutoFixHigh />} onClick={() => this.props.fixlinkcomponentappear()}>
-                              <Typography variant="body2" align="left">
-                                Fix link
-                              </Typography>
-
-                              <Badge color="secondary" >
-                                <Icon className={"fas fa-" + "pen"} />
-                              </Badge>
-                            </Button>
-                          </Grid>
-                          <Grid item xs={3}></Grid></>) :
-                      (
-                        <><Grid item xs={4}></Grid>
-                          <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }}>
-                            <Button id="send" variant="contained" color="success" endIcon={<AutoFixHigh />} onClick={() => this.props.send()}>
-                              <Grid container component="main" style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'left', }}>
-                                <Grid item xs={10}>
-                                  <Typography variant="body2" align="left">
-                                    Send to polyply!
-                                  </Typography>
-                                </Grid>
-                                <Grid item xs={2}>
-                                  <Badge color="secondary" >
-                                    <Icon className={"fas fa-" + "magic"} />
-                                  </Badge>
-                                </Grid>
-
-                              </Grid>
-                            </Button>
-
-
-                          </Grid>
-                          <Grid item xs={1}></Grid>
-
-                        </>)}
-                </>}
             </>)
             : (<>
-              <Grid item xs={7}>
-                <Typography variant="h6" > Loading data from server... </Typography>
-              </Grid>
 
-              <Grid item xs={5}   >
+              <Grid item xs={12} style={{ textAlign: 'center', alignItems: 'center', justifyContent: 'center', }}>
                 <CircularProgress></CircularProgress>
               </Grid>
 
+              <Grid item xs={3}   >
+              </Grid>
+
+              <Grid item xs={6} style={{ textAlign: 'center', alignItems: 'center', justifyContent: 'center', }}>
+                <Typography variant="h6" > Loading data from server... </Typography>
+              </Grid>
+              <Grid item xs={3}   >
+              </Grid>
 
 
             </>)

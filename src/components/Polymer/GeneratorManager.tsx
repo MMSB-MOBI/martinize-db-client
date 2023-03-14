@@ -25,8 +25,10 @@ const parsePdb = require('parse-pdb');
 // Objectif : faire pareil avec element selectionnable dans le bloc menu et ajoutable dans le bloc viewer si deposer
 //https://javascript.plainenglish.io/how-to-implement-drag-and-drop-from-react-to-svg-d3-16700f01470c
 interface StateSimulation {
+  version: string,
   data_for_computation: any;
   Simulation: d3.Simulation<SimulationNode, SimulationLink> | undefined,
+  previous_Simulation_nodes: SimulationNode[],
   Warningmessage: string;
   customITP: { [name: string]: string },
   dialogWarning: string;
@@ -91,7 +93,9 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
   myViewerRef = React.createRef();
 
   state: StateSimulation = {
+    version: "XXX",
     Simulation: undefined,
+    previous_Simulation_nodes: [],
     customITP: {},
     nodesToAdd: [],
     linksToAdd: [],
@@ -112,7 +116,8 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     height: undefined,
     width: undefined,
     inputpdb: undefined,
-    jobfinish: undefined
+    jobfinish: undefined,
+
   }
 
   socket = SocketIo.connect(SERVER_ROOT);
@@ -161,6 +166,41 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     })
 
   }
+
+  go_back_to_previous_simulation = () => {
+    //Give the previous simulation  nodes to the viewer part
+    console.log("previous node :", this.state.previous_Simulation_nodes)
+    currentAvaibleID = -1
+    this.setState({
+      Simulation: undefined,
+      customITP: {},
+      linksToAdd: [],
+      Warningmessage: "",
+      dialogWarning: "",
+      loading: false,
+      stepsubmit: undefined,
+      top: "",
+      itp: "",
+      gro: "",
+      pdb: "",
+      gro_coord: "",
+      current_position_fixlink: undefined,
+      errorfix: undefined,
+      nodesToAdd: this.state.previous_Simulation_nodes
+    })
+  }
+
+  getSimulation = (SimulationFromViewer: d3.Simulation<SimulationNode, SimulationLink>) => {
+    if (this.state.Simulation === undefined) {
+      this.setState({ Simulation: SimulationFromViewer })
+    }
+    else {
+      let nodes = [... this.state.Simulation.nodes()]
+      this.setState({ Simulation: SimulationFromViewer, previous_Simulation_nodes: nodes })
+    }
+
+  }
+
 
   change_current_position_fixlink = (linktofix: SimulationLink): void => {
     //console.log("change_current_position_fixlink")
@@ -325,7 +365,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     }
     this.new_modification()
   }
- 
+
 
   addNEwMolFromITP = (itpstring: string) => {
     // Besoin de traiter different l'information 
@@ -400,7 +440,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
       }
 
     }
-  
+
 
     let newlinks = []
     // 3rd faire la liste des liens
@@ -650,8 +690,17 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
 
   addnode = (toadd: FormState): void => {
     //Check forcefield 
-    if (toadd.numberToAdd > 200) {
-      this.setState({ Warningmessage: "Are you crazy !!! This is too many molecules ! (limit 200)" })
+    if (this.state.Simulation) {
+      let lennode = this.state.Simulation!.nodes().length
+      console.log(this.state.Simulation!.nodes())
+      if (lennode > 600) {
+        this.setState({ Warningmessage: "You have exceeded the maximum number of residues. The limit is 600 and you will have  " + lennode + "." })
+        return
+      }
+    }
+
+    if (toadd.numberToAdd > 300) {
+      this.setState({ Warningmessage: "You have added too many residues at one time. (limit 300)" })
     }
     else if ((this.currentForceField === '') || (this.currentForceField === toadd.forcefield)) {
       this.currentForceField = toadd.forcefield;
@@ -659,9 +708,9 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
       let newlinks = [];
       if (toadd.add_to_every_residue) {
         const nodelist = this.state.Simulation!.nodes().filter((node: SimulationNode) => node.resname === toadd.add_to_every_residue)
-        const numbertoadd = toadd.numberToAdd * nodelist.length
+        if (nodelist.length === 0) this.warningfunction("The residue  " + toadd.add_to_every_residue + " is not present in your current polymer.")
         for (let n of nodelist) {
- 
+
           // convert to node object et injecte dans la list
           const subnewMolecule: SimulationNode[] = [];
           for (let i = 0; i < toadd.numberToAdd; i++) {
@@ -732,7 +781,6 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
       this.setState({ nodesToAdd: newMolecule });
     }
     else {
-
       this.setState({ Warningmessage: "Change forcefield to " + this.currentForceField })
     }
     this.new_modification()
@@ -816,11 +864,6 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     return listparseditp.filter((e: any) => (parseInt(e.idres) === idresmodif))
   }
 
-
-
-
-
-
   Send = (box: string, name: string, number: string): void => {
     //Check if there is more than one polymer 
     const connexe1 = this.giveConnexeNode(this.state.Simulation!.nodes()[1])
@@ -828,7 +871,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     if (nodeNumber !== connexe1.size) {
       console.log("Composed of different")
       //Get the first 
- 
+
       this.warningfunction("Your polymer is composed of different parts. Please add link between every part.")
 
     }
@@ -857,6 +900,35 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
   }
 
 
+  fixlinkcomponentappear = () => {
+    this.setState({ current_position_fixlink: 0 })
+  }
+
+  clear = () => {
+    console.log("clear!")
+    currentAvaibleID = -1
+    this.setState({
+      Simulation: undefined,
+      customITP: {},
+      nodesToAdd: [],
+      linksToAdd: [],
+      dataForForm: {},
+      Warningmessage: "",
+      dialogWarning: "",
+      loading: false,
+      stepsubmit: undefined,
+      top: "",
+      itp: "",
+      gro: "",
+      pdb: "",
+      gro_coord: "",
+      errorLink: [],
+      current_position_fixlink: undefined,
+      errorfix: undefined,
+      data_for_computation: {},
+      inputpdb: undefined,
+    })
+  }
 
   componentDidMount() {
     setPageTitle("Polymer Editor");
@@ -866,10 +938,21 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
 
 
     this.socket.on("polyply_data", (data: any) => {
-      console.log("Data loaded." )
+      console.log("Data loaded.")
       this.setState({ dataForForm: data })
     }
     )
+
+    this.socket.emit("version",)
+
+    this.socket.on("version_answer", (data: string) => {
+      console.log("Version loaded.")
+      this.setState({ version: data })
+    }
+    )
+
+
+
 
     this.socket.on("error_itp", (error: string) => {
       this.setState({
@@ -1036,45 +1119,6 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
 
   }
 
-  // fetching the GET route from the Express server which matches the GET route from server.js
-  getDataForcefield = async () => {
-    const response = await fetch('api/polymergenerator/data');
-    const body = await response.json();
-    if (response.status !== 200) {
-      throw Error(body.message)
-    }
-    return body;
-  };
-
-  fixlinkcomponentappear = () => {
-    this.setState({ current_position_fixlink: 0 })
-  }
-
-  clear = () => {
-    console.log("clear!")
-    currentAvaibleID = -1
-    this.setState({
-      Simulation: undefined,
-      customITP: {},
-      nodesToAdd: [],
-      linksToAdd: [],
-      dataForForm: {},
-      Warningmessage: "",
-      dialogWarning: "",
-      loading: false,
-      stepsubmit: undefined,
-      top: "",
-      itp: "",
-      gro: "",
-      pdb: "",
-      gro_coord: "",
-      errorLink: [],
-      current_position_fixlink: undefined,
-      errorfix: undefined,
-      data_for_computation: {},
-      inputpdb: undefined,
-    })
-  }
 
   render() {
     const classes = this.props.classes;
@@ -1126,6 +1170,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
 
         <Grid md={4} component={Paper} elevation={6} square>
           <GeneratorMenu
+            version={this.state.version}
             clear={this.clear}
             errorlink={this.state.errorLink}
             addprotsequence={this.addprotsequence}
@@ -1141,7 +1186,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
             addCustomitp={(name: string, itpstring: string) => { let dictionary: { [name: string]: string; } = this.state.customITP; dictionary[name] = itpstring; this.setState({ customITP: dictionary }); }}
             fixlinkcomponentappear={this.fixlinkcomponentappear}
             addmoleculecoord={this.handle_coord}
-             
+            previous={this.go_back_to_previous_simulation}
           />
         </Grid>
 
@@ -1155,7 +1200,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
                 change_current_position_fixlink={this.change_current_position_fixlink}
                 warningfunction={this.warningfunction}
                 forcefield={this.currentForceField}
-                getSimulation={(SimulationFromViewer: d3.Simulation<SimulationNode, SimulationLink>) => { this.setState({ Simulation: SimulationFromViewer }) }}
+                getSimulation={this.getSimulation}
                 newNodes={this.state.nodesToAdd}
                 newLinks={this.state.linksToAdd}
                 height={this.state.height ? this.state.height : this.root.current!.clientHeight}

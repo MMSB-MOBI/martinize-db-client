@@ -1,5 +1,6 @@
 path.onfocus {
-    stroke : purple;
+    stroke : rgb(88, 24, 88);
+    stroke-width: 3px;
 }
 
 div.tooltip {
