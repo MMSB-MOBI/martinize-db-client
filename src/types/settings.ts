@@ -9,6 +9,7 @@ interface ForceFieldsInfo{
   [ff_name:string]:{
     polarizable:boolean
     type: "protein" | "supported" | "modified"
+    downloadable : boolean
   }
 }
 

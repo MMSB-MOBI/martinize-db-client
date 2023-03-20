@@ -12,7 +12,7 @@ export default function ForceField() {
     ApiHelper.request('force_fields/list')
       .then(available => {
         // console.log(Settings.martinize_variables.force_fields_info)
-        const downloadable = available.filter((ff: string) => Settings.martinize_variables.force_fields_info[ff].type === "supported")
+        const downloadable = available.filter((ff: string) => Settings.martinize_variables.force_fields_info[ff].downloadable)
         setAvailable(downloadable)})
       .catch(notifyError)
   }, []);
