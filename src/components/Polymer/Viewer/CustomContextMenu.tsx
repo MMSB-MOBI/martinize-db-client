@@ -409,10 +409,7 @@ export default class CustomContextMenu extends React.Component<props> {
 
 
     render() {
-
         const selectedNodes = this.props.svg.selectAll<SVGPathElement, SimulationNode>('.onfocus')
-
-
         return (
             <Menu
                 anchorReference="anchorPosition"

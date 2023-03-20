@@ -28,7 +28,7 @@ export function initSimulation(sizeNodenodeSize: number): d3.Simulation<Simulati
         .force("x", d3.forceX(widthtSVG / 2).strength(0.2))
         .force("y", d3.forceY(heightSVG / 2).strength(0.2))
         .force("link", d3.forceLink().distance((sizeNodenodeSize / 4)).strength(0.5))
-        .force("boundary", forceBoundary( 10, 10, (widthtSVG - 10), (heightSVG - 10)))
+        .force("boundary", forceBoundary(10, 10, (widthtSVG - 10), (heightSVG - 10)))
     return simulation
 }
 
@@ -127,7 +127,7 @@ export function removeNode(nodeToRemove: SimulationNode, updateFunction: () => v
     d3.select(Mysvg).selectAll<SVGCircleElement, SimulationNode>("path:not(.group_path)").filter((d: SimulationNode) => (d.id === nodeToRemove.id)).remove();
     //and then remove link inside svg
     d3.select(Mysvg).selectAll("line").filter((link: any) => ((link.source.id === nodeToRemove.id) || (link.target.id === nodeToRemove.id))).remove();
- 
+
     //Update new ID to fit with polyply 
     d3.select(Mysvg).selectAll<SVGCircleElement, SimulationNode>("path:not(.group_path)")
         .filter((d: SimulationNode) => ((Number(d.id) > (Number(nodeToRemove.id)))))
@@ -137,7 +137,6 @@ export function removeNode(nodeToRemove: SimulationNode, updateFunction: () => v
             //d.index = newID
             d.id = newID.toString()
             d.index = newID
-
         })
     //Check if minimun id != de currentID 
     //Mettre une condition d'arret pour ne pas decrease 

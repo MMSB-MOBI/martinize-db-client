@@ -16,6 +16,7 @@ import { ModalHistorySelector } from "../MyHistory/MyHistory";
 import Switch from '@mui/material/Switch';
 import { ImportProtein } from "./Dialog/importProtein";
 import ApiHelper from "../../ApiHelper";
+import md5 from 'md5';
 
 
 interface propsmenu {
@@ -136,8 +137,6 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
           } else {
             this.props.warningfunction("Not good json format.")
           }
-
-
         }
         reader.readAsText(file);
       }
@@ -181,6 +180,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
           if (event.target.result.includes("moleculetype")) {
             console.log("Valid .itp file");
             this.props.addNEwMolFromITP(event.target.result)
+            this.setState({ moleculeAdded: true })
           } else {
             console.log("Invalid file. Not a well-formed .itp file");
             this.props.warningfunction("Invalid file. Field : [ moleculetype ] is not found in the file loaded. Not a well-formed .itp file")
@@ -189,20 +189,11 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
 
         reader.readAsText(file);
       }
-
-
-      // else if (ext === 'pdb') {
-      //   let reader = new FileReader();
-      //   reader.onload = (event: any) => {
-      //     const pdbContent = event.target.result;
-      //     this.props.addNEwMolFromPDB(pdbContent)
-      //   }
-      //   reader.readAsText(file);
-      // }
       else if (ext === 'ff') {
         let reader = new FileReader();
+
         reader.onload = (event: any) => {
-          this.props.warningfunction(event.target.result)
+          this.props.addCustomitp( md5(event.target.result), "; Custom connexion rule \n"+ event.target.result)
         }
         reader.readAsText(file);
       }
@@ -428,7 +419,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
                   {((this.state.moleculeAdded == false) && (this.state.addMolecule === "")) &&
                     <>
 
-                      <Marger size="3rem" />
+                      <Marger size="2rem" />
 
                       <Grid item xs={2}></Grid>
                       <Grid item xs={8}>
@@ -532,7 +523,12 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
                     <>
                       <Grid item xs={1}></Grid>
                       <Grid item xs={10}>
-                        <Typography align="justify" variant="subtitle2">Create and edit a polymer, you can load a previous polymer or load a molecule not present in polyply database, creating links between molecules. If a link is not provided by polyply a dialog window will help you to set up the links.
+                        <Typography align="justify" variant="subtitle2">
+                          Welcome on MAD:Polymer Editor, powered by polyply, you can create and edit polymers.
+                          You can load molecules from the Polyply database or import new martinized molecule.
+                          If a particular type of link between 2 residues is not provided by Polyply, a dialog window will guide you through the
+                          process of setting it up.  You can also load a previously saved polymer in .json format or load a protein sequence in
+                          .fasta format. Additionally, Polyply allows you to load the topology of a new molecule in .itp.
                         </Typography>
                       </Grid>
                       <Grid item xs={1}></Grid>
@@ -543,7 +539,12 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
                     <>
                       <Grid item xs={1}></Grid>
                       <Grid item xs={10}>
-                        <Typography align="justify" variant="subtitle2">Create and edit a polymer and modify the protein that have been loaded. You can load a previous polymer or load a molecule not present in polyply database, creating links between molecules. If a link is not provided by polyply a dialog window will help you to set up the links.
+                        <Typography align="justify" variant="subtitle2">
+                          Welcome on MAD:Polymer Editor, powered by polyply, you can create and edit polymers in order to modify the protein that have been loaded.
+                          You can load molecules from the Polyply database or import new martinized molecule.
+                          If a particular type of link between 2 residues is not provided by Polyply, a dialog window will guide you through the
+                          process of setting it up.  You can also load a previously saved polymer in .json format or load a protein sequence in
+                          .fasta format. Additionally, Polyply allows you to load the topology of a new molecule in .itp.
                         </Typography>
                       </Grid>
                       <Grid item xs={1}></Grid>
@@ -554,7 +555,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
                   {(this.state.moleculeAdded || (this.state.addMolecule == "false")) &&
                     <>
 
-                      {(this.state.moleculeAdded) &&
+                      {(this.state.moleculeAdded ) &&
                         <>
 
                           <Grid item xs={1}></Grid>
@@ -571,39 +572,6 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
                           <Grid item xs={1}></Grid>
 
                         </>}
-
-                      <Marger size="1rem" />
-                      <Grid item xs={1}></Grid>
-                      <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center' }}>
-
-                        <Typography variant="h6" >
-                          Upload your file:
-                        </Typography>
-                      </Grid>
-
-                      <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center' }}>
-                        <Input
-                          inputProps={{ accept: ".itp,.json,.fasta" }}
-                          color="primary"
-                          onChange={(e: any) => this.handleUpload(e.target.files)}
-                          type="file"
-                        />
-                      </Grid>
-                      <Grid item xs={1}></Grid>
-                      <Grid item xs={1}></Grid>
-                      <Grid item xs={10} style={{ textAlign: 'left', alignItems: 'center' }}>
-
-                        <Typography component={'div'}>
-                          <ul>
-                            <li>Polymer (.json)</li>
-                            <li>Protein sequence (.fasta)</li>
-                            <li>Topology file (.itp)</li>
-                          </ul>
-                        </Typography>
-                      </Grid>
-                      <Grid item xs={1}></Grid>
-
-
                       {(this.state.Menuplus) &&
                         <>
                           <Marger size="1rem" />
@@ -626,7 +594,50 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
                           </Grid>
 
                           <Grid item xs={1}></Grid>
+
+                          <Grid item xs={2}></Grid>
+                          <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center' }}>
+
+                            <Typography variant="button" >
+                              Import custom link file (.ff)
+                            </Typography>
+                          </Grid>
+
+                          <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center' }}>
+                            <Input
+
+                              inputProps={{ accept: ".ff" }}
+                              color="secondary"
+                              onChange={(e: any) => this.handleUpload(e.target.files)}
+                              type="file"
+                            />
+                          </Grid>
+                          <Grid item xs={1}></Grid>
+
+
                         </>}
+
+                      <Marger size="2rem" />
+                      <Grid item xs={1}></Grid>
+                      <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center' }}>
+
+                        <Typography variant="h6" >
+                          Upload your file:
+                        </Typography>
+                      </Grid>
+
+                      <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center' }}>
+                        <Input
+                          inputProps={{ accept: ".itp,.json,.fasta" }}
+                          color="primary"
+                          onChange={(e: any) => this.handleUpload(e.target.files)}
+                          type="file"
+                        />
+                      </Grid>
+                      <Grid item xs={1}></Grid>
+
+
+
                       <Marger size="1rem" />
 
 
@@ -795,7 +806,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
 
                             <Grid item xs={10}>
                               <Typography variant="body2" align="left">
-                                previous
+                                undo
                               </Typography>
                             </Grid>
                             <Grid item xs={2}>
@@ -887,3 +898,4 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
     )
   };
 }
+ 

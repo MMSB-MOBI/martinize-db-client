@@ -5,7 +5,7 @@ import PolymerViewer from './GeneratorViewer';
 import { FormState, SimulationNode, SimulationLink } from './SimulationType';
 import Warning from "./Dialog/warning";
 import { simulationToJson } from './generateJson';
-import { alarmBadLinks, linkcorrected } from './ViewerFunction';
+import { alarmBadLinks, linkcorrected, removeNode } from './ViewerFunction';
 import SocketIo from 'socket.io-client';
 import RunPolyplyDialog from "./Dialog/RunPolyplyDialog";
 import ItpFile from 'itp-parser-forked';
@@ -49,6 +49,7 @@ interface StateSimulation {
   width: number | undefined,
   inputpdb: undefined | string,
   jobfinish: undefined | string,
+  go_to_previous: SimulationNode[] | undefined,
 }
 
 interface GMProps {
@@ -60,13 +61,14 @@ interface GMProps {
 let currentAvaibleID = -1;
 export let generateID = (): string => {
   currentAvaibleID++;
+  console.log("new currentAvaibleID", currentAvaibleID)
   return currentAvaibleID.toString()
 }
 
 export let decreaseID = (clear = false): void => {
   if (clear) currentAvaibleID = -1
   else {
-    //console.log("new currentAvaibleID", currentAvaibleID)
+    console.log("new currentAvaibleID", currentAvaibleID)
     currentAvaibleID--;
   }
 }
@@ -74,6 +76,7 @@ export let decreaseID = (clear = false): void => {
 
 
 class GeneratorManager extends React.Component<GMProps, StateSimulation>{
+
   protected root = React.createRef<HTMLDivElement>();
 
   createTheme(hint: 'light' | 'dark') {
@@ -117,7 +120,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     width: undefined,
     inputpdb: undefined,
     jobfinish: undefined,
-
+    go_to_previous: undefined,
   }
 
   socket = SocketIo.connect(SERVER_ROOT);
@@ -167,27 +170,55 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
 
   }
 
+  FAKEUpdateSVG = () => {
+    console.log( "!!")
+    //throw new Error("Method not implemented.");
+  }
+
+
   go_back_to_previous_simulation = () => {
     //Give the previous simulation  nodes to the viewer part
-    console.log("previous node :", this.state.previous_Simulation_nodes)
-    currentAvaibleID = -1
-    this.setState({
-      Simulation: undefined,
-      customITP: {},
-      linksToAdd: [],
-      Warningmessage: "",
-      dialogWarning: "",
-      loading: false,
-      stepsubmit: undefined,
-      top: "",
-      itp: "",
-      gro: "",
-      pdb: "",
-      gro_coord: "",
-      current_position_fixlink: undefined,
-      errorfix: undefined,
-      nodesToAdd: this.state.previous_Simulation_nodes
-    })
+    //how to do it ? 
+    //Need to relauch the simulation with this new list of nodes 
+    // maybe remove everythiong and start from scrat with this list of bnode, but we might loose the position ???
+    console.log(this.state.previous_Simulation_nodes)
+    if (this.state.previous_Simulation_nodes) {
+      let newArray = this.state.previous_Simulation_nodes.map(function (el) {
+        return el.id;
+      });
+
+      console.log("previous id ", newArray)
+      let node_a_supp = this.state.Simulation?.nodes()
+        .filter((d: SimulationNode) => !(newArray.includes(d.id)))
+
+      for (let i of node_a_supp!) {
+        console.log("remove this one ", i)
+        removeNode(i, this.FAKEUpdateSVG, decreaseID)
+      }
+
+
+      //annuler le previous state ?????????
+      // !!!!!!!!!!!!!!!! WORK HERE AND DEAL WITH THE PREVIOUS NODES  
+
+      this.setState({
+        Simulation: undefined,
+        customITP: {},
+        linksToAdd: [],
+        Warningmessage: "",
+        dialogWarning: "",
+        loading: false,
+        stepsubmit: undefined,
+        top: "",
+        itp: "",
+        gro: "",
+        pdb: "",
+        gro_coord: "",
+        current_position_fixlink: undefined,
+        errorfix: undefined,
+        go_to_previous: this.state.previous_Simulation_nodes
+      })
+    }
+
   }
 
   getSimulation = (SimulationFromViewer: d3.Simulation<SimulationNode, SimulationLink>) => {

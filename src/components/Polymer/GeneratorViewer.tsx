@@ -173,9 +173,11 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
       this.UpdateSVG()
     }
 
-    // Init simulation 
 
   }
+  // Init simulation 
+
+
 
   // Define graph property
   UpdateSVG = () => {
@@ -193,7 +195,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
     // Si des news props apparaissent depuis manager on ajoute les noeuds !!!
 
     if (this.prevPropsNewnode !== this.props.newNodes) {
-      if (this.props.newNodes.length > 150) this.props.warningfunction("The navigation system may become temporarily unresponsive during the procedure, as you want to add significant number of molecules." )
+      if (this.props.newNodes.length > 150) this.props.warningfunction("The navigation system may become temporarily unresponsive during the procedure, as you want to add significant number of molecules.")
       addNodeToSVG(this.props.newNodes, this.simulation, this.UpdateSVG, zoomValue)
       this.polymer_is_modified()
       //Keep the previous props in memory
@@ -312,7 +314,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
             // Link ajouté en double Il faut check si les source target ne sont pas identiques
             console.log(newlinks)
             for (let link of newlinks) {
-              if ((link.source.id === newnodetarget.id) && (link.target.id === newnodesource.id)  ){
+              if ((link.source.id === newnodetarget.id) && (link.target.id === newnodesource.id)) {
                 add = false
               }
             }
