@@ -1,11 +1,11 @@
 import { CircularProgress, Grid, Paper } from "@mui/material";
 import * as React from "react";
 import GeneratorMenu from './GeneratorMenu';
-import PolymerViewer from './GeneratorViewer';
+import GeneratorViewer from './GeneratorViewer';
 import { FormState, SimulationNode, SimulationLink } from './SimulationType';
 import Warning from "./Dialog/warning";
 import { simulationToJson } from './generateJson';
-import { alarmBadLinks, linkcorrected, removeNode } from './ViewerFunction';
+import { alarmBadLinks, linkcorrected, removeNodes } from './ViewerFunction';
 import SocketIo from 'socket.io-client';
 import RunPolyplyDialog from "./Dialog/RunPolyplyDialog";
 import ItpFile from 'itp-parser-forked';
@@ -15,7 +15,8 @@ import { SERVER_ROOT } from '../../constants';
 import FixLink from "./Dialog/FixLink";
 import Settings from "../../Settings";
 import { Theme, withStyles, withTheme } from '@material-ui/core'
-const parsePdb = require('parse-pdb');
+import { FolderOpenOutlined } from "@material-ui/icons";
+//const parsePdb = require('parse-pdb');
 
 
 
@@ -28,7 +29,6 @@ interface StateSimulation {
   version: string,
   data_for_computation: any;
   Simulation: d3.Simulation<SimulationNode, SimulationLink> | undefined,
-  previous_Simulation_nodes: SimulationNode[],
   Warningmessage: string;
   customITP: { [name: string]: string },
   dialogWarning: string;
@@ -49,7 +49,8 @@ interface StateSimulation {
   width: number | undefined,
   inputpdb: undefined | string,
   jobfinish: undefined | string,
-  go_to_previous: SimulationNode[] | undefined,
+  previous_Simulation_nodes: { id: string; links: any[]; }[][],
+  go_to_previous: { id: string; links?: any[]; }[];
 }
 
 interface GMProps {
@@ -61,19 +62,15 @@ interface GMProps {
 let currentAvaibleID = -1;
 export let generateID = (): string => {
   currentAvaibleID++;
-  console.log("new currentAvaibleID", currentAvaibleID)
   return currentAvaibleID.toString()
 }
 
 export let decreaseID = (clear = false): void => {
   if (clear) currentAvaibleID = -1
   else {
-    console.log("new currentAvaibleID", currentAvaibleID)
     currentAvaibleID--;
   }
 }
-
-
 
 class GeneratorManager extends React.Component<GMProps, StateSimulation>{
 
@@ -98,7 +95,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
   state: StateSimulation = {
     version: "XXX",
     Simulation: undefined,
-    previous_Simulation_nodes: [],
+    previous_Simulation_nodes: [[]],
     customITP: {},
     nodesToAdd: [],
     linksToAdd: [],
@@ -120,13 +117,10 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     width: undefined,
     inputpdb: undefined,
     jobfinish: undefined,
-    go_to_previous: undefined,
+    go_to_previous: [],
   }
 
   socket = SocketIo.connect(SERVER_ROOT);
-
-  //@ts-ignore
-
 
   handleResize = () => {
     //console.log("resizing", this.root.current!.clientHeight, this.root.current!.clientWidth)
@@ -150,7 +144,6 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
         this.warningfunction("Fail! We cannot add this polymer to your history!")
       };
     })
-
   }
 
   add_to_history_and_redirect = async (): Promise<void> => {
@@ -167,76 +160,71 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
         this.warningfunction("Fail! We cannot add this polymer to your history!")
       };
     })
-
   }
 
-  FAKEUpdateSVG = () => {
-    console.log( "!!")
-    //throw new Error("Method not implemented.");
+  simulation_nodes_to_frame_shape = (node_from_simulation: SimulationNode[]) => {
+    let li = []
+    for (let node of node_from_simulation) {
+      let links: any[] = []
+      // NEED TO EXTRACT LINKS
+      if (node.links) {
+        let sub_li = []
+        for (let link of node.links) {
+          links.push(link.id)
+        }
+      }
+      li.push({ "id": node.id, "links": links })
+    }
+    return li
   }
-
 
   go_back_to_previous_simulation = () => {
-    //Give the previous simulation  nodes to the viewer part
-    //how to do it ? 
-    //Need to relauch the simulation with this new list of nodes 
-    // maybe remove everythiong and start from scrat with this list of bnode, but we might loose the position ???
-    console.log(this.state.previous_Simulation_nodes)
-    if (this.state.previous_Simulation_nodes) {
-      let newArray = this.state.previous_Simulation_nodes.map(function (el) {
-        return el.id;
-      });
-
-      console.log("previous id ", newArray)
-      let node_a_supp = this.state.Simulation?.nodes()
-        .filter((d: SimulationNode) => !(newArray.includes(d.id)))
-
-      for (let i of node_a_supp!) {
-        console.log("remove this one ", i)
-        removeNode(i, this.FAKEUpdateSVG, decreaseID)
-      }
-
-
-      //annuler le previous state ?????????
-      // !!!!!!!!!!!!!!!! WORK HERE AND DEAL WITH THE PREVIOUS NODES  
-
-      this.setState({
-        Simulation: undefined,
-        customITP: {},
-        linksToAdd: [],
-        Warningmessage: "",
-        dialogWarning: "",
-        loading: false,
-        stepsubmit: undefined,
-        top: "",
-        itp: "",
-        gro: "",
-        pdb: "",
-        gro_coord: "",
-        current_position_fixlink: undefined,
-        errorfix: undefined,
-        go_to_previous: this.state.previous_Simulation_nodes
-      })
+    // remove the frame
+    let copy_frame = [...this.state.previous_Simulation_nodes]
+    const last = copy_frame.pop()
+    console.log("this.state.previous_Simulation_nodes before", [...this.state.previous_Simulation_nodes])
+    console.log("this.state.previous_Simulation_nodes after", copy_frame)
+    if (last) {
+      this.setState({ previous_Simulation_nodes: copy_frame, go_to_previous: last })
     }
-
+    //means that we went back to first slides
+    else {
+      this.setState({ go_to_previous: [{ "id": "START" }] })
+    }
   }
 
-  getSimulation = (SimulationFromViewer: d3.Simulation<SimulationNode, SimulationLink>) => {
+
+  check_similarity = (oldNodes: any[], newNodes: any[]) => {
+    if (oldNodes.length !== newNodes.length) return false
+    for (let i in oldNodes) {
+      if (oldNodes[i].id !== newNodes[i].id) return false
+      if (oldNodes[i].links.length !== newNodes[i].links.length) return false
+    }
+    return true
+  }
+
+  getSimulation_and_update_previous = (SimulationFromViewer: d3.Simulation<SimulationNode, SimulationLink>) => {
+    // PROJET : 
+    // CHANGER LE REPRESENATION DU PREVIOUS SIMULATION
+    //POUR JUSTE FAIRE NODE ET LIEN ET ENSUITE GARDER UNE LIST POUR POUVOIR FAIRE UN TRUC RECURSIF
+    console.log("getSimulation_and_update_previous")
     if (this.state.Simulation === undefined) {
       this.setState({ Simulation: SimulationFromViewer })
     }
-    else {
+    else if (this.check_similarity(this.simulation_nodes_to_frame_shape(SimulationFromViewer.nodes()), this.simulation_nodes_to_frame_shape(this.state.Simulation.nodes()))) {
+      console.log(" not same simulation ??" )
       let nodes = [... this.state.Simulation.nodes()]
-      this.setState({ Simulation: SimulationFromViewer, previous_Simulation_nodes: nodes })
+      let old_previous = [... this.state.previous_Simulation_nodes]
+      old_previous.push(this.simulation_nodes_to_frame_shape(nodes))
+      this.setState({ Simulation: SimulationFromViewer, previous_Simulation_nodes: old_previous })
     }
-
+    else {
+     console.log("same simulation ??",this.check_similarity(this.simulation_nodes_to_frame_shape(SimulationFromViewer.nodes()), this.simulation_nodes_to_frame_shape(this.state.Simulation.nodes())))
+    }
   }
 
-
   change_current_position_fixlink = (linktofix: SimulationLink): void => {
-    //console.log("change_current_position_fixlink")
     let c = 0
-
     for (let bordel of this.state.errorLink) {
       let l = [linktofix.source.id, linktofix.target.id]
       // Super dumb condition 
@@ -266,10 +254,8 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
   }
 
   ce_truc_est_fixed = (id: number): void => {
+    //Keep a trace of which link has been fixed 
     this.state.errorfix[id].is_fixed = true
-    // let copy = this.state.errorfix
-    // copy[id].is_fixed = true
-    // this.setState({ errorfix: copy })
     let id1 = parseInt(this.state.errorfix[id]['startchoice'][0]['idres']) - 1
     let id2 = parseInt(this.state.errorfix[id]['endchoice'][0]['idres']) - 1
     linkcorrected(id1.toString(), id2.toString())
@@ -277,6 +263,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
 
 
   new_modification = (): void => {
+    // The polymer have been updated need to init some states
     this.setState({
       top: "",
       itp: "",
@@ -284,8 +271,11 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
       pdb: "",
       errorLink: [],
       current_position_fixlink: undefined,
-      errorfix: undefined
+      errorfix: undefined,
+      go_to_previous: []
+
     })
+
   }
 
   addprotsequence = (sequence: string) => {
@@ -723,7 +713,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     //Check forcefield 
     if (this.state.Simulation) {
       let lennode = this.state.Simulation!.nodes().length
-      console.log(this.state.Simulation!.nodes())
+      console.log("Now, we have", this.state.Simulation!.nodes(), "nodes in the simulation")
       if (lennode > 600) {
         this.setState({ Warningmessage: "You have exceeded the maximum number of residues. The limit is 600 and you will have  " + lennode + "." })
         return
@@ -1226,16 +1216,17 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
 
           {(this.root.current) ?
             (
-              <PolymerViewer
+              <GeneratorViewer
                 modification={this.new_modification}
                 change_current_position_fixlink={this.change_current_position_fixlink}
                 warningfunction={this.warningfunction}
                 forcefield={this.currentForceField}
-                getSimulation={this.getSimulation}
+                getSimulation_and_update_previous={this.getSimulation_and_update_previous}
                 newNodes={this.state.nodesToAdd}
                 newLinks={this.state.linksToAdd}
                 height={this.state.height ? this.state.height : this.root.current!.clientHeight}
                 width={this.state.width ? this.state.width : this.root.current!.clientWidth}
+                previous={this.state.go_to_previous}
               />
             ) :
             (

@@ -2,7 +2,7 @@ import * as React from "react";
 import * as d3 from "d3";
 import CustomContextMenu from "./Viewer/CustomContextMenu";
 import { SimulationNode, SimulationLink, SimulationGroup } from './SimulationType';
-import { initSimulation, setsizeSVG, reloadSimulation, addNodeToSVG, addLinkToSVG, setSVG, setnodeSize, removeNode } from './ViewerFunction';
+import { initSimulation, setsizeSVG, reloadSimulation, addNodeToSVG, addLinkToSVG, setSVG, setnodeSize, removeNodes } from './ViewerFunction';
 import { decreaseID, generateID } from './GeneratorManager'
 import './GeneratorViewer.css';
 
@@ -11,11 +11,12 @@ interface propsviewer {
   newNodes: SimulationNode[];
   newLinks: SimulationLink[];
   warningfunction: (arg: any) => void;
-  getSimulation: (arg: any) => void;
+  getSimulation_and_update_previous: (arg: any) => void;
   change_current_position_fixlink: (arg: any) => void;
   modification: () => void;
   height: number;
   width: number;
+  previous: { id: string; links?: any[]; }[];
 }
 
 interface statecustommenu {
@@ -145,9 +146,9 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
   componentDidUpdate(prevProps: propsviewer, prevStates: statecustommenu) {
     //Check state and props 
     if ((prevProps.newNodes !== this.props.newNodes) || (prevProps.newLinks !== this.props.newLinks)) {
+      console.log("Update ", prevProps.newNodes, this.props.newNodes ,prevProps.newLinks , this.props.newLinks)
       this.UpdateSVG()
     }
-
 
     if (prevProps.width !== this.props.width) {
       d3.select(this.ref)
@@ -173,10 +174,37 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
       this.UpdateSVG()
     }
 
+  
+    if (this.props.previous.length > 0) {
+      console.log("need to go to previous", this.props.previous)
+      // If we go back to the first frame
+      if ( (this.props.previous.length === 1) && ( this.props.previous[0].id == "START"))  {
+        d3.select(this.ref).selectAll("path").remove()
+        d3.select(this.ref).selectAll("line").remove()
+        decreaseID(true)
+      }
 
+      else if (this.props.previous.length < this.simulation?.nodes().length) {
+        let newArray = this.props.previous.map(function (el) {
+          return el.id;
+        });
+        let node_a_supp = this.simulation?.nodes().filter((d: SimulationNode) => !(newArray.includes(d.id)))
+        console.log("hop")
+        removeNodes(node_a_supp, this.UpdateSVG, decreaseID)
+      }
+      else {
+        for (let i_node_current in this.simulation?.nodes()) {
+          const n1 = this.props.previous[i_node_current]
+          const n2 = this.simulation?.nodes()[i_node_current]
+          if (n1.links?.length !== n2.links?.length){
+            console.log(n1 ,n2)
+          }
+         
+        }
+      }
+
+    }
   }
-  // Init simulation 
-
 
 
   // Define graph property
@@ -235,8 +263,8 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
       }
     }
     //Send new simulation to Manager component
-    this.props.getSimulation(this.simulation)
     reloadSimulation(this.simulation, groups)
+    this.props.getSimulation_and_update_previous(this.simulation)
   }
 
   handleClose = () => {
@@ -387,9 +415,11 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
 
     const handleDelete = (event: React.KeyboardEvent) => {
       if (event.key === "Delete") {
-        d3.select(this.ref).selectAll<SVGCircleElement, SimulationNode>('path.onfocus').each((node: SimulationNode) => {
-          removeNode(node, this.UpdateSVG, decreaseID);
-        })
+        let li: SimulationNode[] = []
+        d3.select(this.ref).selectAll<SVGCircleElement, SimulationNode>('path.onfocus').each((node: SimulationNode) => { li.push(node) })
+
+        removeNodes(li, this.UpdateSVG, decreaseID);
+
       }
     }
 

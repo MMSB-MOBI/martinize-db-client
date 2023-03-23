@@ -6,7 +6,7 @@ import Typography from '@mui/material/Typography';
 import * as d3 from "d3";
 import { SimulationNode, SimulationLink, SimulationGroup } from '../SimulationType';
 import { DownloadJson } from '../generateJson';
-import { addLinkToSVG, addNodeToSVG, removeNode } from "../ViewerFunction";
+import { addLinkToSVG, addNodeToSVG, removeNodes } from "../ViewerFunction";
 import { decreaseID } from '../GeneratorManager'
 
 
@@ -154,10 +154,9 @@ export default class CustomContextMenu extends React.Component<props> {
     }
 
     removeSelectedNodes = (nodes: d3.Selection<SVGPathElement, SimulationNode, SVGSVGElement, unknown>) => {
-        nodes.each((node: SimulationNode) => {
-            console.log(node)
-            removeNode(node, this.props.handleUpdate, decreaseID);
-        })
+        let li: SimulationNode[] = []
+        nodes.each((node: SimulationNode) => { li.push(node) })
+        removeNodes(li, this.props.handleUpdate, decreaseID)
     }
 
     removeLinksSelected = (nodes: d3.Selection<SVGPathElement, SimulationNode, SVGSVGElement, unknown>) => {
@@ -168,12 +167,12 @@ export default class CustomContextMenu extends React.Component<props> {
 
         console.log("Remove links between : ", listnodes)
         for (let node of listnodes) {
-            
+
             if (node.links !== undefined) {
                 for (let linkednode of node.links) {
-                    
+
                     if (listnodes.includes(linkednode)) {
-                        
+
                         // BUUUUUUUUG
 
                         node.links = node.links!.filter((nodeToRM: SimulationNode) => nodeToRM.id !== linkednode.id);
@@ -186,7 +185,6 @@ export default class CustomContextMenu extends React.Component<props> {
     }
 
     clear = () => {
-        
         this.props.svg.selectAll("path").remove()
         this.props.svg.selectAll("line").remove()
         this.props.handleUpdate()
@@ -451,7 +449,7 @@ export default class CustomContextMenu extends React.Component<props> {
                 {(this.props.nodeClick) &&
                     <div>
                         <MenuItem onClick={() => { this.removeNodeLinks(this.props.nodeClick!) }}>Remove link</MenuItem>
-                        <MenuItem onClick={() => { if (this.props.nodeClick !== undefined) removeNode(this.props.nodeClick, this.props.handleUpdate, decreaseID) }}>Remove node #{this.props.nodeClick.id}</MenuItem>
+                        <MenuItem onClick={() => { if (this.props.nodeClick !== undefined) removeNodes( [this.props.nodeClick], this.props.handleUpdate, decreaseID) }}>Remove node #{this.props.nodeClick.id}</MenuItem>
                         <MenuItem onClick={() => { this.giveConnexeNode(this.props.nodeClick!).attr("class", "onfocus") }}>Select this polymer</MenuItem>
                         <Divider />
                     </div>

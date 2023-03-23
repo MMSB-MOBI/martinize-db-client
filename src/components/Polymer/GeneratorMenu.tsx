@@ -193,7 +193,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
         let reader = new FileReader();
 
         reader.onload = (event: any) => {
-          this.props.addCustomitp( md5(event.target.result), "; Custom connexion rule \n"+ event.target.result)
+          this.props.addCustomitp(md5(event.target.result), "; Custom connexion rule \n" + event.target.result)
         }
         reader.readAsText(file);
       }
@@ -268,7 +268,6 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
   onWantGoBack = (e: React.MouseEvent) => {
     // Don't go to #!
     e.preventDefault();
-    //this.props.clear()
     this.setState({
       want_go_back: true
     });
@@ -527,8 +526,8 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
                           Welcome on MAD:Polymer Editor, powered by polyply, you can create and edit polymers.
                           You can load molecules from the Polyply database or import new martinized molecule.
                           If a particular type of link between 2 residues is not provided by Polyply, a dialog window will guide you through the
-                          process of setting it up.  You can also load a previously saved polymer in .json format or load a protein sequence in
-                          .fasta format. Additionally, Polyply allows you to load the topology of a new molecule in .itp.
+                          process of setting it up.  You can also load a previously saved polymer in .json format, a protein sequence in
+                          .fasta format or the topology of a new molecule in .itp.
                         </Typography>
                       </Grid>
                       <Grid item xs={1}></Grid>
@@ -543,8 +542,8 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
                           Welcome on MAD:Polymer Editor, powered by polyply, you can create and edit polymers in order to modify the protein that have been loaded.
                           You can load molecules from the Polyply database or import new martinized molecule.
                           If a particular type of link between 2 residues is not provided by Polyply, a dialog window will guide you through the
-                          process of setting it up.  You can also load a previously saved polymer in .json format or load a protein sequence in
-                          .fasta format. Additionally, Polyply allows you to load the topology of a new molecule in .itp.
+                          process of setting it up. You can also load a previously saved polymer in .json format, a protein sequence in
+                          .fasta format or the topology of a new molecule in .itp.
                         </Typography>
                       </Grid>
                       <Grid item xs={1}></Grid>
@@ -555,7 +554,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
                   {(this.state.moleculeAdded || (this.state.addMolecule == "false")) &&
                     <>
 
-                      {(this.state.moleculeAdded ) &&
+                      {(this.state.moleculeAdded) &&
                         <>
 
                           <Grid item xs={1}></Grid>
@@ -806,7 +805,9 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
 
                             <Grid item xs={10}>
                               <Typography variant="body2" align="left">
-                                undo
+                              <s>undo</s>
+                                  
+                                 
                               </Typography>
                             </Grid>
                             <Grid item xs={2}>
@@ -898,4 +899,4 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
     )
   };
 }
- 
+
