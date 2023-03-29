@@ -187,15 +187,6 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     else this.setState({ go_to_previous: [{ "id": "START" }] })
   }
 
-  check_similarity = (oldNodes: any[], newNodes: any[]) => {
-    if (oldNodes.length !== newNodes.length) return false
-    for (let i in oldNodes) {
-      if (oldNodes[i].id !== newNodes[i].id) return false
-      if (oldNodes[i].links.length !== newNodes[i].links.length) return false
-    }
-    return true
-  }
-
   getSimulation_and_update_previous = (SimulationFromViewer: d3.Simulation<SimulationNode, SimulationLink>) => {
     let nodes = [...SimulationFromViewer.nodes()]
     let old_previous = [... this.state.previous_Simulation_nodes]

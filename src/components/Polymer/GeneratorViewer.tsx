@@ -65,6 +65,14 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
     console.log("polymer_is_modified")
   }
 
+  check_similarity = (oldNodes: any[], newNodes: any[]) => {
+    if (oldNodes.length !== newNodes.length) return false
+    for (let i in oldNodes) {
+      if (oldNodes[i].id !== newNodes[i].id) return false
+      if (oldNodes[i].links.length !== newNodes[i].links.length) return false
+    }
+    return true
+  }
 
   componentDidMount() {
     //console.log(this.ref )
@@ -182,48 +190,42 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
           return el.id;
         });
         let node_a_supp = this.simulation?.nodes().filter((d: SimulationNode) => !(newArray.includes(d.id)))
-        console.log("hop")
+        console.log("hop", this.props.previous.length, this.simulation?.nodes().length)
         removeNodes(node_a_supp, this.UpdateSVG, decreaseID)
       }
-      else {
+      else if (this.check_similarity(this.props.previous, this.simulation?.nodes()) === false) {
+        console.log("else", this.props.previous.length, this.simulation?.nodes().length)
         // the number of  nodes dont change so a link has been changed 
-        let node1: SimulationNode | undefined = undefined
-        let node2: SimulationNode | undefined = undefined
         for (let i_node_current in this.simulation?.nodes()) {
           const prev_state = this.props.previous[i_node_current]
           const node = this.simulation?.nodes()[i_node_current]
           if (prev_state.links?.length !== node.links?.length) {
-            if (node1 === undefined) node1 = node
-            else node2 = node
-            // console.log(n1, n2)
-            // need to remove a node here into the simulation node n2 
 
-            // console.log(  d3.select(this.ref)
-            // .selectAll<SVGLineElement, SimulationLink>("line")
-            // .filter( (L : SimulationLink) => (( L.source.id === n1.id) && ( L.target.id === n2.id)  ) || ( L.target.id === n1.id) && ( L.source.id === n2.id)  )
-            // )
-            // d3.select(this.ref).selectAll<SVGLineElement, SimulationLink>("line").filter((l: SimulationLink) => (l === link)).remove();
-            //d3.select(this.ref).selectAll("line").filter((link: any) => ((link.source.id === nodeToRemove.id) || (link.target.id === nodeToRemove.id))).remove();
+            if (node.links !== undefined) {
+              for (let nodelinked of node.links) {
+                if (!prev_state.links?.includes(nodelinked.id)) {
+                  // need to remove a node here into the simulation node n2 
+                  console.log(prev_state, nodelinked)
+                  let link: SimulationLink = d3.select(this.ref)
+                    .selectAll<SVGLineElement, SimulationLink>("line")
+                    .filter((L: SimulationLink) => ((L.source.id === prev_state.id) && (L.target.id === nodelinked.id)) || (L.target.id === prev_state.id) && (L.source.id === nodelinked.id)).datum()
+
+                  link.source.links = link.source.links!.filter((nodelink: SimulationNode) => nodelink !== link.target);
+                  link.target.links = link.target.links!.filter((nodelink: SimulationNode) => nodelink !== link.source);
+
+                  d3.select(this.ref).selectAll<SVGLineElement, SimulationLink>("line").filter((l: SimulationLink) => (l === link)).remove();
+                }
+              }
+            }
           }
         }
-
-        if ((node1 !== undefined) && (node2 !== undefined)) {
-          let link = d3.select(this.ref)
-            .selectAll<SVGLineElement, SimulationLink>("line")
-            .filter((L: SimulationLink) => ((L.source.id === node1!.id) && (L.target.id === node2!.id)) || (L.target.id === node1!.id) && (L.source.id === node2!.id)).datum()
-          link.source.links = link.source.links!.filter((nodelink: SimulationNode) => nodelink !== link.target);
-          link.target.links = link.target.links!.filter((nodelink: SimulationNode) => nodelink !== link.source);
-
-          d3.select(this.ref).selectAll<SVGLineElement, SimulationLink>("line").filter((l: SimulationLink) => (l === link)).remove();
-          this.UpdateSVG()
-        }
-
-
+        this.UpdateSVG()
       }
-
+      else {
+        console.log("Nothing as expected")
+      }
     }
   }
-
 
   // Define graph property
   UpdateSVG = () => {
