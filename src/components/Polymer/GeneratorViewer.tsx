@@ -69,7 +69,9 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
     if (oldNodes.length !== newNodes.length) return false
     for (let i in oldNodes) {
       if (oldNodes[i].id !== newNodes[i].id) return false
-      if (oldNodes[i].links.length !== newNodes[i].links.length) return false
+     // if (Object.keys(oldNodes[i]).length !== Object.keys(newNodes[i]).length) return false
+      if ((oldNodes[i].links) && (newNodes[i].links))  if (oldNodes[i].links.length !== newNodes[i].links.length) return false
+     
     }
     return true
   }
@@ -219,7 +221,8 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
             }
           }
         }
-        this.UpdateSVG()
+        this.polymer_is_modified()
+        this.UpdateSVG() 
       }
       else {
         console.log("Nothing as expected")

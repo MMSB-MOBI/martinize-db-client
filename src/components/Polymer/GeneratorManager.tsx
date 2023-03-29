@@ -701,8 +701,16 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
       let newMolecule: SimulationNode[] = [];
       let newlinks = [];
       if (toadd.add_to_every_residue) {
+        if (this.state.Simulation === undefined) {
+          this.warningfunction("The residue  " + toadd.add_to_every_residue + " is not present in your current polymer. Please add residues. ")
+          return
+        }
+
         const nodelist = this.state.Simulation!.nodes().filter((node: SimulationNode) => node.resname === toadd.add_to_every_residue)
-        if (nodelist.length === 0) this.warningfunction("The residue  " + toadd.add_to_every_residue + " is not present in your current polymer.")
+        if (nodelist.length === 0) {
+          this.warningfunction("The residue  " + toadd.add_to_every_residue + " is not present in your current polymer.")
+          return
+        }
         for (let n of nodelist) {
 
           // convert to node object et injecte dans la list
@@ -810,12 +818,8 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
   }
 
   closeDialog = (): void => {
-
     this.setState({ stepsubmit: undefined, loading: false, itp: "", gro: "", pdb: "", dialogWarning: "" })
-
   }
-
-
 
   ClickToSend = (): void => {
     console.log("Go to server");
@@ -892,7 +896,6 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     }
   }
 
-
   fixlinkcomponentappear = () => {
     this.setState({ current_position_fixlink: 0 })
   }
@@ -929,7 +932,6 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     this.setState({ height: this.root.current!.clientHeight, width: this.root.current!.clientWidth })
     window.addEventListener('resize', this.handleResize)
 
-
     this.socket.on("polyply_data", (data: any) => {
       console.log("Data loaded.")
       this.setState({ dataForForm: data })
@@ -943,9 +945,6 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
       this.setState({ version: data })
     }
     )
-
-
-
 
     this.socket.on("error_itp", (error: string) => {
       this.setState({
