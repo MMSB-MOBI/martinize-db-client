@@ -117,7 +117,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
         //On recupere la valeur de zoom 
         zoomValue = event.transform.k;
         //On modifie le rayon en fonction du zoom  
-        console.log("Zoom");
+        console.log(event.transform.k);
 
         d3.select(this.ref)
           .selectAll<SVGCircleElement, SimulationNode>("path")
@@ -126,14 +126,10 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
             return this.getAttribute("transform") + ` scale(${zoomValue})`;
           });
 
-        //console.log("distance", (this.nodeSize / 4) * zoomValue)
-
         //Change simulation property
         this.simulation
           .force("link", d3.forceLink().distance((this.nodeSize / 4) * (zoomValue * zoomValue)).strength(0.9))
           .force("charge", d3.forceManyBody().strength(-this.nodeSize * 3 * (zoomValue * zoomValue)))
-
-        //console.log(zoomValue, (this.nodeSize / 4) * (zoomValue * zoomValue))
 
         this.UpdateSVG()
       }
@@ -146,7 +142,6 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
   componentDidUpdate(prevProps: propsviewer, prevStates: statecustommenu) {
     //Check state and props 
     if ((prevProps.newNodes !== this.props.newNodes) || (prevProps.newLinks !== this.props.newLinks)) {
-      console.log("Update ", prevProps.newNodes, this.props.newNodes ,prevProps.newLinks , this.props.newLinks)
       this.UpdateSVG()
     }
 
@@ -155,7 +150,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
         .attr("width", this.props.width)
 
       setsizeSVG(this.props.height, this.props.width)
-      //console.log("Change width");
+
 
       this.simulation
         .force("x", d3.forceX(this.props.width / 2).strength(0.2))
@@ -174,16 +169,14 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
       this.UpdateSVG()
     }
 
-  
+
     if (this.props.previous.length > 0) {
-      console.log("need to go to previous", this.props.previous)
       // If we go back to the first frame
-      if ( (this.props.previous.length === 1) && ( this.props.previous[0].id == "START"))  {
+      if ((this.props.previous.length === 1) && (this.props.previous[0].id == "START")) {
         d3.select(this.ref).selectAll("path").remove()
         d3.select(this.ref).selectAll("line").remove()
         decreaseID(true)
       }
-
       else if (this.props.previous.length < this.simulation?.nodes().length) {
         let newArray = this.props.previous.map(function (el) {
           return el.id;
@@ -193,14 +186,39 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
         removeNodes(node_a_supp, this.UpdateSVG, decreaseID)
       }
       else {
+        // the number of  nodes dont change so a link has been changed 
+        let node1: SimulationNode | undefined = undefined
+        let node2: SimulationNode | undefined = undefined
         for (let i_node_current in this.simulation?.nodes()) {
-          const n1 = this.props.previous[i_node_current]
-          const n2 = this.simulation?.nodes()[i_node_current]
-          if (n1.links?.length !== n2.links?.length){
-            console.log(n1 ,n2)
+          const prev_state = this.props.previous[i_node_current]
+          const node = this.simulation?.nodes()[i_node_current]
+          if (prev_state.links?.length !== node.links?.length) {
+            if (node1 === undefined) node1 = node
+            else node2 = node
+            // console.log(n1, n2)
+            // need to remove a node here into the simulation node n2 
+
+            // console.log(  d3.select(this.ref)
+            // .selectAll<SVGLineElement, SimulationLink>("line")
+            // .filter( (L : SimulationLink) => (( L.source.id === n1.id) && ( L.target.id === n2.id)  ) || ( L.target.id === n1.id) && ( L.source.id === n2.id)  )
+            // )
+            // d3.select(this.ref).selectAll<SVGLineElement, SimulationLink>("line").filter((l: SimulationLink) => (l === link)).remove();
+            //d3.select(this.ref).selectAll("line").filter((link: any) => ((link.source.id === nodeToRemove.id) || (link.target.id === nodeToRemove.id))).remove();
           }
-         
         }
+
+        if ((node1 !== undefined) && (node2 !== undefined)) {
+          let link = d3.select(this.ref)
+            .selectAll<SVGLineElement, SimulationLink>("line")
+            .filter((L: SimulationLink) => ((L.source.id === node1!.id) && (L.target.id === node2!.id)) || (L.target.id === node1!.id) && (L.source.id === node2!.id)).datum()
+          link.source.links = link.source.links!.filter((nodelink: SimulationNode) => nodelink !== link.target);
+          link.target.links = link.target.links!.filter((nodelink: SimulationNode) => nodelink !== link.source);
+
+          d3.select(this.ref).selectAll<SVGLineElement, SimulationLink>("line").filter((l: SimulationLink) => (l === link)).remove();
+          this.UpdateSVG()
+        }
+
+
       }
 
     }
@@ -272,7 +290,6 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
   };
 
   pasteThesedNodes = (listNodesToPaste: any, idStarting?: string) => {
-    console.log("pasteSelectedNode")
     const idModification: any[] = [];
     let oldNodes: SimulationNode[] = []
     //On parcours la selection svg des noeuds a copier 
@@ -340,7 +357,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
 
             //check if the link doesnt already exist 
             // Link ajouté en double Il faut check si les source target ne sont pas identiques
-            console.log(newlinks)
+
             for (let link of newlinks) {
               if ((link.source.id === newnodetarget.id) && (link.target.id === newnodesource.id)) {
                 add = false
@@ -362,7 +379,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
   }
 
   handleContextMenu = (event: React.MouseEvent) => {
-    console.log("Custom menu");
+
     event.preventDefault();
     const element = document.elementFromPoint(event.clientX, event.clientY);
 
@@ -407,7 +424,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
 
     const clickAncCloseMenu = (event: React.MouseEvent) => {
       event.preventDefault();
-      console.log("clickAncCloseMenu")
+
       if (this.state.show) {
         this.handleClose()
       }

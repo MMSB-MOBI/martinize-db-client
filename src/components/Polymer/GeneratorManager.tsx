@@ -10,12 +10,11 @@ import SocketIo from 'socket.io-client';
 import RunPolyplyDialog from "./Dialog/RunPolyplyDialog";
 import ItpFile from 'itp-parser-forked';
 import { blue } from "@material-ui/core/colors";
-import { Marger, setPageTitle } from "../../helpers";
+import { setPageTitle } from "../../helpers";
 import { SERVER_ROOT } from '../../constants';
 import FixLink from "./Dialog/FixLink";
 import Settings from "../../Settings";
 import { Theme, withStyles, withTheme } from '@material-ui/core'
-import { FolderOpenOutlined } from "@material-ui/icons";
 //const parsePdb = require('parse-pdb');
 
 
@@ -123,22 +122,18 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
   socket = SocketIo.connect(SERVER_ROOT);
 
   handleResize = () => {
-    //console.log("resizing", this.root.current!.clientHeight, this.root.current!.clientWidth)
     this.setState({ height: this.root.current!.clientHeight, width: this.root.current!.clientWidth })
   }
 
   currentForceField = 'martini3';
 
   add_to_history = () => {
-    //console.log(this.state)
     this.state.data_for_computation['userId'] = Settings.user?.id
     this.socket.emit("add_to_history", this.state.data_for_computation)
-
     this.socket.on("add_to_history_answer", async (res: string) => {
       if (res) {
         this.setState({ jobfinish: res })
         this.warningfunction("The polymer has been added to your history!");
-
       }
       else {
         this.warningfunction("Fail! We cannot add this polymer to your history!")
@@ -181,18 +176,16 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
   go_back_to_previous_simulation = () => {
     // remove the frame
     let copy_frame = [...this.state.previous_Simulation_nodes]
-    const last = copy_frame.pop()
-    console.log("this.state.previous_Simulation_nodes before", [...this.state.previous_Simulation_nodes])
-    console.log("this.state.previous_Simulation_nodes after", copy_frame)
-    if (last) {
-      this.setState({ previous_Simulation_nodes: copy_frame, go_to_previous: last })
-    }
+    const cut = copy_frame.length - 2
+    const last = copy_frame[cut]
+    //PROBLEME QUAND ON NE VEUX SUPPRIMER QUE 2
+    copy_frame = copy_frame.slice(0, cut)
+    console.log("Go back to ", last)
+    if (last === undefined) this.setState({ go_to_previous: [{ "id": "START" }] })
+    else if (last.length !== 0) this.setState({ previous_Simulation_nodes: copy_frame, go_to_previous: last })
     //means that we went back to first slides
-    else {
-      this.setState({ go_to_previous: [{ "id": "START" }] })
-    }
+    else this.setState({ go_to_previous: [{ "id": "START" }] })
   }
-
 
   check_similarity = (oldNodes: any[], newNodes: any[]) => {
     if (oldNodes.length !== newNodes.length) return false
@@ -204,23 +197,12 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
   }
 
   getSimulation_and_update_previous = (SimulationFromViewer: d3.Simulation<SimulationNode, SimulationLink>) => {
-    // PROJET : 
-    // CHANGER LE REPRESENATION DU PREVIOUS SIMULATION
-    //POUR JUSTE FAIRE NODE ET LIEN ET ENSUITE GARDER UNE LIST POUR POUVOIR FAIRE UN TRUC RECURSIF
-    console.log("getSimulation_and_update_previous")
-    if (this.state.Simulation === undefined) {
-      this.setState({ Simulation: SimulationFromViewer })
-    }
-    else if (this.check_similarity(this.simulation_nodes_to_frame_shape(SimulationFromViewer.nodes()), this.simulation_nodes_to_frame_shape(this.state.Simulation.nodes()))) {
-      console.log(" not same simulation ??" )
-      let nodes = [... this.state.Simulation.nodes()]
-      let old_previous = [... this.state.previous_Simulation_nodes]
-      old_previous.push(this.simulation_nodes_to_frame_shape(nodes))
-      this.setState({ Simulation: SimulationFromViewer, previous_Simulation_nodes: old_previous })
-    }
-    else {
-     console.log("same simulation ??",this.check_similarity(this.simulation_nodes_to_frame_shape(SimulationFromViewer.nodes()), this.simulation_nodes_to_frame_shape(this.state.Simulation.nodes())))
-    }
+    let nodes = [...SimulationFromViewer.nodes()]
+    let old_previous = [... this.state.previous_Simulation_nodes]
+    old_previous.push(this.simulation_nodes_to_frame_shape(nodes))
+    console.log("getSimulation_and_update_previous new previous state", old_previous)
+    this.setState({ Simulation: SimulationFromViewer, previous_Simulation_nodes: old_previous })
+
   }
 
   change_current_position_fixlink = (linktofix: SimulationLink): void => {
@@ -713,7 +695,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     //Check forcefield 
     if (this.state.Simulation) {
       let lennode = this.state.Simulation!.nodes().length
-      console.log("Now, we have", this.state.Simulation!.nodes(), "nodes in the simulation")
+      //onsole.log("Now, we have", this.state.Simulation!.nodes(), "nodes in the simulation")
       if (lennode > 600) {
         this.setState({ Warningmessage: "You have exceeded the maximum number of residues. The limit is 600 and you will have  " + lennode + "." })
         return
@@ -915,7 +897,6 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
       }
 
       this.setState({ stepsubmit: 1, data_for_computation: data })
-      console.log("socket.emit('run_itp_generation')", data)
       this.socket.emit('run_itp_generation', data)
     }
   }
@@ -1010,7 +991,6 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
 
     //Ecoute sur le socket 
     this.socket.on("itp", (res: string) => {
-      console.log("j'ai recu un itp")
       if (res !== "") {
         this.setState({ stepsubmit: 2 })
         this.setState({ itp: res })
@@ -1019,13 +999,13 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
 
         // const klcdwu = this.returnITPinfo(res)
 
-        // console.log("this.returnITPinfo(res)", klcdwu)
+
         // const NBatomsITP: number = klcdwu![0].length
         // const NBlinksITP: number = klcdwu![1].length
         // const NBatomsSIM: number = jsonpolymer.nodes.length
         // const NBlinksSIM: number = jsonpolymer.links.length
 
-        // console.log(NBatomsITP, NBlinksITP, NBatomsSIM, NBlinksSIM)
+
         // if (NBatomsSIM !== NBatomsITP) {
         //   this.setState({ dialogWarning: "WHOUWHOUWHOU alert au node" })
 
@@ -1033,7 +1013,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
         // else if (NBlinksSIM !== NBlinksITP) {
         //   this.setState({ dialogWarning: "Probleme de lien entre le fichier generé par polyply et la representation" })
         //   //Check missing links
-        //   console.log(this.state.Simulation)
+
         //   socket.emit("continue")
 
         // }
@@ -1044,7 +1024,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
         this.state.data_for_computation['itp'] = res
 
         this.socket.emit("run_gro_generation", this.state.data_for_computation)
-        console.log("run_gro_generation")
+
       }
     })
 
@@ -1057,11 +1037,11 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
       //@ts-ignore
       this.state.data_for_computation['top'] = datafromsocket['top']
       this.socket.emit("run_pdb_generation", this.state.data_for_computation)
-      //console.log("on emit run_pdb_generation")
+
     })
 
     this.socket.on("pdb", (data: string) => {
-      console.log("pdb recu")
+      console.log("pdb done")
       this.setState({ pdb: data })
       this.state.data_for_computation['pdb'] = data
       this.setState({ stepsubmit: 4 })

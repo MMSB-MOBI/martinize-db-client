@@ -33,7 +33,7 @@ export function initSimulation(sizeNodenodeSize: number): d3.Simulation<Simulati
 }
 
 export function reloadSimulation(simulation: d3.Simulation<SimulationNode, SimulationLink>, groupsData: SimulationGroup[]) {
-    console.log("Reload simulation, with this number of nodes", simulation.nodes().length);
+    // console.log("Reload simulation, with this number of nodes", simulation.nodes().length);
 
     const updatePolymerPath = (listOfGroups: SimulationGroup[]) => {
         //console.log( "update polymer group path ", listOfGroups)

@@ -191,8 +191,6 @@ export default class CustomContextMenu extends React.Component<props> {
         decreaseID(true)
     }
 
-
-
     //list d3 qui forme le polygon autour de cette liste
     groupPolymer = (listNodesD3: d3.Selection<SVGPathElement, SimulationNode, SVGSVGElement, unknown>) => {
         //clean the previous selected nodes

@@ -805,9 +805,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
 
                             <Grid item xs={10}>
                               <Typography variant="body2" align="left">
-                              <s>undo</s>
-                                  
-                                 
+                               undo 
                               </Typography>
                             </Grid>
                             <Grid item xs={2}>
