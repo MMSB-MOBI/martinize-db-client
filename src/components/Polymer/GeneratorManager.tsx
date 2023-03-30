@@ -24,7 +24,7 @@ import { Theme, withStyles, withTheme } from '@material-ui/core'
 //
 // Objectif : faire pareil avec element selectionnable dans le bloc menu et ajoutable dans le bloc viewer si deposer
 //https://javascript.plainenglish.io/how-to-implement-drag-and-drop-from-react-to-svg-d3-16700f01470c
-interface StateSimulation {
+interface StateSimulation { 
   version: string,
   data_for_computation: any;
   Simulation: d3.Simulation<SimulationNode, SimulationLink> | undefined,
@@ -61,6 +61,10 @@ interface GMProps {
 let currentAvaibleID = -1;
 export let generateID = (): string => {
   currentAvaibleID++;
+  return currentAvaibleID.toString()
+}
+
+export let getID = (): string => {
   return currentAvaibleID.toString()
 }
 
@@ -181,10 +185,13 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     //PROBLEME QUAND ON NE VEUX SUPPRIMER QUE 2
     copy_frame = copy_frame.slice(0, cut)
     console.log("Go back to ", last)
-    if (last === undefined) this.setState({ go_to_previous: [{ "id": "START" }] })
-    else if (last.length !== 0) this.setState({ previous_Simulation_nodes: copy_frame, go_to_previous: last })
+    if ((last === undefined) || (last.length === 0)) {
+      this.setState({ go_to_previous: [{ "id": "START" }] })
+      this.clear()
+    }
+    else this.setState({ previous_Simulation_nodes: copy_frame, go_to_previous: last })
     //means that we went back to first slides
-    else this.setState({ go_to_previous: [{ "id": "START" }] })
+    //else this.setState({ go_to_previous: [{ "id": "START" }] })
   }
 
   getSimulation_and_update_previous = (SimulationFromViewer: d3.Simulation<SimulationNode, SimulationLink>) => {
@@ -900,6 +907,8 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     this.setState({ current_position_fixlink: 0 })
   }
 
+
+  // NEED TO REMOVE STATE DU MENU ? OU ALORS ????
   clear = () => {
     console.log("clear!")
     currentAvaibleID = -1
@@ -908,7 +917,6 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
       customITP: {},
       nodesToAdd: [],
       linksToAdd: [],
-      dataForForm: {},
       Warningmessage: "",
       dialogWarning: "",
       loading: false,
