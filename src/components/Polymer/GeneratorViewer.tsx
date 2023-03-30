@@ -221,7 +221,6 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
             }
           }
         }
-        this.polymer_is_modified()
         this.UpdateSVG() 
       }
       else {
@@ -241,14 +240,13 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
         // }
       }
       addLinkToSVG(Linktoadd)
-      this.polymer_is_modified()
     }
     // Si des news props apparaissent depuis manager on ajoute les noeuds !!!
 
     if (this.prevPropsNewnode !== this.props.newNodes) {
       if (this.props.newNodes.length > 150) this.props.warningfunction("The navigation system may become temporarily unresponsive during the procedure, as you want to add significant number of molecules.")
       addNodeToSVG(this.props.newNodes, this.simulation, this.UpdateSVG, zoomValue)
-      this.polymer_is_modified()
+      
       //Keep the previous props in memory
       this.prevPropsNewLink = this.props.newLinks;
       this.prevPropsNewnode = this.props.newNodes;
@@ -286,6 +284,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
       }
     }
     //Send new simulation to Manager component
+    this.polymer_is_modified()
     reloadSimulation(this.simulation, groups)
     this.props.getSimulation_and_update_previous(this.simulation)
   }
@@ -379,7 +378,6 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
 
     }
     addLinkToSVG(newlinks)
-    this.polymer_is_modified()
     this.UpdateSVG()
   }
 
