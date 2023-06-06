@@ -942,19 +942,22 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
 
     this.socket.on("polyply_data", (data: any) => {
       console.log("Data loaded.")
+      this.setState({ version: data['version'] })
+      delete data['version']
       this.setState({ dataForForm: data })
     }
     )
 
-    this.socket.emit("version",)
+    // this.socket.emit("version",)
 
-    this.socket.on("version_answer", (data: string) => {
-      console.log("Version loaded.")
-      this.setState({ version: data })
-    }
-    )
+    // this.socket.on("version_answer", (data: string) => {
+    //   console.log("Version loaded.")
+    //   this.setState({ version: data })
+    // }
+    // )
 
     this.socket.on("error_itp", (error: string) => {
+      console.log("error_itp", error )
       this.setState({
         Warningmessage: error,
         dialogWarning: "",
@@ -992,32 +995,6 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
       if (res !== "") {
         this.setState({ stepsubmit: 2 })
         this.setState({ itp: res })
-        //Besoin de verifier que l'itp fourni par polyply est le meme polymere que celui afficher
-        // const jsonpolymer = simulationToJson(this.state.Simulation!, this.currentForceField)
-
-        // const klcdwu = this.returnITPinfo(res)
-
-
-        // const NBatomsITP: number = klcdwu![0].length
-        // const NBlinksITP: number = klcdwu![1].length
-        // const NBatomsSIM: number = jsonpolymer.nodes.length
-        // const NBlinksSIM: number = jsonpolymer.links.length
-
-
-        // if (NBatomsSIM !== NBatomsITP) {
-        //   this.setState({ dialogWarning: "WHOUWHOUWHOU alert au node" })
-
-        // }
-        // else if (NBlinksSIM !== NBlinksITP) {
-        //   this.setState({ dialogWarning: "Probleme de lien entre le fichier generé par polyply et la representation" })
-        //   //Check missing links
-
-        //   socket.emit("continue")
-
-        // }
-        // else {
-        //   socket.emit("continue")
-        // }
         //@ts-ignore
         this.state.data_for_computation['itp'] = res
 
@@ -1099,6 +1076,13 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
         this.setState({ errorLink: listerror, errorfix: generate_error_fixing_state })
         //socket.emit("continue",)
 
+      }
+      else if (dicoError.linksnotapplied.length > 0) {
+        let out = ''
+        for (let pb of dicoError.linksnotapplied ){
+          out += "residue number "+pb[1]+" ("+pb[0]+") and residue number "+pb[3]+" ("+pb[2]+"),"
+        }
+        this.warningfunction("Polyply does not support linking between "+ out + " please keep this information in mind. Sorry for the inconvenience. ")
       }
       else if (dicoError.boxerror) {
 
