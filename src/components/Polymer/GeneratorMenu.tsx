@@ -282,7 +282,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
       this.props.warningfunction("Wrong forcefield : " + ff)
       return
     }
-    //console.log(molecule)
+    console.log("moleculefromhistory", molecule)
     this.setState({ want_go_back: false });
     this.props.addmoleculecoord(molecule.gro.content)
     this.props.addNEwMolFromITP(molecule.itp)
@@ -358,7 +358,6 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
 
         />
 
-
         <Marger size="2rem" />
         <Typography component="h1" variant="h3" align="center" style={{ fontWeight: 700, fontSize: '2.5rem', marginBottom: '1rem' }}>
           Polymer Editor
@@ -382,8 +381,6 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
 
           <RouterLink ref={this.go_back_btn} to="/" style={{ display: 'none' }} />
         </div>
-
-
 
         <Divider variant='middle' />
 

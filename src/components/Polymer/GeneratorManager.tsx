@@ -24,7 +24,7 @@ import { Theme, withStyles, withTheme } from '@material-ui/core'
 //
 // Objectif : faire pareil avec element selectionnable dans le bloc menu et ajoutable dans le bloc viewer si deposer
 //https://javascript.plainenglish.io/how-to-implement-drag-and-drop-from-react-to-svg-d3-16700f01470c
-interface StateSimulation { 
+interface StateSimulation {
   version: string,
   data_for_computation: any;
   Simulation: d3.Simulation<SimulationNode, SimulationLink> | undefined,
@@ -50,6 +50,7 @@ interface StateSimulation {
   jobfinish: undefined | string,
   previous_Simulation_nodes: { id: string; links: any[]; }[][],
   go_to_previous: { id: string; links?: any[]; }[];
+  add_fake_links: any,
 }
 
 interface GMProps {
@@ -121,6 +122,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     inputpdb: undefined,
     jobfinish: undefined,
     go_to_previous: [],
+    add_fake_links: undefined
   }
 
   socket = SocketIo.connect(SERVER_ROOT);
@@ -650,42 +652,46 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     }
   }
 
-  giveConnexeNode = (node: SimulationNode) => {
-    //Give one node and class on focus rest of polymer nodes 
-    //Return one selection of connexe nodes
+  get_Graph_Components = (nodes: SimulationNode[]) => {
 
-    //clean the previous selected nodes
+    let list_Components: string[][] = []
+    let visited: SimulationNode[] = []
+    let stack: SimulationNode[] = []
+    let id_component = 0
 
-    // Create a list and add our initial node in it
-    let s = [];
-    s.push(node);
-    // Mark the first node as explored
-    let explored: any[] = [];
-    //List of id 
-    let connexeNodesId = new Set();
-    connexeNodesId.add(node.id);
-    //Chek si le noeud n'est pas connecter aux autres 
-    if (node.links === undefined) {
-      connexeNodesId.add(node.id);
-    }
-    else {
-      //continue while list of linked node is not emphty 
-      while (s.length !== 0) {
-        let firstNode: any = s.shift();
-        //console.log(firstNode)
-        if (firstNode !== undefined) {
-          for (let connectedNodes of firstNode!.links!) {
-            s.push(connectedNodes);
-            connexeNodesId.add(connectedNodes.id);
-          }
-          explored.push(firstNode)
-          s = s.filter(val => !explored.includes(val));
-        }
+    while (nodes.length !== visited.length) {
+      let component: any = new Set();
+
+      // Init first node 
+      console.log(nodes.filter(node => !visited.includes(node)))
+      let node = nodes.filter(node => !visited.includes(node))[0]
+      stack.push(node);
+
+
+      if (node.links === undefined) {
+        list_Components[id_component].push(node.id);
       }
+      else {
+        //continue while list of linked node is not emphty 
+        while (stack.length !== 0) {
+          let firstNode: any = stack.shift();
+
+          if (firstNode !== undefined) {
+            for (let connectedNodes of firstNode!.links!) {
+              stack.push(connectedNodes);
+              component.add(connectedNodes.id);
+            }
+            visited.push(firstNode)
+            stack = stack.filter(val => !visited.includes(val));
+          }
+        }
+
+      }
+      list_Components.push( Array.from(component))
+      console.log(list_Components)
+      id_component = id_component + 1
     }
-    // Return a selection of one connexe graph 
-    // Maybe juste one node
-    return connexeNodesId
+    return list_Components
   }
 
 
@@ -871,36 +877,32 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
 
   Send = (box: string, name: string, number: string): void => {
     //Check if there is more than one polymer 
-    const connexe1 = this.giveConnexeNode(this.state.Simulation!.nodes()[1])
-    const nodeNumber = this.state.Simulation?.nodes().length
-    if (nodeNumber !== connexe1.size) {
-      console.log("Composed of different")
-      //Get the first 
+    const list_graph_component = this.get_Graph_Components(this.state.Simulation!.nodes())
 
-      this.warningfunction("Your polymer is composed of different parts. Please add link between every part.")
+    const jsonpolymer = simulationToJson(this.state.Simulation!, this.currentForceField)
+    let data: { [x: string]: any; } = {}
 
+    data = {
+      'polymer': jsonpolymer,
+      'box': box,
+      'name': name,
+      'number': number
     }
-    else {
-      const jsonpolymer = simulationToJson(this.state.Simulation!, this.currentForceField)
-      let data: { [x: string]: any; } = {}
 
-      data = {
-        'polymer': jsonpolymer,
-        'box': box,
-        'name': name,
-        'number': number
-      }
+    console.log("list_graph_component", list_graph_component)
+    data['list_graph_component'] = list_graph_component
+    
+    data['customITP'] = this.state.customITP
+    data['proteinGRO'] = this.state.gro_coord
 
-      data['customITP'] = this.state.customITP
-      data['proteinGRO'] = this.state.gro_coord
 
-      if (this.state.inputpdb) {
-        data['inputpdb'] = this.state.inputpdb
-      }
-
-      this.setState({ stepsubmit: 1, data_for_computation: data })
-      this.socket.emit('run_itp_generation', data)
+    if (this.state.inputpdb) {
+      data['inputpdb'] = this.state.inputpdb
     }
+
+    this.setState({ stepsubmit: 1, data_for_computation: data })
+    this.socket.emit('run_itp_generation', data)
+
   }
 
   fixlinkcomponentappear = () => {
@@ -948,16 +950,8 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     }
     )
 
-    // this.socket.emit("version",)
-
-    // this.socket.on("version_answer", (data: string) => {
-    //   console.log("Version loaded.")
-    //   this.setState({ version: data })
-    // }
-    // )
-
     this.socket.on("error_itp", (error: string) => {
-      console.log("error_itp", error )
+      console.log("error_itp", error)
       this.setState({
         Warningmessage: error,
         dialogWarning: "",
@@ -1079,10 +1073,11 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
       }
       else if (dicoError.linksnotapplied.length > 0) {
         let out = ''
-        for (let pb of dicoError.linksnotapplied ){
-          out += "residue number "+pb[1]+" ("+pb[0]+") and residue number "+pb[3]+" ("+pb[2]+"),"
+        for (let pb of dicoError.linksnotapplied) {
+          out += "residue number " + pb[1] + " (" + pb[0] + ") and residue number " + pb[3] + " (" + pb[2] + "),"
         }
-        this.warningfunction("Polyply does not support linking between "+ out + " please keep this information in mind. Sorry for the inconvenience. ")
+        console.log( dicoError.linksnotapplied)
+        this.warningfunction("Polyply does not support linking between " + out + " please keep this information in mind. Sorry for the inconvenience. ")
       }
       else if (dicoError.boxerror) {
 
