@@ -860,7 +860,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
                                 <Grid container component="main" style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'left', }}>
                                   <Grid item xs={10}>
                                     <Typography variant="body2" align="left">
-                                      Send to polyply!
+                                      Run
                                     </Typography>
                                   </Grid>
                                   <Grid item xs={2}>
