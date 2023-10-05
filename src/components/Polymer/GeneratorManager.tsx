@@ -687,7 +687,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
         }
 
       }
-      list_Components.push( Array.from(component))
+      list_Components.push(Array.from(component))
       console.log(list_Components)
       id_component = id_component + 1
     }
@@ -891,7 +891,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
 
     console.log("list_graph_component", list_graph_component)
     data['list_graph_component'] = list_graph_component
-    
+
     data['customITP'] = this.state.customITP
     data['proteinGRO'] = this.state.gro_coord
 
@@ -1017,7 +1017,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     })
 
     this.socket.on("oups", async (dicoError: any) => {
-      console.log("Oups")
+      console.log("Oups", dicoError)
       this.setState({ stepsubmit: undefined })
       this.setState({ loading: false })
 
@@ -1076,7 +1076,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
         for (let pb of dicoError.linksnotapplied) {
           out += "residue number " + pb[1] + " (" + pb[0] + ") and residue number " + pb[3] + " (" + pb[2] + "),"
         }
-        console.log( dicoError.linksnotapplied)
+        console.log(dicoError.linksnotapplied)
         this.warningfunction("Polyply does not support linking between " + out + " please keep this information in mind. Sorry for the inconvenience. ")
       }
       else if (dicoError.boxerror) {
@@ -1084,8 +1084,9 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
         this.setState({ Warningmessage: "Box is too small. Please increase the value." })
       }
       else if (dicoError.message.length) {
-
-        this.setState({ Warningmessage: dicoError.message })
+        let os_error_only = dicoError.message.filter((line: string) => line.startsWith("OSError"))
+        let firstos_error_only = os_error_only[0].replace("OSError:", "")
+        this.setState({ Warningmessage: "Error from polyply : "+ firstos_error_only })
       }
 
       else {

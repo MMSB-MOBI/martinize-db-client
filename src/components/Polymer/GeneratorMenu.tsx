@@ -220,6 +220,11 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
         let reader = new FileReader();
 
         reader.onload = (event: any) => {
+          if (event.target.result.includes("moleculetype")) {
+            console.log(".ff file with molecule type");
+            this.props.addNEwMolFromITP(event.target.result)
+            this.setState({ moleculeAdded: true })
+          }
           this.props.addCustomitp(md5(event.target.result), "; Custom connexion rule \n" + event.target.result)
         }
         reader.readAsText(file);
@@ -648,7 +653,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
 
                       <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center' }}>
                         <Input
-                          inputProps={{ accept: ".itp,.json,.fasta" }}
+                          inputProps={{ accept: ".ff,.itp,.json,.fasta" }}
                           color="primary"
                           onChange={(e: any) => this.handleUpload(e.target.files)}
                           type="file"
