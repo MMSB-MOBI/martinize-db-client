@@ -18,7 +18,6 @@ import { Theme, withStyles, withTheme } from '@material-ui/core'
 //const parsePdb = require('parse-pdb');
 
 
-
 // Pour plus tard
 //https://github.com/korydondzila/React-TypeScript-D3/tree/master/src/components
 //
@@ -420,7 +419,6 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
       const nodelist = nodestrfix.split(' ').filter((e) => { return e !== "" })
       //check si c'est une bead de l'ancien residu ou pas
 
-
       if (resid === -1) {
         let mol = {
           "resname": nodelist[3],
@@ -443,7 +441,6 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
       }
 
     }
-
 
     let newlinks = []
     // 3rd faire la liste des liens
@@ -482,162 +479,6 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
 
     this.new_modification()
   }
-
-  // addFromITP = (itpstring: string) => {
-  //   const itp = ItpFile.readFromString(itpstring);
-
-  //   const atoms = itp.getField('atoms')
-  //   const links = itp.getField('bonds')
-  //   let good = true
-  //   // 1st generer une liste de noeuds
-
-  //   console.log("atoms", atoms.length)
-  //   console.log("links", links.length)
-  //   const newMolecules: SimulationNode[] = [];
-
-  //   // convert to node object et injecte dans la list
-  //   //Voila la forme du bordel
-  //   // 1 P5    1 POPE NH3  1  0.0
-  //   //Super pratique 
-  //   //Garder en memoire l'id d'avant sur l'itp 
-  //   let oldid = 0
-
-  //   for (let nodestr of atoms) {
-  //     const nodelist = nodestr.split(' ').filter((e) => { return e !== "" })
-  //     // 2nd check s'ils sont inside le forcefield 
-  //     if (!(this.state.dataForForm[this.currentForceField].includes(nodelist[3]))) {
-  //       this.setState({ Warningmessage: nodelist[3] + " not in " + this.currentForceField })
-  //       console.log(nodelist[3] + " not in " + this.currentForceField)
-  //       good = false
-  //       break
-  //     }
-  //     else if (nodelist[2] !== oldid.toString()) {
-  //       let mol = {
-  //         "resname": nodelist[3],
-  //         "seqid": 0,
-  //         "id": generateID(),
-  //       };
-
-  //       newMolecules.push(mol)
-  //       oldid = parseInt(nodelist[2])
-  //     }
-  //   }
-
-  //   if (good) {
-
-  //     let newlinks = []
-  //     // 3rd faire la liste des liens
-  //     for (let linkstr of links) {
-  //       if (linkstr.startsWith(";")) continue
-  //       else if (linkstr.startsWith("#")) continue
-  //       else {
-  //         const link = linkstr.split(' ').filter((e) => { return e !== "" })
-
-  //         console.log("add this link ", link)
-  //         let idlink1 = parseInt(atoms[parseInt(link[0]) - 1].split(' ').filter((e) => { return e !== "" })[2])
-  //         let idlink2 = parseInt(atoms[parseInt(link[1]) - 1].split(' ').filter((e) => { return e !== "" })[2])
-
-  //         let node1 = newMolecules[idlink1 - 1]
-  //         let node2 = newMolecules[idlink2 - 1]
-
-  //         if (idlink1 !== idlink2) {
-  //           newlinks.push({
-  //             "source": newMolecules[idlink1 - 1],
-  //             "target": newMolecules[idlink2 - 1]
-  //           });
-
-  //           if (node1.links) node1.links.push(node2);
-  //           else node1.links = [node2];
-
-  //           if (node2.links) node2.links.push(node1);
-  //           else node2.links = [node1];
-
-  //         }
-  //       }
-  //     }
-
-  //     this.setState({ nodesToAdd: newMolecules });
-  //     this.setState({ linksToAdd: newlinks });
-
-
-  //   }
-  // }
-
-  // returnITPinfo = (itpstring: string) => {
-  //   const itp = ItpFile.readFromString(itpstring);
-  //   const atoms = itp.getField('atoms')
-  //   const links = itp.getField('bonds')
-  //   let good = true
-  //   // 1st generer une liste de noeuds
-
-  //   console.log("atoms", atoms.length)
-  //   console.log("links", links.length)
-  //   const newMolecules: SimulationNode[] = [];
-
-  //   // convert to node object et injecte dans la list
-  //   //Voila la forme du bordel
-  //   // 1 P5    1 POPE NH3  1  0.0
-  //   //Super pratique 
-  //   //Garder en memoire l'id d'avant sur l'itp 
-  //   let oldid = 0
-
-  //   let id = 0
-  //   for (let nodestr of atoms) {
-  //     const nodelist = nodestr.split(' ').filter((e) => { return e !== "" })
-  //     // 2nd check s'ils sont inside le forcefield 
-  //     if (!(this.state.dataForForm[this.currentForceField].includes(nodelist[3]))) {
-  //       this.setState({ Warningmessage: nodelist[3] + " not in " + this.currentForceField })
-  //       console.log(nodelist[3] + " not in " + this.currentForceField)
-  //       good = false
-  //       break
-  //     }
-  //     else if (nodelist[2] !== oldid.toString()) {
-  //       let mol = {
-  //         "resname": nodelist[3],
-  //         "seqid": 0,
-  //         "id": id.toString()
-  //       };
-
-  //       newMolecules.push(mol)
-  //       oldid = parseInt(nodelist[2])
-  //       id++
-  //     }
-  //   }
-
-  //   if (good) {
-
-  //     let newlinks = []
-  //     // 3rd faire la liste des liens
-  //     for (let linkstr of links) {
-  //       if (linkstr.startsWith(";")) continue
-  //       else if (linkstr.startsWith("#")) continue
-  //       else {
-  //         const link = linkstr.split(' ').filter((e) => { return e !== "" })
-
-  //         let idlink1 = parseInt(atoms[parseInt(link[0]) - 1].split(' ').filter((e) => { return e !== "" })[2])
-  //         let idlink2 = parseInt(atoms[parseInt(link[1]) - 1].split(' ').filter((e) => { return e !== "" })[2])
-
-  //         let node1 = newMolecules[idlink1 - 1]
-  //         let node2 = newMolecules[idlink2 - 1]
-
-  //         if (idlink1 !== idlink2) {
-  //           newlinks.push({
-  //             "source": newMolecules[idlink1 - 1],
-  //             "target": newMolecules[idlink2 - 1]
-  //           });
-
-  //           if (node1.links) node1.links.push(node2);
-  //           else node1.links = [node2];
-
-  //           if (node2.links) node2.links.push(node1);
-  //           else node2.links = [node1];
-
-  //         }
-  //       }
-  //     }
-  //     return [newMolecules, newlinks]
-  //   }
-  // }
 
   setForcefield = (ff: string): void => {
     if ((this.currentForceField === '') || (this.currentForceField === ff)) {
