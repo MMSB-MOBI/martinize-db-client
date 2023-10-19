@@ -172,32 +172,3 @@ export function DownloadJson(simulation: d3.Simulation<SimulationNode, Simulatio
     a.dispatchEvent(clickEvt);
     a.remove();
 }
-
-export function PolyplyJson(simulation: d3.Simulation<SimulationNode, SimulationLink>, ff: string) {
-    const data = simulationToJson(simulation, ff)
-
-    const socket = io({ path: '/socket' })
-
-    socket.on("connect", () => {
-        console.log("connect")
-        socket.emit('testpolyply', data)
-    })
-    console.dir(socket)
-
-    socket.on("res", (data: string[]) => {
-
-        const blob = new Blob([data[1]], { type: "text" });
-
-        const a = document.createElement("a");
-        a.download = "out.gro";
-        a.href = window.URL.createObjectURL(blob);
-        const clickEvt = new MouseEvent("click", {
-            view: window,
-            bubbles: true,
-            cancelable: true,
-        });
-        a.dispatchEvent(clickEvt);
-        a.remove();
-
-    })
-}
