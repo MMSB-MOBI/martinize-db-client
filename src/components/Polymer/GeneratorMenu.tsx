@@ -17,6 +17,7 @@ import Switch from '@mui/material/Switch';
 import { ImportProtein } from "./Dialog/importProtein";
 import ApiHelper from "../../ApiHelper";
 import md5 from 'md5';
+import { getID } from "./GeneratorManager";
 
 
 interface propsmenu {
@@ -82,6 +83,32 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
   closeCreate(): void {
     //console.log(this.state)
     // this.setState( {createLink : false})
+  }
+
+  handle_previous = (): void => {
+    //Check how is the previous nodes list 
+    //If it's emphy we should change state to go back 
+    console.log(getID())
+    if (Number(getID()) < 0) {
+      this.setState({
+        forcefield: "",
+        moleculeToAdd: "",
+        numberToAdd: 1,
+        id1: undefined,
+        id2: undefined,
+        createLink: false,
+        database_modal_chooser: false,
+        history_modal_chooser: false,
+        builder_mode: "classic",
+        want_go_back: false,
+        Menuplus: false,
+        proteinImport: false,
+        add_to_every_residue: "",
+        addMolecule: "",
+        moleculeAdded: false,
+      })
+    }
+    else this.props.previous()
   }
 
   CheckNewMolecule(): void {
@@ -193,6 +220,11 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
         let reader = new FileReader();
 
         reader.onload = (event: any) => {
+          if (event.target.result.includes("moleculetype")) {
+            console.log(".ff file with molecule type");
+            this.props.addNEwMolFromITP(event.target.result)
+            this.setState({ moleculeAdded: true })
+          }
           this.props.addCustomitp(md5(event.target.result), "; Custom connexion rule \n" + event.target.result)
         }
         reader.readAsText(file);
@@ -243,10 +275,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
           console.error(e)
           this.props.warningfunction(molecule.alias + ": Coordinate file not found")
         })
-
-
     }
-
   };
 
   moleculefromhistory = (ff: string, molecule: any) => {
@@ -258,7 +287,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
       this.props.warningfunction("Wrong forcefield : " + ff)
       return
     }
-    //console.log(molecule)
+    console.log("moleculefromhistory", molecule)
     this.setState({ want_go_back: false });
     this.props.addmoleculecoord(molecule.gro.content)
     this.props.addNEwMolFromITP(molecule.itp)
@@ -334,7 +363,6 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
 
         />
 
-
         <Marger size="2rem" />
         <Typography component="h1" variant="h3" align="center" style={{ fontWeight: 700, fontSize: '2.5rem', marginBottom: '1rem' }}>
           Polymer Editor
@@ -358,8 +386,6 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
 
           <RouterLink ref={this.go_back_btn} to="/" style={{ display: 'none' }} />
         </div>
-
-
 
         <Divider variant='middle' />
 
@@ -627,7 +653,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
 
                       <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center' }}>
                         <Input
-                          inputProps={{ accept: ".itp,.json,.fasta" }}
+                          inputProps={{ accept: ".ff,.itp,.json,.fasta" }}
                           color="primary"
                           onChange={(e: any) => this.handleUpload(e.target.files)}
                           type="file"
@@ -800,12 +826,12 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
                         <Button
                           id="previous"
                           variant="text"
-                          onClick={() => { this.props.previous() }}>
+                          onClick={this.handle_previous}>
                           <Grid container component="main" >
 
                             <Grid item xs={10}>
                               <Typography variant="body2" align="left">
-                               undo 
+                                undo
                               </Typography>
                             </Grid>
                             <Grid item xs={2}>
@@ -839,7 +865,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
                                 <Grid container component="main" style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'left', }}>
                                   <Grid item xs={10}>
                                     <Typography variant="body2" align="left">
-                                      Send to polyply!
+                                      Run
                                     </Typography>
                                   </Grid>
                                   <Grid item xs={2}>
@@ -853,13 +879,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
                             )}
                       </Grid>
                       <Grid item xs={3}></Grid>
-
-
-
-
                     </>}
-
-
                 </>
               }
 

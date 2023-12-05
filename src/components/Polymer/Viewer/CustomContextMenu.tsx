@@ -406,6 +406,8 @@ export default class CustomContextMenu extends React.Component<props> {
 
     render() {
         const selectedNodes = this.props.svg.selectAll<SVGPathElement, SimulationNode>('.onfocus')
+        console.log( (this.props.svg.selectAll<SVGPathElement, SimulationLink>("line.error").nodes().length > 0 ) )
+        console.log( this.props.svg.selectAll<SVGPathElement, SimulationLink>("line.error").nodes() )
         return (
             <Menu
                 anchorReference="anchorPosition"
@@ -447,15 +449,19 @@ export default class CustomContextMenu extends React.Component<props> {
                 {(this.props.nodeClick) &&
                     <div>
                         <MenuItem onClick={() => { this.removeNodeLinks(this.props.nodeClick!) }}>Remove link</MenuItem>
-                        <MenuItem onClick={() => { if (this.props.nodeClick !== undefined) removeNodes( [this.props.nodeClick], this.props.handleUpdate, decreaseID) }}>Remove node #{this.props.nodeClick.id}</MenuItem>
+                        <MenuItem onClick={() => { if (this.props.nodeClick !== undefined) removeNodes([this.props.nodeClick], this.props.handleUpdate, decreaseID) }}>Remove node #{this.props.nodeClick.id}</MenuItem>
                         <MenuItem onClick={() => { this.giveConnexeNode(this.props.nodeClick!).attr("class", "onfocus") }}>Select this polymer</MenuItem>
                         <Divider />
                     </div>
                 }
 
                 <MenuItem onClick={() => { this.clear() }}>Clear</MenuItem>
-                <MenuItem onClick={() => { this.addMagicLink() }}>Magic Link it</MenuItem>
-                <MenuItem onClick={() => { this.removeBadLinks(this.props.svg) }}>Remove bad links</MenuItem>
+                <MenuItem onClick={() => { this.addMagicLink() }}>Connect end terminal</MenuItem>
+                {(this.props.svg.selectAll<SVGPathElement, SimulationLink>("line.error").nodes().length > 0 ) &&
+                    <MenuItem onClick={() => { this.removeBadLinks(this.props.svg) }}>Remove bad links</MenuItem>
+                }
+
+
                 <MenuItem onClick={() => { DownloadJson(this.props.simulation, this.props.forcefield) }}>Download Json</MenuItem>
             </Menu>
         )

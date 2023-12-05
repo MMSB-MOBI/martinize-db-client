@@ -118,7 +118,7 @@ export default class RunPolyplyDialog extends React.Component<props, state> {
         return (
             show ? (
                 <Dialog maxWidth="sm" fullWidth open={true} >
-                    <DialogTitle>Send to polyply!</DialogTitle>
+                    {/* <DialogTitle>Compute</DialogTitle> */}
 
                     <DialogContent>
                         <Stepper activeStep={this.props.currentStep!} orientation="vertical" >
@@ -180,31 +180,31 @@ export default class RunPolyplyDialog extends React.Component<props, state> {
                     </DialogContent>
 
                     <Grid container component="main" style={{ textAlign: 'center', alignItems: 'center', justifyContent: 'left', }}>
-                        <Grid item xs={4}>
+                        <Grid item xs={3}>
                             {this.props.itp &&
-                                <Button onClick={() => { this.dl(this.props.itp, "out.itp"); }}> <Icon className={"fas fa-download"} /> Download .itp</Button>
+                                <Button onClick={() => { this.dl(this.props.itp, "out.itp"); }}> <Icon className={"fas fa-download"} /> .itp</Button>
                             }
                         </Grid>
 
-                        <Grid item xs={4}>
+                        <Grid item xs={3}>
                             {this.props.gro &&
-                                <Button onClick={() => { this.dl(this.props.gro, "out.gro"); }}> <Icon className={"fas fa-download"} /> Download .gro</Button>
+                                <Button onClick={() => { this.dl(this.props.gro, "out.gro"); }}> <Icon className={"fas fa-download"} />  .gro</Button>
                             }
                         </Grid>
 
-                        <Grid item xs={4}>
+                        <Grid item xs={3}>
                             {this.props.pdb &&
-                                <Button onClick={() => { this.dl(this.props.pdb, "out.pdb"); }}> <Icon className={"fas fa-download"} /> Download .pdb</Button>
+                                <Button onClick={() => { this.dl(this.props.pdb, "out.pdb"); }}> <Icon className={"fas fa-download"} />  .pdb</Button>
                             }
                         </Grid>
 
+                        <Grid item xs={3}>
+                            {(this.props.gro && this.props.itp && this.props.pdb) ? (<>
+
+                                <Button onClick={() => { this.dlzip(this.props.itp, this.props.gro, this.props.pdb, "out.zip"); }}> <Icon className={"fas fa-download"} /> .ZIP</Button>
+                            </>) : (<></>)}
+                        </Grid>
                     </Grid>
-
-                    {(this.props.gro && this.props.itp && this.props.pdb) ? (<>
-
-                        <Button onClick={() => { this.dlzip(this.props.itp, this.props.gro, this.props.pdb, "out.zip"); }}> <Icon className={"fas fa-download"} /> Download all</Button>
-                    </>) : (<></>)}
-
                     {this.props.pdb &&
                         <ResultViewer top={this.props.top} pdb={this.props.pdb} itp={this.props.itp} currentforcefield={this.props.forcefield} />
                     }
@@ -213,7 +213,7 @@ export default class RunPolyplyDialog extends React.Component<props, state> {
                     {((this.props.currentStep! === 0) || (this.props.currentStep! === 4)) ? (<>
 
                         <Grid container component="main" style={{ textAlign: 'center', alignItems: 'center', justifyContent: 'center', }}>
-                            <Grid item xs={3} >
+                            <Grid item xs={2} >
                                 <DialogActions >
                                     <Button color='warning' onClick={() => { this.props.close() }}>Close</Button>
                                 </DialogActions>
@@ -222,12 +222,12 @@ export default class RunPolyplyDialog extends React.Component<props, state> {
 
                             {(this.props.currentStep! === 4) &&
                                 <>
-                                    <Grid item xs={9} >
+                                    <Grid item xs={5} >
                                         <DialogActions >
-                                            <Button color='success' onClick={this.handlehistory}>Add to history</Button>
+                                            <Button color='success' onClick={this.handlehistory}>Save to history</Button>
                                         </DialogActions>
                                     </Grid>
-                                    <Grid item xs={12} >
+                                    <Grid item xs={4} >
                                         <DialogActions >
 
                                             <Button onClick={this.handlehistoryandredirect}>
@@ -236,6 +236,32 @@ export default class RunPolyplyDialog extends React.Component<props, state> {
 
                                         </DialogActions>
                                     </Grid>
+                                    <Grid item xs={12} >
+                                        <DialogActions >
+
+                                            <Typography variant="subtitle2" component="div">
+                                                Grünewald, F., Alessandri, R., Kroon, P.C. et al. Polyply; a python suite for facilitating simulations of macromolecules and nanomaterials. Nat Commun 13, 68 (2022).
+                                                {/* </Typography>
+
+                                        </DialogActions>
+                                    </Grid>
+                                    <Grid item xs={12} >
+                                        <DialogActions >
+                                            <Typography variant="subtitle2" component="div"> */}
+
+                                                Hilpert, C., Beranger, L., Souza, P.C.T., Vainikka, P.A., Nieto, V., Marrink, S.J., Monticelli, L.&; Launay, G. (2022) Facilitating CG simulations with MAD: the MArtini Database Server. BiorXiv.
+                                            </Typography>
+                                        </DialogActions>
+
+                                    </Grid>
+                                    <Grid item xs={12} >
+                                        <DialogActions >
+                                            <Typography variant="subtitle2" component="div">
+                                                Future reference for Polymer editor
+                                            </Typography>
+                                        </DialogActions>
+                                    </Grid>
+
 
                                 </>
                             }
@@ -243,7 +269,8 @@ export default class RunPolyplyDialog extends React.Component<props, state> {
                     </>) : (<>
                         <Marger size="1rem" />
                         <LinearProgress />
-                    </>)}
+                    </>)
+                    }
 
 
 

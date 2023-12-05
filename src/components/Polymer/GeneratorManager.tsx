@@ -18,7 +18,6 @@ import { Theme, withStyles, withTheme } from '@material-ui/core'
 //const parsePdb = require('parse-pdb');
 
 
-
 // Pour plus tard
 //https://github.com/korydondzila/React-TypeScript-D3/tree/master/src/components
 //
@@ -50,6 +49,7 @@ interface StateSimulation {
   jobfinish: undefined | string,
   previous_Simulation_nodes: { id: string; links: any[]; }[][],
   go_to_previous: { id: string; links?: any[]; }[];
+  add_fake_links: any,
 }
 
 interface GMProps {
@@ -61,6 +61,10 @@ interface GMProps {
 let currentAvaibleID = -1;
 export let generateID = (): string => {
   currentAvaibleID++;
+  return currentAvaibleID.toString()
+}
+
+export let getID = (): string => {
   return currentAvaibleID.toString()
 }
 
@@ -117,6 +121,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     inputpdb: undefined,
     jobfinish: undefined,
     go_to_previous: [],
+    add_fake_links: undefined
   }
 
   socket = SocketIo.connect(SERVER_ROOT);
@@ -181,10 +186,13 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     //PROBLEME QUAND ON NE VEUX SUPPRIMER QUE 2
     copy_frame = copy_frame.slice(0, cut)
     console.log("Go back to ", last)
-    if (last === undefined) this.setState({ go_to_previous: [{ "id": "START" }] })
-    else if (last.length !== 0) this.setState({ previous_Simulation_nodes: copy_frame, go_to_previous: last })
+    if ((last === undefined) || (last.length === 0)) {
+      this.setState({ go_to_previous: [{ "id": "START" }] })
+      this.clear()
+    }
+    else this.setState({ previous_Simulation_nodes: copy_frame, go_to_previous: last })
     //means that we went back to first slides
-    else this.setState({ go_to_previous: [{ "id": "START" }] })
+    //else this.setState({ go_to_previous: [{ "id": "START" }] })
   }
 
   getSimulation_and_update_previous = (SimulationFromViewer: d3.Simulation<SimulationNode, SimulationLink>) => {
@@ -411,7 +419,6 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
       const nodelist = nodestrfix.split(' ').filter((e) => { return e !== "" })
       //check si c'est une bead de l'ancien residu ou pas
 
-
       if (resid === -1) {
         let mol = {
           "resname": nodelist[3],
@@ -434,7 +441,6 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
       }
 
     }
-
 
     let newlinks = []
     // 3rd faire la liste des liens
@@ -474,162 +480,6 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     this.new_modification()
   }
 
-  // addFromITP = (itpstring: string) => {
-  //   const itp = ItpFile.readFromString(itpstring);
-
-  //   const atoms = itp.getField('atoms')
-  //   const links = itp.getField('bonds')
-  //   let good = true
-  //   // 1st generer une liste de noeuds
-
-  //   console.log("atoms", atoms.length)
-  //   console.log("links", links.length)
-  //   const newMolecules: SimulationNode[] = [];
-
-  //   // convert to node object et injecte dans la list
-  //   //Voila la forme du bordel
-  //   // 1 P5    1 POPE NH3  1  0.0
-  //   //Super pratique 
-  //   //Garder en memoire l'id d'avant sur l'itp 
-  //   let oldid = 0
-
-  //   for (let nodestr of atoms) {
-  //     const nodelist = nodestr.split(' ').filter((e) => { return e !== "" })
-  //     // 2nd check s'ils sont inside le forcefield 
-  //     if (!(this.state.dataForForm[this.currentForceField].includes(nodelist[3]))) {
-  //       this.setState({ Warningmessage: nodelist[3] + " not in " + this.currentForceField })
-  //       console.log(nodelist[3] + " not in " + this.currentForceField)
-  //       good = false
-  //       break
-  //     }
-  //     else if (nodelist[2] !== oldid.toString()) {
-  //       let mol = {
-  //         "resname": nodelist[3],
-  //         "seqid": 0,
-  //         "id": generateID(),
-  //       };
-
-  //       newMolecules.push(mol)
-  //       oldid = parseInt(nodelist[2])
-  //     }
-  //   }
-
-  //   if (good) {
-
-  //     let newlinks = []
-  //     // 3rd faire la liste des liens
-  //     for (let linkstr of links) {
-  //       if (linkstr.startsWith(";")) continue
-  //       else if (linkstr.startsWith("#")) continue
-  //       else {
-  //         const link = linkstr.split(' ').filter((e) => { return e !== "" })
-
-  //         console.log("add this link ", link)
-  //         let idlink1 = parseInt(atoms[parseInt(link[0]) - 1].split(' ').filter((e) => { return e !== "" })[2])
-  //         let idlink2 = parseInt(atoms[parseInt(link[1]) - 1].split(' ').filter((e) => { return e !== "" })[2])
-
-  //         let node1 = newMolecules[idlink1 - 1]
-  //         let node2 = newMolecules[idlink2 - 1]
-
-  //         if (idlink1 !== idlink2) {
-  //           newlinks.push({
-  //             "source": newMolecules[idlink1 - 1],
-  //             "target": newMolecules[idlink2 - 1]
-  //           });
-
-  //           if (node1.links) node1.links.push(node2);
-  //           else node1.links = [node2];
-
-  //           if (node2.links) node2.links.push(node1);
-  //           else node2.links = [node1];
-
-  //         }
-  //       }
-  //     }
-
-  //     this.setState({ nodesToAdd: newMolecules });
-  //     this.setState({ linksToAdd: newlinks });
-
-
-  //   }
-  // }
-
-  // returnITPinfo = (itpstring: string) => {
-  //   const itp = ItpFile.readFromString(itpstring);
-  //   const atoms = itp.getField('atoms')
-  //   const links = itp.getField('bonds')
-  //   let good = true
-  //   // 1st generer une liste de noeuds
-
-  //   console.log("atoms", atoms.length)
-  //   console.log("links", links.length)
-  //   const newMolecules: SimulationNode[] = [];
-
-  //   // convert to node object et injecte dans la list
-  //   //Voila la forme du bordel
-  //   // 1 P5    1 POPE NH3  1  0.0
-  //   //Super pratique 
-  //   //Garder en memoire l'id d'avant sur l'itp 
-  //   let oldid = 0
-
-  //   let id = 0
-  //   for (let nodestr of atoms) {
-  //     const nodelist = nodestr.split(' ').filter((e) => { return e !== "" })
-  //     // 2nd check s'ils sont inside le forcefield 
-  //     if (!(this.state.dataForForm[this.currentForceField].includes(nodelist[3]))) {
-  //       this.setState({ Warningmessage: nodelist[3] + " not in " + this.currentForceField })
-  //       console.log(nodelist[3] + " not in " + this.currentForceField)
-  //       good = false
-  //       break
-  //     }
-  //     else if (nodelist[2] !== oldid.toString()) {
-  //       let mol = {
-  //         "resname": nodelist[3],
-  //         "seqid": 0,
-  //         "id": id.toString()
-  //       };
-
-  //       newMolecules.push(mol)
-  //       oldid = parseInt(nodelist[2])
-  //       id++
-  //     }
-  //   }
-
-  //   if (good) {
-
-  //     let newlinks = []
-  //     // 3rd faire la liste des liens
-  //     for (let linkstr of links) {
-  //       if (linkstr.startsWith(";")) continue
-  //       else if (linkstr.startsWith("#")) continue
-  //       else {
-  //         const link = linkstr.split(' ').filter((e) => { return e !== "" })
-
-  //         let idlink1 = parseInt(atoms[parseInt(link[0]) - 1].split(' ').filter((e) => { return e !== "" })[2])
-  //         let idlink2 = parseInt(atoms[parseInt(link[1]) - 1].split(' ').filter((e) => { return e !== "" })[2])
-
-  //         let node1 = newMolecules[idlink1 - 1]
-  //         let node2 = newMolecules[idlink2 - 1]
-
-  //         if (idlink1 !== idlink2) {
-  //           newlinks.push({
-  //             "source": newMolecules[idlink1 - 1],
-  //             "target": newMolecules[idlink2 - 1]
-  //           });
-
-  //           if (node1.links) node1.links.push(node2);
-  //           else node1.links = [node2];
-
-  //           if (node2.links) node2.links.push(node1);
-  //           else node2.links = [node1];
-
-  //         }
-  //       }
-  //     }
-  //     return [newMolecules, newlinks]
-  //   }
-  // }
-
   setForcefield = (ff: string): void => {
     if ((this.currentForceField === '') || (this.currentForceField === ff)) {
       this.currentForceField = ff
@@ -643,42 +493,46 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     }
   }
 
-  giveConnexeNode = (node: SimulationNode) => {
-    //Give one node and class on focus rest of polymer nodes 
-    //Return one selection of connexe nodes
+  get_Graph_Components = (nodes: SimulationNode[]) => {
 
-    //clean the previous selected nodes
+    let list_Components: string[][] = []
+    let visited: SimulationNode[] = []
+    let stack: SimulationNode[] = []
+    let id_component = 0
 
-    // Create a list and add our initial node in it
-    let s = [];
-    s.push(node);
-    // Mark the first node as explored
-    let explored: any[] = [];
-    //List of id 
-    let connexeNodesId = new Set();
-    connexeNodesId.add(node.id);
-    //Chek si le noeud n'est pas connecter aux autres 
-    if (node.links === undefined) {
-      connexeNodesId.add(node.id);
-    }
-    else {
-      //continue while list of linked node is not emphty 
-      while (s.length !== 0) {
-        let firstNode: any = s.shift();
-        //console.log(firstNode)
-        if (firstNode !== undefined) {
-          for (let connectedNodes of firstNode!.links!) {
-            s.push(connectedNodes);
-            connexeNodesId.add(connectedNodes.id);
-          }
-          explored.push(firstNode)
-          s = s.filter(val => !explored.includes(val));
-        }
+    while (nodes.length !== visited.length) {
+      let component: any = new Set();
+
+      // Init first node 
+      console.log(nodes.filter(node => !visited.includes(node)))
+      let node = nodes.filter(node => !visited.includes(node))[0]
+      stack.push(node);
+
+
+      if (node.links === undefined) {
+        list_Components[id_component].push(node.id);
       }
+      else {
+        //continue while list of linked node is not emphty 
+        while (stack.length !== 0) {
+          let firstNode: any = stack.shift();
+
+          if (firstNode !== undefined) {
+            for (let connectedNodes of firstNode!.links!) {
+              stack.push(connectedNodes);
+              component.add(connectedNodes.id);
+            }
+            visited.push(firstNode)
+            stack = stack.filter(val => !visited.includes(val));
+          }
+        }
+
+      }
+      list_Components.push(Array.from(component))
+      console.log(list_Components)
+      id_component = id_component + 1
     }
-    // Return a selection of one connexe graph 
-    // Maybe juste one node
-    return connexeNodesId
+    return list_Components
   }
 
 
@@ -864,42 +718,40 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
 
   Send = (box: string, name: string, number: string): void => {
     //Check if there is more than one polymer 
-    const connexe1 = this.giveConnexeNode(this.state.Simulation!.nodes()[1])
-    const nodeNumber = this.state.Simulation?.nodes().length
-    if (nodeNumber !== connexe1.size) {
-      console.log("Composed of different")
-      //Get the first 
+    const list_graph_component = this.get_Graph_Components(this.state.Simulation!.nodes())
 
-      this.warningfunction("Your polymer is composed of different parts. Please add link between every part.")
+    const jsonpolymer = simulationToJson(this.state.Simulation!, this.currentForceField)
+    let data: { [x: string]: any; } = {}
 
+    data = {
+      'polymer': jsonpolymer,
+      'box': box,
+      'name': name,
+      'number': number
     }
-    else {
-      const jsonpolymer = simulationToJson(this.state.Simulation!, this.currentForceField)
-      let data: { [x: string]: any; } = {}
 
-      data = {
-        'polymer': jsonpolymer,
-        'box': box,
-        'name': name,
-        'number': number
-      }
+    console.log("list_graph_component", list_graph_component)
+    data['list_graph_component'] = list_graph_component
 
-      data['customITP'] = this.state.customITP
-      data['proteinGRO'] = this.state.gro_coord
+    data['customITP'] = this.state.customITP
+    data['proteinGRO'] = this.state.gro_coord
 
-      if (this.state.inputpdb) {
-        data['inputpdb'] = this.state.inputpdb
-      }
 
-      this.setState({ stepsubmit: 1, data_for_computation: data })
-      this.socket.emit('run_itp_generation', data)
+    if (this.state.inputpdb) {
+      data['inputpdb'] = this.state.inputpdb
     }
+
+    this.setState({ stepsubmit: 1, data_for_computation: data })
+    this.socket.emit('run_itp_generation', data)
+
   }
 
   fixlinkcomponentappear = () => {
     this.setState({ current_position_fixlink: 0 })
   }
 
+
+  // NEED TO REMOVE STATE DU MENU ? OU ALORS ????
   clear = () => {
     console.log("clear!")
     currentAvaibleID = -1
@@ -908,7 +760,6 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
       customITP: {},
       nodesToAdd: [],
       linksToAdd: [],
-      dataForForm: {},
       Warningmessage: "",
       dialogWarning: "",
       loading: false,
@@ -934,19 +785,14 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
 
     this.socket.on("polyply_data", (data: any) => {
       console.log("Data loaded.")
+      this.setState({ version: data['version'] })
+      delete data['version']
       this.setState({ dataForForm: data })
     }
     )
 
-    this.socket.emit("version",)
-
-    this.socket.on("version_answer", (data: string) => {
-      console.log("Version loaded.")
-      this.setState({ version: data })
-    }
-    )
-
     this.socket.on("error_itp", (error: string) => {
+      console.log("error_itp", error)
       this.setState({
         Warningmessage: error,
         dialogWarning: "",
@@ -984,32 +830,6 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
       if (res !== "") {
         this.setState({ stepsubmit: 2 })
         this.setState({ itp: res })
-        //Besoin de verifier que l'itp fourni par polyply est le meme polymere que celui afficher
-        // const jsonpolymer = simulationToJson(this.state.Simulation!, this.currentForceField)
-
-        // const klcdwu = this.returnITPinfo(res)
-
-
-        // const NBatomsITP: number = klcdwu![0].length
-        // const NBlinksITP: number = klcdwu![1].length
-        // const NBatomsSIM: number = jsonpolymer.nodes.length
-        // const NBlinksSIM: number = jsonpolymer.links.length
-
-
-        // if (NBatomsSIM !== NBatomsITP) {
-        //   this.setState({ dialogWarning: "WHOUWHOUWHOU alert au node" })
-
-        // }
-        // else if (NBlinksSIM !== NBlinksITP) {
-        //   this.setState({ dialogWarning: "Probleme de lien entre le fichier generé par polyply et la representation" })
-        //   //Check missing links
-
-        //   socket.emit("continue")
-
-        // }
-        // else {
-        //   socket.emit("continue")
-        // }
         //@ts-ignore
         this.state.data_for_computation['itp'] = res
 
@@ -1038,7 +858,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     })
 
     this.socket.on("oups", async (dicoError: any) => {
-      console.log("Oups")
+      console.log("Oups", dicoError)
       this.setState({ stepsubmit: undefined })
       this.setState({ loading: false })
 
@@ -1092,13 +912,22 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
         //socket.emit("continue",)
 
       }
+      else if (dicoError.linksnotapplied.length > 0) {
+        let out = ''
+        for (let pb of dicoError.linksnotapplied) {
+          out += "residue number " + pb[1] + " (" + pb[0] + ") and residue number " + pb[3] + " (" + pb[2] + "),"
+        }
+        console.log(dicoError.linksnotapplied)
+        this.warningfunction("Polyply does not support linking between " + out + " please keep this information in mind. Sorry for the inconvenience. ")
+      }
       else if (dicoError.boxerror) {
 
         this.setState({ Warningmessage: "Box is too small. Please increase the value." })
       }
       else if (dicoError.message.length) {
-
-        this.setState({ Warningmessage: dicoError.message })
+        let os_error_only = dicoError.message.filter((line: string) => line.startsWith("OSError"))
+        let firstos_error_only = os_error_only[0].replace("OSError:", "")
+        this.setState({ Warningmessage: "Error from polyply : "+ firstos_error_only })
       }
 
       else {
