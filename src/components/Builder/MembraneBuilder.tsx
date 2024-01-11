@@ -18,6 +18,7 @@ import { BetaWarning, SimpleSelect } from '../../Shared';
 import EmbeddedError from '../Errors/Errors';
 import Settings, { LoginStatus } from '../../Settings';
 import {itpBeads} from './BeadsHelper'
+import socketClient from '../../Socket';
 
 
 
@@ -336,9 +337,14 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
     parameters.solvent_type = settings.solvent_type;
 
     try {
+      console.log("Posting @" + 'molecule/membrane_builder');
+      console.dir(parameters);
+
       const res = await ApiHelper.request('molecule/membrane_builder', {
         parameters, body_mode: 'multipart', method: 'POST',
       });
+      socketClient.emit("membraneBuilderSubmit",parameters);
+      //socketClient.emit("membraneBuilderSubmit", pdb, itp, top, parameters) => {
 
       const result = this.parseInsaneResult(res);
 

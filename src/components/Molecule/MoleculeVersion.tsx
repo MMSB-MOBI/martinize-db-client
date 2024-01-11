@@ -126,7 +126,12 @@ function createMoleculeTree(molecules: Molecule[]): MoleculeTree {
 }
 
 export default function MoleculeVersion(props: { versions: Molecule[], current: Molecule, onVersionChange: (id: string) => void }) {
-
+  console.log("MoleculeVersion:props.versions")
+  console.dir(props.versions);
+  console.log("MoleculeVersion:props.currrent")
+  console.dir(props.current);
+  
+  
   const [newVersion, setNewVersion] = React.useState(false);
   const [parent, setParent] = React.useState<Molecule|undefined>(undefined);  
 

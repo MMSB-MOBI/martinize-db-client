@@ -12,7 +12,6 @@ import { RepresentationParameters } from '@mmsb/ngl/declarations/representation/
 import JSZip from 'jszip';
 import { blue } from '@material-ui/core/colors';
 import { applyUserRadius } from '../../nglhelpers';
-import SocketIo from 'socket.io-client';
 import { SERVER_ROOT, STEPS } from '../../constants';
 import { v4 as uuid } from 'uuid';
 import NglWrapper, { NglComponent, ViableRepresentation } from './NglWrapper';
@@ -36,6 +35,7 @@ import { MartinizeFile, MartinizeMode, ReadedJobFiles, ElasticOrGoBounds, Readed
 import { Alert } from '@material-ui/lab'
 import { itpBeads, Bead } from './BeadsHelper';
 import BeadsLegend from './BeadsLegend'
+import socketClient from '../../Socket';
 
 // @ts-ignore
 window.NGL = ngl; window.BaseBondsHelper = BaseBondsHelper;
@@ -726,7 +726,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     });
 
     // Run via socket.io
-    const socket = SocketIo.connect(SERVER_ROOT);
+  //  const socket = SocketIo.connect(SERVER_ROOT);
 
     const pdb_content = await new Promise((resolve, reject) => {
       const fr = new FileReader();
@@ -749,11 +749,11 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       const files: Partial<MartinizeFiles> = {};
 
       // Begin the run
-      socket.emit('martinize', Buffer.from(pdb_content), RUN_ID, form_data);
+      socketClient.emit('martinize', Buffer.from(pdb_content), RUN_ID, form_data);
       this.setState({ martinize_step: 'Sending your files to server' });
 
       // Martinize step
-      socket.on('martinize step', ({ step, id }: { step: string, id: string }) => {
+      socketClient.on('martinize step', ({ step, id }: { step: string, id: string }) => {
         if (id !== RUN_ID) {
           return;
         }
@@ -778,7 +778,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       });
 
       // File upload
-      socket.on('martinize download', ({ id, name, type, mol_idx }: { id: string, name: string, type: string, mol_idx: number }, file: ArrayBuffer, ok_cb: Function) => {
+      socketClient.on('martinize download', ({ id, name, type, mol_idx }: { id: string, name: string, type: string, mol_idx: number }, file: ArrayBuffer, ok_cb: Function) => {
         if (id !== RUN_ID) {
           return;
         }
@@ -834,7 +834,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       });
 
       // Run error
-      socket.on('martinize error', ({ id, error, type, stack }: { id: string, error: string, type?: string, stack: string }, raw_run?: ArrayBuffer) => {
+      socketClient.on('martinize error', ({ id, error, type, stack }: { id: string, error: string, type?: string, stack: string }, raw_run?: ArrayBuffer) => {
         if (id !== RUN_ID) {
           return;
         }
@@ -843,7 +843,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       });
 
       // Before end send
-      socket.on('martinize before end', ({ id }: { id: string }) => {
+      socketClient.on('martinize before end', ({ id }: { id: string }) => {
         if (id !== RUN_ID) {
           return;
         }
@@ -853,7 +853,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
 
       // When run ends
-      socket.on('martinize end', (
+      socketClient.on('martinize end', (
         { id, elastic_bonds, radius, savedToHistory, jobId }: {
           id: string,
           elastic_bonds?: ElasticOrGoBounds[],
@@ -889,7 +889,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       return undefined;
     });
 
-    socket.disconnect();
+    socketClient.disconnect();
 
     if (!files) {
       return;
@@ -1493,7 +1493,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       this.setState({ commandline: value }, () => { })
     } else {
       const s = this.state
-      const socket = SocketIo.connect(SERVER_ROOT);
+      //const socket = SocketIo.connect(SERVER_ROOT);
       const form_data: any = {};
 
       form_data.ff = s.builder_force_field;

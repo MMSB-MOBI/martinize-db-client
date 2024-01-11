@@ -6,12 +6,12 @@ import { FormState, SimulationNode, SimulationLink } from './SimulationType';
 import Warning from "./Dialog/warning";
 import { simulationToJson } from './generateJson';
 import { alarmBadLinks, linkcorrected, removeNodes } from './ViewerFunction';
-import SocketIo from 'socket.io-client';
+//import SocketIo from 'socket.io-client';
+import socketClient from '../../Socket';
 import RunPolyplyDialog from "./Dialog/RunPolyplyDialog";
 import ItpFile from 'itp-parser-forked';
 import { blue } from "@material-ui/core/colors";
 import { setPageTitle } from "../../helpers";
-import { SERVER_ROOT } from '../../constants';
 import FixLink from "./Dialog/FixLink";
 import Settings from "../../Settings";
 import { Theme, withStyles, withTheme } from '@material-ui/core'
@@ -124,7 +124,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     add_fake_links: undefined
   }
 
-  socket = SocketIo.connect(SERVER_ROOT);
+  socket = socketClient;//SocketIo.connect(SERVER_ROOT);
 
   handleResize = () => {
     this.setState({ height: this.root.current!.clientHeight, width: this.root.current!.clientWidth })
