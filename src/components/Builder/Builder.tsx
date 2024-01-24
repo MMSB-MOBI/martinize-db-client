@@ -35,8 +35,9 @@ import { MartinizeFile, MartinizeMode, ReadedJobFiles, ElasticOrGoBounds, Readed
 import { Alert } from '@material-ui/lab'
 import { itpBeads, Bead } from './BeadsHelper';
 import BeadsLegend from './BeadsLegend'
-import socketClient from '../../Socket';
+import { getSocket } from '../../Socket';
 
+const socketClient = getSocket("Martinize"); // May have to work on that
 // @ts-ignore
 window.NGL = ngl; window.BaseBondsHelper = BaseBondsHelper;
 
@@ -747,7 +748,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
     const files: MartinizeFiles | undefined = await new Promise<MartinizeFiles>((resolve, reject) => {
       const files: Partial<MartinizeFiles> = {};
-
+      
       // Begin the run
       socketClient.emit('martinize', Buffer.from(pdb_content), RUN_ID, form_data);
       this.setState({ martinize_step: 'Sending your files to server' });

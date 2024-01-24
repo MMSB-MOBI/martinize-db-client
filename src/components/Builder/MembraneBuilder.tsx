@@ -18,7 +18,7 @@ import { BetaWarning, SimpleSelect } from '../../Shared';
 import EmbeddedError from '../Errors/Errors';
 import Settings, { LoginStatus } from '../../Settings';
 import {itpBeads} from './BeadsHelper'
-import socketClient from '../../Socket';
+import { getSocket, Socket} from '../../Socket';
 
 
 
@@ -79,7 +79,7 @@ function isMolecule(data: any) : data is Molecule {
 
 class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
   state: MBuilderState;
-  
+  socket:Socket;
   ngl!: NglWrapper;
   representation?: NglRepresentation<BallAndStickRepresentation>;
   beadsComponent?:NglComponent
@@ -90,6 +90,7 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
     super(props);
 
     this.state = this.original_state;
+    this.socket = getSocket("MembraneBuilder");
   }
 
   async componentDidMount() {
@@ -337,23 +338,39 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
     parameters.solvent_type = settings.solvent_type;
 
     try {
-      console.log("Posting @" + 'molecule/membrane_builder');
+     
+      /*
+       console.log("Posting @" + 'molecule/membrane_builder');
       console.dir(parameters);
-
       const res = await ApiHelper.request('molecule/membrane_builder', {
         parameters, body_mode: 'multipart', method: 'POST',
       });
-      socketClient.emit("membraneBuilderSubmit",parameters);
-      //socketClient.emit("membraneBuilderSubmit", pdb, itp, top, parameters) => {
-
       const result = this.parseInsaneResult(res);
-
-      this.initNglWithResult(result, 'no_water', molecule?.builder_mode);
+       this.initNglWithResult(result, 'no_water', molecule?.builder_mode);
 
       this.setState({ 
         running: 'visualization', 
         result, 
       });
+      */
+      console.log("SocketEmit@" + 'MembraneBuilder');
+      console.dir(parameters);
+      this.socket.on("insaneResult", (res)=> {
+        console.log(res);
+        const result = this.parseInsaneResult(res);
+        this.initNglWithResult(result, 'no_water', molecule?.builder_mode);
+
+        this.setState({ 
+          running: 'visualization', 
+          result, 
+        });
+      });
+      this.socket.emit("insaneSubmit", parameters);
+      //socketClient.emit("membraneBuilderSubmit", pdb, itp, top, parameters) => {
+
+     
+
+     
     } catch (e) {
       if (Array.isArray(e) && e[0].status === 400) {
         const error = e[1] as { error: string, trace?: string, zip: number[], errorCode?: string, e?:any, msg?:string };

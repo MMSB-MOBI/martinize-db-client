@@ -7,7 +7,7 @@ import Warning from "./Dialog/warning";
 import { simulationToJson } from './generateJson';
 import { alarmBadLinks, linkcorrected, removeNodes } from './ViewerFunction';
 //import SocketIo from 'socket.io-client';
-import socketClient from '../../Socket';
+import {getSocket, Socket} from '../../Socket';
 import RunPolyplyDialog from "./Dialog/RunPolyplyDialog";
 import ItpFile from 'itp-parser-forked';
 import { blue } from "@material-ui/core/colors";
@@ -124,7 +124,8 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     add_fake_links: undefined
   }
 
-  socket = socketClient;//SocketIo.connect(SERVER_ROOT);
+  job_socket     = getSocket("PolymerGenerator");
+  history_socket = getSocket("History");
 
   handleResize = () => {
     this.setState({ height: this.root.current!.clientHeight, width: this.root.current!.clientWidth })
@@ -132,10 +133,11 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
 
   currentForceField = 'martini3';
 
+  // Register History router on back-end side TO DO
   add_to_history = () => {
     this.state.data_for_computation['userId'] = Settings.user?.id
-    this.socket.emit("add_to_history", this.state.data_for_computation)
-    this.socket.on("add_to_history_answer", async (res: string) => {
+    this.history_socket.emit("add", this.state.data_for_computation)
+    this.history_socket.on("add", async (res: string) => {
       if (res) {
         this.setState({ jobfinish: res })
         this.warningfunction("The polymer has been added to your history!");
@@ -149,9 +151,9 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
   add_to_history_and_redirect = async (): Promise<void> => {
     //console.log(this.state)
     this.state.data_for_computation['userId'] = Settings.user?.id
-    this.socket.emit("add_to_history", this.state.data_for_computation)
+    this.history_socket.emit("add", this.state.data_for_computation)
 
-    this.socket.on("add_to_history_answer", async (res: string) => {
+    this.history_socket.on("add", async (res: string) => {
       if (res) {
         this.setState({ jobfinish: res })
         window.location.assign("/builder/" + res);
@@ -690,7 +692,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
   grossecorection = (itpfix: string) => {
     this.setState({ stepsubmit: 2, loading: true, itp: itpfix, current_position_fixlink: undefined, errorLink: [] })
     this.state.data_for_computation['itp'] = itpfix
-    this.socket.emit("run_gro_generation", this.state.data_for_computation)
+    this.job_socket.emit("run_gro_generation", this.state.data_for_computation)
   }
 
   getbeadslist = (idres: string) => {
@@ -742,7 +744,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     }
 
     this.setState({ stepsubmit: 1, data_for_computation: data })
-    this.socket.emit('run_itp_generation', data)
+    this.job_socket.emit('generateITP', data)
 
   }
 
@@ -779,19 +781,19 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
 
   componentDidMount() {
     setPageTitle("Polymer Editor");
-    this.socket.emit("get_polyply_data",)
+    this.job_socket.emit("polyply_data",)
     this.setState({ height: this.root.current!.clientHeight, width: this.root.current!.clientWidth })
     window.addEventListener('resize', this.handleResize)
 
-    this.socket.on("polyply_data", (data: any) => {
+    this.job_socket.on("polyply_data", (data: any) => {
       console.log("Data loaded.")
       this.setState({ version: data['version'] })
       delete data['version']
       this.setState({ dataForForm: data })
-    }
-    )
+      }
+    );
 
-    this.socket.on("error_itp", (error: string) => {
+    this.job_socket.on("error_itp", (error: string) => {
       console.log("error_itp", error)
       this.setState({
         Warningmessage: error,
@@ -808,7 +810,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
       })
     })
 
-    this.socket.on("error_gro", (error: string) => {
+    this.job_socket.on("error_gro", (error: string) => {
       console.log("error gro")
       this.setState({
         Warningmessage: error,
@@ -826,38 +828,38 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     })
 
     //Ecoute sur le socket 
-    this.socket.on("itp", (res: string) => {
+    this.job_socket.on("generateITP", (res: string) => {
       if (res !== "") {
         this.setState({ stepsubmit: 2 })
         this.setState({ itp: res })
         //@ts-ignore
         this.state.data_for_computation['itp'] = res
 
-        this.socket.emit("run_gro_generation", this.state.data_for_computation)
+        this.job_socket.emit("generateGRO", this.state.data_for_computation)
 
       }
     })
 
 
-    this.socket.on("gro_top", (datafromsocket: any) => {
+    this.job_socket.on("generateGRO", (datafromsocket: any) => {
       this.setState({ gro: datafromsocket['gro'], top: datafromsocket['top'] })
       this.setState({ stepsubmit: 3 })
       //@ts-ignore
       this.state.data_for_computation['gro'] = datafromsocket['gro']
       //@ts-ignore
       this.state.data_for_computation['top'] = datafromsocket['top']
-      this.socket.emit("run_pdb_generation", this.state.data_for_computation)
+      this.job_socket.emit("generatePDB", this.state.data_for_computation)
 
     })
 
-    this.socket.on("pdb", (data: string) => {
+    this.job_socket.on("generatePDB", (data: string) => {
       console.log("pdb done")
       this.setState({ pdb: data })
       this.state.data_for_computation['pdb'] = data
       this.setState({ stepsubmit: 4 })
     })
 
-    this.socket.on("oups", async (dicoError: any) => {
+    this.job_socket.on("oups", async (dicoError: any) => {
       console.log("Oups", dicoError)
       this.setState({ stepsubmit: undefined })
       this.setState({ loading: false })
