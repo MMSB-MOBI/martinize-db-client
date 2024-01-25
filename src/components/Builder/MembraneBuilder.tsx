@@ -266,6 +266,7 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
   startInsane = async () => {
     const { settings, lipids, molecule, ph_upp, ph_low } = this.state;
     const parameters: any = {};
+    const moleculeInputFiles: any = {};
 
     if ((!molecule && this.state.addMolecule === "true") || !settings || (!lipids && this.state.addLipids)) {
       return;
@@ -286,15 +287,23 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
 
     if (this.state.addMolecule === "true"){
       if (isMolecule(molecule)) {
-        parameters.from_id = molecule.id;
+        console.log("MembraneBuilder:Case1 ");
+        console.dir(molecule);
+        //parameters.from_id = molecule.id;
+        moleculeInputFiles.from_id = molecule.id;
       }
       else { //it's multer params, I think
+        console.log("MembraneBuilder:Case2 ");
+        console.dir(molecule);
+        //@ts-ignore      
+        moleculeInputFiles.pdb = { file : molecule.pdb, fileName: molecule.pdb.name }
+        //parameters.pdb = molecule.pdb
         //@ts-ignore
-        parameters.pdb = molecule.pdb;
+        moleculeInputFiles.top = { file: molecule.top, fileName: molecule.top.name };
+        //parameters.top = molecule.top;        
         //@ts-ignore
-        parameters.top = molecule.top;
-        //@ts-ignore
-        parameters.itp = molecule.itps;
+        moleculeInputFiles.itp =  molecule.itps.map( (itp) => {return { file:itp, fileName: itp.name} })
+        //parameters.itp = molecule.itps;
         //@ts-ignore
         parameters.force_field = molecule.force_field;
       }
@@ -365,7 +374,11 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
           result, 
         });
       });
-      this.socket.emit("insaneSubmit", parameters);
+      console.log("Emiting@insaneSubmit:");
+      console.dir(parameters);
+
+
+      this.socket.emit("insaneSubmit", moleculeInputFiles, parameters);
       //socketClient.emit("membraneBuilderSubmit", pdb, itp, top, parameters) => {
 
      
