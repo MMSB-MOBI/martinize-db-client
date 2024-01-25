@@ -289,8 +289,8 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
       if (isMolecule(molecule)) {
         console.log("MembraneBuilder:Case1 ");
         console.dir(molecule);
-        //parameters.from_id = molecule.id;
-        moleculeInputFiles.from_id = molecule.id;
+        parameters.from_id = molecule.id;
+        //moleculeInputFiles.from_id = molecule.id;
       }
       else { //it's multer params, I think
         console.log("MembraneBuilder:Case2 ");
