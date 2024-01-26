@@ -302,7 +302,7 @@ class MembraneBuilder extends React.Component<MBuilderProps, MBuilderState> {
         moleculeInputFiles.top = { file: molecule.top, fileName: molecule.top.name };
         //parameters.top = molecule.top;        
         //@ts-ignore
-        moleculeInputFiles.itp =  molecule.itps.map( (itp) => {return { file:itp, fileName: itp.name} })
+        moleculeInputFiles.itps =  molecule.itps.map( (itp) => {return { file:itp, fileName: itp.name} })
         //parameters.itp = molecule.itps;
         //@ts-ignore
         parameters.force_field = molecule.force_field;
