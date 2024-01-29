@@ -327,6 +327,11 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
     )
   }
 
+  /*
+  componentDidMount() {
+    
+  }
+  */
   render() {
     let forcefield = this.state.forcefield;
     //console.log("menuPlus", this.state.Menuplus)
@@ -509,7 +514,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
                           <Grid item xs={6} style={{ textAlign: 'center', alignItems: 'center' }}>
                             <Button variant="outlined" color="primary" onClick={() => this.setState({ database_modal_chooser: true })}>
                               Search a molecule
-                              <Badge color="secondary" >
+                              <Badge overlap="rectangular" color="secondary" >
                                 <Icon className={"fas fa-" + "upload"} />
                               </Badge>
                             </Button>
@@ -530,7 +535,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
                             <Button variant="outlined" color="primary"
                               onClick={() => this.setState({ history_modal_chooser: true })}>
                               Search a molecule
-                              <Badge color="secondary" >
+                              <Badge overlap="rectangular" color="secondary" >
                                 <Icon className={"fas fa-" + "upload"} />
                               </Badge>
                             </Button>
@@ -723,7 +728,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
                               </Typography>
                             </Grid>
                             <Grid item xs={2}>
-                              <Badge color="secondary" >
+                              <Badge overlap="rectangular" color="secondary" >
                                 <Icon className={"fas fa-" + "plus"} />
                               </Badge>
                             </Grid>
@@ -807,7 +812,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
                               </Typography>
                             </Grid>
                             <Grid item xs={2}>
-                              <Badge color="secondary" >
+                              <Badge overlap="rectangular" color="secondary" >
                                 <Icon className={"fas fa-" + "link"} />
                               </Badge>
                             </Grid>
@@ -835,7 +840,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
                               </Typography>
                             </Grid>
                             <Grid item xs={2}>
-                              <Badge color="secondary" >
+                              <Badge overlap="rectangular" color="secondary" >
                                 <Icon className={"fas fa-" + "arrow-left"} />
                               </Badge>
                             </Grid>
@@ -855,7 +860,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
                                   Fix link
                                 </Typography>
 
-                                <Badge color="secondary" >
+                                <Badge overlap="rectangular" color="secondary" >
                                   <Icon className={"fas fa-" + "pen"} />
                                 </Badge>
                               </Button>) :
@@ -869,7 +874,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
                                     </Typography>
                                   </Grid>
                                   <Grid item xs={2}>
-                                    <Badge color="secondary" >
+                                    <Badge overlap="rectangular" color="secondary" >
                                       <Icon className={"fas fa-" + "magic"} />
                                     </Badge>
                                   </Grid>

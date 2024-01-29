@@ -96,7 +96,7 @@ function BadgedIcon(props: {
   }, [])
 
   return (
-    <Badge badgeContent={count} color="secondary" >
+    <Badge overlap="rectangular" badgeContent={count} color="secondary" >
       <Icon className={"fas fa-" + props.icon} />
     </Badge>)
 }

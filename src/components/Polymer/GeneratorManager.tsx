@@ -7,7 +7,7 @@ import Warning from "./Dialog/warning";
 import { simulationToJson } from './generateJson';
 import { alarmBadLinks, linkcorrected, removeNodes } from './ViewerFunction';
 //import SocketIo from 'socket.io-client';
-import {getSocket, Socket} from '../../Socket';
+import {getSocket, Socket, getMadSocket} from '../../Socket';
 import RunPolyplyDialog from "./Dialog/RunPolyplyDialog";
 import ItpFile from 'itp-parser-forked';
 import { blue } from "@material-ui/core/colors";
@@ -96,7 +96,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
   myViewerRef = React.createRef();
 
   state: StateSimulation = {
-    version: "XXX",
+    version: "n/a",
     Simulation: undefined,
     previous_Simulation_nodes: [[]],
     customITP: {},
@@ -124,7 +124,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     add_fake_links: undefined
   }
 
-  job_socket     = getSocket("PolymerGenerator");
+  job_socket     = getMadSocket("PolymerGenerator");
   history_socket = getSocket("History");
 
   handleResize = () => {
@@ -779,20 +779,26 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     })
   }
 
-  componentDidMount() {
+  async componentDidMount() {
     setPageTitle("Polymer Editor");
-    this.job_socket.emit("polyply_data",)
     this.setState({ height: this.root.current!.clientHeight, width: this.root.current!.clientWidth })
     window.addEventListener('resize', this.handleResize)
 
+    this.setState({ dataForForm: await this.job_socket.request("polyply_data") as any });
+    this.setState({ version: await this.job_socket.request("version") as string });
+
+    /*
+    this.job_socket.emit("polyply_data",)
+    
     this.job_socket.on("polyply_data", (data: any) => {
-      console.log("Data loaded.")
-      this.setState({ version: data['version'] })
-      delete data['version']
+      console.log("Data loaded.")     
       this.setState({ dataForForm: data })
       }
     );
-
+    */
+    // Socket MAD type here
+    //this.setState({ version: await this.job_socket.request("version") as string });
+    
     this.job_socket.on("error_itp", (error: string) => {
       console.log("error_itp", error)
       this.setState({

@@ -1,6 +1,6 @@
 
 export const DEBUG_MODE: boolean = process.env.NODE_ENV !== 'production';
-export const SERVER_ROOT = DEBUG_MODE ? "http://localhost:4123/" : "/";
+export const SERVER_ROOT = DEBUG_MODE ? "http://localhost:8080/" : "/"; //8080  refers to the mapping from the docker forwarded port
 export const API_URL = SERVER_ROOT + "api/";
 export const STEPS = {
   STEP_MARTINIZE_INIT: 'init',
