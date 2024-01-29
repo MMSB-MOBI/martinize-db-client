@@ -32,7 +32,7 @@ interface StateSimulation {
   dialogWarning: string;
   nodesToAdd: SimulationNode[],
   linksToAdd: SimulationLink[],
-  dataForForm: { [forcefield: string]: string[] },
+  dataForForm: { [forcefield: string]: Record<string, [string, string]> },
   loading: Boolean,
   stepsubmit: number | undefined,
   itp: string,
@@ -273,7 +273,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     // VERIFIER SI LE FORCEFIELD CONTIENT LES AA 
     // Aficher message d'erreur 
     for (let aa of Object.keys(fastaconv)) {
-      if (!this.state.dataForForm[this.currentForceField].includes(aa)) {
+      if (!Object(this.state.dataForForm[this.currentForceField]).keys.includes(aa)) {
         this.setState({ Warningmessage: "This residue (" + aa + " ) is not in this forcefield " + this.currentForceField })
         return
       }
@@ -337,7 +337,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
           oldID: node.id,
           newID: newid,
         })
-        if (!(this.state.dataForForm[this.currentForceField].includes(node.resname))) {
+        if (!(Object(this.state.dataForForm[this.currentForceField]).keys.includes(node.resname))) {
           this.setState({ Warningmessage: node.resname + " not in " + this.currentForceField + ". Please add a definition for your molecule." })
         }
 
@@ -477,7 +477,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     }
     this.setState({ nodesToAdd: newMolecules });
 
-    this.state.dataForForm[this.currentForceField].push(molname)
+    this.state.dataForForm[this.currentForceField][molname] = [molname, "n/a"];
 
     this.new_modification()
   }

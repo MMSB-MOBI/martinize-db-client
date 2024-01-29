@@ -32,7 +32,7 @@ interface propsmenu {
   addmoleculecoord: (arg0: string) => void;
   send: () => void;
   addCustomitp: (arg0: string, arg1: string) => void;
-  dataForceFieldMolecule: { [forcefield: string]: string[] };
+  dataForceFieldMolecule: { [forcefield: string]: Record<string, [string,string]> };
   errorlink: any[];
   fixlinkcomponentappear: () => void;
   clear: () => void;
@@ -417,7 +417,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
                         required
                         label="forcefield : "
                         variant="standard"
-                        values={Object.keys(this.props.dataForceFieldMolecule).map(e => ({ id: e, name: e }))}
+                        values={Object.keys(this.props.dataForceFieldMolecule).map( (e) => ({ id: e, name: e }))}
                         id="ff"
                         value={this.state.forcefield}
                         onChange={v => {
@@ -692,7 +692,9 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
                           variant="standard"
                           // values={this.GetMolFField(this.props.dataForceFieldMolecule, forcefield).map(e => ({ id: e, name: e }))}
                           // @ts-ignore
-                          values={this.props.dataForceFieldMolecule[this.state.forcefield].map(e => ({ id: e, name: e }))}
+                          values={ Object.entries(this.props.dataForceFieldMolecule[this.state.forcefield]).map( (e) =>{
+                                return { id: e[0], name: e[1][0], url:e[1][1] } }) 
+                          }
                           id="ff"
                           value={this.state.moleculeToAdd}
                           onChange={v => this.setState({ moleculeToAdd: v })} />
@@ -760,8 +762,8 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
                               <em>None</em>
                             </MenuItem>
 
-                            {this.props.dataForceFieldMolecule[this.state.forcefield]
-                              .map(e => <MenuItem key={e} value={e}> {e}</MenuItem>)}
+                            {Object.entries(this.props.dataForceFieldMolecule[this.state.forcefield])
+                              .map( v =>{ <MenuItem key={v[0]} value={v[0]}> {v[1][0]} ??? {v[1][1]}</MenuItem>  }) }
 
                           </Select>
                         </FormControl>

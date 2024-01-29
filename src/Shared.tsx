@@ -1,7 +1,12 @@
 import React from 'react';
 import { Grid, CircularProgress, FormControl, InputLabel, Select, MenuItem, Link } from "@material-ui/core";
 import { Alert } from '@material-ui/lab';
+import { Icon, Tooltip } from '@material-ui/core';
 import clsx from 'clsx';
+
+const tooltipText =
+"Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley.";
+
 
 export const CenterComponent = (props: any) => {
   return (
@@ -29,14 +34,16 @@ export function LoadFader(props: React.PropsWithChildren<{ when?: boolean }>) {
 
 export function SimpleSelect(props: {
   label: string,
-  value: string,
+  value: string, 
   onChange: (v: string) => void, id: string,
-  values: { id: string, name: string }[],
+  values: { id: string, name: string, url?:string, }[],
   disabled?: boolean,
   formControlClass?: string,
   variant?: "outlined" | "standard" | "filled",
   noMinWidth?: boolean,
   required?: boolean,
+  //children?: ReactElement<any, any>|ReactElement<any, any>[]
+  // <Icon className="fas fa-question-circle fa-xs" />
 }) {
   const inputLabel = React.useRef<HTMLLabelElement>(null);
   const [labelWidth, setLabelWidth] = React.useState(0);
@@ -58,7 +65,12 @@ export function SimpleSelect(props: {
         required
         disabled={props.disabled}
       >
-        {props.values.map(cat => <MenuItem key={cat.id} value={cat.id}>{cat.name}</MenuItem>)}
+        {props.values.map( (cat) => { return ! cat.url ?
+          <MenuItem key={cat.id} value={cat.id}>{cat.name}</MenuItem>
+          : <Tooltip title={<img src={cat.url}/>}> 
+              <MenuItem key={cat.id} value={cat.id}>{cat.name}  </MenuItem>
+        </Tooltip>
+        })}
       </Select>
     </FormControl>
   )
