@@ -67,7 +67,7 @@ export function SimpleSelect(props: {
       >
         {props.values.map( (cat) => { return ! cat.url ?
           <MenuItem key={cat.id} value={cat.id}>{cat.name}</MenuItem>
-          : <Tooltip title={<img src={cat.url}/>}> 
+          : <Tooltip title={<img src={cat.url}/>} placement="right-end" arrow> 
               <MenuItem key={cat.id} value={cat.id}>{cat.name}  </MenuItem>
         </Tooltip>
         })}

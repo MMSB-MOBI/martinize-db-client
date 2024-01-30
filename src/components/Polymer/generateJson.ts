@@ -1,8 +1,5 @@
 import * as d3 from "d3";
 import { SimulationNode, SimulationLink } from './SimulationType';
-import io from 'socket.io-client';
-
-
 
 //Format of Json ask by polyply
 //{

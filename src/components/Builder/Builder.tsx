@@ -726,8 +726,6 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       martinize_error: undefined,
     });
 
-    // Run via socket.io
-  //  const socket = SocketIo.connect(SERVER_ROOT);
 
     const pdb_content = await new Promise((resolve, reject) => {
       const fr = new FileReader();
