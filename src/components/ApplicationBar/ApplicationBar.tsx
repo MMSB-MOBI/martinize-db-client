@@ -72,6 +72,7 @@ interface DrawerElement {
   count?: Countable;
   font?: number | "-moz-initial" | "inherit" | "initial" | "revert" | "unset" | "normal" | "bold" | "bolder" | "lighter";
   render?: () => JSX.Element;
+  children?: React.ReactNode;
 }
 
 type Countable = "molecules" | "users"
