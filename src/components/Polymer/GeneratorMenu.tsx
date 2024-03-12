@@ -8,7 +8,8 @@ import CreateLink from "./Dialog/CreateLink";
 import AutoFixHigh from "@mui/material/Icon/Icon";
 import { FaIcon, Marger } from "../../helpers";
 import { Badge, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Divider, FormControl, FormControlLabel, FormLabel, Grid, Icon, Input, InputLabel, MenuItem, Paper, Radio, RadioGroup, Select, } from '@material-ui/core';
-import { SimpleSelect } from "../../Shared";
+import { TooltipedSelect } from "../../ShareTT";
+import { SimpleSelect } from '../../Shared';
 import Link from "@mui/material/Link";
 import { Link as RouterLink } from 'react-router-dom';
 import { ModalMoleculeSelector } from "../Builder/MembraneBuilder/MoleculeChooser";
@@ -684,11 +685,11 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
 
                       <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
 
-                        <SimpleSelect
+                        <TooltipedSelect
 
                           //formControlClass={this.props.classes.ff_select}
                           required
-                          label="Molecule"
+                          label="Molecule TT"
                           variant="standard"
                           // values={this.GetMolFField(this.props.dataForceFieldMolecule, forcefield).map(e => ({ id: e, name: e }))}
                           // @ts-ignore
@@ -696,6 +697,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
                                 return { id: e[0], name: e[1][0], url:e[1][1] } }) 
                           }
                           id="ff"
+                          key="ff"
                           value={this.state.moleculeToAdd}
                           onChange={v => this.setState({ moleculeToAdd: v })} />
                       </Grid>

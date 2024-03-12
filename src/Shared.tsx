@@ -4,9 +4,6 @@ import { Alert } from '@material-ui/lab';
 import { Icon, Tooltip } from '@material-ui/core';
 import clsx from 'clsx';
 
-const tooltipText =
-"Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley.";
-
 
 export const CenterComponent = (props: any) => {
   return (
@@ -44,7 +41,7 @@ export function SimpleSelect(props: {
   required?: boolean,
   //children?: ReactElement<any, any>|ReactElement<any, any>[]
   // <Icon className="fas fa-question-circle fa-xs" />
-}) {
+  }) {
   const inputLabel = React.useRef<HTMLLabelElement>(null);
   const [labelWidth, setLabelWidth] = React.useState(0);
   React.useEffect(() => {
@@ -65,12 +62,7 @@ export function SimpleSelect(props: {
         required
         disabled={props.disabled}
       >
-        {props.values.map( (cat) => { return ! cat.url ?
-          <MenuItem key={cat.id} value={cat.id}>{cat.name}</MenuItem>
-          : <Tooltip title={<img src={cat.url}/>} placement="right-end" arrow> 
-              <MenuItem key={cat.id} value={cat.id}>{cat.name}  </MenuItem>
-        </Tooltip>
-        })}
+        {props.values.map( (cat) => <MenuItem key={cat.id} value={cat.id}>{cat.name}</MenuItem>)}      
       </Select>
     </FormControl>
   )
