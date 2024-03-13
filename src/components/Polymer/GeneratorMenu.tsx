@@ -689,13 +689,15 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
 
                           //formControlClass={this.props.classes.ff_select}
                           required
-                          label="Molecule TT"
+                          label="Molecule**"
                           variant="standard"
                           // values={this.GetMolFField(this.props.dataForceFieldMolecule, forcefield).map(e => ({ id: e, name: e }))}
                           // @ts-ignore
-                          values={ Object.entries(this.props.dataForceFieldMolecule[this.state.forcefield]).map( (e) =>{
+                          /*values={ Object.entries(this.props.dataForceFieldMolecule[this.state.forcefield]).map( (e) =>{
                                 return { id: e[0], name: e[1][0], url:e[1][1] } }) 
-                          }
+                          }*/
+                          //@ts-ignore
+                          values = {this.props.dataForceFieldMolecule[this.state.forcefield]}
                           id="ff"
                           key="ff"
                           value={this.state.moleculeToAdd}

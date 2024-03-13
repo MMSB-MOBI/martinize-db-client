@@ -2,6 +2,7 @@ import React from 'react';
 import { FormControl, InputLabel, Select, MenuItem, Link } from "@material-ui/core";
 //import { Alert } from '@material-ui/lab';
 import { Tooltip } from '@material-ui/core';
+import ListSubheader from '@mui/material/ListSubheader';
 /*
 type State = {
     open: boolean,
@@ -66,7 +67,7 @@ type State = {
     value: string, 
     onChange: (v: string) => void, 
     id: string,
-    values: { id: string, name: string, url?:string, }[],
+    values: Record<string, [string, string, string][]>//{ id: string, name: string, url?:string, }[],
     disabled?: boolean,
     formControlClass?: string,
     variant?: "outlined" | "standard" | "filled",
@@ -81,7 +82,7 @@ type State = {
       if (inputLabel.current)
         setLabelWidth(inputLabel.current!.offsetWidth);
     }, [props]);
-    
+    console.dir(props.values);
     return (
       <FormControl required={props.required} className={props.formControlClass} variant={props.variant ?? "outlined"} style={{ minWidth: props.noMinWidth ? 0 : 180 }}>
         <InputLabel ref={inputLabel} id={props.id}>
@@ -95,13 +96,22 @@ type State = {
           required
           disabled={props.disabled}
         >
-            {props.values.map( (cat) =>
-                <MenuItem key={cat.id} value={cat.id}>
-                  <Tooltip title={<img src={cat.url} />} placement="right-end" arrow> 
-                    <span>{cat.name}</span>
-                  </Tooltip>
-                </MenuItem>
-            )}
+          { Object.keys(props.values).map( molCat => {
+              return (
+                <div>
+                <ListSubheader color='primary'>{ molCat }</ListSubheader>
+                {
+                  props.values[molCat].map( mol =>
+                    <MenuItem key={mol[2]} value={mol[2]}>
+                    <Tooltip title={<img src={mol[1]} />} placement="right-end" arrow> 
+                      <span>{mol[0]}</span>
+                    </Tooltip>
+                  </MenuItem>
+                  )
+                  }
+                  </div>
+                )  
+        })}
         </Select>
       </FormControl>
     )
