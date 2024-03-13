@@ -236,27 +236,21 @@ export default class RunPolyplyDialog extends React.Component<props, state> {
 
                                         </DialogActions>
                                     </Grid>
+                                    <DialogContent>
                                     <Grid item xs={12} >
-                                        <DialogActions >
-
-                                            <Typography variant="subtitle2" component="div">
-                                                Grünewald, F., Alessandri, R., Kroon, P.C. et al. Polyply; a python suite for facilitating simulations of macromolecules and nanomaterials. Nat Commun 13, 68 (2022).
-                                                {/* </Typography>
-
-                                        </DialogActions>
-                                    </Grid>
-                                    <Grid item xs={12} >
-                                        <DialogActions >
-                                            <Typography variant="subtitle2" component="div"> */}
-
-                                                Hilpert, C., Beranger, L., Souza, P.C.T., Vainikka, P.A., Nieto, V., Marrink, S.J., Monticelli, L.&; Launay, G. (2022) Facilitating CG simulations with MAD: the MArtini Database Server. BiorXiv.
+                                            <Typography variant="caption" component="div">
+                                                Grünewald, F., Alessandri, R., Kroon, P.C. et al. Polyply; a python suite for facilitating simulations of macromolecules and nanomaterials. Nat Commun. 2022
                                             </Typography>
-                                        </DialogActions>
-
                                     </Grid>
                                     <Grid item xs={12} >
+                                            <Typography variant="caption" component="div">
+                                                Hilpert, C., Beranger, L., Souza, P.C.T., Vainikka, P.A., Nieto, V., Marrink, S.J., Monticelli, L.&, Launay, G. Facilitating CG simulations with MAD: the MArtini Database Server. J Chem Inf Model. 2023
+                                            </Typography>
+                                    </Grid>
+                                    </DialogContent>
+                                    <Grid item xs={12} >
                                         <DialogActions >
-                                            <Typography variant="subtitle2" component="div">
+                                            <Typography variant="caption" component="div">
                                                 Future reference for Polymer editor
                                             </Typography>
                                         </DialogActions>

@@ -98,18 +98,18 @@ type State = {
         >
           { Object.keys(props.values).map( molCat => {
               return (
-                <div>
-                <ListSubheader color='primary'>{ molCat }</ListSubheader>
-                {
+                [
+                <ListSubheader color='primary'>{ molCat }</ListSubheader>,
+                
                   props.values[molCat].map( mol =>
                     <MenuItem key={mol[2]} value={mol[2]}>
-                    <Tooltip title={<img src={mol[1]} />} placement="right-end" arrow> 
-                      <span>{mol[0]}</span>
+                    <Tooltip title={<img src={mol[1]} width="200px"/>} placement="right-end" arrow> 
+                      <span style={{ width:'100%'}}>{mol[0]}</span>
                     </Tooltip>
                   </MenuItem>
                   )
-                  }
-                  </div>
+                  
+                ]
                 )  
         })}
         </Select>
