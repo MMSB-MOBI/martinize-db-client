@@ -554,12 +554,24 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
                     <>
                       <Grid item xs={1}></Grid>
                       <Grid item xs={10}>
-                        <Typography align="justify" variant="subtitle2">
-                          Welcome on MAD:Polymer Editor, powered by polyply, you can create and edit polymers.
-                          You can load molecules from the Polyply database or import new martinized molecule.
+                      <Typography align="justify" variant="subtitle2">
+                          Welcome to the <span style={{fontWeight:"bold"}}>MAD:Polymer Editor</span>, powered by the polyply software!
+                          {"\n"}
+                          Here you will be able to:
+                          <ul>
+                            <li>Create and/or edit new polymers.</li>
+                            <li>Create and/or edit polymers from the polyply library</li>
+                            <li>Attach polymers to your martinized molecule (<a href="">why not a protein)</a></li> 
+                          </ul>
                           If a particular type of link between 2 residues is not provided by Polyply, a dialog window will guide you through the
-                          process of setting it up.  You can also load a previously saved polymer in .json format, a protein sequence in
-                          .fasta format or the topology of a new molecule in .itp.
+                          process of setting it up. 
+                          <div> In addition, You can provide:
+                          <ul>
+                            <li>A previously saved polymer in .json format</li>
+                            <li>A protein sequence in.fasta format</li>
+                            <li>The topology of a new molecule in .itp</li>
+                          </ul>
+                          </div>
                         </Typography>
                       </Grid>
                       <Grid item xs={1}></Grid>
@@ -571,11 +583,23 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
                       <Grid item xs={1}></Grid>
                       <Grid item xs={10}>
                         <Typography align="justify" variant="subtitle2">
-                          Welcome on MAD:Polymer Editor, powered by polyply, you can create and edit polymers in order to modify the protein that have been loaded.
-                          You can load molecules from the Polyply database or import new martinized molecule.
+                        Welcome to the <span style={{fontWeight:"bold"}}>MAD:Polymer Editor</span>, powered by the polyply software!
+                          {"\n"}
+                          Here you will be able to:
+                          <ul>
+                            <li>Create and/or edit new polymers.</li>
+                            <li>Create and/or edit polymers from the polyply library</li>
+                            <li>Attach polymers to your martinized molecule (<a href="">why not a protein)</a></li> 
+                          </ul>
                           If a particular type of link between 2 residues is not provided by Polyply, a dialog window will guide you through the
-                          process of setting it up. You can also load a previously saved polymer in .json format, a protein sequence in
-                          .fasta format or the topology of a new molecule in .itp.
+                          process of setting it up. 
+                          <div> In addition, You can provide:
+                          <ul>
+                            <li>A previously saved polymer in .json format</li>
+                            <li>A protein sequence in.fasta format</li>
+                            <li>The topology of a new molecule in .itp</li>
+                          </ul>
+                          </div>
                         </Typography>
                       </Grid>
                       <Grid item xs={1}></Grid>
