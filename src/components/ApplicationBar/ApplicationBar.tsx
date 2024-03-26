@@ -49,12 +49,12 @@ const useStyles = makeStyles((theme: Theme) =>
       backgroundColor: '#e4ebf2', //'#dae4f5',//"#e8ecf3",
       color: 'black',
       //minHeight:75,
-      justifyContent:"space-between"
+      justifyContent:"space-between",
     },
     toolbar: { ...theme.mixins.toolbar, 
       marginTop:120}, // The tutorial banner
     drawerPaper: { // The left panel
-      marginTop:'-60px',
+      marginTop:'-75px',
       backgroundColor: 'whitesmoke',
       width: drawerWidth,
       borderRight: 'none',
@@ -415,7 +415,7 @@ function AppBarContent() {
     }, []);
    
  return (
-  <Typography variant="h6" style={{ marginLeft:'200px' }}>
+  <Typography variant="h6" style={{ display: 'flex', justifyContent: 'center', width: '100%' } /*marginLeft:'200px' */}>
     <img src="/assets/logo-large.png" alt="MAD LOGO" style={{ height :'110px'}}/>
   </Typography>
  )

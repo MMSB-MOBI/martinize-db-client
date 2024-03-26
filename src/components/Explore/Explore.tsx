@@ -218,7 +218,7 @@ export class Explore extends React.Component<RouteComponentProps, ExploreState> 
   
   render() {
     return (
-      <Container style={{ paddingTop: 14 }}>
+      <Container style={{ marginTop: '-40px' }}>
         <Typography variant="h3" className="page-title">
           Explore
         </Typography>
