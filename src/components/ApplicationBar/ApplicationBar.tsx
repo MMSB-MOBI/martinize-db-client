@@ -249,10 +249,11 @@ function DrawerElements(props: RouteComponentProps) {
         i++;
         continue;
       }
-      console.log("ADDIN G KEY", i);
+      if(e.static)
+        i++;
       list_elements.push(
-          e.static ? 
-          <a style={{ all:'unset'}} href="/tutorial">
+         e.static ? 
+          <a key={i-1} style={{ all:'unset'}} href="/tutorial">
           <ListItem
            button
             key={i}
@@ -266,7 +267,7 @@ function DrawerElements(props: RouteComponentProps) {
         <ListItemText primary={<Typography style={{ fontWeight: e.font ? e.font : 'normal' }}>{e.text}</Typography>} />
       </ListItem>
          </a>
-          :
+      :
         <ListItem
           button
           key={i}
@@ -319,7 +320,6 @@ export default function ApplicationDrawer(props: RouteComponentProps) {
             <PersonIcon />
           </Avatar>
         </ListItemAvatar>
-        {/* FAIRE UNE ONE LIGNE DEGEUE AVEC PLUSIEUR IF JUSTE POUR AFFICHER UNE MAJUSCULE !! J'ADORE MON TTRAVAIL !! Ca va prendre 2h pour rien */}
         <ListItemText primary={Settings.user.name} secondary={Settings.user.role} />
       </ListItem>}
 
