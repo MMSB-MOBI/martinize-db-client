@@ -1,5 +1,5 @@
 import React from 'react';
-import { Marger } from '../../../helpers';
+import { Marger, FaIcon } from '../../../helpers';
 import MartinizeError, { MZError } from './MartinizeError';
 import { Typography, Grid, Box, Button, makeStyles, TextField, FormLabel, RadioGroup, FormControlLabel, Radio, Checkbox, IconButton, SvgIcon, Snackbar, Switch } from '@material-ui/core';
 import { SimpleSelect } from '../../../Shared';
@@ -291,7 +291,9 @@ export default function MartinizeForm(props: MartinizeFormProps) {
             Back
           </Button>
 
-          <Button variant="outlined" color="primary" type="submit">
+          <Button variant="outlined" color="primary" type="submit" 
+            endIcon={ <FaIcon cocktail style={{ fontSize: '1.5rem' }} /> }
+            >
             Submit
           </Button>
         </Box>

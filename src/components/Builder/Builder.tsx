@@ -108,6 +108,7 @@ export interface MBState {
   edited: boolean;
   want_reset: boolean;
   want_go_back: boolean;
+  want_go_tutorial:boolean;
 
   theme: Theme;
 
@@ -135,7 +136,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
   protected root = React.createRef<HTMLDivElement>();
   protected go_back_btn = React.createRef<any>();
-
+  protected go_tuto_anchor = React.createRef<any>();
   protected beads: Bead[] = [];
 
   protected saved_viz_params?: {
@@ -254,6 +255,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       edited: false,
       want_reset: false,
       want_go_back: false,
+      want_go_tutorial: false,
       error: undefined,
       martinize_step: '',
       send_mail: "false",
@@ -1163,6 +1165,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
 
   onWantGoBack = (e: React.MouseEvent) => {
     // Don't go to #!
+    console.log("Dont go !");
     e.preventDefault();
 
     this.setState({
@@ -1175,10 +1178,14 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
   };
 
   onGoBack = () => {
+    if(this.state.want_go_tutorial)
+      this.go_tuto_anchor.current.click();
+    else
     // Click on the hidden link
-    this.go_back_btn.current.click();
+      this.go_back_btn.current.click();
   };
 
+ 
   onForceFieldChange = (ff: AvailableForceFields) => {
     if (this.state.builder_mode === 'go' && !ff.includes('martini3')) {
       this.setState({ builder_mode: 'classic' });
@@ -1464,7 +1471,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     return (
       <Dialog open={!!this.state.want_go_back} onClose={this.onWantGoBackCancel}>
         <DialogTitle>
-          Get back to database ?
+          Get back to { this.state.want_go_tutorial ? "tutorial" : "database" } ?
         </DialogTitle>
 
         <DialogContent>
@@ -1549,22 +1556,50 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
                 <Typography variant="subtitle1" align="center" style={{ fontSize: '0.7rem', fontStyle: 'italic', marginBottom: '1rem' }}>
                   martinize version : {this.state.version}
                 </Typography>
+                {/* modify this
+                https://mui.com/material-ui/react-grid/
+                 */}
+                 
+                <div style={{ display: 'flex', flexWrap: 'nowrap', justifyContent : 'space-between' }} >
 
-                <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
-                  <Link
-                    href="#!"
-                    // When state is initial state (main loader), don't show the confirm modal
-                    onClick={this.state.running !== 'pdb' ? this.onWantGoBack : this.onGoBack}
-                  >
-                    <FaIcon home style={{ fontSize: '1rem' }} />
-                    <span style={{ marginLeft: '.7rem', fontSize: '1.1rem' }}>
-                      MAD Home
-                    </span>
-                  </Link>
+                  <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+                    <Link
+                      href="#!"
+                      // When state is initial state (main loader), don't show the confirm modal
+                      onClick={ (e)=>{ this.setState({want_go_tutorial:false});this.state.running !== 'pdb' ? this.onWantGoBack(e) : this.onGoBack()} }
+                    >
+                      <FaIcon home style={{ fontSize: '1.5rem' }} />
+                      <span style={{ marginLeft: '.7rem', fontSize: '1.1rem' }}>
+                        MAD Home
+                      </span>
+                    </Link>
+                    <RouterLink ref={this.go_back_btn} to="/" style={{ display: 'none' }} />
+                  </div>
 
-                  <RouterLink ref={this.go_back_btn} to="/" style={{ display: 'none' }} />
-                </div>
-
+                  <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+                  <a 
+                      href="/tutorial/molecule.html"
+                      ref={this.go_tuto_anchor} style={{display:'none'}}></a>
+                    <a className="static"
+                     // When state is initial state (main loader), don't show the confirm modal
+                      onClick={ (e)=> { 
+                        console.log("kikou"); 
+                        if (this.state.running !== 'pdb'){
+                          console.log("Shwoing stuff"); 
+                          this.setState({want_go_tutorial:true}); 
+                          this.onWantGoBack(e) 
+                        }
+                        this.onGoBack();
+                      }}
+                    >
+                      <FaIcon graduation-cap style={{ fontSize: '1.5rem' }} />
+                      <span style={{ marginLeft: '.7rem', fontSize: '1.1rem' }}>
+                        Builder Tutorial
+                      </span>
+                    </a>
+                  </div>
+                <div/>
+              </div>
                 <Divider />
               </div>
 

@@ -21,7 +21,7 @@ import ApiHelper from '../../ApiHelper';
 import { toast } from '../Toaster';
 import { errorToText } from '../../helpers';
 import { Citation, TutorialShow } from '../../Shared';
-
+import Box from '@mui/system/Box';
 
 //import { WarnBeta } from '../WarnBeta';
 
@@ -44,13 +44,18 @@ const useStyles = makeStyles((theme: Theme) =>
         display: 'none',
       },
     },
-    appBar: {
+    appBar: { // The logo section, top banner
       zIndex: theme.zIndex.drawer + 1,
-      backgroundColor: "#e8ecf3",
+      backgroundColor: '#e4ebf2', //'#dae4f5',//"#e8ecf3",
       color: 'black',
+      //minHeight:75,
+      justifyContent:"space-between"
     },
-    toolbar: theme.mixins.toolbar,
-    drawerPaper: {
+    toolbar: { ...theme.mixins.toolbar, 
+      marginTop:120}, // The tutorial banner
+    drawerPaper: { // The left panel
+      marginTop:'-60px',
+      backgroundColor: 'whitesmoke',
       width: drawerWidth,
       borderRight: 'none',
     },
@@ -59,11 +64,20 @@ const useStyles = makeStyles((theme: Theme) =>
     },
     ppHeader: {
 
+    },/*
+    logo: {
+      maxWidth: 40,
+      marginRight: '10px'
     },
+    title: {
+      flexGrow: 1,
+      textAlign: "center"
+    },*/
   }),
 );
 
 interface DrawerElement {
+  static?:boolean;
   path?: string;
   link?: boolean;
   icon?: string;
@@ -143,7 +157,15 @@ function DrawerElements(props: RouteComponentProps) {
         text: 'Polymer Editor',
         condition: Settings.logged === LoginStatus.Admin || Settings.logged === LoginStatus.Dev,
         font: "bold"
-      }
+      },
+      {
+        /*path: '/tutorial/',
+        link: true,*/
+        static: true,
+        icon: "graduation-cap",
+        text: "Tutorials",
+        font: "bold"
+      },
     ],
     [
       {
@@ -227,8 +249,24 @@ function DrawerElements(props: RouteComponentProps) {
         i++;
         continue;
       }
-
+      console.log("ADDIN G KEY", i);
       list_elements.push(
+          e.static ? 
+          <a style={{ all:'unset'}} href="/tutorial">
+          <ListItem
+           button
+            key={i}
+            selected={props.location.pathname === e.path}
+            style={{ fontWeight: 600 }}
+          >
+            <ListItemIcon>
+          <Icon className={"fas fa-" + e.icon} style={{ color: e.font ? 'black' : '' }} />
+      
+        </ListItemIcon>
+        <ListItemText primary={<Typography style={{ fontWeight: e.font ? e.font : 'normal' }}>{e.text}</Typography>} />
+      </ListItem>
+         </a>
+          :
         <ListItem
           button
           key={i}
@@ -289,6 +327,17 @@ export default function ApplicationDrawer(props: RouteComponentProps) {
     </div>
   );
 
+  const styles = {
+    customizeToolbar: {
+      minHeight: "100px",
+      //marginBottom:"-50px"
+    }
+  };
+  const leftStyle = [
+
+  ]
+  
+
   return (
     <div className={classes.root}>
       {/* App bar */}
@@ -300,9 +349,11 @@ export default function ApplicationDrawer(props: RouteComponentProps) {
             onClick={handleDrawerToggle}
             className={classes.menuButton}
           >
-            <MenuIcon />
+          
+          <MenuIcon />
           </IconButton>
           <AppBarContent />
+         
         </Toolbar>
       </AppBar>
       {/* Drawer */}
@@ -339,7 +390,7 @@ export default function ApplicationDrawer(props: RouteComponentProps) {
       {/* Main content */}
       <main className={classes.content}>
         <div className={classes.toolbar} />
-        <TutorialShow />
+      {/*     <TutorialShow />   */}
         <DrawerContentRouter {...props} />
       </main>
     </div>
@@ -361,16 +412,26 @@ function AppBarContent() {
       // @ts-ignore
       window.removeEventListener('app-bar.title-change', onTitleChange);
     };
-  }, []);
-
-  return (
-    <div style={{ textAlign: 'center', width: '100%' }}>
-      <Typography variant="h6" noWrap style={{ fontWeight: 200, fontSize: '1.7rem' }}>
-        {title}
-      </Typography>
-    </div>
-  );
+    }, []);
+   
+ return (
+  <Typography variant="h6" style={{ marginLeft:'200px' }}>
+    <img src="/assets/logo-large.png" alt="MAD LOGO" style={{ height :'110px'}}/>
+  </Typography>
+ )
 }
+
+  /*
+  return  (
+    <Box
+    component="img"
+  sx={{
+    height: 100,
+   }}
+  alt="The house from the offer."
+  src="/assets/logo.png"
+/>
+  )*/
 
 function LogOutDialog() {
   const [open, setOpen] = React.useState(false);

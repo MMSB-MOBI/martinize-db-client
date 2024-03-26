@@ -82,7 +82,7 @@ export const BetaWarning = () => {
 export const TutorialShow = () => {
   const baseUrl = window.location.origin.toString()
   return <Alert severity="info"
-    style={{ justifyContent: 'center', alignItems: 'center' }}>
+    style={{ justifyContent: 'center', alignItems: 'center', backgroundColor:'#8fffcb' }}>
     New to MAD? Try our <Link href={baseUrl + "/tutorial"}>tutorial!</Link>
   </Alert>
 }

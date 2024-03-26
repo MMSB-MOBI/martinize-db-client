@@ -6,7 +6,13 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-
+a.static{
+  color : #3f51b5;
+  text-decoration:none;
+}
+a.static:hover {
+  text-decoration: underline;
+}
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
@@ -32,10 +38,12 @@ code {
 }
 
 .page-title {
-  margin-bottom: 2rem !important;
-  margin-top: 1rem !important;
-  font-weight: 200 !important;
+  margin-bottom: 1rem !important;
+  margin-top: 0.25rem !important;
+  font-weight: 500 !important;
   text-align: center !important;
+  font-family: 'Ubuntu'!important;
+ // margin-top: '-200px' !important;
 }
 
 .maintenance-div {
