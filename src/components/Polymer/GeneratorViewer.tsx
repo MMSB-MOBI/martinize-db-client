@@ -150,6 +150,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
   }
 
   componentDidUpdate(prevProps: propsviewer, prevStates: statecustommenu) {
+    console.log("UPDATING OF GeneratorViewer");
     //Check state and props 
     if ((prevProps.newNodes !== this.props.newNodes) || (prevProps.newLinks !== this.props.newLinks)) {
       this.UpdateSVG()
@@ -231,6 +232,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
 
   // Define graph property
   UpdateSVG = () => {
+    console.log("### UPDATING SVG ###")
     // Verifier si on doit bien ajouter des props ou si c'est deja fait 
     if (this.prevPropsNewLink !== this.props.newLinks) {
       let Linktoadd: SimulationLink[] = [];

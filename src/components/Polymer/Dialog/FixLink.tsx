@@ -148,9 +148,10 @@ export default class FixLink extends React.Component<props, state> {
                                 >
                                     {
                                         this.props.fixing_error[this.state.numeroLink]["startchoice"]
-                                            .map((e: any) => {
+                                            .map((e: any, i:number) => {
                                                 return <FormControlLabel
                                                     labelPlacement="start"
+                                                    key={i}
                                                     value={e.idbead}
                                                     control={<Radio />}
                                                     label={` Bead : ${e.bead}`} />
@@ -171,8 +172,9 @@ export default class FixLink extends React.Component<props, state> {
                                 >
                                     {
                                         this.props.fixing_error[this.state.numeroLink]["endchoice"]
-                                            .map((e: any) => {
+                                            .map((e: any, i:number) => {
                                                 return <FormControlLabel
+                                                    key={i}
                                                     value={e.idbead}
                                                     control={<Radio />}
                                                     label={` Bead : ${e.bead}`} />
@@ -205,7 +207,7 @@ export default class FixLink extends React.Component<props, state> {
                                         autoWidth
                                         value={this.props.fixing_error[this.state.numeroLink]["change_bead_1"] ? this.props.fixing_error[this.state.numeroLink]["change_bead_1"] : ""}
                                     >
-                                        {beadslist.map(cat => <MenuItem key={cat} value={cat}>{cat}</MenuItem>)}
+                                        {beadslist.map((cat, i) => <MenuItem key={i} value={cat}>{cat}</MenuItem>)}
                                     </Select>
 
                                 </FormControl>
@@ -236,7 +238,7 @@ export default class FixLink extends React.Component<props, state> {
                                         autoWidth
                                         value={this.props.fixing_error[this.state.numeroLink]["change_bead_2"] ? this.props.fixing_error[this.state.numeroLink]["change_bead_2"] : ""}
                                     >
-                                        {beadslist.map(cat => <MenuItem key={cat} value={cat}>{cat}</MenuItem>)}
+                                        {beadslist.map((cat, i) => <MenuItem key={i} value={cat}>{cat}</MenuItem> )}
                                     </Select>
                                 </FormControl>
                             </Grid>

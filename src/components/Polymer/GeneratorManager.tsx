@@ -689,10 +689,10 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     }
 
   }
-  grossecorection = (itpfix: string) => {
+  linkFixedToGRO = (itpfix: string) => {
     this.setState({ stepsubmit: 2, loading: true, itp: itpfix, current_position_fixlink: undefined, errorLink: [] })
     this.state.data_for_computation['itp'] = itpfix
-    this.job_socket.emit("run_gro_generation", this.state.data_for_computation)
+    this.job_socket.emit("generateGRO", this.state.data_for_computation)
   }
 
   getbeadslist = (idres: string) => {
@@ -743,7 +743,8 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
       data['inputpdb'] = this.state.inputpdb
     }
 
-    this.setState({ stepsubmit: 1, data_for_computation: data })
+    this.setState({ stepsubmit: 1, data_for_computation: data });
+    console.warn("Emiting GenerateITP", data);
     this.job_socket.emit('generateITP', data)
 
   }
@@ -835,15 +836,15 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
 
     //Ecoute sur le socket 
     this.job_socket.on("generateITP", (res: string) => {
+      console.warn("GenerateITP incoming", res);
       if (res !== "") {
-        this.setState({ stepsubmit: 2 })
-        this.setState({ itp: res })
+          this.setState({ stepsubmit: 2 })
+          this.setState({ itp:res })
         //@ts-ignore
-        this.state.data_for_computation['itp'] = res
+          this.state.data_for_computation['itp'] = res
 
-        this.job_socket.emit("generateGRO", this.state.data_for_computation)
-
-      }
+          this.job_socket.emit("generateGRO", this.state.data_for_computation)
+        }
     })
 
 
@@ -865,8 +866,8 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
       this.setState({ stepsubmit: 4 })
     })
 
-    this.job_socket.on("oups", async (dicoError: any) => {
-      console.log("Oups", dicoError)
+    this.job_socket.on("polyplyError", async (dicoError: any) => {
+      console.warn("polyplyError", dicoError)
       this.setState({ stepsubmit: undefined })
       this.setState({ loading: false })
 
@@ -988,7 +989,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
             current_position={this.state.current_position_fixlink}
             itp={this.state.itp}
             close={() => { this.setState({ current_position_fixlink: undefined }) }}
-            send={this.grossecorection}
+            send={this.linkFixedToGRO}
             fixing_error={this.state.errorfix}
             update_error={(e: any): void => {
               this.setState({ errorfix: e });
