@@ -70,7 +70,9 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
     for (let i in oldNodes) {
       if (oldNodes[i].id !== newNodes[i].id) return false
      // if (Object.keys(oldNodes[i]).length !== Object.keys(newNodes[i]).length) return false
-      if ((oldNodes[i].links) && (newNodes[i].links))  if (oldNodes[i].links.length !== newNodes[i].links.length) return false
+      if ((oldNodes[i].links) && (newNodes[i].links)) 
+        if (oldNodes[i].links.length !== newNodes[i].links.length) 
+          return false
      
     }
     return true
@@ -290,7 +292,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
     //Send new simulation to Manager component
     if(!justZoom)
       this.polymer_is_modified();
-    
+
     reloadSimulation(this.simulation, groups)
     this.props.getSimulation_and_update_previous(this.simulation)
   }
