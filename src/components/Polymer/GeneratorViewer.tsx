@@ -140,8 +140,8 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
         this.simulation
           .force("link", d3.forceLink().distance((this.nodeSize / 4) * (zoomValue * zoomValue)).strength(0.9))
           .force("charge", d3.forceManyBody().strength(-this.nodeSize * 3 * (zoomValue * zoomValue)))
-
-        this.UpdateSVG()
+        console.warn("Zoom changed calling UpdateSVG")
+        this.UpdateSVG(true);
       }
 
     }));
@@ -150,9 +150,10 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
   }
 
   componentDidUpdate(prevProps: propsviewer, prevStates: statecustommenu) {
-    console.log("UPDATING OF GeneratorViewer");
+    console.log("UPDATING OF GeneratorViewer " + Math.floor(Math.random() * 100000) );
     //Check state and props 
     if ((prevProps.newNodes !== this.props.newNodes) || (prevProps.newLinks !== this.props.newLinks)) {
+      console.warn("Nodes or links altered, calling UpdateSVG")
       this.UpdateSVG()
     }
 
@@ -165,7 +166,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
 
       this.simulation
         .force("x", d3.forceX(this.props.width / 2).strength(0.2))
-
+      console.warn("Width changed, calling UpdateSVG");
       this.UpdateSVG()
     }
     if (prevProps.height !== this.props.height) {
@@ -176,7 +177,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
       //console.log("Change height");
       this.simulation
         .force("y", d3.forceY(this.props.height / 2).strength(0.2))
-
+      console.warn("Height changed, calling UpdateSVG");
       this.UpdateSVG()
     }
 
@@ -222,6 +223,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
             }
           }
         }
+        console.warn("Links changed, calling UpdateSVG");
         this.UpdateSVG() 
       }
       else {
@@ -231,7 +233,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
   }
 
   // Define graph property
-  UpdateSVG = () => {
+  UpdateSVG = (justZoom?:boolean) => {
     console.log("### UPDATING SVG ###")
     // Verifier si on doit bien ajouter des props ou si c'est deja fait 
     if (this.prevPropsNewLink !== this.props.newLinks) {
@@ -286,7 +288,9 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
       }
     }
     //Send new simulation to Manager component
-    this.polymer_is_modified()
+    if(!justZoom)
+      this.polymer_is_modified();
+    
     reloadSimulation(this.simulation, groups)
     this.props.getSimulation_and_update_previous(this.simulation)
   }
