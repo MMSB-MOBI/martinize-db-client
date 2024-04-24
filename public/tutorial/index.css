@@ -284,3 +284,13 @@ span.command {
     max-width: 650px;
     padding : 2em;
 }
+
+
+blockquote {
+    border-left:5px solid #059ce5;
+}
+
+pre.output {
+    background-color: #e5f8fb;
+    overflow: scroll;
+}
