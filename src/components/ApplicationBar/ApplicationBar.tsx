@@ -155,7 +155,7 @@ function DrawerElements(props: RouteComponentProps) {
         link: true,
         icon: 'draw-polygon',
         text: 'Polymer Editor',
-        condition: Settings.logged === LoginStatus.Admin || Settings.logged === LoginStatus.Dev,
+        //condition: Settings.logged === LoginStatus.Admin || Settings.logged === LoginStatus.Dev,
         font: "bold"
       },
       {
