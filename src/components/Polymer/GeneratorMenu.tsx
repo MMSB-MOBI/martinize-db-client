@@ -7,7 +7,7 @@ import Typography from "@mui/material/Typography";
 import CreateLink from "./Dialog/CreateLink";
 import AutoFixHigh from "@mui/material/Icon/Icon";
 import { FaIcon, Marger } from "../../helpers";
-import { Badge, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Divider, FormControl, FormControlLabel, FormLabel, Grid, Icon, Input, InputLabel, MenuItem, Paper, Radio, RadioGroup, Select, } from '@material-ui/core';
+import { withStyles, Badge, CircularProgress, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Divider, FormControl, FormControlLabel, FormLabel, Grid, Icon, Input, InputLabel, MenuItem, Paper, Radio, RadioGroup, Select, } from '@material-ui/core';
 import { TooltipedSelect } from "../../ShareTT";
 import { SimpleSelect } from '../../Shared';
 import Link from "@mui/material/Link";
@@ -19,6 +19,26 @@ import { ImportProtein } from "./Dialog/importProtein";
 import ApiHelper from "../../ApiHelper";
 import md5 from 'md5';
 import { getID } from "./GeneratorManager";
+import { color } from "d3";
+
+
+
+const useStyles = (theme:any) => ({
+  form: {
+    width: '100%', // Fix IE 11 issue.
+    marginTop: theme.spacing(1),
+  },
+  formContainer: {
+    paddingLeft: theme.spacing(2),
+    width:"100%",
+    marginTop: theme.spacing(1),
+    color:"green"
+  },
+  textField: {
+    width: '100%',
+  },
+});
+  
 
 
 interface propsmenu {
@@ -39,6 +59,7 @@ interface propsmenu {
   clear: () => void;
   version: string;
   previous: () => void;
+  doSendMail: (maybeSend: boolean) => void; 
 }
 
 interface GeneratorMenuState extends FormState {
@@ -54,10 +75,10 @@ interface GeneratorMenuState extends FormState {
   add_to_every_residue: string | undefined;
   addMolecule: string;
   moleculeAdded: boolean;
-
+  send_mail:string;
 }
 
-export default class GeneratorMenu extends React.Component<propsmenu, GeneratorMenuState> {
+class GeneratorMenu extends React.Component<propsmenu, GeneratorMenuState> {
 
   // Set the state directly. Use props if necessary.
   state = {
@@ -76,9 +97,10 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
     add_to_every_residue: "",
     addMolecule: "",
     moleculeAdded: false,
+    send_mail:"false"
   }
 
-
+ 
   protected go_back_btn = React.createRef<any>();
 
   closeCreate(): void {
@@ -107,6 +129,7 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
         add_to_every_residue: "",
         addMolecule: "",
         moleculeAdded: false,
+        send_mail:"false"
       })
     }
     else this.props.previous()
@@ -334,8 +357,9 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
   }
   */
   render() {
+    const { classes } = this.props;
     let forcefield = this.state.forcefield;
-    //console.log("menuPlus", this.state.Menuplus)
+    
     return (
       <div  >
         {this.renderModalBackToDatabase()}
@@ -550,7 +574,9 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
 
                   <Marger size="1rem" />
 
-                  {(this.state.addMolecule == "false") &&
+                  { ( (this.state.addMolecule == "false") ||
+                    (this.state.moleculeAdded && (this.state.addMolecule == "true") )
+                   ) &&
                     <>
                       <Grid item xs={1}></Grid>
                       <Grid item xs={10}>
@@ -559,13 +585,13 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
                           {"\n"}
                           Here you will be able to:
                           <ul>
-                            <li>Create and/or edit new polymers.</li>
-                            <li>Create and/or edit polymers from the polyply library</li>
+                            <li>Create/edit new polymers.</li>
+                            <li>Create /edit polymers from the polyply library</li>
                             <li>Attach polymers to your martinized molecule (<a href="">why not a protein)</a></li> 
                           </ul>
-                          If a particular type of link between 2 residues is not provided by Polyply, a dialog window will guide you through the
-                          process of setting it up. 
-                          <div> In addition, You can provide:
+                          If case of a link between 2 molecules missing in the Polyply library, a dialog window will guide you through the
+                          process of creating the ad hoc link.
+                          <div> You can also start by providing:
                           <ul>
                             <li>A previously saved polymer in .json format</li>
                             <li>A protein sequence in.fasta format</li>
@@ -574,37 +600,18 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
                           </div>
                         </Typography>
                       </Grid>
-                      <Grid item xs={1}></Grid>
-                    </>
-                  }
-                  {(this.state.moleculeAdded && (this.state.addMolecule == "true")) &&
-
-                    <>
-                      <Grid item xs={1}></Grid>
-                      <Grid item xs={10}>
-                        <Typography align="justify" variant="subtitle2">
-                        Welcome to the <span style={{fontWeight:"bold"}}>MAD:Polymer Editor</span>, powered by the polyply software!
-                          {"\n"}
-                          Here you will be able to:
-                          <ul>
-                            <li>Create and/or edit new polymers.</li>
-                            <li>Create and/or edit polymers from the polyply library</li>
-                            <li>Attach polymers to your martinized molecule (<a href="">why not a protein)</a></li> 
-                          </ul>
-                          If a particular type of link between 2 residues is not provided by Polyply, a dialog window will guide you through the
-                          process of setting it up. 
-                          <div> In addition, You can provide:
-                          <ul>
-                            <li>A previously saved polymer in .json format</li>
-                            <li>A protein sequence in.fasta format</li>
-                            <li>The topology of a new molecule in .itp</li>
-                          </ul>
-                          </div>
-                        </Typography>
+                      <Grid item xs={10} className={classes.formContainer} >
+                      <FormControlLabel
+                        control={<Switch 
+                        onChange={e => {
+                        this.props.doSendMail(e.target.checked)}} 
+                        />}
+                        label="Send me email when my job is done"
+                      />  
                       </Grid>
+
                       <Grid item xs={1}></Grid>
                     </>
-
                   }
 
                   {(this.state.moleculeAdded || (this.state.addMolecule == "false")) &&
@@ -953,3 +960,4 @@ export default class GeneratorMenu extends React.Component<propsmenu, GeneratorM
   };
 }
 
+export default withStyles(useStyles, { withTheme: true })(GeneratorMenu)

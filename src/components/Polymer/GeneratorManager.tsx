@@ -132,7 +132,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
   }
 
   currentForceField = 'martini3';
-
+  doSendEmail       = false;
   // Register History router on back-end side TO DO
   add_to_history = () => {
     this.state.data_for_computation['userId'] = Settings.user?.id
@@ -482,6 +482,10 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     this.new_modification()
   }
 
+  setSendEmail = (status: boolean): void => {
+    this.doSendEmail = status;
+  }
+
   setForcefield = (ff: string): void => {
     if ((this.currentForceField === '') || (this.currentForceField === ff)) {
       this.currentForceField = ff
@@ -719,6 +723,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
   }
 
   Send = (box: string, name: string, number: string): void => {
+    console.log("==>Send " + box + " " + name + " " + number);
     //Check if there is more than one polymer 
     const list_graph_component = this.get_Graph_Components(this.state.Simulation!.nodes())
 
@@ -726,6 +731,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     let data: { [x: string]: any; } = {}
 
     data = {
+      'do_send_email' : this.doSendEmail,
       'polymer': jsonpolymer,
       'box': box,
       'name': name,
@@ -951,9 +957,10 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
 
   render() {
     const classes = this.props.classes;
-
+    
     return (
       <Grid
+        item={true}
         container
         component="main"
         className={classes.root}
@@ -999,6 +1006,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
 
         <Grid md={4} component={Paper} elevation={6} square>
           <GeneratorMenu
+            doSendMail={ this.setSendEmail }
             version={this.state.version}
             clear={this.clear}
             errorlink={this.state.errorLink}
