@@ -27,10 +27,12 @@ interface props {
     pdb: string,
     warning: string,
     close: () => void;
+    redirectToViewer:() => void;
     add_to_history: () => void;
     add_to_history_redirect: () => void;
     jobid: string | undefined
     forcefield: string
+    save_is_accessible:boolean
 }
 
 interface state {
@@ -222,20 +224,36 @@ export default class RunPolyplyDialog extends React.Component<props, state> {
 
                             {(this.props.currentStep! === 4) &&
                                 <>
+                                {
+                                (this.props.save_is_accessible) &&
                                     <Grid item xs={5} >
                                         <DialogActions >
                                             <Button color='success' onClick={this.handlehistory}>Save to history</Button>
                                         </DialogActions>
                                     </Grid>
+                                }
+                                {
+                                 (! this.props.save_is_accessible) &&
                                     <Grid item xs={4} >
                                         <DialogActions >
-
+                                        <Button onClick={this.props.redirectToViewer}>
+                                           Watch in molecule viewer
+                                        </Button>
+                                    </DialogActions>
+                                    </Grid>
+                                }
+                                {
+                                 ( this.props.save_is_accessible) &&
+                                    <Grid item xs={4} >
+                                        <DialogActions >
+                                    
                                             <Button onClick={this.handlehistoryandredirect}>
                                                 Save and Go to molecule viewer
                                             </Button>
 
                                         </DialogActions>
                                     </Grid>
+                                }
                                     <DialogContent>
                                     <Grid item xs={12} >
                                             <Typography variant="caption" component="div">

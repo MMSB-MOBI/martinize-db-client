@@ -15,6 +15,7 @@ import { setPageTitle } from "../../helpers";
 import FixLink from "./Dialog/FixLink";
 import Settings from "../../Settings";
 import { Theme, withStyles, withTheme } from '@material-ui/core'
+
 //const parsePdb = require('parse-pdb');
 
 
@@ -126,6 +127,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
 
   job_socket     = getMadSocket("PolymerGenerator");
   history_socket = getSocket("History");
+  job_save_id?:string 
 
   handleResize = () => {
     this.setState({ height: this.root.current!.clientHeight, width: this.root.current!.clientWidth })
@@ -163,7 +165,9 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
       };
     })
   }
-
+  redirect_to_viewer = () => {
+    window.location.assign("/builder/" + this.job_save_id);
+  }
   simulation_nodes_to_frame_shape = (node_from_simulation: SimulationNode[]) => {
     let li = []
     for (let node of node_from_simulation) {
@@ -735,7 +739,8 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
       'polymer': jsonpolymer,
       'box': box,
       'name': name,
-      'number': number
+      'number': number,
+      'userId': Settings.user?.id
     }
 
     console.log("list_graph_component", list_graph_component)
@@ -860,14 +865,16 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
       //@ts-ignore
       this.state.data_for_computation['gro'] = datafromsocket['gro']
       //@ts-ignore
-      this.state.data_for_computation['top'] = datafromsocket['top']
+      this.state.data_for_computation['top'] = datafromsocket['top']    
       this.job_socket.emit("generatePDB", this.state.data_for_computation)
 
     })
 
-    this.job_socket.on("generatePDB", (data: string) => {
+    this.job_socket.on("generatePDB", (data:[string, string|undefined]) => {
+      const [pdb, job_save_id] = data;
       console.log("pdb done")
-      this.setState({ pdb: data })
+      this.setState({ pdb })
+      this.job_save_id = job_save_id;
       this.state.data_for_computation['pdb'] = data
       this.setState({ stepsubmit: 4 })
     })
@@ -957,7 +964,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
 
   render() {
     const classes = this.props.classes;
-    
+
     return (
       <Grid
         item={true}
@@ -983,9 +990,11 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
             close={this.closeDialog}
             add_to_history={this.add_to_history}
             add_to_history_redirect={this.add_to_history_and_redirect}
+            redirectToViewer={this.redirect_to_viewer}
             jobid={this.state.jobfinish}
             top={this.state.top}
             forcefield={this.currentForceField}
+            save_is_accessible = { !this.doSendEmail }
             warning={this.state.dialogWarning}> </RunPolyplyDialog>
         ) : (<></>)
         }
