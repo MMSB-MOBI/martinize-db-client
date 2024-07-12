@@ -23,7 +23,9 @@ export async function itpBeads(top_file : File|string, itp_files:File[]|string[]
     let bb_registration: string[] = []
     
 
-    const system = await TopFile.read(top, itps)
+    const system = await TopFile.read(top, itps);
+    console.log("Bead helper system");
+    console.dir(system);
     for (const molecule of system.molecules){
         if(molecule.type.startsWith(";")) continue
         if(molecule.itp){

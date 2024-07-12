@@ -312,6 +312,9 @@ export function downloadBlob(file: Blob, filename: string) {
 
 
 export async function loadMartinizeFiles(job: ReadedJobDoc) : Promise<MartinizeFiles> {
+  console.log("loadMartinizeFiles");
+  console.dir(job);
+  
   const files = job.files
   const itps = files.itp_files.map((mol_itp, mol_idx) => mol_itp.map(itp => ({name : itp.name, type : itp.type, content : new File([itp.content], itp.name), mol_idx})) ).flat()
 

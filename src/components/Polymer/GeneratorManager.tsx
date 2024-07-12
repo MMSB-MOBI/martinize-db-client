@@ -875,7 +875,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
       console.log("pdb done")
       this.setState({ pdb })
       this.job_save_id = job_save_id;
-      this.state.data_for_computation['pdb'] = data
+      this.state.data_for_computation['pdb'] = pdb;
       this.setState({ stepsubmit: 4 })
     })
 

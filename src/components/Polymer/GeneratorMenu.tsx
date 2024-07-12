@@ -357,6 +357,7 @@ class GeneratorMenu extends React.Component<propsmenu, GeneratorMenuState> {
   }
   */
   render() {
+    //@ts-ignore
     const { classes } = this.props;
     let forcefield = this.state.forcefield;
     

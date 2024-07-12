@@ -96,7 +96,7 @@ interface JobDoc extends CouchDoc {
   date : string; 
   radius : { [atomName: string]: number }; 
   settings: JobSettings 
-  type : "martinize" | "insane"; 
+  type : "martinize" | "insane" | "polyply"; 
   name: string;
   update_date? : string; 
   manual_bonds_edition?: boolean; 

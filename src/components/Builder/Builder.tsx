@@ -62,7 +62,6 @@ interface AtomRadius {
   [atom: string]: number;
 }
 
-type BuilderType = "martinize" | "insane | polyply"
 
 export interface MBState {
   running: 'pdb' | 'pdb_read' | 'martinize_params' | 'martinize_generate' | 'martinize_error' | 'done' | 'go_editor' | 'load_error' | 'load_history';
@@ -158,7 +157,7 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       return;
     }
 
-
+   
     // @ts-ignore
     window.MoleculeBuilder = this;
 
@@ -172,7 +171,6 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       const jobId = params.id
       this.setState({ running: 'load_history' })
       this.loadFromHistory(jobId)
-
     }
 
   }
@@ -181,14 +179,42 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     try {
       this.jobId = jobId;
       const job: ReadedJobDoc = await ApiHelper.request(`history/get?jobId=${jobId}`)
-      this.reloadJobSettingsIntoState(job)
-      const [allAtomFile, martinizeFiles, warnFile] = await Promise.all([this.loadAllAtomFile(job.files), loadMartinizeFiles(job), this.loadWarnings(job.files)])
-      this.reloadJob(allAtomFile, martinizeFiles, warnFile)
+      console.warn("==>")
+      console.dir(job);
+      if(job.type === "polyply") {
+        this.reloadJobSettingsIntoStatePolyplyMockup(job)
+        const cg_files = await loadMartinizeFiles(job);
+        this.reloadJob(undefined, cg_files, undefined)
+      } else {
+        this.reloadJobSettingsIntoState(job)
+        const [allAtomFile, martinizeFiles, warnFile] = await Promise.all([this.loadAllAtomFile(job.files), loadMartinizeFiles(job), this.loadWarnings(job.files)])
+        this.reloadJob(allAtomFile, martinizeFiles, warnFile)
+      }
     } catch (e) {
+      console.error('loadFromHistory has an error');
       this.setState({ load_error_message: errorToText(e as any), running: 'load_error' })
     }
   }
-
+  reloadJobSettingsIntoStatePolyplyMockup(job: ReadedJobDoc) {
+    console.log("reloadJobSettingsIntoStatePolyplyMockup");
+    this.setState({
+      builder_force_field: job.settings.ff,
+      builder_mode: "classic",
+      builder_positions: "backbone",
+      builder_ef: this.original_state.builder_ef,
+      builder_el: this.original_state.builder_el,
+      builder_eu: this.original_state.builder_eu,
+      builder_ea: this.original_state.builder_ea,
+      builder_ep: this.original_state.builder_ep,
+      builder_em: this.original_state.builder_em,
+      nTer: "NH2-ter",
+      cTer: "COOH-ter",
+      sc_fix: "false",
+      cystein_bridge: "none",
+      results_prefix: job.name.split(".")[0]
+    });
+    console.log("reloadJobSettingsIntoStatePolyplyMockup");
+  }
   reloadJobSettingsIntoState(job: ReadedJobDoc) {
     this.setState({
       builder_force_field: job.settings.ff,
@@ -265,70 +291,22 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
     };
   }
 
-
-
-  /* LOAD, RESET AND SAVE STAGES */
-  /*async save(name: string, overwrite_uuid?: string) {
-    const saver = new StashedBuildHelper();
-
-    if (!this.state.files) {
-      return;
-    }
-
-    toast("Your molecule has been saved.", "info");
-
-    const uuid = await saver.add({
-      info: {
-        created_at: new Date(),
-        name,
-        builder_force_field: this.state.builder_force_field,
-        builder_mode: this.state.builder_mode,
-        builder_positions: this.state.builder_positions,
-        builder_ef: this.state.builder_ef,
-        builder_el: this.state.builder_el,
-        builder_ea: this.state.builder_ea,
-        builder_eu: this.state.builder_eu,
-        builder_ep: this.state.builder_ep,
-        builder_em: this.state.builder_em,
-        cTer: this.state.cTer,
-        nTer: this.state.nTer,
-        sc_fix: this.state.sc_fix,
-        cystein_bridge: this.state.cystein_bridge,
-        advanced: this.state.advanced,
-        commandline: this.state.commandline,
-        stdout: this.state.stdout
-      },
-      all_atom: this.state.all_atom_pdb!,
-      coarse_grained: this.state.files.pdb,
-      itp_files: this.state.files.itps,
-      top_file: this.state.files.top,
-      radius: this.state.files.radius,
-      elastic_bonds: this.state.files.elastic_bonds?.bonds,
-      go: this.state.files.go?.toJSON(),
-    }, overwrite_uuid);
-
-    this.setState({
-      saved: uuid,
-      edited: false,
-    });
-  }*/
-
-
-  async reloadJob(allAtomFile: File | undefined, martinizeFiles: MartinizeFiles, warnFile: File) {
+  async reloadJob(allAtomFile: File | undefined, martinizeFiles: MartinizeFiles, warnFile: File|undefined) {
     try {
       const builder_mode = this.state.builder_mode
       const completeFiles = builder_mode === "go" || builder_mode === "elastic" ? await this.loadBonds(martinizeFiles, builder_mode) : martinizeFiles
       completeFiles.warnings = warnFile;
       // XXXXX
-      if (allAtomFile?.size !== 0) {
-        this.initAllAtomPdb(allAtomFile!);
-      }
+      if(allAtomFile != undefined)
+        if (allAtomFile?.size !== 0)
+           this.initAllAtomPdb(allAtomFile!);
+      
 
       this.initCoarseGrainPdb({
         files: completeFiles,
         mode: builder_mode === "classic" ? undefined : builder_mode
       });
-      this.setState({ files: completeFiles })
+      this.setState({ files: completeFiles });
     } catch (e) {
       notifyError(e as any)
     }
@@ -386,12 +364,16 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
   }
 
   async initCoarseGrainPdb(options: { files: MartinizeFiles, mode?: 'go' | 'elastic' }) {
+    
+    console.warn("initCoarseGrainPdb");
+    console.dir(options);
+    console.log(options.files.pdb.content);
     let component: NglComponent;
     const polarizableFF = Settings.martinize_variables.force_fields_info[this.state.builder_force_field].polarizable
     this.beads = await itpBeads(options.files.top.content, options.files.itps.map(itp => itp.content), polarizableFF, options.mode)
     // Apply the NGL radius
     applyUserRadius(options.files.radius);
-
+    console.log("applyUserRadius passed");
     try {
       component = await this.ngl.load(options.files.pdb.content, { coarse_grained: true });
     } catch (e) {
@@ -399,8 +381,18 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       toast("Unable to load generated PDB. Please retry by re-loading the page.");
       return;
     }
-
-    const repr = component.add<BallAndStickRepresentation>("ball+stick", {}, { radius: true, color: true, beads: this.beads, ff: this.state.builder_force_field, radiusFactor: this.state.bead_radius_factor });
+    console.log("ngl.load passed");
+    const cg_ngl_settings = { 
+      radius: true, 
+      color: true, 
+      beads: this.beads, 
+      ff: this.state.builder_force_field, 
+      radiusFactor: this.state.bead_radius_factor 
+    };
+    console.log("CG_NGL settings");
+    console.dir(cg_ngl_settings);
+    const repr = component.add<BallAndStickRepresentation>("ball+stick", {}, 
+      cg_ngl_settings);
 
     component.center(500);
 
@@ -419,23 +411,28 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
         options.files.go.representation.registerCoords(coordinates);
         options.files.go.render();
       }
-      /*
-      else if (options.mode === 'elastic' && options.files.elastic_bonds) {
-        options.files.elastic_bonds.registerCoords(coordinates);
-        options.files.elastic_bonds.render();
-      }
-      */
-    }
 
+    }
+    console.warn("initCoarseGrainPdb NGL startup completed, setting states");
+    console.dir(options.files.pdb);
+    console.dir(options.files.pdb.content);
+    console.dir(component);
+    console.dir(this.state);
+    console.log(this.state.running);
     // Register the component
     this.setState({
       running: 'done',
       coarse_grain_pdb: options.files.pdb.content,
       coarse_grain_ngl: component,
     });
+
+    console.warn("initCoarseGrainPdb Completed");
   }
 
   async initAllAtomPdb(file: File) {
+    console.warn("initAllAtomPdb");
+    console.dir(file);
+
     const component = await this.ngl.load(file, { coarse_grained: false });
 
     const repr = component.add<BallAndStickRepresentation>("ball+stick");
@@ -913,40 +910,6 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
       mode
     });
 
-    // AJAX METHOD
-    //
-    // ApiHelper.request('molecule/martinize', {
-    //   parameters: form_data,
-    //   method: 'POST',
-    //   body_mode: 'multipart',
-    //   mode: 'text',
-    // }) 
-    //   .then((res: string) => {
-    //     const data = martinizeOutputParser(res);
-    //     console.log(data);
-
-    //     const cg_pdb = data.pdb.content;
-
-    //     // Init PDB scene
-    //     this.initCoarseGrainPdb(cg_pdb, data.radius);
-    //     this.setState({ files: data });
-    //   })
-    //   .catch(e => {
-    //     console.log(e);
-    //     if (Array.isArray(e)) {
-    //       const error = e[1];
-
-    //       this.setState({
-    //         running: 'martinize_error',
-    //         error
-    //       });
-    //     }
-    //     else {
-    //       this.setState({
-    //         running: 'martinize_error'
-    //       });
-    //     }
-    //   }) 
   };
 
   onFileSelect = (file: File) => {
@@ -1583,7 +1546,6 @@ class MartinizeBuilder extends React.Component<MBProps, MBState> {
                     <a className="static"
                      // When state is initial state (main loader), don't show the confirm modal
                       onClick={ (e)=> { 
-                        console.log("kikou"); 
                         if (this.state.running !== 'pdb'){
                           console.log("Shwoing stuff"); 
                           this.setState({want_go_tutorial:true}); 

@@ -59,11 +59,12 @@ export default class MartinizeGenerated extends React.Component<MartinizeGenerat
   }
 
   componentDidMount() {
-    this.props.martinizeWarnings.text().then((fileStr: string) => {
+    if(this.props.martinizeWarnings == undefined)
+      this.setState({ warnings: "" })
+    else 
+      this.props.martinizeWarnings.text().then((fileStr: string) => {
       this.setState({ warnings: fileStr })
-    })
-
-
+      })
   }
 
   render() {
