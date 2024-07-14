@@ -21,7 +21,7 @@ import md5 from 'md5';
 import { getID } from "./GeneratorManager";
 import { color } from "d3";
 
-
+/*
 
 const useStyles = (theme:any) => ({
   form: {
@@ -39,7 +39,7 @@ const useStyles = (theme:any) => ({
   },
 });
   
-
+*/
 
 interface propsmenu {
   customITPS: { [name: string]: string };
@@ -590,8 +590,8 @@ class GeneratorMenu extends React.Component<propsmenu, GeneratorMenuState> {
                             <li>Create /edit polymers from the polyply library</li>
                             <li>Attach polymers to your martinized molecule (<a href="">why not a protein)</a></li> 
                           </ul>
-                          If case of a link between 2 molecules missing in the Polyply library, a dialog window will guide you through the
-                          process of creating the ad hoc link.
+                          If your desired link between 2 molecules is missing from the Polyply library, the editor will assist you in the creation
+                          of the ad hoc link.
                           <div> You can also start by providing:
                           <ul>
                             <li>A previously saved polymer in .json format</li>
@@ -601,7 +601,8 @@ class GeneratorMenu extends React.Component<propsmenu, GeneratorMenuState> {
                           </div>
                         </Typography>
                       </Grid>
-                      <Grid item xs={10} className={classes.formContainer} >
+                      <Grid item xs={10} //className={classes.formContainer} >
+                      style={{ paddingLeft:"3em"}}>
                       <FormControlLabel
                         control={<Switch 
                         onChange={e => {
@@ -682,13 +683,14 @@ class GeneratorMenu extends React.Component<propsmenu, GeneratorMenuState> {
 
                       <Marger size="2rem" />
                       <Grid item xs={1}></Grid>
-                      <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center' }}>
+                      <Grid item xs={3} style={{ textAlign: 'left', alignItems: 'center' }}>
 
                         <Typography variant="h6" >
-                          Upload your file:
+                          Upload
+                          <span style={{ fontSize : "0.5em"}}>json/fasta</span>
                         </Typography>
                       </Grid>
-
+                      <Grid item xs={1}></Grid>
                       <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center' }}>
                         <Input
                           inputProps={{ accept: ".ff,.itp,.json,.fasta" }}
@@ -697,11 +699,8 @@ class GeneratorMenu extends React.Component<propsmenu, GeneratorMenuState> {
                           type="file"
                         />
                       </Grid>
-                      <Grid item xs={1}></Grid>
 
-
-
-                      <Marger size="1rem" />
+                     <Marger size="1rem" />
 
 
                       <Grid item xs={1}></Grid>
@@ -961,4 +960,5 @@ class GeneratorMenu extends React.Component<propsmenu, GeneratorMenuState> {
   };
 }
 
-export default withStyles(useStyles, { withTheme: true })(GeneratorMenu)
+//export default withStyles(useStyles, { withTheme: true })(GeneratorMenu)
+export default GeneratorMenu;
