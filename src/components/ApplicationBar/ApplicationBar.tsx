@@ -172,14 +172,14 @@ function DrawerElements(props: RouteComponentProps) {
         path: '/submissions',
         link: true,
         icon: "file-import",
-        text: "My submissions",
+        text: "My submitted models",
         condition: !!Settings.logged,
       },
       {
         path: '/history',
         link: true,
         icon: "history",
-        text: "My builder history",
+        text: "My jobs history",
         condition: !!Settings.logged
       },
       {
