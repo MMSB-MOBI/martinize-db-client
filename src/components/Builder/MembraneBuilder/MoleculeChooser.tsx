@@ -199,7 +199,14 @@ interface ModalState {
   oups : boolean
 }
 
-export class ModalMoleculeSelector extends React.Component<{ open: boolean; onChoose(molecule: Molecule): any; onCancel(): any; }, ModalState> {
+interface ModalProps { 
+  open: boolean; 
+  onChoose(molecule: Molecule): any; 
+  onCancel(): any;
+  ff?:string;
+ }
+
+export class ModalMoleculeSelector extends React.Component<ModalProps, ModalState> {
   timeout: NodeJS.Timeout | undefined;
 
   state: ModalState = {
@@ -248,10 +255,15 @@ export class ModalMoleculeSelector extends React.Component<{ open: boolean; onCh
     this.setState({ loading: true, load_more: false, content: "", molecules: [], });
 
     try { 
-      const { molecules, length }: { molecules: Molecule[], length: number } = await ApiHelper.request('molecule/list', { 
+      let { molecules, length }: { molecules: Molecule[], length: number } = await ApiHelper.request('molecule/list', { 
         parameters: { q: content, combine: 'false', limit: 10 } 
       });
-
+      if(this.props.ff) {
+        const ff = this.props.ff;
+        molecules = molecules.filter( (mol) => mol.force_field.startsWith(ff) )
+      };
+      console.warn('Molecules');
+      console.dir(molecules);
       if (this.state.loading)
         this.setState({ molecules, load_more: molecules.length < length, content });
     } catch (e) {
@@ -293,7 +305,7 @@ export class ModalMoleculeSelector extends React.Component<{ open: boolean; onCh
     return (
       <Dialog open={this.props.open} onClose={this.props.onCancel} maxWidth="md" fullWidth>
         <DialogTitle>
-          Find a molecule
+          Find a <span style={{"color":'steelblue'}}>{ this.props.ff || '' }</span> molecule
         </DialogTitle>
 
         <DialogContent>

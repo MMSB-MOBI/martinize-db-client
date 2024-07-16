@@ -19,7 +19,8 @@ import { ImportProtein } from "./Dialog/importProtein";
 import ApiHelper from "../../ApiHelper";
 import md5 from 'md5';
 import { getID } from "./GeneratorManager";
-import { color } from "d3";
+import PolymerSourceButtons from "./PolymerSourceButtons";
+
 
 /*
 
@@ -377,12 +378,14 @@ class GeneratorMenu extends React.Component<propsmenu, GeneratorMenuState> {
           open={this.state.database_modal_chooser}
           onChoose={this.nextFromMolecule}
           onCancel={() => this.setState({ database_modal_chooser: false })}
+          ff={forcefield}
         />
 
         <ModalHistorySelector
           open={this.state.history_modal_chooser}
           onChoose={this.moleculefromhistory}
           onCancel={() => this.setState({ history_modal_chooser: false })}
+          ff={ this.state.forcefield }
         />
 
         <ImportProtein
@@ -502,10 +505,25 @@ class GeneratorMenu extends React.Component<propsmenu, GeneratorMenuState> {
                         <>
 
                           <Grid item xs={2}></Grid>
-                          <Grid item xs={8}>
-                            <Typography variant="subtitle2">Load a molecule (protein ?) with their coordinates in order to modify it with polymers: </Typography>
+                          <Grid item xs={8}
+                            style={{ marginBottom:"2em"}}
+                          >
+                            <Typography variant="subtitle2">Load orginal molecule coordinates to start modifying with polymers: </Typography>
                           </Grid>
                           <Grid item xs={1}></Grid>
+                          <Grid container
+                          spacing = {0}
+                          direction="column"
+                          alignItems="center"
+                          justifyContent="center"            
+                          >
+                          <PolymerSourceButtons onClick={[ 
+                            () => this.setState({ proteinImport: true }),
+                            () => this.setState({  database_modal_chooser: true }),
+                            () => this.setState({history_modal_chooser: true })
+                          ]}></PolymerSourceButtons>
+
+                          </Grid>
                           <Marger size="2rem" />
 
                           <Grid item xs={2}></Grid>

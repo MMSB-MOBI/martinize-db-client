@@ -101,8 +101,13 @@ export class MyHistory extends React.Component<RouteComponentProps, MyHistorySta
 export default MyHistory;
 
 
-
-export class ModalHistorySelector extends React.Component<{ open: boolean; onChoose(ff: string, molecule: Molecule): any; onCancel(): any; }, any> {
+interface MHSProps {
+  open: boolean;
+  onChoose(ff: string, molecule: Molecule): any;
+  onCancel(): any;
+  ff?:string; 
+}
+export class ModalHistorySelector extends React.Component<MHSProps, any> {
   timeout: NodeJS.Timeout | undefined;
 
   state: any = {
@@ -113,7 +118,6 @@ export class ModalHistorySelector extends React.Component<{ open: boolean; onCho
     content: "",
     jobs: []
   };
-
 
   componentDidMount() {
 
@@ -133,6 +137,12 @@ export class ModalHistorySelector extends React.Component<{ open: boolean; onCho
 
       getHistory()
         .then(jobs => {
+          console.log("getHistory");
+          console.dir(jobs);
+          if (this.props.ff) {
+            const ff = this.props.ff;
+            jobs = jobs.filter( (j) => j?.settings.ff.startsWith(ff) );
+          }
           this.setState({ jobs, loaded: true })
         })
         .catch(err => {
@@ -192,7 +202,7 @@ export class ModalHistorySelector extends React.Component<{ open: boolean; onCho
     return (
       <Dialog open={this.props.open} onClose={this.props.onCancel} maxWidth="md" fullWidth>
         <DialogTitle>
-          Find a molecule in your history
+          Find a <span style={{"color":"steelblue"}}>{this.props.ff || ''} </span> molecule in your history
         </DialogTitle>
         {this.state.oups &&
           <Alert severity="warning">Error while loading molecules.</Alert>
