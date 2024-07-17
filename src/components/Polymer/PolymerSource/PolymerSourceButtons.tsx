@@ -11,28 +11,29 @@ import MenuList from '@mui/material/MenuList';
 
 const options = ['Upload your own molecule', 'Load from MAD:Database', 'Load from you history'];
 interface PSBProps {
-    onClick:[ownMol:()=>void, fromMAD:()=>void, fromHIST:()=>void];
+    onClick:(index:number)=>void;
 }
 
 export default function PolymerSourceButtons({onClick}:PSBProps) {
-  const [open, setOpen] = React.useState(false);
+  const [state, setState] = React.useState({ open:false, selectedIndex: 0 });
   const anchorRef = React.useRef<HTMLDivElement>(null);
-  const [selectedIndex, setSelectedIndex] = React.useState(1);
+//  const [selectedIndex, setSelectedIndex] = React.useState(1);
   const handleClick = () => {
-    console.info(`You clicked ${options[selectedIndex]}`);
-    onClick[selectedIndex]();
+    console.info(`You clicked ${options[state.selectedIndex]} passing it above`);
+    onClick(state.selectedIndex);
   };
 
   const handleMenuItemClick = (
     event: React.MouseEvent<HTMLLIElement, MouseEvent>,
     index: number,
   ) => {
-    setSelectedIndex(index);
-    setOpen(false);
+    console.log("You clicked on menu item")
+    setState({open:false, selectedIndex:index});
   };
 
   const handleToggle = () => {
-    setOpen((prevOpen) => !prevOpen);
+    setState( {...state, open : ! state.open})
+    //setOpen((prevOpen) => !prevOpen);
   };
 
   const handleClose = (event: Event) => {
@@ -43,21 +44,24 @@ export default function PolymerSourceButtons({onClick}:PSBProps) {
       return;
     }
 
-    setOpen(false);
+    setState({...state, open:false});
   };
 
   return (
     <React.Fragment>
       <ButtonGroup
         variant="contained"
+        color="warning"
         ref={anchorRef}
         aria-label="Button group with a nested menu"
       >
-        <Button onClick={handleClick}>{options[selectedIndex]}</Button>
+        <Button onClick={handleClick}>
+          {options[state.selectedIndex]}
+          </Button>
         <Button
           size="small"
-          aria-controls={open ? 'split-button-menu' : undefined}
-          aria-expanded={open ? 'true' : undefined}
+          aria-controls={state.open ? 'split-button-menu' : undefined}
+          aria-expanded={state.open ? 'true' : undefined}
           aria-label="select merge strategy"
           aria-haspopup="menu"
           onClick={handleToggle}
@@ -69,7 +73,7 @@ export default function PolymerSourceButtons({onClick}:PSBProps) {
         sx={{
           zIndex: 1,
         }}
-        open={open}
+        open={state.open}
         anchorEl={anchorRef.current}
         role={undefined}
         transition
@@ -90,7 +94,7 @@ export default function PolymerSourceButtons({onClick}:PSBProps) {
                     <MenuItem
                       key={option}
                       //disabled={index === 2}
-                      selected={index === selectedIndex}
+                      selected={index === state.selectedIndex}
                       onClick={(event) => handleMenuItemClick(event, index)}
                     >
                       {option}
