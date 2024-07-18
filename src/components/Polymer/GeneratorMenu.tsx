@@ -30,7 +30,9 @@ import MailerSwitch from "./MailerSwitch";
 import LinkCreator from './LinkCreator';
 import MoleculeAdder from "./MoleculeAdder";
 import PolyplyControls from "./PolyplyControls";
-import { Padding } from "@mui/icons-material";
+import Chip from '@mui/material/Chip';
+
+
 /*
 
 const useStyles = (theme:any) => ({
@@ -358,7 +360,7 @@ class GeneratorMenu extends React.Component<propsmenu, GeneratorMenuState> {
 
         <DialogContent>
           <DialogContentText>
-            Your beautiful polymer will be lost.
+            Your current polymer will be lost.
           </DialogContentText>
         </DialogContent>
 
@@ -522,7 +524,7 @@ class GeneratorMenu extends React.Component<propsmenu, GeneratorMenuState> {
           }
           { // Initial upload choice was made, display disclaimer           
             (this.state.hasForceField && 
-             this.state.basicUploadedMoleculeDone
+             (this.state.basicUploadedMoleculeDone || this.state.basicUploadedMoleculeChoice == false)
             ) &&                         
               <Grid item xs={11}>
                 <PolyplyDisclaimer></PolyplyDisclaimer>
@@ -533,18 +535,19 @@ class GeneratorMenu extends React.Component<propsmenu, GeneratorMenuState> {
           
           {/* Molecule injectors sub menus for now same conds as above*/
             (this.state.hasForceField && 
-             this.state.basicUploadedMoleculeDone 
+             (this.state.basicUploadedMoleculeDone || this.state.basicUploadedMoleculeChoice == false)
             ) &&    
               <>    
                 <Grid item
                   xs={11}
                 >
                   <AdvancedSettings></AdvancedSettings>
-                </Grid>
+                </Grid>                               
+              
                 <Grid item
                   xs={11}
                   style={{ paddingTop:'2em', paddingBottom:'2em'}}
-                >
+                >                   
                   <MoleculeAdder
                     type="injector"
                     value={this.state.moleculeToAdd}

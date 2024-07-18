@@ -9,7 +9,7 @@ import Popper from '@mui/material/Popper';
 import MenuItem from '@mui/material/MenuItem';
 import MenuList from '@mui/material/MenuList';
 
-const options = ['Upload your own molecule', 'Load from MAD:Database', 'Load from you history'];
+const options = ['Upload your own molecule', 'Load from MAD:Database', 'Load from your MAD:History'];
 interface PSBProps {
     onClick:(index:number)=>void;
 }

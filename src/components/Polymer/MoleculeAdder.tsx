@@ -194,82 +194,80 @@ export default function MoleculeAdder(props:MAProps) {
 
     return (
         <>
-        <Typography                
-        variant="button" align="center" color="primary"
-        >
-        Attach many homomultimers to target residue
-        </Typography> 
-                
-        <Timeline
-      sx={{
-        [`& .${timelineOppositeContentClasses.root}`]: {
-          flex: 0.2,
-        },
-      }}
-    >
-      <TimelineItem>
-        <TimelineOppositeContent color="textSecondary">
-        <Typography variant="h6" component="span"        
-        >
-            Select
-          </Typography>
-          <Typography>Available residue type</Typography>
-        </TimelineOppositeContent>
-        <TimelineSeparator>
-            <TimelineConnector sx={{minHeight:25}}/>
-          <TimelineDot
-            color={ (attachSteps[0]) ? 'success' : 'grey' }
-          ><AdsClickIcon /></TimelineDot>
-          <TimelineConnector sx={{minHeight:50}}/>
-        </TimelineSeparator>
-        <TimelineContent mt={3}>
-        { generateSelector() }
-
-        </TimelineContent>
-      </TimelineItem>
-      <TimelineItem>
-        <TimelineOppositeContent color="textSecondary">
-        <Typography variant="h6" component="span" sx={{ marginTop:-10}}
-        >
-            Design
-        </Typography>
-        <Typography>polymer to attach</Typography>
-        </TimelineOppositeContent>
-        <TimelineSeparator>
-          <TimelineDot 
-           color={ (attachSteps[1] && attachSteps[2]) ? 'success' : 'grey' }
+        <Box sx={{ width: '100%', textAlign: "center" }}>
+            <Typography                
+                variant="button" align="center" color="primary"
             >
-          <DesignServicesIcon />
-          </TimelineDot>
-        </TimelineSeparator>
-        <TimelineContent mt={-1}>
-        {generateDesigner("attacher")}        
-        </TimelineContent>
-      </TimelineItem>
-      
-      <TimelineItem>
+                Attach many homomultimers to target residue
+            </Typography> 
+        </Box>
         
-        <TimelineOppositeContent color="textSecondary">
-        <Box sx={{minWidth:62}}/>
-        </TimelineOppositeContent>
-        <TimelineSeparator>
-            <TimelineConnector sx={{ minHeight:30, marginTop:-7}}/>
-          { (attachSteps[0] && (attachSteps[1], attachSteps[2])) ?  
-           < StyledTimelineDot 
-           color="success" sx={{ boxShadow: 5, cursor:"grab" }}>
-           <AddIcon/>
-           </ StyledTimelineDot>
-           :
-            <TimelineDot 
-            color="grey" sx={{ boxShadow: 0, cursor:"pointer" }}>
-            <AddIcon/>
-            </TimelineDot>
-            }              
-         </TimelineSeparator>
-        <TimelineContent></TimelineContent>
-      </TimelineItem> 
-
-    </Timeline>
+        <Timeline
+            sx={{
+                [`& .${timelineOppositeContentClasses.root}`]: {
+                flex: 0.2,
+                },
+            }}
+        >
+            <TimelineItem>
+                <TimelineOppositeContent color="textSecondary">
+                    <Typography variant="h6" component="span">
+                        Select
+                    </Typography>
+                    <Typography>Available residue type</Typography>
+                </TimelineOppositeContent>
+                <TimelineSeparator>
+                    <TimelineConnector sx={{minHeight:25}}/>
+                        <TimelineDot
+                            color={ (attachSteps[0]) ? 'success' : 'grey' }
+                        ><AdsClickIcon /></TimelineDot>
+                    <TimelineConnector sx={{minHeight:50}}/>
+                </TimelineSeparator>
+                <TimelineContent mt={3}>
+                    { generateSelector() }
+                </TimelineContent>
+            </TimelineItem>
+            <TimelineItem>
+                <TimelineOppositeContent color="textSecondary">
+                    <Typography variant="h6" component="span" sx={{ marginTop:-10}}>
+                        Design
+                    </Typography>
+                    <Typography>polymer to attach</Typography>
+                </TimelineOppositeContent>
+                <TimelineSeparator>
+                    <TimelineDot 
+                        color={ (attachSteps[1] && attachSteps[2]) ? 'success' : 'grey' }
+                    >
+                        <DesignServicesIcon />
+                    </TimelineDot>
+                </TimelineSeparator>
+                <TimelineContent mt={-1}>
+                    {generateDesigner("attacher")}        
+                </TimelineContent>
+            </TimelineItem>
+            <TimelineItem>
+                <TimelineOppositeContent color="textSecondary">
+                    <Box sx={{minWidth:62}}/>
+                </TimelineOppositeContent>
+                <TimelineSeparator>
+                    <TimelineConnector sx={{ minHeight:30, marginTop:-7}}/>
+                    { (attachSteps[0] && (attachSteps[1], attachSteps[2])) ?  
+                        <StyledTimelineDot 
+                            color="success" sx={{ boxShadow: 5, cursor:"grab" }}
+                        >
+                            <AddIcon/>
+                        </StyledTimelineDot>
+                    :
+                        <TimelineDot 
+                            color="grey" sx={{ boxShadow: 0, cursor:"pointer" }}
+                        >
+                            <AddIcon/>
+                        </TimelineDot>
+                    }              
+                </TimelineSeparator>
+                <TimelineContent></TimelineContent>
+            </TimelineItem> 
+        </Timeline>
     </>
    )
 }

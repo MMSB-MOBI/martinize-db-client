@@ -12,13 +12,13 @@ export default function LinkCreator() {
         <Box sx={{ width: '100%',  textAlign:"center" }}>
             <Typography
                 variant="button" align="center"
-                color="primary"
+                color="primary"               
             >
                 Create a Link
             </Typography>
         <Stack 
             width={'100%'}
-            mt={0}
+            mt={1}
             direction='row'
             spacing={1}
         >
