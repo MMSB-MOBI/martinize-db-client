@@ -82,7 +82,8 @@ type State = {
       if (inputLabel.current)
         setLabelWidth(inputLabel.current!.offsetWidth);
     }, [props]);
-    console.dir(props.values);
+    console.log("TooltipSelect==>props");
+    console.dir(props);
     return (
       <FormControl required={props.required} className={props.formControlClass} variant={props.variant ?? "outlined"} style={{ minWidth: props.noMinWidth ? 0 : 180 }}>
         <InputLabel ref={inputLabel} id={props.id}>
@@ -93,7 +94,7 @@ type State = {
           value={props.value}
           onChange={v => props.onChange(v.target.value as string)}
           labelWidth={labelWidth}
-          required
+          required          
           disabled={props.disabled}
         >
           { Object.keys(props.values).map( molCat => {

@@ -41,14 +41,7 @@ export default function LinkCreator() {
                     setIsValid(true);
              }}
             variant="outlined" 
-            InputProps={{inputProps: { min: 0, max: 9999 }
-            /*, endAdornment:  (
-                <InputAdornment position="end">
-                    <IconButton edge="end" color="primary">
-                        <SendIcon/>
-                    </IconButton>
-                </InputAdornment>
-            )*/
+            InputProps={{inputProps: { min: 0, max: 9999 }       
         }}
         />
          <Button 

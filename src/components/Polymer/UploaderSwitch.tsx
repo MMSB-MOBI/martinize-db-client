@@ -8,16 +8,16 @@ import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
 
 interface USProps {
-    onClick: (doIupload: string) => void;
+    onClick: (doIupload: boolean) => void;
 }
 
 interface USStates {
-    value: string;
+    value: boolean;
 }
 
 export default function UploaderSwitch(props: USProps, states: USStates) {
     const [open, setOpen] = React.useState(true);
-    const [state, setState] = React.useState({ value: "kiki" });
+    const [state, setState] = React.useState({ value: false });
     return (
         <Box sx={{ width: '100%' }}>
             <Collapse 
@@ -38,7 +38,7 @@ export default function UploaderSwitch(props: USProps, states: USStates) {
                             <Button color="inherit" size="small" value="true"
                                 onClick={e => {
                                     console.log("setting value to " + e.currentTarget.value)
-                                    setState({ value: e.currentTarget.value });
+                                    setState({ value: true });
                                 }}
                             >
                                 YES
@@ -46,7 +46,7 @@ export default function UploaderSwitch(props: USProps, states: USStates) {
                             <Button color="inherit" size="small" value="false"
                                 onClick={e => {
                                     console.log("setting value to " + e.currentTarget.value)
-                                    setState({ value: e.currentTarget.value });
+                                    setState({ value: false});
                                 }}
                             >
                                 NO

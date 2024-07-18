@@ -67,7 +67,7 @@ interface propsmenu {
   clear: () => void;
   version: string;
   previous: () => void;
-  doSendMail: (maybeSend: boolean) => void; 
+  doSendMail: (maybeSend: boolean) => void;
 }
 
 interface GeneratorMenuState extends FormState {
@@ -81,9 +81,11 @@ interface GeneratorMenuState extends FormState {
   Menuplus: boolean;
   proteinImport: boolean;
   add_to_every_residue: string | undefined;
-  addMolecule: string;
-  moleculeAdded: boolean;
-  send_mail:string;
+  basicUploadedMoleculeChoice: boolean |undefined;
+  basicUploadedMoleculeDone:boolean;
+  expertUploadedMolecule: boolean;
+  send_mail:boolean;
+  hasForceField:boolean;
 }
 
 class GeneratorMenu extends React.Component<propsmenu, GeneratorMenuState> {
@@ -103,9 +105,11 @@ class GeneratorMenu extends React.Component<propsmenu, GeneratorMenuState> {
     Menuplus: false,
     proteinImport: false,
     add_to_every_residue: "",
-    addMolecule: "",
-    moleculeAdded: false,
-    send_mail:"false"
+    basicUploadedMoleculeChoice: undefined,  // basic switch
+    expertUploadedMolecule: false, // advanced option
+    basicUploadedMoleculeDone:false,
+    send_mail:false,
+    hasForceField:false
   }
 
  
@@ -135,9 +139,12 @@ class GeneratorMenu extends React.Component<propsmenu, GeneratorMenuState> {
         Menuplus: false,
         proteinImport: false,
         add_to_every_residue: "",
-        addMolecule: "",
-        moleculeAdded: false,
-        send_mail:"false"
+       // addMolecule: "",
+       // StartupMoleculeAdded: false,
+        basicUploadedMoleculeChoice: undefined,
+        basicUploadedMoleculeDone:false,
+        expertUploadedMolecule: false,
+        send_mail:false
       })
     }
     else this.props.previous()
@@ -239,7 +246,7 @@ class GeneratorMenu extends React.Component<propsmenu, GeneratorMenuState> {
           if (event.target.result.includes("moleculetype")) {
             console.log("Valid .itp file");
             this.props.addNEwMolFromITP(event.target.result)
-            this.setState({ moleculeAdded: true })
+            this.setState({ expertUploadedMolecule: true })
           } else {
             console.log("Invalid file. Not a well-formed .itp file");
             this.props.warningfunction("Invalid file. Field : [ moleculetype ] is not found in the file loaded. Not a well-formed .itp file")
@@ -255,7 +262,7 @@ class GeneratorMenu extends React.Component<propsmenu, GeneratorMenuState> {
           if (event.target.result.includes("moleculetype")) {
             console.log(".ff file with molecule type");
             this.props.addNEwMolFromITP(event.target.result)
-            this.setState({ moleculeAdded: true })
+            this.setState({ expertUploadedMolecule: true })
           }
           this.props.addCustomitp(md5(event.target.result), "; Custom connexion rule \n" + event.target.result)
         }
@@ -291,7 +298,7 @@ class GeneratorMenu extends React.Component<propsmenu, GeneratorMenuState> {
       ApiHelper.request(req_itp, { mode: "text" })
         .then((rep: string) => {
           this.props.addNEwMolFromITP(rep)
-          this.setState({ moleculeAdded: true })
+          this.setState({ basicUploadedMoleculeDone: true })
         })
         .catch(e => {
           console.error(e)
@@ -301,7 +308,7 @@ class GeneratorMenu extends React.Component<propsmenu, GeneratorMenuState> {
       ApiHelper.request(req_gro, { mode: "text" })
         .then((rep: string) => {
           this.props.addmoleculecoord(rep)
-          this.setState({ moleculeAdded: true })
+          this.setState({ basicUploadedMoleculeDone: true })
         })
         .catch(e => {
           console.error(e)
@@ -323,7 +330,7 @@ class GeneratorMenu extends React.Component<propsmenu, GeneratorMenuState> {
     this.setState({ want_go_back: false });
     this.props.addmoleculecoord(molecule.gro.content)
     this.props.addNEwMolFromITP(molecule.itp)
-    this.setState({ history_modal_chooser: false, moleculeAdded: true })
+    this.setState({ history_modal_chooser: false, basicUploadedMoleculeDone: true })
   };
 
   onWantGoBack = (e: React.MouseEvent) => {
@@ -398,7 +405,7 @@ class GeneratorMenu extends React.Component<propsmenu, GeneratorMenuState> {
         <ImportProtein
           open={this.state.proteinImport}
           close={() => this.setState({ proteinImport: false })}
-          addprotcoord={(a) => { this.setState({ moleculeAdded: true }); this.props.addmoleculecoord(a) }}
+          addprotcoord={(a) => { this.setState({ basicUploadedMoleculeDone: true }); this.props.addmoleculecoord(a) }}
           addNEwMolFromITP={this.props.addNEwMolFromITP}
           addCustomitp={this.props.addCustomitp}
 
@@ -440,217 +447,158 @@ class GeneratorMenu extends React.Component<propsmenu, GeneratorMenuState> {
         alignItems="center"
         >
 
-          {/* Check if the data are avaible */}
-          {(Object.keys(this.props.dataForceFieldMolecule).length > 1) ?
-            (<>
-
-              {((this.state.forcefield === "")) ?
-                <>
-                  <Grid item
+          {/* By default we ask for forcefield choice */}
+          { !this.state.hasForceField ?
+              <Grid item xs={11}
+                style={ { justifyContent:"center", 
+                          textAlign     :"center",
+                          width         :'100%'
+                          } }>
+                <Alert severity="info">
+                    Current forcefield is 
+                    <Box sx={{ml:'0.5em'}} fontWeight='fontWeightBold' fontSize="1.25em" display='inline'>{this.state.forcefield} </Box>
+                </Alert>                    
+              </Grid> 
+              :
+              <Grid item
                   xs={12}
-                  style={{width:'100%', paddingLeft:"2em", paddingRight:"2em"}}
-                  
+                  style={{width:'100%', paddingLeft:"2em", paddingRight:"2em"}}                  
                   >
                     <ForceFieldChooser 
                       availableForcefield= { Object.keys(this.props.dataForceFieldMolecule) }
                       onChange={ (ff) => {
                         this.props.setForcefield(ff);
                         this.setState({ forcefield: ff });
+                        this.setState({ hasForceField: true });
                       } }
                     ></ForceFieldChooser>
                   </Grid>
-                </>
-                :
-                <>
-                  <Grid item xs={11}
-                    style={ { justifyContent:"center", 
-                              textAlign     :"center",
-                              width         :'100%'
-                              } }>
-                      <Alert severity="info">
-                        Current forcefield is 
-                        <Box sx={{ml:'0.5em'}} fontWeight='fontWeightBold' fontSize="1.25em" display='inline'>{this.state.forcefield} </Box>
-                      </Alert>                    
-                  </Grid>
+          }
+            
+          { // We have a force field but no molecule at all, we propose the premade switch
+            (  this.state.hasForceField &&
+              this.state.basicUploadedMoleculeChoice == undefined) &&
+                <Grid item xs={11}
+                  style={{ 
+                    justifyContent:"center", 
+                    textAlign     :"center",
+                    width         :'100%'
+                  }}
+                >
+                  <UploaderSwitch 
+                    onClick={ yesNo => this.setState({ basicUploadedMoleculeChoice: yesNo }) }
+                  >
+                  </UploaderSwitch>
+                </Grid>
+          }
+           {  
+            // Premade switch was set to yes
+            // We display the premade source menu
+            ( this.state.hasForceField && 
+              this.state.basicUploadedMoleculeChoice == true /*not undefined */) &&                    
+                <Grid item xs={11}
+                  style={{
+                    justifyContent: "center",
+                    textAlign: "center",
+                    width: '100%'
+                  }}
+                >
+                  <PolymerSource
+                    onClick={[ //basicUploadedMoleculeDone will be set to true by those 3 calls
+                      () => this.setState({ proteinImport: true }),
+                      () => this.setState({ database_modal_chooser: true }),
+                      () => this.setState({ history_modal_chooser: true })
+                    ]}
+                  ></PolymerSource>
+                </Grid>
+          }
+          { // Initial upload choice was made, display disclaimer           
+            (this.state.hasForceField && 
+              ( this.state.basicUploadedMoleculeDone ||
+                this.state.basicUploadedMoleculeDone == false
+              )
+            ) &&                         
+              <Grid item xs={11}>
+                <PolyplyDisclaimer></PolyplyDisclaimer>
+                <MailerSwitch></MailerSwitch>                
+              </Grid>
+          }
+         
+          
+          {/* Molecule injectors sub menus for now same conds as above*/
+            (this.state.hasForceField && 
+              ( this.state.basicUploadedMoleculeDone ||
+                this.state.basicUploadedMoleculeDone == false
+              )
+            ) &&    
+              <>    
+                <Grid item
+                  xs={11}
+                >
+                  <AdvancedSettings></AdvancedSettings>
+            
+                  <MoleculeAdder
+                    type="injector"
+                    value={this.state.moleculeToAdd}
+                    molecules={ this.props.dataForceFieldMolecule[this.state.forcefield]}>                              
+                  </MoleculeAdder>
+                </Grid>
+                <Grid item
+                  xs={11}
+                >
+                  <MoleculeAdder
+                    type="attacher"
+                    value={this.state.moleculeToAdd}
+                    molecules={ this.props.dataForceFieldMolecule[this.state.forcefield]}>                              
+                  </MoleculeAdder>
+                </Grid>
+                <Grid item
+                  xs={11}
+                >
+                  <LinkCreator></LinkCreator>
+                </Grid>
+                <Grid item
+                  xs={6}
+                >
+                  <PolyplyControls
+                    onUndo={()=>{}}
+                    onSubmit={()=>{}}>                        
+                  </PolyplyControls>
+                </Grid>
+              </>
+            }
+      </Grid>
+      </div>
+    )
+  
 
-                  {((this.state.moleculeAdded == false) && (this.state.addMolecule === "")) &&
-                    <>
-                     <Grid item xs={11}
-                         style={ { justifyContent:"center", 
-                          textAlign     :"center",
-                          width         :'100%'
-                          } }
-                      >
-                      <UploaderSwitch onClick={ (yesNo) =>  {                        
-                        this.setState({ addMolecule: yesNo }) }}></UploaderSwitch>
-                    </Grid>
-                    </>}
+//export default withStyles(useStyles, { withTheme: true })(GeneratorMenu)
+export default GeneratorMenu;
+/*
 
-                  {(this.state.moleculeAdded == false) &&
-                    <>
-                      {(this.state.addMolecule === "true") &&
-                        <>
-                      <Grid item xs={11}
-                        style={{
-                          justifyContent: "center",
-                          textAlign: "center",
-                          width: '100%'
-                        }}
-                      >
-                        <PolymerSource
-                          onClick={[
-                            () => this.setState({ proteinImport: true }),
-                            () => this.setState({ database_modal_chooser: true }),
-                            () => this.setState({ history_modal_chooser: true })
-                          ]}
-                        ></PolymerSource>
-                      </Grid>
-                        </>}
-                    </>}
+{ 
+            : (<>
 
-                  <Marger size="1rem" />
+              <Grid item xs={12} style={{ textAlign: 'center', alignItems: 'center', justifyContent: 'center', }}>
+                <CircularProgress></CircularProgress>
+              </Grid>
 
-                  { ( (this.state.addMolecule == "false") ||
-                    (this.state.moleculeAdded && (this.state.addMolecule == "true") )
-                   ) &&
-                    <>
-                      <Grid item xs={11}>
-                     <PolyplyDisclaimer></PolyplyDisclaimer>
-                     </Grid>
-                     <Grid item xs={11}
-                      style={ { justifyContent:"center", 
-                        textAlign     :"center",
-                        width         :'100%'
-                        } }
-                        >
-                     <MailerSwitch></MailerSwitch>
-                     </Grid>
-                    </>
-                  }
+              <Grid item xs={3}   >
+              </Grid>
 
-                  {(this.state.moleculeAdded || (this.state.addMolecule == "false")) &&
-                        <>
-                        <Grid item
-                        xs={11}
-                        >
-                        <AdvancedSettings></AdvancedSettings>
-                        </Grid>
-                      <Grid item
-                      xs={10}
-                      >
-                        <MoleculeAdder></MoleculeAdder>
-
-                      </Grid>
-                                              
-                      <Grid item xs={10} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }}>
-                        <Typography variant="h6" align="left">
-                          Add repeat units or chain of repeat units
-                        </Typography>
-                      </Grid>
-                      <Grid item xs={1}></Grid>
-
-                      <Grid item xs={1}></Grid>
-
-                      <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
-
-                        <TooltipedSelect
-
-                          //formControlClass={this.props.classes.ff_select}
-                          required
-                          label="Molecule**"
-                          variant="standard"
-                          // values={this.GetMolFField(this.props.dataForceFieldMolecule, forcefield).map(e => ({ id: e, name: e }))}
-                          // @ts-ignore
-                          /*values={ Object.entries(this.props.dataForceFieldMolecule[this.state.forcefield]).map( (e) =>{
-                                return { id: e[0], name: e[1][0], url:e[1][1] } }) 
-                          }*/
-                          //@ts-ignore
-                          values = {this.props.dataForceFieldMolecule[this.state.forcefield]}
-                          id="ff"
-                          key="ff"
-                          value={this.state.moleculeToAdd}
-                          onChange={v => this.setState({ moleculeToAdd: v })} />
-                      </Grid>
-
-
-
-                      <Grid item xs={2} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
-
-                        <FormControl >
-                          <TextField
-                            label="Number"
-                            type="number"
-                            InputProps={{ inputProps: { min: 1, max: 100 } }}
-                            value={this.state.numberToAdd}
-                            onChange={v => this.setState({ numberToAdd: Number(v.target.value) })}
-                            variant="standard" />
-                        </FormControl>
-
-                      </Grid>
-
-                      <Grid item xs={3} style={{ textAlign: 'right', alignItems: 'center', justifyContent: 'center', }} >
-                        <Button
-                          endIcon={<Grain />}
-                          id="addmol"
-                          variant="outlined"
-                          onClick={() => { this.setState({ want_go_back: false }); this.CheckNewMolecule() }}>
-                          <Grid container component="main" style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'left', }}>
-
-                            <Grid item xs={10}>
-                              <Typography variant="body2" align="left">
-                                Add
-                              </Typography>
-                            </Grid>
-                            <Grid item xs={2}>
-                              <Badge overlap="rectangular" color="secondary" >
-                                <Icon className={"fas fa-" + "plus"} />
-                              </Badge>
-                            </Grid>
-
-                          </Grid>
-
-                        </Button>
-                      </Grid>
-                      <Grid item xs={1}></Grid>
-
-                      <Marger size="1rem" />
-
-                      <Grid item xs={1}></Grid>
-                      <Grid item xs={5}>
-                        <Typography align="justify" variant={'subtitle2'} > Add a residue or a chain of residues to every residue of this type present in your current polymer:</Typography>
-                      </Grid>
-                      <Grid item xs={1}></Grid>
-                      <Grid item xs={3}>
-
-                        <FormControl fullWidth>
-                          <InputLabel id="demo-simple-select-helper-label">resName</InputLabel>
-                          <Select
-                            labelId="demo-simple-select-helper-label"
-                            id="demo-simple-select-helper"
-                            value={this.state.add_to_every_residue}
-                            onChange={(event: any) => this.setState({ add_to_every_residue: event.target.value })}
-                          >
-                            <MenuItem value="">
-                              <em>None</em>
-                            </MenuItem>
-
-                            {Object.entries(this.props.dataForceFieldMolecule[this.state.forcefield])
-                              .map( v =>{ <MenuItem key={v[0]} value={v[0]}> {v[1][0]} ??? {v[1][1]}</MenuItem>  }) }
-
-                          </Select>
-                        </FormControl>
-
-                      </Grid>
-                     <Grid item
-                     sx={10}>
-                      <LinkCreator></LinkCreator>
-
-                     </Grid>
+              <Grid item xs={6} style={{ textAlign: 'center', alignItems: 'center', justifyContent: 'center', }}>
+                <Typography variant="h6" > Loading data from server... </Typography>
+              </Grid>
+              <Grid item xs={3}   >
+              </Grid>
 
 
-                      <Grid item xs={1}></Grid>
+            </>)
+          }
+            }
 
-                      <Grid item xs={3} style={{ textAlign: 'right', alignItems: 'center', justifyContent: 'center', }} >
+     
+<Grid item xs={3} style={{ textAlign: 'right', alignItems: 'center', justifyContent: 'center', }} >
                         <Button
                           id="previous"
                           variant="text"
@@ -709,47 +657,105 @@ class GeneratorMenu extends React.Component<propsmenu, GeneratorMenuState> {
                       <Grid item xs={3}></Grid>
                     </>}
                 </>
-              }
+
+  
+                      <Grid item xs={1}></Grid>
+                      <Grid item xs={5}>
+                        <Typography align="justify" variant={'subtitle2'} > Add a residue or a chain of residues to every residue of this type present in your current polymer:</Typography>
+                      </Grid>
+                      <Grid item xs={1}></Grid>
+                      <Grid item xs={3}>
+
+                        <FormControl fullWidth>
+                          <InputLabel id="demo-simple-select-helper-label">resName</InputLabel>
+                          <Select
+                            labelId="demo-simple-select-helper-label"
+                            id="demo-simple-select-helper"
+                            value={this.state.add_to_every_residue}
+                            onChange={(event: any) => this.setState({ add_to_every_residue: event.target.value })}
+                          >
+                            <MenuItem value="">
+                              <em>None</em>
+                            </MenuItem>
+
+                            {Object.entries(this.props.dataForceFieldMolecule[this.state.forcefield])
+                              .map( v =>{ <MenuItem key={v[0]} value={v[0]}> {v[1][0]} ??? {v[1][1]}</MenuItem>  }) }
+
+                          </Select>
+                        </FormControl>
+
+                      </Grid>
+                     
+                      */
+
+/*
+
+                       
+                      <Grid item xs={10} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }}>
+                        <Typography variant="h6" align="left">
+                          Add repeat units or chain of repeat units
+                        </Typography>
+                      </Grid>
+                      <Grid item xs={1}></Grid>
+
+                      <Grid item xs={1}></Grid>
+
+                      <Grid item xs={5} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
+
+                        <TooltipedSelect
+            
+                          required
+                          label="Molecule**"
+                          variant="standard"
+                          // We should fix below
+                          //@ts-ignore
+                          values = {this.props.dataForceFieldMolecule[this.state.forcefield]}
+                          id="ff"
+                          key="ff"
+                          value={this.state.moleculeToAdd}
+                          onChange={v => this.setState({ moleculeToAdd: v })} />
+                      </Grid>
 
 
-              <Marger size="2rem" />
 
+                      <Grid item xs={2} style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'center', }} >
 
+                        <FormControl >
+                          <TextField
+                            label="Number"
+                            type="number"
+                            InputProps={{ inputProps: { min: 1, max: 100 } }}
+                            value={this.state.numberToAdd}
+                            onChange={v => this.setState({ numberToAdd: Number(v.target.value) })}
+                            variant="standard" />
+                        </FormControl>
 
-            </>)
-            : (<>
+                      </Grid>
+    <Grid item xs={3} style={{ textAlign: 'right', alignItems: 'center', justifyContent: 'center', }} >
+                        <Button
+                          endIcon={<Grain />}
+                          id="addmol"
+                          variant="outlined"
+                          onClick={() => { this.setState({ want_go_back: false }); this.CheckNewMolecule() }}>
+                          <Grid container component="main" style={{ textAlign: 'left', alignItems: 'center', justifyContent: 'left', }}>
 
-              <Grid item xs={12} style={{ textAlign: 'center', alignItems: 'center', justifyContent: 'center', }}>
-                <CircularProgress></CircularProgress>
-              </Grid>
+                            <Grid item xs={10}>
+                              <Typography variant="body2" align="left">
+                                Add
+                              </Typography>
+                            </Grid>
+                            <Grid item xs={2}>
+                              <Badge overlap="rectangular" color="secondary" >
+                                <Icon className={"fas fa-" + "plus"} />
+                              </Badge>
+                            </Grid>
 
-              <Grid item xs={3}   >
-              </Grid>
+                          </Grid>
 
-              <Grid item xs={6} style={{ textAlign: 'center', alignItems: 'center', justifyContent: 'center', }}>
-                <Typography variant="h6" > Loading data from server... </Typography>
-              </Grid>
-              <Grid item xs={3}   >
-              </Grid>
+                        </Button>
+                      </Grid>
 
-
-            </>)
-          }
-
-
-        </Grid >
-
-        <Marger size="1rem" />
-
-      </div >
-    )
-  };
-}
-
-//export default withStyles(useStyles, { withTheme: true })(GeneratorMenu)
-export default GeneratorMenu;
-
-
+                      */
 
 
 
