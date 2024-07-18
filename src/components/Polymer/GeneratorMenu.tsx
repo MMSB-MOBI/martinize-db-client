@@ -29,6 +29,8 @@ import AdvancedSettings from "./AdvancedSettings";
 import MailerSwitch from "./MailerSwitch";
 import LinkCreator from './LinkCreator';
 import MoleculeAdder from "./MoleculeAdder";
+import PolyplyControls from "./PolyplyControls";
+import { Padding } from "@mui/icons-material";
 /*
 
 const useStyles = (theme:any) => ({
@@ -86,6 +88,7 @@ interface GeneratorMenuState extends FormState {
   expertUploadedMolecule: boolean;
   send_mail:boolean;
   hasForceField:boolean;
+  readyToGo:boolean;
 }
 
 class GeneratorMenu extends React.Component<propsmenu, GeneratorMenuState> {
@@ -109,7 +112,8 @@ class GeneratorMenu extends React.Component<propsmenu, GeneratorMenuState> {
     expertUploadedMolecule: false, // advanced option
     basicUploadedMoleculeDone:false,
     send_mail:false,
-    hasForceField:false
+    hasForceField:false,
+    readyToGo:false
   }
 
  
@@ -378,7 +382,9 @@ class GeneratorMenu extends React.Component<propsmenu, GeneratorMenuState> {
     
     return (
       <div  >
-        {this.renderModalBackToDatabase()}
+        {this.renderModalBackToDatabase()
+          /*Move this to dedicated module*/
+        } 
 
         <CreateLink
           customITPS={this.props.customITPS}
@@ -448,7 +454,7 @@ class GeneratorMenu extends React.Component<propsmenu, GeneratorMenuState> {
         >
 
           {/* By default we ask for forcefield choice */}
-          { !this.state.hasForceField ?
+          { this.state.hasForceField ?
               <Grid item xs={11}
                 style={ { justifyContent:"center", 
                           textAlign     :"center",
@@ -469,7 +475,7 @@ class GeneratorMenu extends React.Component<propsmenu, GeneratorMenuState> {
                       onChange={ (ff) => {
                         this.props.setForcefield(ff);
                         this.setState({ forcefield: ff });
-                        this.setState({ hasForceField: true });
+                        this.setState({ hasForceField: true });                       
                       } }
                     ></ForceFieldChooser>
                   </Grid>
@@ -486,7 +492,8 @@ class GeneratorMenu extends React.Component<propsmenu, GeneratorMenuState> {
                   }}
                 >
                   <UploaderSwitch 
-                    onClick={ yesNo => this.setState({ basicUploadedMoleculeChoice: yesNo }) }
+                    onClick={ yesNo => this.setState({ basicUploadedMoleculeChoice: yesNo }) } 
+                                        
                   >
                   </UploaderSwitch>
                 </Grid>
@@ -495,7 +502,8 @@ class GeneratorMenu extends React.Component<propsmenu, GeneratorMenuState> {
             // Premade switch was set to yes
             // We display the premade source menu
             ( this.state.hasForceField && 
-              this.state.basicUploadedMoleculeChoice == true /*not undefined */) &&                    
+              this.state.basicUploadedMoleculeChoice == true /*not undefined */ &&
+              ! this.state.basicUploadedMoleculeDone ) &&                    
                 <Grid item xs={11}
                   style={{
                     justifyContent: "center",
@@ -514,9 +522,7 @@ class GeneratorMenu extends React.Component<propsmenu, GeneratorMenuState> {
           }
           { // Initial upload choice was made, display disclaimer           
             (this.state.hasForceField && 
-              ( this.state.basicUploadedMoleculeDone ||
-                this.state.basicUploadedMoleculeDone == false
-              )
+             this.state.basicUploadedMoleculeDone
             ) &&                         
               <Grid item xs={11}>
                 <PolyplyDisclaimer></PolyplyDisclaimer>
@@ -527,16 +533,18 @@ class GeneratorMenu extends React.Component<propsmenu, GeneratorMenuState> {
           
           {/* Molecule injectors sub menus for now same conds as above*/
             (this.state.hasForceField && 
-              ( this.state.basicUploadedMoleculeDone ||
-                this.state.basicUploadedMoleculeDone == false
-              )
+             this.state.basicUploadedMoleculeDone 
             ) &&    
               <>    
                 <Grid item
                   xs={11}
                 >
                   <AdvancedSettings></AdvancedSettings>
-            
+                </Grid>
+                <Grid item
+                  xs={11}
+                  style={{ paddingTop:'2em', paddingBottom:'2em'}}
+                >
                   <MoleculeAdder
                     type="injector"
                     value={this.state.moleculeToAdd}
@@ -558,11 +566,15 @@ class GeneratorMenu extends React.Component<propsmenu, GeneratorMenuState> {
                   <LinkCreator></LinkCreator>
                 </Grid>
                 <Grid item
-                  xs={6}
+                  style={{ paddingTop:'2em'}}
+                  xs={8}
                 >
                   <PolyplyControls
+                    onClick={ () => { console.log("GOGO")}}
                     onUndo={()=>{}}
-                    onSubmit={()=>{}}>                        
+                    onSubmit={()=>{}}
+                    enabling={ ()=>this.state.readyToGo }
+                    >                        
                   </PolyplyControls>
                 </Grid>
               </>
@@ -570,7 +582,8 @@ class GeneratorMenu extends React.Component<propsmenu, GeneratorMenuState> {
       </Grid>
       </div>
     )
-  
+  }
+}
 
 //export default withStyles(useStyles, { withTheme: true })(GeneratorMenu)
 export default GeneratorMenu;
@@ -958,5 +971,4 @@ export default GeneratorMenu;
                       </Grid>
 
                       <Grid item xs={1}></Grid>
-
-                      */
+*/

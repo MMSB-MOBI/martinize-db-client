@@ -71,6 +71,17 @@ const customTheme = createTheme({
     `}
   `;
 
+  const StyledAddButton = styled(Button)`
+  ${({ theme }) => `
+  transition: ${theme.transitions.create(['background-color', 'transform'], {
+    duration: theme.transitions.duration.standard,
+  })};
+  &:hover {
+    transform: scale(1.1);
+  }
+  `}
+`;
+
 
 export default function MoleculeAdder(props:MAProps) {
     const [state, setState] =  React.useState({ molCount: 0, molecule: undefined, molAsStr:"", showAdvanced:false} as MAState); // {id:string, name:string, url:string}
@@ -124,7 +135,7 @@ export default function MoleculeAdder(props:MAProps) {
                 onChange={v => { 
                     setState({ ...state, molAsStr: v } );
                     if(type === "attacher")
-                        setAttachSteps([attachSteps[0], true, attachSteps[2]]);
+                        setAttachSteps([attachSteps[0], true, attachSteps[2]]);                   
              }}                                    
             />
             <TextField
@@ -134,7 +145,8 @@ export default function MoleculeAdder(props:MAProps) {
                 value={state.molCount}
                 onChange={(v) => {
                     setState({ ...state, molCount: parseInt(v.target.value) });
-                    if (state.molecule !== undefined)
+                    console.log("##" + state.molecule);
+                    if (state.molAsStr !== undefined)
                         setValid(true);
 
                     if(type === "attacher")
@@ -143,17 +155,22 @@ export default function MoleculeAdder(props:MAProps) {
                 }}
                 variant="outlined"
             />
-            { type === "injector" &&
-            <Button
-                style={{
-                    backgroundColor: isValid ? "steelblue" : "lightgrey",
-                    borderTopRightRadius: 28, borderBottomRightRadius: 28
-                }}
-                disabled={isValid}
-            >
+            { (type === "injector" && isValid) &&                   
+                <StyledAddButton
+                style={{borderTopRightRadius: 28, borderBottomRightRadius: 28,backgroundColor:'forestgreen'}}
+                >
                 <AddIcon />
-            </Button>
+                </StyledAddButton>
             }
+            { (type === "injector" && !isValid) &&                   
+                <Button
+                disabled={true}
+                style={{ borderTopRightRadius: 28, borderBottomRightRadius: 28, backgroundColor:'lightgrey' }}                
+                >
+                    <AddIcon />
+                </Button>
+            }
+
         </Stack>
         )
     }
@@ -163,7 +180,7 @@ export default function MoleculeAdder(props:MAProps) {
     return (
         <Box sx={{ width: '100%', textAlign: "center" }}>
             <Typography                
-                variant="button" align="center"
+                variant="button" align="center" color='primary'
             >
                 Add a new homomultimer                
             </Typography>
@@ -178,7 +195,7 @@ export default function MoleculeAdder(props:MAProps) {
     return (
         <>
         <Typography                
-        variant="button" align="center"
+        variant="button" align="center" color="primary"
         >
         Attach many homomultimers to target residue
         </Typography> 
@@ -233,10 +250,10 @@ export default function MoleculeAdder(props:MAProps) {
       <TimelineItem>
         
         <TimelineOppositeContent color="textSecondary">
-
-          </TimelineOppositeContent>
+        <Box sx={{minWidth:62}}/>
+        </TimelineOppositeContent>
         <TimelineSeparator>
-            <TimelineConnector sx={{minHeight:30, marginTop:-3}}/>
+            <TimelineConnector sx={{ minHeight:30, marginTop:-7}}/>
           { (attachSteps[0] && (attachSteps[1], attachSteps[2])) ?  
            < StyledTimelineDot 
            color="success" sx={{ boxShadow: 5, cursor:"grab" }}>
