@@ -3,7 +3,7 @@ import { Box, Button, Grid, Input, TextField } from '@material-ui/core';
 import SendIcon from '@mui/icons-material/Send';
 import Stack from '@mui/material/Stack';
 import { InputAdornment, Typography, MenuItem } from '@mui/material';
-import { TooltipedSelect } from "../../ShareTT";
+import { TooltipedSelect } from "../../../ShareTT";
 import AddIcon from '@mui/icons-material/Add';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
@@ -14,10 +14,6 @@ import TimelineSeparator from '@mui/lab/TimelineSeparator';
 import TimelineConnector from '@mui/lab/TimelineConnector';
 import TimelineContent from '@mui/lab/TimelineContent';
 import TimelineDot from '@mui/lab/TimelineDot';
-import FastfoodIcon from '@mui/icons-material/Fastfood';
-import LaptopMacIcon from '@mui/icons-material/LaptopMac';
-import HotelIcon from '@mui/icons-material/Hotel';
-import RepeatIcon from '@mui/icons-material/Repeat';
 
 import AdsClickIcon from '@mui/icons-material/AdsClick';
 import DesignServicesIcon from '@mui/icons-material/DesignServices';
@@ -37,9 +33,11 @@ import { lightGreen } from '@mui/material/colors';
 
 type moleculeDatum = {id:string, name:string, url:string};
 interface MAProps {
-    molecules: Record<string, [string, string]>; 
-    value:string;
+    molecules: Record<string, [string, string]>;    
     type:"injector" | "attacher";
+    onAddClick:(molecule:string, count:number, target:string|undefined)=>void;
+    targetLister?:()=>void;
+    disabled?:boolean;
 };
 interface MAState {
     molCount:number;
@@ -105,8 +103,9 @@ export default function MoleculeAdder(props:MAProps) {
                 }
             }
           >
-            {
-                Object.keys(props.molecules).map(m=><MenuItem value={m}>{m}</MenuItem>)
+            {   //@ts-ignore
+                props?.targetLister().map(m=><MenuItem value={m}>{m}</MenuItem>)
+               // Object.keys(props.molecules).map(m=><MenuItem value={m}>{m}</MenuItem>)
             } 
           </Select>
         </FormControl>
@@ -121,7 +120,7 @@ export default function MoleculeAdder(props:MAProps) {
             width={'100%'}               
             direction='row'
             spacing={1}>
-            <TooltipedSelect         
+            <TooltipedSelect  
                 required
                 inputL
                 label="Molecule"
@@ -135,7 +134,9 @@ export default function MoleculeAdder(props:MAProps) {
                 onChange={v => { 
                     setState({ ...state, molAsStr: v } );
                     if(type === "attacher")
-                        setAttachSteps([attachSteps[0], true, attachSteps[2]]);                   
+                        setAttachSteps([attachSteps[0], true, attachSteps[2]]);
+                    else 
+                        setValid(state.molCount > 0)                     
              }}                                    
             />
             <TextField
@@ -144,10 +145,9 @@ export default function MoleculeAdder(props:MAProps) {
                 InputProps={{ inputProps: { min: 0, max: 9999 } }}
                 value={state.molCount}
                 onChange={(v) => {
-                    setState({ ...state, molCount: parseInt(v.target.value) });
-                    console.log("##" + state.molecule);
-                    if (state.molAsStr !== undefined)
-                        setValid(true);
+                    const cnt = parseInt(v.target.value);
+                    setState({ ...state, molCount: cnt });
+                    setValid(state.molAsStr !== '' && cnt > 0 )               
 
                     if(type === "attacher")
                         setAttachSteps([attachSteps[0], attachSteps[1], parseInt(v.target.value) > 0]);
@@ -158,6 +158,7 @@ export default function MoleculeAdder(props:MAProps) {
             { (type === "injector" && isValid) &&                   
                 <StyledAddButton
                 style={{borderTopRightRadius: 28, borderBottomRightRadius: 28,backgroundColor:'forestgreen'}}
+                onClick={ ()=>{ props.onAddClick(state.molAsStr, state.molCount, undefined)} }
                 >
                 <AddIcon />
                 </StyledAddButton>
@@ -255,7 +256,9 @@ export default function MoleculeAdder(props:MAProps) {
                         <StyledTimelineDot 
                             color="success" sx={{ boxShadow: 5, cursor:"grab" }}
                         >
-                            <AddIcon/>
+                            <AddIcon 
+                            onClick={ ()=>{ props.onAddClick(state.molAsStr, state.molCount, selTarget) } }
+                            />
                         </StyledTimelineDot>
                     :
                         <TimelineDot 

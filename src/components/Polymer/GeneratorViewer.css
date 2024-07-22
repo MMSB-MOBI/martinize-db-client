@@ -15,3 +15,7 @@ div.tooltip {
     border-radius: 8px;			
     pointer-events: none;			
 }
+.highlight {
+    stroke-width: 8px;
+    stroke:red;
+}

@@ -2,7 +2,7 @@ import * as React from 'react';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import Button from '@mui/material/Button';
 import UndoIcon from '@mui/icons-material/Undo';
-import PowerSettingsNewIcon from '@mui/icons-material/PowerSettingsNew';
+import SkipNextIcon from '@mui/icons-material/SkipNext';
 
 interface PCProps {
     enabling : ()=>boolean;
@@ -27,7 +27,7 @@ export default function PolyplyControls(props:PCProps) {
             disabled= { props.enabling() }
             onClick={ ()=> props.onSubmit()}
         >
-            Submit <PowerSettingsNewIcon/>
+            Next <SkipNextIcon/>
         </Button>
     </ButtonGroup>
   );

@@ -17,6 +17,7 @@ interface propsviewer {
   height: number;
   width: number;
   previous: { id: string; links?: any[]; }[];
+  highlight_node:[index:number,up:boolean]
 }
 
 interface statecustommenu {
@@ -25,7 +26,7 @@ interface statecustommenu {
   nodeClick: SimulationNode | undefined,
   hullClick: Element | undefined,
   lineClick: SimulationLink | undefined,
-  show: boolean,
+  show: boolean, 
 }
 
 let zoomValue = 1
@@ -39,8 +40,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
     nodeClick: undefined,
     hullClick: undefined,
     lineClick: undefined,
-    show: false,
-
+    show: false,    
   };
 
 
@@ -152,7 +152,18 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
   }
 
   componentDidUpdate(prevProps: propsviewer, prevStates: statecustommenu) {
+
     console.log("UPDATING OF GeneratorViewer " + Math.floor(Math.random() * 100000) );
+
+    if (
+        (prevProps.highlight_node[0] !== this.props.highlight_node[0] ||
+         prevProps.highlight_node[1] !== this.props.highlight_node[1]
+        )
+    ) {
+      console.warn(`!!!Nodes highlight changes, ${this.props.highlight_node}`);
+      this.highlightNode(this.props.highlight_node[0], this.props.highlight_node[1])
+    }
+
     //Check state and props 
     if ((prevProps.newNodes !== this.props.newNodes) || (prevProps.newLinks !== this.props.newLinks)) {
       console.warn("Nodes or links altered, calling UpdateSVG")
@@ -411,6 +422,14 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
     }
   };
 
+  highlightNode = (nodeIndex:number,up:boolean) => {
+    const sel=`path.nodes[id='${nodeIndex}']`;//#${nodeIndex}`;
+    console.log("==>" + sel);
+    d3.select(this.ref).selectAll('path.nodes.highlight').classed("highlight", false);
+    d3.select(this.ref).selectAll<SVGCircleElement, SimulationNode>(sel)    
+      .classed("highlight", up)/*(d,i,nodes)=>{  }*/      
+  }
+
   render() {
     const ifContextMenuShouldAppear = (show: boolean) => {
       if (show) {
@@ -450,7 +469,7 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
 
       }
     }
-
+   
     return (
       <div className="svg"
         onKeyDown={(e: React.KeyboardEvent) => handleDelete(e)}

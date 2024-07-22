@@ -1,12 +1,11 @@
 import { CircularProgress, Grid, Paper } from "@mui/material";
 import * as React from "react";
-import GeneratorMenu from './GeneratorMenu';
+import GeneratorMenu from './GeneratorMenu/index';
 import GeneratorViewer from './GeneratorViewer';
 import { FormState, SimulationNode, SimulationLink } from './SimulationType';
 import Warning from "./Dialog/warning";
 import { simulationToJson } from './generateJson';
 import { alarmBadLinks, linkcorrected, removeNodes } from './ViewerFunction';
-//import SocketIo from 'socket.io-client';
 import {getSocket, Socket, getMadSocket} from '../../Socket';
 import RunPolyplyDialog from "./Dialog/RunPolyplyDialog";
 import ItpFile from 'itp-parser-forked';
@@ -50,7 +49,8 @@ interface StateSimulation {
   jobfinish: undefined | string,
   previous_Simulation_nodes: { id: string; links: any[]; }[][],
   go_to_previous: { id: string; links?: any[]; }[];
-  add_fake_links: any,
+  add_fake_links: any,  
+  highlight_node:[number, boolean]
 }
 
 interface GMProps {
@@ -122,7 +122,8 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     inputpdb: undefined,
     jobfinish: undefined,
     go_to_previous: [],
-    add_fake_links: undefined
+    add_fake_links: undefined,
+    highlight_node:[0, false]
   }
 
   job_socket     = getMadSocket("PolymerGenerator");
@@ -545,7 +546,12 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     return list_Components
   }
 
-
+  /*
+  forcefield: string;
+  moleculeToAdd: string;
+  numberToAdd: number;
+  add_to_every_residue : string|undefined;
+  */
   addnode = (toadd: FormState): void => {
     //Check forcefield 
     if (this.state.Simulation) {
@@ -961,6 +967,16 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
 
   }
 
+  listSimulationMolecule = ():string[] => {
+
+    if(this.state != undefined) {
+      return this.state.Simulation?.nodes().map((n) => n.resname) ?? [];
+    }
+    else {
+      return [];
+    }
+
+  }
 
   render() {
     const classes = this.props.classes;
@@ -1033,6 +1049,8 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
             fixlinkcomponentappear={this.fixlinkcomponentappear}
             addmoleculecoord={this.handle_coord}
             previous={this.go_back_to_previous_simulation}
+            listSimulationMolecule={this.listSimulationMolecule}
+            onNodeHighlight={ (i,b) => { this.setState({highlight_node:[i, b]})}}
           />
         </Grid>
 
@@ -1052,6 +1070,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
                 height={this.state.height ? this.state.height : this.root.current!.clientHeight}
                 width={this.state.width ? this.state.width : this.root.current!.clientWidth}
                 previous={this.state.go_to_previous}
+                highlight_node={ this.state.highlight_node }
               />
             ) :
             (
