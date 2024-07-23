@@ -19,12 +19,12 @@ export default function LinkCreator(props:LKProps) {
     const [state, setState] = React.useState({ id1: "", id2:"" });
     const [isValid, setIsValid] = React.useState(false);
     return (
-        <Box sx={{ width: '100%',  textAlign:"center" }}>
+        <Box sx={{ width: '100%',  textAlign:"center" }} padding={2}>
             <Typography
                 variant="button" align="center"
                 color={ props.disabled ? "lightgrey" : "primary" }
             >
-                Create a Link
+                Create a new Link between existing monomers
             </Typography>
         <Stack 
             width={'100%'}

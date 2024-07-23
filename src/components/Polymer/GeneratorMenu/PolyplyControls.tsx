@@ -20,10 +20,12 @@ export default function PolyplyControls(props:PCProps) {
     >
         <Button color="warning"              
             onClick={props.onUndo}
+            style={{paddingLeft:'1em', paddingRight:'1em'}}
         > 
             Cancel <UndoIcon/> 
         </Button>
         <Button color="success"
+            style={{paddingLeft:'2em', paddingRight:'2em', paddingTop:'1em', paddingBottom:'0.5em'}}
             disabled= { props.enabling() }
             onClick={ ()=> props.onSubmit()}
         >

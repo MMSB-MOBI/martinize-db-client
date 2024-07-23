@@ -7,7 +7,7 @@ import Typography from "@mui/material/Typography";
 import CreateLink from "../Dialog/CreateLink";
 import AutoFixHigh from "@mui/material/Icon/Icon";
 import { FaIcon, Marger } from "../../../helpers";
-import { Badge, CircularProgress, Divider, FormControl, FormControlLabel, FormLabel, Grid, Icon, Input, InputLabel, MenuItem, Paper, Radio, RadioGroup, Select, ButtonGroup } from '@material-ui/core';
+import { Button, CircularProgress, Divider, FormControl, FormControlLabel, FormLabel, Grid, Icon, Input, InputLabel, MenuItem, Paper, Radio, RadioGroup, Select, ButtonGroup } from '@material-ui/core';
 import { TooltipedSelect } from "../../../ShareTT";
 import { SimpleSelect } from '../../../Shared';
 import Link from "@mui/material/Link";
@@ -25,38 +25,28 @@ import Alert from '@mui/material/Alert';
 import Box from "@mui/material/Box";
 import UploaderSwitch from "./UploaderSwitch";
 import PolyplyDisclaimer from "./PolyplyDisclaimer";
-import AdvancedSettings from "./AdvancedSettings";
 import MailerSwitch from "./MailerSwitch";
 import LinkCreator from './LinkCreator';
 import MoleculeAdder from "./MoleculeAdder";
 import PolyplyControls from "./PolyplyControls";
 //import Chip from '@mui/material/Chip';
 import ModalBackToDb from "./ModalBackToDb";
-import { Padding } from "@mui/icons-material";
 import HomeIcon from '@mui/icons-material/Home';
 import RepeatOnIcon from '@mui/icons-material/RepeatOn';
 import { Stack } from "@mui/material";
 
+// Accordeon section attempt
 
-/*
+import Accordion from '@mui/material/Accordion';
+import AccordionActions from '@mui/material/AccordionActions';
+import AccordionSummary from '@mui/material/AccordionSummary';
+import AccordionDetails from '@mui/material/AccordionDetails';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import ExpandCircleDownIcon from '@mui/icons-material/ExpandCircleDown';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 
-const useStyles = (theme:any) => ({
-  form: {
-    width: '100%', // Fix IE 11 issue.
-    marginTop: theme.spacing(1),
-  },
-  formContainer: {
-    paddingLeft: theme.spacing(2),
-    width:"100%",
-    marginTop: theme.spacing(1),
-    color:"green"
-  },
-  textField: {
-    width: '100%',
-  },
-});
-  
-*/
+import {CustomMoleculeUploader, CustomLinkUploader} from './AdvancedUploaders';
+import { makeStyles } from "@material-ui/core/styles";
 
 interface propsmenu {
   customITPS: { [name: string]: string };
@@ -560,87 +550,161 @@ class GeneratorMenu extends React.Component<propsmenu, GeneratorMenuState> {
           }
          
           
-          {/* Molecule injectors sub menus for now same conds as above*/
+          {/* 
+              --- MAIN SECTION --
+            Molecule injectors sub menus for now same conds as above 
+          
+            */
             (this.state.hasForceField && 
              (this.state.basicUploadedMoleculeDone || this.state.basicUploadedMoleculeChoice == false)
             ) &&    
               <>    
+                { /*
                 <Grid item
                   xs={11}
                 >
                   <AdvancedSettings></AdvancedSettings>
-                </Grid>                               
-              
+                </Grid>                                                                    
+                */
+                }
+
                 <Grid item
                   xs={11}
-                  style={{ paddingTop:'2em', paddingBottom:'2em' }}
-                >              
-                  <Box sx={{marginBottom:3}}><Typography variant="h5" color="primary" textAlign="center">
-                    Create Polymers
-                  </Typography>     
-                  </Box>
-                  <MoleculeAdder
-                    type="injector"                    
-                    molecules={ this.props.dataForceFieldMolecule[this.state.forcefield] }
-                    onAddClick= { (molecule, count) => { 
-                      this.setState({ want_go_back: false }); 
-                      this.CheckNewMolecule(molecule, count, undefined) } 
-                    }
-                  >                              
-                  </MoleculeAdder>
-                </Grid>
-                <Grid item
-                  xs={11}
+                  style={{ width:'100%', paddingTop:'1em', paddingBottom:'1em', alignItems:'stretch'}}
                 >
-                  <MoleculeAdder
-                    type="attacher"                   
-                    molecules={ this.props.dataForceFieldMolecule[this.state.forcefield]}
-                    onAddClick={ (molecule, count, target)=> { 
-                      this.setState({ want_go_back: false }); 
-                      this.CheckNewMolecule(molecule, count, target); 
-                    }}
-                    targetLister={ () => {
-                      const nodes = this.props.listSimulationMolecule();
-                      return nodes.reduce( (uniq, name) => uniq.includes(name) ? uniq : 
-                        uniq.concat([name]), [] as string[] );
-                    }}
-                    >                              
-                  </MoleculeAdder>
-                  <Box sx={{marginBottom:0}}><Typography variant="body2" color="primary" textAlign="center">
-                    Import a polymer
+                 
+                  <Accordion defaultExpanded>
+                    <AccordionSummary                      
+                      style={{ color:'midnightblue' }}
+                      expandIcon={<ExpandCircleDownIcon style={{ color:'midnightblue'}}/>}
+                    >
+                    <Typography 
+                      align="center"
+                      variant="h4" 
+                      style={{ width:'100%', color:'midnightblue', fontWeight:'800'}}
+                    >
+                      Create Polymers
                     </Typography>     
-                  </Box>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      <Stack direction={"column"} spacing={2}>                     
+                      <Paper elevation={2} 
+                        style={{ 
+                          display: "flex", 
+                          justifyContent:"center",                         
+                          textAlign: "center",
+                          paddingBottom:'1.5em',
+                          paddingTop:'0.5em',                      
+                          }}
+                        >
+                        <MoleculeAdder
+                          type="injector"                    
+                          molecules={ this.props.dataForceFieldMolecule[this.state.forcefield] }
+                          onAddClick= { (molecule, count) => { 
+                            this.setState({ want_go_back: false }); 
+                            this.CheckNewMolecule(molecule, count, undefined) } 
+                          }
+                        ></MoleculeAdder>
+                      </Paper>
+
+                      <Paper elevation={2}
+                       style={{ 
+                        display: "flex", 
+                        justifyContent:"center",  
+                        alignItems: "center",
+                        textAlign: "center",
+                        paddingBottom:'1.5em',
+                        paddingTop:'0.5em'
+                        }}
+                      >
+                        <MoleculeAdder
+                          type="attacher"                   
+                          molecules={ this.props.dataForceFieldMolecule[this.state.forcefield]}
+                          onAddClick={ (molecule, count, target)=> { 
+                            this.setState({ want_go_back: false }); 
+                            this.CheckNewMolecule(molecule, count, target); 
+                          }}
+                          targetLister={ () => {
+                            const nodes = this.props.listSimulationMolecule();
+                            return nodes.reduce( (uniq, name) => uniq.includes(name) ? uniq : 
+                              uniq.concat([name]), [] as string[] );
+                          }}
+                        ></MoleculeAdder>  
+                        </Paper>                            
+                        <Paper elevation={8}
+                          style={{ 
+                            display: "flex", 
+                            justifyContent:"center",  
+                            alignItems: "center",
+                            textAlign: "center",
+                            paddingBottom:'0em',
+                            paddingTop:'0.25em'
+                            }}
+                          >                                            
+                        <CustomMoleculeUploader 
+                          handleUpload={ this.handleUpload }
+                        ></CustomMoleculeUploader>
+                          </Paper>
+                      </Stack>                
+                    </AccordionDetails>
+                  </Accordion>
+                
+                  <Accordion>
+                    <AccordionSummary                      
+                      style={{ color:'midnightblue' }}
+                      expandIcon={<ExpandCircleDownIcon style={{ color:'midnightblue'}}/>}
+                    >
+                      <Typography 
+                        align="center"
+                        variant="h4" 
+                        style={{ width:'100%', color:'midnightblue', fontWeight:'800'}}
+                      >
+                        Edit Molecular Bonds
+                      </Typography>     
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      <Stack direction={"column"} spacing={4}>
+                        <Paper elevation={2}>
+                      <LinkCreator
+                        disabled={ ! (this.props.listSimulationMolecule().length > 0) }
+                        values={ () => this.props.listSimulationMolecule().map(                        
+                            (n, i) =>  `${n}#${i}` )                       
+                          }
+                          onSelectItemEnter={ (v,b)=>{
+                            console.log(`GeneratorMenu::EnterEvent ${v}, ${b}`)
+                            this.props.onNodeHighlight(parseInt(v.split("#")[1]), b)
+                          }}
+                          onSelectItemLeave={ (v,b)=>{
+                            console.log(`GeneratorMenu::LeaveEvent ${v}, ${b}`)
+                            this.props.onNodeHighlight(parseInt(v.split("#")[1]), b)
+                          }}
+                          onSrcSelect={ (v)=>{
+                            this.props.onNodeHighlight(parseInt(v.split("#")[1]), false)
+                          }}
+                          onTgtSelect={ (v)=>{
+                            this.props.onNodeHighlight(parseInt(v.split("#")[1]), false)
+                          }}
+                          onAction= { (v1, v2)=>{
+                            console.log("Action !" + v1 + v2); 
+                            this.setState({ want_go_back: false }); this.CheckNewLink(v1, v2) 
+                          }}
+                      ></LinkCreator>   
+                      </Paper>
+                      <Paper elevation={2}>
+                    
+                      <CustomLinkUploader
+                        handleUpload={ this.handleUpload }
+                      ></CustomLinkUploader>
+                        </Paper>
+                      </Stack>
+
+
+                </AccordionDetails>
+                </Accordion>
                 </Grid>
+
                 <Grid item
-                  xs={11}                
-                >
-                  <LinkCreator
-                    disabled={ ! (this.props.listSimulationMolecule().length > 0) }
-                    values={ () => this.props.listSimulationMolecule().map(                        
-                        (n, i) =>  `${n}#${i}` )                       
-                      }
-                      onSelectItemEnter={ (v,b)=>{
-                        console.log(`GeneratorMenu::EnterEvent ${v}, ${b}`)
-                        this.props.onNodeHighlight(parseInt(v.split("#")[1]), b)
-                      }}
-                      onSelectItemLeave={ (v,b)=>{
-                        console.log(`GeneratorMenu::LeaveEvent ${v}, ${b}`)
-                        this.props.onNodeHighlight(parseInt(v.split("#")[1]), b)
-                      }}
-                      onSrcSelect={ (v)=>{
-                        this.props.onNodeHighlight(parseInt(v.split("#")[1]), false)
-                      }}
-                      onTgtSelect={ (v)=>{
-                        this.props.onNodeHighlight(parseInt(v.split("#")[1]), false)
-                      }}
-                      onAction= { (v1, v2)=>{
-                        console.log("Action !" + v1 + v2); 
-                        this.setState({ want_go_back: false }); this.CheckNewLink(v1, v2) 
-                      }}
-                  ></LinkCreator>                 
-                </Grid>
-                <Grid item
-                  style={{ paddingTop:'2em'}}
+                  style={{ paddingTop:'1em', paddingBottom:'1.5em'}}
                   xs={8}
                 >
                   <PolyplyControls

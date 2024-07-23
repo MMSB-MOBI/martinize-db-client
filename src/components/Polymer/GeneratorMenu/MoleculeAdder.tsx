@@ -119,7 +119,11 @@ export default function MoleculeAdder(props:MAProps) {
             mt={1}
             width={'100%'}               
             direction='row'
-            spacing={1}>
+            spacing={1} 
+            style= {{
+                justifyContent:"center",                  
+            }}
+            >
             <TooltipedSelect  
                 required
                 inputL
@@ -194,7 +198,7 @@ export default function MoleculeAdder(props:MAProps) {
     )
 
     return (
-        <>
+        <Stack direction={"column"}>
         <Box sx={{ width: '100%', textAlign: "center" }}>
             <Typography                
                 variant="button" align="center" color="primary"
@@ -271,7 +275,7 @@ export default function MoleculeAdder(props:MAProps) {
                 <TimelineContent></TimelineContent>
             </TimelineItem> 
         </Timeline>
-    </>
+    </Stack>
    )
 }
 
