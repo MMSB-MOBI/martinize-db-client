@@ -161,7 +161,7 @@ export default function MoleculeAdder(props:MAProps) {
             />
             { (type === "injector" && isValid) &&                   
                 <StyledAddButton
-                style={{borderTopRightRadius: 28, borderBottomRightRadius: 28,backgroundColor:'forestgreen'}}
+                style={{borderTopRightRadius: 28, borderBottomRightRadius: 28,backgroundColor:'dodgerblue'}}
                 onClick={ ()=>{ props.onAddClick(state.molAsStr, state.molCount, undefined)} }
                 >
                 <AddIcon />
@@ -258,7 +258,7 @@ export default function MoleculeAdder(props:MAProps) {
                     <TimelineConnector sx={{ minHeight:30, marginTop:-7}}/>
                     { (attachSteps[0] && (attachSteps[1], attachSteps[2])) ?  
                         <StyledTimelineDot 
-                            color="success" sx={{ boxShadow: 5, cursor:"grab" }}
+                            color="info" sx={{ boxShadow: 5, cursor:"grab" }}
                         >
                             <AddIcon 
                             onClick={ ()=>{ props.onAddClick(state.molAsStr, state.molCount, selTarget) } }

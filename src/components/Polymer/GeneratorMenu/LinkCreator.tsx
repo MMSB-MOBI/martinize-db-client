@@ -108,9 +108,9 @@ export default function LinkCreator(props:LKProps) {
                 </Select>
             </FormControl>
             { isValid ? 
-                <Button 
+                <Button                
                     style={ { 
-                        color:  'black' , backgroundColor: "forestgreen", 
+                        color: 'white' , backgroundColor: "dodgerblue", 
                         borderTopRightRadius: 28, borderBottomRightRadius: 28,
                         } }
                     onClick={()=>{

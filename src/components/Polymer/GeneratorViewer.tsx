@@ -476,7 +476,9 @@ export default class GeneratorViewer extends React.Component<propsviewer, statec
         tabIndex={0}
         onClick={(e) => { clickAncCloseMenu(e) }}
         onContextMenu={this.handleContextMenu}
-        style={{ cursor: 'context-menu' }}
+        style={{ cursor: 'context-menu',
+          position:'fixed',         
+         }}
         ref={(ref: HTMLDivElement) => this.frame = ref} >
 
         <svg className="container" id="svg" ref={(ref: SVGSVGElement) => this.ref = ref}></svg>

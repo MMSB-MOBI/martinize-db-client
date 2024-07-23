@@ -1,20 +1,14 @@
 import * as React from "react";
 
-import TextField from "@mui/material/TextField";
-import Grain from "@mui/material/Icon/Icon";
+
 import { FormState } from '../SimulationType'
 import Typography from "@mui/material/Typography";
 import CreateLink from "../Dialog/CreateLink";
-import AutoFixHigh from "@mui/material/Icon/Icon";
-import { FaIcon, Marger } from "../../../helpers";
+import { Marger } from "../../../helpers";
 import { Button, CircularProgress, Divider, FormControl, FormControlLabel, FormLabel, Grid, Icon, Input, InputLabel, MenuItem, Paper, Radio, RadioGroup, Select, ButtonGroup } from '@material-ui/core';
-import { TooltipedSelect } from "../../../ShareTT";
-import { SimpleSelect } from '../../../Shared';
-import Link from "@mui/material/Link";
 import { Link as RouterLink } from 'react-router-dom';
 import { ModalMoleculeSelector } from "../../Builder/MembraneBuilder/MoleculeChooser";
 import { ModalHistorySelector } from "../../MyHistory/MyHistory";
-import Switch from '@mui/material/Switch';
 import { ImportProtein } from "../Dialog/importProtein";
 import ApiHelper from "../../../ApiHelper";
 import md5 from 'md5';
@@ -38,15 +32,11 @@ import { Stack } from "@mui/material";
 // Accordeon section attempt
 
 import Accordion from '@mui/material/Accordion';
-import AccordionActions from '@mui/material/AccordionActions';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandCircleDownIcon from '@mui/icons-material/ExpandCircleDown';
-import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 
 import {CustomMoleculeUploader, CustomLinkUploader} from './AdvancedUploaders';
-import { makeStyles } from "@material-ui/core/styles";
 
 interface propsmenu {
   customITPS: { [name: string]: string };
@@ -409,21 +399,24 @@ class GeneratorMenu extends React.Component<propsmenu, GeneratorMenuState> {
       <Grid container
         direction="column"
         justifyContent="center" alignItems="center" 
+        
         >
-           <Marger size="1rem" />
-        <Grid item>
+        <Grid item
+        style={{paddingTop:'2em'}}
+        >
         <Typography component="h1" variant="h3" align="center" style={{ fontWeight: 700, fontSize: '2.5rem', marginBottom: '1rem' }}>
           Polymer Editor
         </Typography>
-        </Grid>
+        </Grid>     
         <Grid item>        
         <Typography variant="subtitle1" align="center" style={{ fontSize: '0.7rem', fontStyle: 'italic', marginBottom: '1rem' }}>
           polyply version : {this.props.version}
         </Typography>
         </Grid>
-        <Grid item xs={7}>
-        <Stack direction="row" spacing={3} >
-          
+        <Grid item xs={7}         
+        style={{paddingTop:'0.5em', paddingBottom:'1em'}}
+        >
+        <Stack direction="row" spacing={3} >          
           <RouterLink ref={this.go_back_btn} to="/"
           onClick={this.state.want_go_back !== true ? this.onWantGoBack : this.onGoBack}
           style={{ textDecoration:"none"}}
@@ -458,18 +451,15 @@ class GeneratorMenu extends React.Component<propsmenu, GeneratorMenuState> {
           
       </Stack>
       </Grid>
-      </Grid>
-        <Marger size="2rem" />
-        <Divider variant='middle' />
-
-        <Marger size="2rem" />
-
+      </Grid>    
+      <Divider variant='middle'/>
+      <Marger size="2rem" />
         <Grid container
         spacing={1}
         component="main" 
         direction="column"
         justifyContent="center"
-        alignItems="center"
+        alignItems="center"  
         >
 
           {/* By default we ask for forcefield choice */}
@@ -574,14 +564,13 @@ class GeneratorMenu extends React.Component<propsmenu, GeneratorMenuState> {
                 >
                  
                   <Accordion defaultExpanded>
-                    <AccordionSummary                      
-                      style={{ color:'midnightblue' }}
-                      expandIcon={<ExpandCircleDownIcon style={{ color:'midnightblue'}}/>}
+                    <AccordionSummary                                          
+                      expandIcon={<ExpandCircleDownIcon style={{ color:'darkslategrey'}}/>}
                     >
                     <Typography 
                       align="center"
-                      variant="h4" 
-                      style={{ width:'100%', color:'midnightblue', fontWeight:'800'}}
+                      variant="h5" 
+                      style={{ width:'100%', color:'darkslategrey', fontWeight:'800'}}
                     >
                       Create Polymers
                     </Typography>     
@@ -708,10 +697,10 @@ class GeneratorMenu extends React.Component<propsmenu, GeneratorMenuState> {
                   xs={8}
                 >
                   <PolyplyControls
-                    onClick={ () => { console.log("GOGO")}}
-                    onUndo={()=>{}}
-                    onSubmit={()=>{}}
-                    enabling={ ()=>this.state.readyToGo }
+                    onUndo= { this.handle_previous }
+                    onSubmit={ this.props.send }
+                    onRepairClick={ this.props.fixlinkcomponentappear }
+                    onError={ this.props.errorlink.length !== 0 }
                     >                        
                   </PolyplyControls>
                 </Grid>

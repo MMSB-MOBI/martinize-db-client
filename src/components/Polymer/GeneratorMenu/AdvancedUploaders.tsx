@@ -10,6 +10,9 @@ import { styled } from '@mui/material/styles';
 import BuildCircleIcon from '@mui/icons-material/BuildCircle';
 import { Stack } from '@mui/material';
 import ShareIcon from '@mui/icons-material/Share';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
 
 export const VisuallyHiddenInput = styled('input')({
     clip: 'rect(0 0 0 0)',
@@ -26,6 +29,12 @@ export const VisuallyHiddenInput = styled('input')({
 export interface CMUProps {
     handleUpload:(f:FileList)=>void
 }
+const fileTooltip=`
+Aliquam eget finibus ante, non facilisis lectus. Sed vitae dignissim est, vel aliquam tellus.
+Praesent non nunc mollis, fermentum neque at, semper arcu.
+Nullam eget est sed sem iaculis gravida eget vitae justo.
+`;
+
 export function CustomMoleculeUploader(props:CMUProps) {
     return (
         <Grid container
@@ -39,6 +48,11 @@ export function CustomMoleculeUploader(props:CMUProps) {
             >
                 <Typography variant="button" align="center" style={{color:"steelblue"}}>
                     Upload your polymer files
+                    <Tooltip title={fileTooltip} placement="top-start">
+                        <IconButton color='primary' style={{marginTop:'-0.15em'}}>
+                            <HelpOutlineIcon />
+                        </IconButton>
+                    </Tooltip>
                 </Typography>   
             </Grid>
             <Grid item

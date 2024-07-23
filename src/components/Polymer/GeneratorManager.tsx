@@ -695,7 +695,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
     console.log("Go to server");
     this.setState({ stepsubmit: 0 })
     if (this.state.Simulation === undefined) {
-      this.setState({ Warningmessage: "No molecule in your polymer. You need to build a polymer before." })
+      this.setState({ Warningmessage: "Your polymer is curently empty. You need to add molecule into it." })
     }
     else {
       // Make dialog box appaer
@@ -911,7 +911,7 @@ class GeneratorManager extends React.Component<GMProps, StateSimulation>{
           listerror.push([i[1].toString(), i[3].toString()])
           alarmBadLinks(i[1].toString(), i[3].toString())
         }
-        this.warningfunction("Fail! Wrong links : " + dicoError.errorlinks + ". You can correct this mistake with \"click right\" -> \"Remove bad links\" or with the \"fix link\" button in red")
+        this.warningfunction("Fail! Wrong links : " + dicoError.errorlinks + ". You can correct this mistake with \"click right\" -> \"Remove bad links\" or with the \"FIX A BOND\" button in red")
 
         this.setState({ itp: dicoError.itp })
         let generate_error_fixing_state = Array.from({ length: listerror.length }, (_, i) => {

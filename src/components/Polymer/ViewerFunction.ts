@@ -144,16 +144,16 @@ export function removeNodes(nodesToRemove: SimulationNode[], updateFunction: () 
 }
 
 export function addNodeToSVG(newnodes: SimulationNode[], simulation: any, update: () => void, zoomValue: number) {
-    let div: any;
+    let tooltipElem: d3.Selection<HTMLDivElement, unknown, HTMLElement, any>;
     // Define the div for the tooltip
 
     if (document.getElementsByClassName("tooltip").length === 0) {
-        div = d3.select("body")
+        tooltipElem = d3.select("body")
             .append("div")
             .attr("class", "tooltip")
     }
     else {
-        div = d3.select("body").select("div.tooltip")
+        tooltipElem = d3.select("body").select("div.tooltip")
     }
 
     for (let node of newnodes) {
@@ -180,16 +180,16 @@ export function addNodeToSVG(newnodes: SimulationNode[], simulation: any, update
                 .on("end", dragended)
             )
             .on("mouseover", function (event: any, d: SimulationNode) {
-                div.transition()
+                tooltipElem.transition()
                     .duration(20)
                     .style("opacity", 1)
 
-                div.html(d.resname + " #" + d.id)
+                tooltipElem.html(d.resname + " #" + d.id)
                     .style("left", (event.clientX) + "px")
                     .style("top", (event.clientY) + 20 + "px")
             })
             .on("mouseout", function (d) {
-                div.transition()
+                tooltipElem.transition()
                     .duration(500)
                     .style("opacity", 0);
             })
